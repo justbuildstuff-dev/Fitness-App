@@ -1,0 +1,250 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/program_provider.dart';
+
+class CreateProgramScreen extends StatefulWidget {
+  const CreateProgramScreen({super.key});
+
+  @override
+  State<CreateProgramScreen> createState() => _CreateProgramScreenState();
+}
+
+class _CreateProgramScreenState extends State<CreateProgramScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  bool _isCreating = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Program'),
+        actions: [
+          TextButton(
+            onPressed: _isCreating ? null : _createProgram,
+            child: _isCreating
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('CREATE'),
+          ),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.fitness_center,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Create New Program',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Build a structured workout program to track your fitness journey',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Program Name
+            TextFormField(
+              controller: _nameController,
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Program Name',
+                hintText: 'e.g., Full Body Strength',
+                prefixIcon: Icon(Icons.title),
+                border: OutlineInputBorder(),
+                helperText: 'Give your program a descriptive name',
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a program name';
+                }
+                if (value.trim().length > 100) {
+                  return 'Program name must be 100 characters or less';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Program Description
+            TextFormField(
+              controller: _descriptionController,
+              textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Description (Optional)',
+                hintText: 'Describe your program goals, target muscles, or training style...',
+                prefixIcon: Icon(Icons.description),
+                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
+              ),
+              validator: (value) {
+                if (value != null && value.length > 500) {
+                  return 'Description must be 500 characters or less';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) => _createProgram(),
+            ),
+            const SizedBox(height: 32),
+
+            // Tips Card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Program Tips',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const _TipItem(
+                      text: 'After creating your program, you can add weeks to structure your training',
+                    ),
+                    const _TipItem(
+                      text: 'Each week can contain multiple workouts with different exercises',
+                    ),
+                    const _TipItem(
+                      text: 'Use the duplicate feature to repeat successful weeks',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _createProgram() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isCreating = true;
+    });
+
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    
+    final programId = await programProvider.createProgram(
+      name: _nameController.text,
+      description: _descriptionController.text.trim().isEmpty 
+          ? null 
+          : _descriptionController.text,
+    );
+
+    setState(() {
+      _isCreating = false;
+    });
+
+    if (programId != null) {
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Program created successfully!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } else {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(programProvider.error ?? 'Failed to create program'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
+class _TipItem extends StatelessWidget {
+  final String text;
+
+  const _TipItem({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(top: 8, right: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
