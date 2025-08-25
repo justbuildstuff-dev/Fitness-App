@@ -19,7 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Documentation
 - `Docs/Workout_Tracker_Final_Spec.md` - Complete technical specification with data models, security rules, and implementation details
-- `Docs/README.md` - Collaboration guidelines for working with Claude Code
+- `Docs/original_README.md` - Collaboration guidelines for working with Claude Code
+- `Docs/*` - Includes all documentation for the project and should be reviewed when getting context for the current task. Documents exist for each component of the application and there is also and architectural overview. You should ask for the necessary document to be added for context when implementing changes. The Architectural Overview should be requested when adding new functionality or cross-component updates to make sure the updates align with the vision for the application.
 
 ## Data Model
 
@@ -75,3 +76,6 @@ Deploy the provided security rules and indexes:
 - Unit tests for duplication logic and validation
 - Integration tests with Firebase Emulator (Auth + Firestore)
 - E2E tests for core flows (create program, duplicate week, offline sync)
+
+## Commands
+- When asked to deploy the application for testing, a check should be done to see if the emulators are already running before redeploying. If the emulators are already running and accessible then a hot redeploy of the application should be performed. 

@@ -154,7 +154,9 @@ service cloud.firestore {
       return (!data.name || isString(data.name) && data.name.size() <= 100)
         && (!data.description || isString(data.description) && data.description.size() <= 500)
         && (!data.createdAt || isTimestamp(data.createdAt))
-        && (!data.userId || isString(data.userId));
+        && (!data.updatedAt || isTimestamp(data.updatedAt))
+        && (!data.userId || isString(data.userId))
+        && (!data.isArchived || isBoolean(data.isArchived));
     }
 
     function validWeek(data) {

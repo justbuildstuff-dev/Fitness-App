@@ -67,4 +67,32 @@ class Week {
 
   bool get isValidName => name.trim().isNotEmpty;
   bool get isValidOrder => order > 0;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Week &&
+        other.id == id &&
+        other.name == name &&
+        other.order == order &&
+        other.notes == notes &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.userId == userId &&
+        other.programId == programId;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      id,
+      name,
+      order,
+      notes,
+      createdAt,
+      updatedAt,
+      userId,
+      programId,
+    );
+  }
 }

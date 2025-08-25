@@ -143,7 +143,7 @@ service cloud.firestore {
     // Keep these functions concise; firestore rule evaluations should be efficient.
     // -----------------------
     function validUserProfile(data) {
-      return (!data.displayName || isString(data.displayName) && data.displayName.size() <= 100)
+      return (!data.displayName || (isString(data.displayName) && data.displayName.size() <= 100))
         && (!data.email || isString(data.email))
         && (!data.createdAt || isTimestamp(data.createdAt))
         && (!data.lastLogin || isTimestamp(data.lastLogin))
@@ -151,10 +151,12 @@ service cloud.firestore {
     }
 
     function validProgram(data) {
-      return (!data.name || isString(data.name) && data.name.size() <= 100)
-        && (!data.description || isString(data.description) && data.description.size() <= 500)
-        && (!data.createdAt || isTimestamp(data.createdAt))
-        && (!data.userId || isString(data.userId));
+      return (isString(data.name) && data.name.size() >= 1 && data.name.size() <= 100)
+        && (data.description == null || (isString(data.description) && data.description.size() <= 500))
+        && (isTimestamp(data.createdAt))
+        && (isTimestamp(data.updatedAt))
+        && (isString(data.userId) && data.userId.size() >= 1)
+        && (isBoolean(data.isArchived));
     }
 
     function validWeek(data) {
@@ -165,11 +167,11 @@ service cloud.firestore {
     }
 
     function validWorkout(data) {
-      return (!data.name || isString(data.name) && data.name.size() <= 200)
-        && (!data.orderIndex || isNumber(data.orderIndex))
-        && (!data.dayOfWeek || (isNumber(data.dayOfWeek) && data.dayOfWeek >= 1 && data.dayOfWeek <= 7))
-        && (!data.notes || isString(data.notes))
-        && (!data.userId || isString(data.userId));
+      return (isString(data.name) && data.name.size() >= 1 && data.name.size() <= 200)
+        && (isNumber(data.orderIndex))
+        && (data.dayOfWeek == null || (isNumber(data.dayOfWeek) && data.dayOfWeek >= 1 && data.dayOfWeek <= 7))
+        && (data.notes == null || isString(data.notes))
+        && (isString(data.userId) && data.userId.size() >= 1);
     }
 
     function validExercise(data) {

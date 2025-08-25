@@ -169,4 +169,38 @@ class Exercise {
         return ['reps', 'weight', 'duration', 'distance', 'restTime'];
     }
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Exercise &&
+        other.id == id &&
+        other.name == name &&
+        other.exerciseType == exerciseType &&
+        other.orderIndex == orderIndex &&
+        other.notes == notes &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.userId == userId &&
+        other.workoutId == workoutId &&
+        other.weekId == weekId &&
+        other.programId == programId;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      id,
+      name,
+      exerciseType,
+      orderIndex,
+      notes,
+      createdAt,
+      updatedAt,
+      userId,
+      workoutId,
+      weekId,
+      programId,
+    );
+  }
 }

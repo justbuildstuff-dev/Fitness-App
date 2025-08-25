@@ -1,5 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Helper class to distinguish between null and not provided in copyWith
+class _NoValue {
+  const _NoValue();
+}
+
 class Program {
   final String id;
   final String name;
@@ -45,14 +50,14 @@ class Program {
 
   Program copyWith({
     String? name,
-    String? description,
+    Object? description = const _NoValue(),
     DateTime? updatedAt,
     bool? isArchived,
   }) {
     return Program(
       id: id,
       name: name ?? this.name,
-      description: description ?? this.description,
+      description: description is _NoValue ? this.description : description as String?,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       userId: userId,
@@ -63,4 +68,30 @@ class Program {
   bool get isValidName => name.trim().isNotEmpty && name.trim().length <= 100;
   bool get isValidDescription => 
       description == null || description!.length <= 500;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Program &&
+        other.id == id &&
+        other.name == name &&
+        other.description == description &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.userId == userId &&
+        other.isArchived == isArchived;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      id,
+      name,
+      description,
+      createdAt,
+      updatedAt,
+      userId,
+      isArchived,
+    );
+  }
 }
