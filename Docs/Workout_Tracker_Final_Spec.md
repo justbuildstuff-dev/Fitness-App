@@ -25,8 +25,7 @@
 18. [Performance, Indexing & Scalability](#18-performance-indexing--scalability)  
 
 Appendix A: [Firestore security rules (full)](#appendix-a-firestore-security-rules)  
-Appendix B: [Cloud Function full code — duplicateWeek (downloadable)](#appendix-b-cloud-function-full-code---duplicateweek)  
-Appendix C: [`firestore.indexes.json` ready-to-deploy](#appendix-c-firestoreindexesjson-ready-to-deploy)  
+Appendix B: [`firestore.indexes.json` ready-to-deploy](#appendix-b-firestoreindexesjson-ready-to-deploy)  
 
 ---
 
@@ -243,171 +242,16 @@ Duplication is centralized and must be consistent across UI and API. Users may d
 - **Idempotency**: Client-side double-tap prevention is sufficient; server does not guarantee idempotency by default.
 - **Audit**: Log duplication events for debugging & monitoring.
 
-### 10.2 Callable Cloud Function — `duplicateWeek` (production-ready)
+### 10.2 Client-Side Duplication Implementation
 
-This function duplicates a Week (and its nested Workouts → Exercises → Sets) for the authenticated user. It includes inline comments explaining each step. It expects documents to live under the `users/{userId}` tree.
+**Note**: The duplication functionality has been implemented client-side using batched Firestore writes instead of Cloud Functions for better performance and reduced complexity. The implementation is available in `FirestoreService.duplicateWeek()` method.
 
-```javascript
-// duplicateWeek Cloud Function (callable)
-
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-admin.initializeApp();
-
-exports.duplicateWeek = functions.https.onCall(async (data, context) => {
-  // 1) Auth check - ensure the user is authenticated
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
-  }
-  const uid = context.auth.uid;
-
-  // 2) Input validation
-  const { programId, weekId } = data || {};
-  if (!programId || !weekId) {
-    throw new functions.https.HttpsError('invalid-argument', 'programId and weekId are required.');
-  }
-
-  const db = admin.firestore();
-
-  // 3) Load source week document and verify ownership
-  const srcWeekRef = db.collection('users').doc(uid)
-    .collection('programs').doc(programId)
-    .collection('weeks').doc(weekId);
-
-  const srcWeekSnap = await srcWeekRef.get();
-  if (!srcWeekSnap.exists) {
-    throw new functions.https.HttpsError('not-found', 'Original week not found.');
-  }
-
-  const srcWeekData = srcWeekSnap.data();
-
-  // 4) Create new week document under the same program
-  const newWeekRef = db.collection('users').doc(uid)
-    .collection('programs').doc(programId)
-    .collection('weeks').doc();
-
-  const newWeekData = {
-    name: (srcWeekData.name ? `${srcWeekData.name} (Copy)` : 'Week (Copy)'),
-    order: srcWeekData.order || null,
-    notes: srcWeekData.notes || null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    userId: uid
-  };
-
-  // Batch helper functions to manage Firestore batch limits
-  const BATCH_LIMIT = 450; // stay below 500
-  let batch = db.batch();
-  let batchCount = 0;
-  async function commitBatch() {
-    if (batchCount === 0) return;
-    await batch.commit();
-    batch = db.batch();
-    batchCount = 0;
-  }
-  function addToBatch(ref, data) {
-    batch.set(ref, data);
-    batchCount += 1;
-    if (batchCount >= BATCH_LIMIT) {
-      return commitBatch();
-    } else {
-      return Promise.resolve();
-    }
-  }
-
-  // Add new week create to batch
-  await addToBatch(newWeekRef, newWeekData);
-
-  // Prepare mapping for return value
-  const newIdsMapping = { weekId: newWeekRef.id, workouts: [] };
-
-  // 5) Duplicate workouts under the src week
-  const srcWorkoutsSnap = await srcWeekRef.collection('workouts').orderBy('orderIndex', 'asc').get();
-  for (const workoutDoc of srcWorkoutsSnap.docs) {
-    const workoutData = workoutDoc.data();
-
-    const newWorkoutRef = newWeekRef.collection('workouts').doc();
-    const newWorkoutData = {
-      name: workoutData.name || null,
-      dayOfWeek: workoutData.dayOfWeek || null,
-      orderIndex: workoutData.orderIndex || null,
-      notes: workoutData.notes || null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      userId: uid
-    };
-    await addToBatch(newWorkoutRef, newWorkoutData);
-
-    const workoutMapEntry = { oldWorkoutId: workoutDoc.id, newWorkoutId: newWorkoutRef.id, exercises: [] };
-
-    // Duplicate exercises for this workout
-    const srcExercisesSnap = await workoutDoc.ref.collection('exercises').orderBy('orderIndex', 'asc').get();
-    for (const exerciseDoc of srcExercisesSnap.docs) {
-      const exerciseData = exerciseDoc.data();
-
-      const newExerciseRef = newWorkoutRef.collection('exercises').doc();
-      const newExerciseData = {
-        name: exerciseData.name || null,
-        exerciseType: exerciseData.exerciseType || 'custom',
-        orderIndex: exerciseData.orderIndex || null,
-        notes: exerciseData.notes || null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        userId: uid
-      };
-      await addToBatch(newExerciseRef, newExerciseData);
-
-      const exerciseMapEntry = { oldExerciseId: exerciseDoc.id, newExerciseId: newExerciseRef.id, sets: [] };
-
-      // Duplicate sets for this exercise
-      const srcSetsSnap = await exerciseDoc.ref.collection('sets').orderBy('setNumber', 'asc').get();
-      for (const setDoc of srcSetsSnap.docs) {
-        const setData = setDoc.data();
-
-        // Build new set object copying only relevant fields based on exerciseType
-        const allowedSet = {
-          setNumber: setData.setNumber,
-          exerciseType: exerciseData.exerciseType || 'custom',
-          checked: false,
-          notes: setData.notes || null,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          userId: uid
-        };
-
-        const type = exerciseData.exerciseType || 'custom';
-        if (type === 'strength') {
-          if (setData.reps != null) allowedSet.reps = setData.reps;
-          allowedSet.weight = null; // reset weight to encourage fresh entry
-        } else if (type === 'cardio' || type === 'time-based') {
-          if (setData.duration != null) allowedSet.duration = setData.duration;
-          if (setData.distance != null) allowedSet.distance = setData.distance;
-        } else {
-          if (setData.reps != null) allowedSet.reps = setData.reps;
-          if (setData.duration != null) allowedSet.duration = setData.duration;
-          if (setData.distance != null) allowedSet.distance = setData.distance;
-          if (setData.weight != null) allowedSet.weight = setData.weight;
-        }
-
-        const newSetRef = newExerciseRef.collection('sets').doc();
-        await addToBatch(newSetRef, allowedSet);
-
-        exerciseMapEntry.sets.push({ oldSetId: setDoc.id, newSetId: newSetRef.id });
-      } // end sets
-
-      workoutMapEntry.exercises.push(exerciseMapEntry);
-    } // end exercises
-
-    newIdsMapping.workouts.push(workoutMapEntry);
-  } // end workouts
-
-  // Commit any remaining batched writes
-  await commitBatch();
-
-  // Return mapping
-  return { success: true, mapping: newIdsMapping };
-});
-```
+**Key Features of Client-Side Implementation:**
+- Batched writes with proper chunking (450 ops/batch limit)
+- Exercise type-specific field copying for sets
+- Proper error handling and rollback
+- Returns mapping of old IDs to new IDs for UI updates
+- Maintains all security through Firestore rules
 
 ### 10.3 Duplication Error Handling, Idempotency & Audit
 
@@ -423,7 +267,8 @@ exports.duplicateWeek = functions.https.onCall(async (data, context) => {
 - Cloud Logging entries for duplication events (`userId`, `sourceWeekId`, `newWeekId`, timestamp).
 
 **Security**
-- Callable function uses `context.auth.uid` to validate ownership; only self-duplication allowed.
+- Client-side implementation leverages Firestore security rules for ownership validation
+- All operations validated through existing security rules with `request.auth.uid == userId` checks
 - Admin role: implement via custom claim `admin: true` for support access; admins can be allowed expanded read-only operations via rules.
 
 ---
@@ -642,15 +487,9 @@ service cloud.firestore {
 
 ---
 
-# Appendix B — Cloud Function (duplicateWeek) — Full file
-
-The same code as Section 10.2 above is provided here for convenience to copy into `functions/index.js`.  It includes inline comments explaining each step.
-
-(See Section 10.2 for the complete code block.)
-
 ---
 
-# Appendix C — firestore.indexes.json (ready to deploy)
+# Appendix B — firestore.indexes.json (ready to deploy)
 
 ```json
 {

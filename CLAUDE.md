@@ -7,13 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **FitTrack** is a mobile-first workout tracking app built on Firebase with the following architecture:
 
 - **Client**: Flutter (iOS + Android) 
-- **Backend**: Firebase (Auth, Firestore, Storage, Cloud Functions)
+- **Backend**: Firebase (Auth, Firestore, Storage)
 - **Data Structure**: Hierarchical Firestore collections under `users/{userId}/programs/{programId}/weeks/{weekId}/workouts/{workoutId}/exercises/{exerciseId}/sets/{setId}`
 
 ## Key Files & Components
 
 ### Code Samples
-- `Code Samples/duplicateWeek.js` - Production-ready Cloud Function for week duplication with batched writes
 - `Code Samples/Firestore.rules` - Complete security rules with per-user data scoping and admin support
 - `Code Samples/firestore.indexes.json` - Firestore composite indexes for efficient queries
 
@@ -52,24 +51,41 @@ Every document includes a `userId` field for security and efficient querying.
 - `custom` → flexible user-configured fields
 
 ### Duplication Strategy
-- Server-side Cloud Functions with batched writes (≤450 ops/batch)
+- Client-side implementation with batched writes (≤450 ops/batch)
 - Selective field copying based on `exerciseType`
 - Deep copying: Week → Workouts → Exercises → Sets
 - Reset `checked` to false, optionally reset `weight` to null for fresh tracking
 
 ### Development Workflow
-1. **Plan & Outline**: State intentions and list sub-tasks before coding
-2. **Ask for Confirmation**: Propose plans before implementation
-3. **Test-Driven Development**: Write tests before code implementation
-4. **Iterative Progress**: Work section by section through the specification
-5. **Clear Communication**: Share reasoning and ask for clarification when needed
+- This plan should be followed (in order) whenever a new feature, feature update, or bug fix is requested.
+
+1. **Review Documentation**: 
+  - Check the document titles in the @Docs folder.
+  - Request access to document titles that sound relevant.
+  - State why the document would help with development.
+2. **Plan & Outline**: 
+  - State intentions and list sub-tasks before coding.
+3. **Ask for Confirmation**:
+  - Propose plans before implementation.
+4. **Test-Driven Development**:
+  - Review existing tests to help with understanding functionality flows.
+  - write new tests aligned defined by the expected outcomes of the new functionality.
+  - Update existing tests if necessary.
+5. **Iterative Progress**: 
+  - Work section by section through the specification.
+6. **Clear Communication**:
+  - Share reasoning and ask for clarification when needed.
+7. **Update Documentation**:
+  - Existing documentation files within the @Docs folder should be updated to align with any changes that were made.
+  - If the updates do not fit entirely within an already existing document:
+    - Create a new document in @Docs for the new functionality
+    - Follow the exact same formatting, tone, and level of detail as other, already existing documents.
 
 ## Firebase Configuration
 
 Deploy the provided security rules and indexes:
 - `firebase deploy --only firestore:rules`
-- `firebase deploy --only firestore:indexes` 
-- `firebase deploy --only functions` (for duplicateWeek function)
+- `firebase deploy --only firestore:indexes`
 
 ## Testing Requirements
 
