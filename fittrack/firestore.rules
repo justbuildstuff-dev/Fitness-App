@@ -143,57 +143,77 @@ service cloud.firestore {
     // Keep these functions concise; firestore rule evaluations should be efficient.
     // -----------------------
     function validUserProfile(data) {
-      return (!data.displayName || (isString(data.displayName) && data.displayName.size() <= 100))
-        && (!data.email || isString(data.email))
-        && (!data.createdAt || isTimestamp(data.createdAt))
-        && (!data.lastLogin || isTimestamp(data.lastLogin))
-        && (!data.settings || data.settings is map);
+      return (data.displayName == null || isString(data.displayName) && data.displayName.size() <= 100)
+        && (data.email == null || isString(data.email))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.lastLogin == null || isTimestamp(data.lastLogin))
+        && (data.settings == null || data.settings is map);
     }
 
     function validProgram(data) {
-      return (isString(data.name) && data.name.size() >= 1 && data.name.size() <= 100)
-        && (data.description == null || (isString(data.description) && data.description.size() <= 500))
-        && (isTimestamp(data.createdAt))
-        && (isTimestamp(data.updatedAt))
-        && (isString(data.userId) && data.userId.size() >= 1)
-        && (isBoolean(data.isArchived));
+      return (data.name != null && isString(data.name) && data.name.size() <= 100)
+        && (data.description == null || isString(data.description) && data.description.size() <= 500)
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.updatedAt != null && isTimestamp(data.updatedAt))
+        && (data.userId != null && isString(data.userId))
+        && (data.isArchived == null || isBoolean(data.isArchived));
     }
 
     function validWeek(data) {
-      return (!data.name || isString(data.name))
-        && (!data.order || isNumber(data.order) && data.order >= 0)
-        && (!data.createdAt || isTimestamp(data.createdAt))
-        && (!data.userId || isString(data.userId));
+      return (data.name != null && isString(data.name))
+        && (data.order != null && isNumber(data.order) && data.order >= 0)
+        && (data.notes == null || isString(data.notes))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.updatedAt != null && isTimestamp(data.updatedAt))
+        && (data.userId != null && isString(data.userId))
+        && (data.programId != null && isString(data.programId));
     }
 
     function validWorkout(data) {
-      return (isString(data.name) && data.name.size() >= 1 && data.name.size() <= 200)
-        && (isNumber(data.orderIndex))
+      return (data.name != null && isString(data.name) && data.name.size() <= 200)
+        && (data.orderIndex != null && isNumber(data.orderIndex))
         && (data.dayOfWeek == null || (isNumber(data.dayOfWeek) && data.dayOfWeek >= 1 && data.dayOfWeek <= 7))
         && (data.notes == null || isString(data.notes))
-        && (isString(data.userId) && data.userId.size() >= 1);
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.updatedAt != null && isTimestamp(data.updatedAt))
+        && (data.userId != null && isString(data.userId))
+        && (data.weekId != null && isString(data.weekId))
+        && (data.programId != null && isString(data.programId));
     }
 
     function validExercise(data) {
-      return (!data.name || isString(data.name) && data.name.size() <= 200)
-        && (!data.exerciseType || (isString(data.exerciseType) && allowedExerciseType(data.exerciseType)))
-        && (!data.orderIndex || isNumber(data.orderIndex))
-        && (!data.notes || isString(data.notes))
-        && (!data.userId || isString(data.userId));
+      return (data.name != null && isString(data.name) && data.name.size() <= 200)
+        && (data.exerciseType != null && isString(data.exerciseType) && allowedExerciseType(data.exerciseType))
+        && (data.orderIndex != null && isNumber(data.orderIndex))
+        && (data.notes == null || isString(data.notes))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.updatedAt != null && isTimestamp(data.updatedAt))
+        && (data.userId != null && isString(data.userId))
+        && (data.workoutId != null && isString(data.workoutId))
+        && (data.weekId != null && isString(data.weekId))
+        && (data.programId != null && isString(data.programId));
     }
 
     function validSet(data) {
       // at least one of reps/duration/distance must be present
       let hasMetric = (data.reps != null) || (data.duration != null) || (data.distance != null);
 
-      return (!data.setNumber || isNumber(data.setNumber) && data.setNumber >= 0)
+      return (data.setNumber != null && isNumber(data.setNumber) && data.setNumber >= 0)
         && hasMetric
-        && (!data.reps || isNumber(data.reps) && data.reps >= 0)
-        && (!data.weight || isNumber(data.weight) && data.weight >= 0)
-        && (!data.duration || isNumber(data.duration) && data.duration >= 0)
-        && (!data.distance || isNumber(data.distance) && data.distance >= 0)
-        && (!data.restTime || isNumber(data.restTime) && data.restTime >= 0)
-        && (!data.userId || isString(data.userId));
+        && (data.reps == null || isNumber(data.reps) && data.reps >= 0)
+        && (data.weight == null || isNumber(data.weight) && data.weight >= 0)
+        && (data.duration == null || isNumber(data.duration) && data.duration >= 0)
+        && (data.distance == null || isNumber(data.distance) && data.distance >= 0)
+        && (data.restTime == null || isNumber(data.restTime) && data.restTime >= 0)
+        && (data.checked == null || isBoolean(data.checked))
+        && (data.notes == null || isString(data.notes))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.updatedAt != null && isTimestamp(data.updatedAt))
+        && (data.userId != null && isString(data.userId))
+        && (data.exerciseId != null && isString(data.exerciseId))
+        && (data.workoutId != null && isString(data.workoutId))
+        && (data.weekId != null && isString(data.weekId))
+        && (data.programId != null && isString(data.programId));
     }
 
     function validDuplicationRequest(data) {

@@ -163,20 +163,31 @@ MultiProvider(
 ```
 screens/
 ├── auth/
-│   ├── auth_wrapper.dart      # Authentication routing
-│   ├── sign_in_screen.dart    # User login
-│   └── sign_up_screen.dart    # User registration
+│   ├── auth_wrapper.dart         # Authentication routing
+│   ├── sign_in_screen.dart       # User login
+│   ├── sign_up_screen.dart       # User registration
+│   └── forgot_password_screen.dart # Password recovery
 ├── home/
-│   └── home_screen.dart       # Main navigation hub
+│   └── home_screen.dart          # Main navigation hub
 ├── programs/
-│   ├── programs_screen.dart   # Program list
+│   ├── programs_screen.dart      # Program list
+│   ├── create_program_screen.dart # Program creation
 │   └── program_detail_screen.dart # Program details with weeks
 ├── weeks/
-│   └── weeks_screen.dart      # Week management
+│   ├── weeks_screen.dart         # Week management
+│   └── create_week_screen.dart   # Week creation
 ├── workouts/
-│   └── workout_screen.dart    # Workout execution
+│   ├── create_workout_screen.dart # Workout creation
+│   └── workout_detail_screen.dart # Workout execution interface
+├── exercises/
+│   ├── create_exercise_screen.dart # Exercise creation with type selection
+│   └── exercise_detail_screen.dart # Exercise management with set tracking
+├── sets/
+│   └── create_set_screen.dart    # Set logging with type-specific fields
+├── profile/
+│   └── profile_screen.dart       # User profile and settings
 └── settings/
-    └── settings_screen.dart   # App settings
+    └── settings_screen.dart      # App settings (placeholder)
 ```
 
 #### Widget Architecture

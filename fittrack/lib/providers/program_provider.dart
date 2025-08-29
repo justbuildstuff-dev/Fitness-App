@@ -66,6 +66,12 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> get sets => _sets;
   bool get isLoadingSets => _isLoadingSets;
 
+  /// Get current sets (convenience method)
+  List<ExerciseSet> getCurrentSets() => _sets;
+
+  /// General loading state (true if any operation is loading)
+  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets;
+
   // ========================================
   // PROGRAM OPERATIONS
   // ========================================

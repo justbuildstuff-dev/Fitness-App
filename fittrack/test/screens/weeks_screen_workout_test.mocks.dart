@@ -97,10 +97,25 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       ) as bool);
 
   @override
+  bool get isLoading => (super.noSuchMethod(
+        Invocation.getter(#isLoading),
+        returnValue: false,
+      ) as bool);
+
+  @override
   bool get hasListeners => (super.noSuchMethod(
         Invocation.getter(#hasListeners),
         returnValue: false,
       ) as bool);
+
+  @override
+  List<_i7.ExerciseSet> getCurrentSets() => (super.noSuchMethod(
+        Invocation.method(
+          #getCurrentSets,
+          [],
+        ),
+        returnValue: <_i7.ExerciseSet>[],
+      ) as List<_i7.ExerciseSet>);
 
   @override
   void loadPrograms() => super.noSuchMethod(

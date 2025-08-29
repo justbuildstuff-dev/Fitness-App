@@ -203,61 +203,305 @@ Card(
 )
 ```
 
-### Workout Execution Screens
+### Workout Management Screens
 **Location**: `lib/screens/workouts/`
 
-#### WorkoutScreen
-**Purpose**: Active workout interface for exercise execution
+#### WorkoutDetailScreen
+**Purpose**: Workout execution interface showing exercises and sets
 
 **Features**:
-- Exercise list with set tracking
-- Timer functionality for rest periods
-- Set completion checkboxes
-- Weight/rep input with quick increment buttons
-- Exercise notes and form tips
-- Workout completion summary
+- Exercise list for selected workout
+- Exercise type color coding and visual indicators
+- Navigation to exercise detail screens
+- Exercise creation functionality
+- Integration with workout execution flow
+- Real-time updates from ProgramProvider
 
-**Set Input Component**:
+**Exercise Display Pattern**:
 ```dart
-class SetInputRow extends StatelessWidget {
+Card(
+  child: ListTile(
+    leading: CircleAvatar(
+      backgroundColor: _getExerciseTypeColor(exercise.exerciseType),
+      child: Icon(_getExerciseTypeIcon(exercise.exerciseType)),
+    ),
+    title: Text(exercise.name),
+    subtitle: Text('${exercise.exerciseType.displayName} • ${setCount} sets'),
+    trailing: Icon(Icons.chevron_right),
+    onTap: () => _navigateToExerciseDetail(exercise),
+  ),
+)
+```
+
+### Exercise Management Screens
+**Location**: `lib/screens/exercises/`
+
+#### CreateExerciseScreen
+**Purpose**: Create new exercises with type-specific configuration
+
+**Features**:
+- Exercise type dropdown with all available types
+- Dynamic field requirement display based on selected type
+- Form validation with real-time feedback
+- Context breadcrumb (Program → Week → Workout)
+- Helper text and user guidance tips
+
+**Exercise Type Selection Pattern**:
+```dart
+DropdownButtonFormField<ExerciseType>(
+  decoration: InputDecoration(
+    labelText: 'Exercise Type *',
+    border: OutlineInputBorder(),
+  ),
+  value: _selectedExerciseType,
+  items: ExerciseType.values.map((type) {
+    return DropdownMenuItem(
+      value: type,
+      child: Row(
+        children: [
+          Icon(_getTypeIcon(type), color: _getTypeColor(type)),
+          SizedBox(width: 8),
+          Text(type.displayName),
+        ],
+      ),
+    );
+  }).toList(),
+  onChanged: (value) => setState(() => _selectedExerciseType = value),
+)
+```
+
+#### ExerciseDetailScreen  
+**Purpose**: Manage individual exercises and their sets
+
+**Features**:
+- Exercise information display with type-specific styling
+- Set list management with completion tracking
+- Set creation and editing navigation
+- Exercise type color coding
+- Set completion toggle functionality
+
+**Set List Display Pattern**:
+```dart
+ListView.builder(
+  itemCount: sets.length,
+  itemBuilder: (context, index) {
+    final set = sets[index];
+    return Card(
+      child: ListTile(
+        leading: Checkbox(
+          value: set.checked,
+          onChanged: (value) => _toggleSetCompletion(set),
+        ),
+        title: Text('Set ${index + 1}'),
+        subtitle: Text(set.displayString),
+        trailing: PopupMenuButton(
+          itemBuilder: (context) => [
+            PopupMenuItem(value: 'edit', child: Text('Edit')),
+            PopupMenuItem(value: 'delete', child: Text('Delete')),
+          ],
+          onSelected: (action) => _handleSetAction(action, set),
+        ),
+      ),
+    );
+  },
+)
+```
+
+### Set Management Screens
+**Location**: `lib/screens/sets/`
+
+#### CreateSetScreen
+**Purpose**: Create and edit sets with exercise type-specific fields
+
+**Features**:
+- Dynamic form generation based on exercise type
+- Exercise type-specific input validation
+- Unit conversion (minutes/seconds, km/meters)
+- Loading states and error handling
+- Context information display
+
+**Exercise Type-Specific Input Pattern**:
+```dart
+List<Widget> _buildFieldsForExerciseType() {
+  final fields = <Widget>[];
+  
+  // Dynamic field generation based on exercise type requirements
+  if (_requiredFields.contains('reps') || _optionalFields.contains('reps')) {
+    fields.add(_buildRepsField());
+  }
+  
+  if (_requiredFields.contains('weight') || _optionalFields.contains('weight')) {
+    fields.add(_buildWeightField());
+  }
+  
+  if (_requiredFields.contains('duration') || _optionalFields.contains('duration')) {
+    fields.add(_buildDurationField()); // Minutes + Seconds inputs
+  }
+  
+  return fields;
+}
+
+Widget _buildDurationField() {
+  return Row(
+    children: [
+      Expanded(
+        child: TextFormField(
+          controller: _durationMinutesController,
+          decoration: InputDecoration(
+            labelText: 'Minutes${_requiredFields.contains('duration') ? ' *' : ''}',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.schedule),
+          ),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+      ),
+      SizedBox(width: 16),
+      Expanded(
+        child: TextFormField(
+          controller: _durationSecondsController,
+          decoration: InputDecoration(
+            labelText: 'Seconds',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.timer),
+          ),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (value) {
+            if (value != null && value.trim().isNotEmpty) {
+              final seconds = int.tryParse(value);
+              if (seconds == null || seconds < 0 || seconds >= 60) {
+                return 'Must be 0-59';
+              }
+            }
+            return null;
+          },
+        ),
+      ),
+    ],
+  );
+}
+```
+
+## Exercise & Set Components
+
+### Exercise Type Visual Elements
+
+#### Exercise Type Colors and Icons
+```dart
+Color _getExerciseTypeColor(ExerciseType type) {
+  switch (type) {
+    case ExerciseType.strength:
+      return Colors.blue;
+    case ExerciseType.cardio:
+      return Colors.red;
+    case ExerciseType.timeBased:
+      return Colors.orange;
+    case ExerciseType.bodyweight:
+      return Colors.green;
+    case ExerciseType.custom:
+      return Colors.purple;
+  }
+}
+
+IconData _getExerciseTypeIcon(ExerciseType type) {
+  switch (type) {
+    case ExerciseType.strength:
+      return Icons.fitness_center;
+    case ExerciseType.cardio:
+      return Icons.directions_run;
+    case ExerciseType.timeBased:
+      return Icons.timer;
+    case ExerciseType.bodyweight:
+      return Icons.accessibility;
+    case ExerciseType.custom:
+      return Icons.tune;
+  }
+}
+```
+
+#### Exercise Type Information Display
+```dart
+Widget _buildExerciseTypeInfo() {
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              _getExerciseTypeIcon(_selectedExerciseType),
+              color: _getExerciseTypeColor(_selectedExerciseType),
+            ),
+            SizedBox(width: 8),
+            Text(
+              '${_selectedExerciseType.displayName} Exercise',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Text(_getExerciseTypeDescription()),
+        SizedBox(height: 8),
+        ..._buildFieldRequirements(),
+      ],
+    ),
+  );
+}
+```
+
+### Set Display Components
+
+#### Set Completion Tracking
+```dart
+class SetCompletionCard extends StatelessWidget {
   final ExerciseSet set;
-  final ExerciseType exerciseType;
-  final ValueChanged<ExerciseSet> onSetChanged;
+  final int setNumber;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text('Set ${set.setNumber}'),
-        Expanded(
-          child: _buildInputsForExerciseType(exerciseType),
-        ),
-        Checkbox(
+    return Card(
+      elevation: set.checked ? 1 : 2,
+      color: set.checked 
+        ? Theme.of(context).colorScheme.surfaceVariant 
+        : null,
+      child: ListTile(
+        leading: Checkbox(
           value: set.checked,
-          onChanged: (value) => _toggleSetCompletion(value),
+          onChanged: (_) => onToggle?.call(),
         ),
-      ],
+        title: Text(
+          'Set $setNumber',
+          style: TextStyle(
+            decoration: set.checked 
+              ? TextDecoration.lineThrough 
+              : null,
+          ),
+        ),
+        subtitle: Text(
+          set.displayString,
+          style: TextStyle(
+            color: set.checked 
+              ? Theme.of(context).colorScheme.onSurfaceVariant
+              : null,
+          ),
+        ),
+        trailing: PopupMenuButton<String>(
+          itemBuilder: (context) => [
+            PopupMenuItem(value: 'edit', child: Text('Edit')),
+            PopupMenuItem(value: 'delete', child: Text('Delete')),
+          ],
+        ),
+      ),
     );
-  }
-
-  Widget _buildInputsForExerciseType(ExerciseType type) {
-    switch (type) {
-      case ExerciseType.strength:
-        return Row(
-          children: [
-            _buildNumberInput('Reps', set.reps, (value) => _updateReps(value)),
-            _buildNumberInput('Weight', set.weight, (value) => _updateWeight(value)),
-          ],
-        );
-      case ExerciseType.cardio:
-        return Row(
-          children: [
-            _buildDurationInput(set.duration),
-            _buildNumberInput('Distance', set.distance, (value) => _updateDistance(value)),
-          ],
-        );
-      // ... other exercise types
-    }
   }
 }
 ```

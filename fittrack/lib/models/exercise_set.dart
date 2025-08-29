@@ -79,6 +79,10 @@ class ExerciseSet {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'userId': userId,
+      'exerciseId': exerciseId,
+      'workoutId': workoutId,
+      'weekId': weekId,
+      'programId': programId,
     };
   }
 

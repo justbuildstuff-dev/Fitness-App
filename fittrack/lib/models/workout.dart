@@ -54,6 +54,8 @@ class Workout {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'userId': userId,
+      'weekId': weekId,
+      'programId': programId,
     };
   }
 

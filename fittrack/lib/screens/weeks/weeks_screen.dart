@@ -5,6 +5,7 @@ import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../workouts/create_workout_screen.dart';
+import '../workouts/workout_detail_screen.dart';
 
 class WeeksScreen extends StatefulWidget {
   final Program program;
@@ -279,12 +280,13 @@ class _WeeksScreenState extends State<WeeksScreen> {
   }
 
   void _navigateToWorkout(BuildContext context, Workout workout) {
-    // TODO: Navigate to workout detail/execution screen
-    // This would show exercises and sets for the workout
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening "${workout.name}" - Exercise management coming next!'),
-        behavior: SnackBarBehavior.floating,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => WorkoutDetailScreen(
+          program: widget.program,
+          week: widget.week,
+          workout: workout,
+        ),
       ),
     );
   }

@@ -12,9 +12,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Key Files & Components
 
-### Code Samples
-- `Code Samples/Firestore.rules` - Complete security rules with per-user data scoping and admin support
-- `Code Samples/firestore.indexes.json` - Firestore composite indexes for efficient queries
+### Configuration Files
+- `fittrack/firestore.rules` - Complete security rules with per-user data scoping and admin support
+- `fittrack/firestore.indexes.json` - Firestore composite indexes for efficient queries
 
 ### Documentation
 - `Docs/Workout_Tracker_Final_Spec.md` - Complete technical specification with data models, security rules, and implementation details
@@ -58,6 +58,7 @@ Every document includes a `userId` field for security and efficient querying.
 
 ### Development Workflow
 - This plan should be followed (in order) whenever a new feature, feature update, or bug fix is requested.
+- CurrentScreens.md should be reviewed at the start of each session to see what is still in the pipeline to be completed.
 
 1. **Review Documentation**: 
   - Check the document titles in the @Docs folder.
@@ -80,6 +81,8 @@ Every document includes a `userId` field for security and efficient querying.
   - If the updates do not fit entirely within an already existing document:
     - Create a new document in @Docs for the new functionality
     - Follow the exact same formatting, tone, and level of detail as other, already existing documents.
+    - CurrentScreens.md should be updated to reflect the completion of a task within the document.
+    - Any new tasks for the next session should be added to CurrentScreens.md or a similar document for tracking status should be created.
 
 ## Firebase Configuration
 
