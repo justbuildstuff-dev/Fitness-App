@@ -129,7 +129,7 @@ Enables Firestore offline persistence. Must be called before any other Firestore
 
 #### Duplication Principles (Per Specification)
 1. **Exercise Type-Specific Field Copying**:
-   - `strength` → Copy `reps`, reset `weight` to null, copy `restTime`
+   - `strength` → Copy `reps`, `weight`, `restTime`
    - `cardio`/`time-based` → Copy `duration`, `distance`
    - `bodyweight` → Copy `reps`, `restTime`
    - `custom` → Copy all relevant fields

@@ -382,46 +382,36 @@ class FirestoreService {
               .get();
 
           for (final setDoc in srcSetsSnap.docs) {
-            final setData = setDoc.data();
+            // Create ExerciseSet object from source data to use its built-in duplication logic
+            final sourceSet = ExerciseSet.fromFirestore(
+              setDoc,
+              exerciseDoc.id,
+              workoutDoc.id,
+              srcWeekSnap.id,
+              programId,
+            );
 
-            // Build the new set payload by copying only relevant fields
-            final type = exerciseData['exerciseType'] ?? 'custom';
-            final Map<String, dynamic> newSetPayload = {
-              'setNumber': setData['setNumber'],
-              'exerciseType': type,
-              'checked': false,
-              'notes': setData['notes'],
-              'createdAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-              'userId': userId,
-              'programId': programId,
-              'weekId': newWeekRef.id,
-              'workoutId': newWorkoutRef.id,
-              'exerciseId': newExerciseRef.id,
-            };
+            // Get exercise type and convert to enum
+            final typeString = exerciseData['exerciseType'] ?? 'custom';
+            final exerciseType = ExerciseType.fromString(typeString);
 
-            // conditional copying based on type
-            if (type == 'strength') {
-              if (setData['reps'] != null) newSetPayload['reps'] = setData['reps'];
-              // Reset weight to null to encourage fresh entry (policy decision)
-              newSetPayload['weight'] = null;
-              if (setData['restTime'] != null) newSetPayload['restTime'] = setData['restTime'];
-            } else if (type == 'cardio' || type == 'time-based') {
-              if (setData['duration'] != null) newSetPayload['duration'] = setData['duration'];
-              if (setData['distance'] != null) newSetPayload['distance'] = setData['distance'];
-            } else if (type == 'bodyweight') {
-              if (setData['reps'] != null) newSetPayload['reps'] = setData['reps'];
-              if (setData['restTime'] != null) newSetPayload['restTime'] = setData['restTime'];
-            } else {
-              // custom or other -> copy over sensible fields
-              if (setData['reps'] != null) newSetPayload['reps'] = setData['reps'];
-              if (setData['duration'] != null) newSetPayload['duration'] = setData['duration'];
-              if (setData['distance'] != null) newSetPayload['distance'] = setData['distance'];
-              if (setData['weight'] != null) newSetPayload['weight'] = setData['weight'];
-              if (setData['restTime'] != null) newSetPayload['restTime'] = setData['restTime'];
-            }
-
+            // Use model's built-in duplication method - handles all business logic properly
             final newSetRef = newExerciseRef.collection('sets').doc();
+            final duplicatedSet = sourceSet.createDuplicateCopy(
+              newId: newSetRef.id,
+              newExerciseId: newExerciseRef.id,
+              newWorkoutId: newWorkoutRef.id,
+              newWeekId: newWeekRef.id,
+              newProgramId: programId,
+              exerciseType: exerciseType,
+            );
+
+            // Convert to Firestore format and add to batch
+            final newSetPayload = duplicatedSet.toFirestore();
+            // Use server timestamp instead of client timestamp for consistency
+            newSetPayload['createdAt'] = FieldValue.serverTimestamp();
+            newSetPayload['updatedAt'] = FieldValue.serverTimestamp();
+            
             await addToBatch(newSetRef, newSetPayload);
 
             (exerciseMap['sets'] as List<Map<String, dynamic>>).add({

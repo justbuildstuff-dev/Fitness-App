@@ -86,13 +86,20 @@ match /users/{userId} {
 #### User Profile Validation
 ```javascript
 function validUserProfile(data) {
-  return (!data.displayName || isString(data.displayName) && data.displayName.size() <= 100)
-    && (!data.email || isString(data.email))
-    && (!data.createdAt || isTimestamp(data.createdAt))
-    && (!data.lastLogin || isTimestamp(data.lastLogin))
-    && (!data.settings || data.settings is map);
+  return (data.displayName == null || isString(data.displayName) && data.displayName.size() <= 100)
+    && (data.email == null || isString(data.email))
+    && (data.createdAt != null && isTimestamp(data.createdAt))
+    && (data.lastLogin == null || isTimestamp(data.lastLogin))
+    && (data.settings == null || data.settings is map);
 }
 ```
+
+**Validation Rules**:
+- `displayName`: Optional string, max 100 characters
+- `email`: Optional string (any format)
+- `createdAt`: **Required** timestamp (server-generated)
+- `lastLogin`: Optional timestamp
+- `settings`: Optional map object
 
 ### Hierarchical Data Security
 
@@ -173,70 +180,98 @@ match /sets/{setId} {
 ### Program Validation
 ```javascript
 function validProgram(data) {
-  return (!data.name || isString(data.name) && data.name.size() <= 100)
-    && (!data.description || isString(data.description) && data.description.size() <= 500)
-    && (!data.createdAt || isTimestamp(data.createdAt))
-    && (!data.userId || isString(data.userId));
+  return (data.name != null && isString(data.name) && data.name.size() <= 100)
+    && (data.description == null || isString(data.description) && data.description.size() <= 500)
+    && (data.createdAt != null && isTimestamp(data.createdAt))
+    && (data.updatedAt != null && isTimestamp(data.updatedAt))
+    && (data.userId != null && isString(data.userId))
+    && (data.isArchived == null || isBoolean(data.isArchived));
 }
 ```
 
 **Validation Rules**:
-- `name`: Optional string, max 100 characters
+- `name`: **Required** string, max 100 characters
 - `description`: Optional string, max 500 characters  
-- `createdAt`: Optional timestamp (server-generated)
-- `userId`: Optional string (must match auth.uid if provided)
+- `createdAt`: **Required** timestamp (server-generated)
+- `updatedAt`: **Required** timestamp (server-generated)
+- `userId`: **Required** string (must match auth.uid)
+- `isArchived`: Optional boolean for soft deletion
 
 ### Week Validation
 ```javascript
 function validWeek(data) {
-  return (!data.name || isString(data.name))
-    && (!data.order || isNumber(data.order) && data.order >= 0)
-    && (!data.createdAt || isTimestamp(data.createdAt))
-    && (!data.userId || isString(data.userId));
+  return (data.name != null && isString(data.name))
+    && (data.order != null && isNumber(data.order) && data.order >= 0)
+    && (data.notes == null || isString(data.notes))
+    && (data.createdAt != null && isTimestamp(data.createdAt))
+    && (data.updatedAt != null && isTimestamp(data.updatedAt))
+    && (data.userId != null && isString(data.userId))
+    && (data.programId != null && isString(data.programId));
 }
 ```
 
 **Validation Rules**:
-- `name`: Optional string (any length)
-- `order`: Optional number, must be >= 0 (1-based ordering)
-- `createdAt`: Optional timestamp
-- `userId`: Optional string
+- `name`: **Required** string (any length)
+- `order`: **Required** number, must be >= 0 (0-based ordering)
+- `notes`: Optional string for user notes
+- `createdAt`: **Required** timestamp (server-generated)
+- `updatedAt`: **Required** timestamp (server-generated)
+- `userId`: **Required** string (must match auth.uid)
+- `programId`: **Required** string reference to parent program
 
 ### Workout Validation
 ```javascript
 function validWorkout(data) {
-  return (!data.name || isString(data.name) && data.name.size() <= 200)
-    && (!data.orderIndex || isNumber(data.orderIndex))
-    && (!data.dayOfWeek || (isNumber(data.dayOfWeek) && data.dayOfWeek >= 1 && data.dayOfWeek <= 7))
-    && (!data.notes || isString(data.notes))
-    && (!data.userId || isString(data.userId));
+  return (data.name != null && isString(data.name) && data.name.size() <= 200)
+    && (data.orderIndex != null && isNumber(data.orderIndex))
+    && (data.dayOfWeek == null || (isNumber(data.dayOfWeek) && data.dayOfWeek >= 1 && data.dayOfWeek <= 7))
+    && (data.notes == null || isString(data.notes))
+    && (data.createdAt != null && isTimestamp(data.createdAt))
+    && (data.updatedAt != null && isTimestamp(data.updatedAt))
+    && (data.userId != null && isString(data.userId))
+    && (data.weekId != null && isString(data.weekId))
+    && (data.programId != null && isString(data.programId));
 }
 ```
 
 **Validation Rules**:
-- `name`: Optional string, max 200 characters
-- `orderIndex`: Optional number (0-based)
+- `name`: **Required** string, max 200 characters
+- `orderIndex`: **Required** number (0-based ordering within week)
 - `dayOfWeek`: Optional number, 1-7 (Monday-Sunday)
 - `notes`: Optional string (any length)
-- `userId`: Optional string
+- `createdAt`: **Required** timestamp (server-generated)
+- `updatedAt`: **Required** timestamp (server-generated)
+- `userId`: **Required** string (must match auth.uid)
+- `weekId`: **Required** string reference to parent week
+- `programId`: **Required** string reference to parent program
 
 ### Exercise Validation
 ```javascript
 function validExercise(data) {
-  return (!data.name || isString(data.name) && data.name.size() <= 200)
-    && (!data.exerciseType || (isString(data.exerciseType) && allowedExerciseType(data.exerciseType)))
-    && (!data.orderIndex || isNumber(data.orderIndex))
-    && (!data.notes || isString(data.notes))
-    && (!data.userId || isString(data.userId));
+  return (data.name != null && isString(data.name) && data.name.size() <= 200)
+    && (data.exerciseType != null && isString(data.exerciseType) && allowedExerciseType(data.exerciseType))
+    && (data.orderIndex != null && isNumber(data.orderIndex))
+    && (data.notes == null || isString(data.notes))
+    && (data.createdAt != null && isTimestamp(data.createdAt))
+    && (data.updatedAt != null && isTimestamp(data.updatedAt))
+    && (data.userId != null && isString(data.userId))
+    && (data.workoutId != null && isString(data.workoutId))
+    && (data.weekId != null && isString(data.weekId))
+    && (data.programId != null && isString(data.programId));
 }
 ```
 
 **Validation Rules**:
-- `name`: Optional string, max 200 characters
-- `exerciseType`: Optional string, must be valid exercise type
-- `orderIndex`: Optional number
+- `name`: **Required** string, max 200 characters
+- `exerciseType`: **Required** string, must be valid exercise type
+- `orderIndex`: **Required** number (0-based ordering within workout)
 - `notes`: Optional string
-- `userId`: Optional string
+- `createdAt`: **Required** timestamp (server-generated)
+- `updatedAt`: **Required** timestamp (server-generated)
+- `userId`: **Required** string (must match auth.uid)
+- `workoutId`: **Required** string reference to parent workout
+- `weekId`: **Required** string reference to parent week
+- `programId`: **Required** string reference to parent program
 
 **Valid Exercise Types**:
 - `strength`: For weight-based exercises
@@ -251,26 +286,42 @@ function validSet(data) {
   // At least one metric must be present
   let hasMetric = (data.reps != null) || (data.duration != null) || (data.distance != null);
 
-  return (!data.setNumber || isNumber(data.setNumber) && data.setNumber >= 0)
+  return (data.setNumber != null && isNumber(data.setNumber) && data.setNumber >= 0)
     && hasMetric
-    && (!data.reps || isNumber(data.reps) && data.reps >= 0)
-    && (!data.weight || isNumber(data.weight) && data.weight >= 0)
-    && (!data.duration || isNumber(data.duration) && data.duration >= 0)
-    && (!data.distance || isNumber(data.distance) && data.distance >= 0)
-    && (!data.restTime || isNumber(data.restTime) && data.restTime >= 0)
-    && (!data.userId || isString(data.userId));
+    && (data.reps == null || isNumber(data.reps) && data.reps >= 0)
+    && (data.weight == null || isNumber(data.weight) && data.weight >= 0)
+    && (data.duration == null || isNumber(data.duration) && data.duration >= 0)
+    && (data.distance == null || isNumber(data.distance) && data.distance >= 0)
+    && (data.restTime == null || isNumber(data.restTime) && data.restTime >= 0)
+    && (data.checked == null || isBoolean(data.checked))
+    && (data.notes == null || isString(data.notes))
+    && (data.createdAt != null && isTimestamp(data.createdAt))
+    && (data.updatedAt != null && isTimestamp(data.updatedAt))
+    && (data.userId != null && isString(data.userId))
+    && (data.exerciseId != null && isString(data.exerciseId))
+    && (data.workoutId != null && isString(data.workoutId))
+    && (data.weekId != null && isString(data.weekId))
+    && (data.programId != null && isString(data.programId));
 }
 ```
 
 **Validation Rules**:
-- `setNumber`: Optional number, must be >= 0
+- `setNumber`: **Required** number, must be >= 0 (0-based ordering)
 - **Metric Requirement**: At least one of `reps`, `duration`, or `distance` must be present
 - `reps`: Optional number, must be >= 0
 - `weight`: Optional number, must be >= 0
 - `duration`: Optional number (seconds), must be >= 0
 - `distance`: Optional number (meters), must be >= 0
 - `restTime`: Optional number (seconds), must be >= 0
-- `userId`: Optional string
+- `checked`: Optional boolean for completion tracking
+- `notes`: Optional string for set-specific notes
+- `createdAt`: **Required** timestamp (server-generated)
+- `updatedAt`: **Required** timestamp (server-generated)
+- `userId`: **Required** string (must match auth.uid)
+- `exerciseId`: **Required** string reference to parent exercise
+- `workoutId`: **Required** string reference to parent workout
+- `weekId`: **Required** string reference to parent week
+- `programId`: **Required** string reference to parent program
 
 ## Admin Support Features
 

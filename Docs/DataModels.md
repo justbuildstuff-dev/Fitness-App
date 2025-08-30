@@ -14,6 +14,13 @@ Program
     └── Workout
         └── Exercise
             └── ExerciseSet
+
+Analytics Models (Client-side computed):
+├── WorkoutAnalytics      (Aggregated statistics)
+├── ActivityHeatmapData   (Activity visualization data)
+├── PersonalRecord        (Achievement tracking)
+├── DateRange            (Time period utilities)
+└── HeatmapDay           (Daily activity representation)
 ```
 
 Each model maintains references to its parent documents through ID fields, enabling efficient queries and security validation.
@@ -203,7 +210,7 @@ enum ExerciseType {
 
 | Exercise Type | Required Fields | Optional Fields | Duplication Behavior |
 |---------------|----------------|-----------------|---------------------|
-| `strength` | `reps` | `weight`, `restTime` | Reset `weight` to null |
+| `strength` | `reps` | `weight`, `restTime` | Keep all fields |
 | `cardio` | `duration` | `distance` | Keep both fields |
 | `bodyweight` | `reps` | `restTime` | Keep both fields |
 | `custom` | Any metric | All fields | Keep all fields |
@@ -357,7 +364,7 @@ final duplicatedSet = set.createDuplicateCopy(
   newProgramId: 'new_program_id',
   exerciseType: ExerciseType.strength,
 );
-// duplicatedSet.weight will be null (reset per spec)
+// duplicatedSet.weight will be 135.0 (preserved for progressive overload)
 // duplicatedSet.checked will be false
 ```
 
@@ -518,5 +525,113 @@ When adding new hierarchical relationships:
 4. Consider cascade delete implications
 5. Update FirestoreService query methods
 6. Test hierarchical security rules
+
+## Analytics Models
+
+### WorkoutAnalytics
+**Location**: `lib/models/analytics.dart`
+
+Client-side computed analytics for workout performance tracking:
+
+```dart
+class WorkoutAnalytics {
+  final String userId;
+  final DateTime startDate;
+  final DateTime endDate;
+  final int totalWorkouts;
+  final int totalSets;
+  final double totalVolume;
+  final int totalDuration;
+  final Map<ExerciseType, int> exerciseTypeBreakdown;
+  final List<String> completedWorkoutIds;
+}
+```
+
+**Key Features**:
+- Computed from existing workout data
+- Date range flexible analytics
+- Exercise type distribution analysis
+- Performance metrics calculation
+
+### ActivityHeatmapData
+**Location**: `lib/models/analytics.dart`
+
+GitHub-style activity heatmap for workout consistency visualization:
+
+```dart
+class ActivityHeatmapData {
+  final String userId;
+  final int year;
+  final Map<DateTime, int> dailyWorkoutCounts;
+  final int currentStreak;
+  final int longestStreak;
+  final int totalWorkouts;
+}
+```
+
+**Key Features**:
+- Daily workout count tracking
+- Streak calculation (current and longest)
+- Yearly activity overview
+- Heatmap intensity computation
+
+### PersonalRecord
+**Location**: `lib/models/analytics.dart`
+
+Personal achievement tracking with improvement analysis:
+
+```dart
+class PersonalRecord {
+  final String id;
+  final String userId;
+  final String exerciseId;
+  final String exerciseName;
+  final ExerciseType exerciseType;
+  final PRType prType;
+  final double value;
+  final double? previousValue;
+  final DateTime achievedAt;
+  final String workoutId;
+  final String setId;
+}
+```
+
+**Key Features**:
+- Multiple PR types (weight, reps, volume, duration, distance)
+- Improvement calculation
+- Achievement timestamps
+- Exercise-specific records
+
+### Supporting Models
+
+#### DateRange
+Flexible date range utilities for analytics filtering:
+```dart
+class DateRange {
+  final DateTime start;
+  final DateTime end;
+  // Factory methods: thisWeek(), thisMonth(), thisYear(), last30Days()
+}
+```
+
+#### HeatmapDay & HeatmapIntensity
+Daily activity representation for heatmap visualization:
+```dart
+class HeatmapDay {
+  final DateTime date;
+  final int workoutCount;
+  final HeatmapIntensity intensity;
+}
+
+enum HeatmapIntensity { none, low, medium, high }
+```
+
+### Analytics Model Principles
+
+1. **Client-Side Computation**: All analytics computed from existing data, no additional storage
+2. **Real-time Accuracy**: Always computed from current dataset
+3. **Performance Optimization**: Efficient algorithms with caching strategies
+4. **Type Safety**: Strong typing for all analytics data
+5. **Immutable Design**: Consistent with other application models
 
 This documentation provides the foundation for understanding and extending the FitTrack data models while maintaining consistency with the technical specification and security requirements.

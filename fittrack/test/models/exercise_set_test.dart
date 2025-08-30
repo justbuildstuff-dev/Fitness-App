@@ -239,9 +239,9 @@ void main() {
     });
 
     group('Duplication Logic', () {
-      test('createDuplicateCopy resets weight for strength exercises', () {
+      test('createDuplicateCopy preserves weight for strength exercises', () {
         /// Test Purpose: Verify duplication follows specification for strength exercises
-        /// Per spec, strength exercises should reset weight to null but keep reps
+        /// Per spec, strength exercises should preserve weight for progressive overload tracking
         
         final original = _createTestSet(
           id: 'original-id',
@@ -267,7 +267,7 @@ void main() {
 
         // Verify strength-specific duplication rules
         expect(duplicate.reps, equals(12)); // Keep reps
-        expect(duplicate.weight, isNull); // Reset weight
+        expect(duplicate.weight, equals(100.0)); // Keep weight for progressive overload
         expect(duplicate.restTime, equals(90)); // Keep rest time
 
         // Verify general duplication rules

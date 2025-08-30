@@ -5,10 +5,13 @@ import '../models/week.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../models/analytics.dart';
 import '../services/firestore_service.dart';
+import '../services/analytics_service.dart';
 
 class ProgramProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService.instance;
+  final AnalyticsService _analyticsService = AnalyticsService.instance;
   final String? _userId;
 
   ProgramProvider(this._userId);
@@ -38,6 +41,13 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> _sets = [];
   bool _isLoadingSets = false;
 
+  // Analytics
+  WorkoutAnalytics? _currentAnalytics;
+  ActivityHeatmapData? _heatmapData;
+  List<PersonalRecord>? _recentPRs;
+  Map<String, dynamic>? _keyStatistics;
+  bool _isLoadingAnalytics = false;
+
   // Stream subscriptions for cleanup
   StreamSubscription<List<Program>>? _programsSubscription;
   StreamSubscription<List<Week>>? _weeksSubscription;
@@ -66,11 +76,21 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> get sets => _sets;
   bool get isLoadingSets => _isLoadingSets;
 
+  // Analytics getters
+  WorkoutAnalytics? get currentAnalytics => _currentAnalytics;
+  ActivityHeatmapData? get heatmapData => _heatmapData;
+  List<PersonalRecord>? get recentPRs => _recentPRs;
+  Map<String, dynamic>? get keyStatistics => _keyStatistics;
+  bool get isLoadingAnalytics => _isLoadingAnalytics;
+
   /// Get current sets (convenience method)
   List<ExerciseSet> getCurrentSets() => _sets;
 
   /// General loading state (true if any operation is loading)
-  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets;
+  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets || _isLoadingAnalytics;
+  
+  /// Get the userId
+  String? get userId => _userId;
 
   // ========================================
   // PROGRAM OPERATIONS
@@ -685,6 +705,90 @@ class ProgramProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  // ========================================
+  // ANALYTICS OPERATIONS
+  // ========================================
+
+  /// Load analytics data for the user
+  Future<void> loadAnalytics({DateRange? dateRange}) async {
+    if (_userId == null) return;
+
+    try {
+      _isLoadingAnalytics = true;
+      _error = null;
+      notifyListeners();
+
+      final selectedDateRange = dateRange ?? DateRange.thisYear();
+      final currentYear = DateTime.now().year;
+
+      // Load analytics data concurrently
+      final futures = [
+        _analyticsService.computeWorkoutAnalytics(
+          userId: _userId!,
+          dateRange: selectedDateRange,
+        ),
+        _analyticsService.generateHeatmapData(
+          userId: _userId!,
+          year: currentYear,
+        ),
+        _analyticsService.getPersonalRecords(
+          userId: _userId!,
+          limit: 10,
+        ),
+        _analyticsService.computeKeyStatistics(
+          userId: _userId!,
+          dateRange: selectedDateRange,
+        ),
+      ];
+
+      final results = await Future.wait(futures);
+
+      _currentAnalytics = results[0] as WorkoutAnalytics;
+      _heatmapData = results[1] as ActivityHeatmapData;
+      _recentPRs = results[2] as List<PersonalRecord>;
+      _keyStatistics = results[3] as Map<String, dynamic>;
+
+    } catch (e) {
+      _error = 'Failed to load analytics: $e';
+    } finally {
+      _isLoadingAnalytics = false;
+      notifyListeners();
+    }
+  }
+
+  /// Check for personal record when a set is created
+  Future<PersonalRecord?> checkForPersonalRecord(ExerciseSet set, Exercise exercise) async {
+    try {
+      final pr = await _analyticsService.checkForNewPR(
+        set: set,
+        exercise: exercise,
+      );
+
+      if (pr != null) {
+        // Add to recent PRs list
+        _recentPRs = _recentPRs ?? [];
+        _recentPRs!.insert(0, pr);
+        
+        // Keep only the most recent 10 PRs
+        if (_recentPRs!.length > 10) {
+          _recentPRs = _recentPRs!.take(10).toList();
+        }
+        
+        notifyListeners();
+      }
+
+      return pr;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Refresh analytics data
+  Future<void> refreshAnalytics() async {
+    _analyticsService.clearCache();
+    await loadAnalytics();
   }
 
   // ========================================

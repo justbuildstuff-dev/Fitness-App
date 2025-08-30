@@ -171,7 +171,7 @@ class ExerciseSet {
 
     switch (exerciseType) {
       case ExerciseType.strength:
-        newWeight = null; // Reset weight to encourage fresh entry
+        // Keep weight - useful for progressive overload tracking
         break;
       case ExerciseType.cardio:
       case ExerciseType.timeBased:

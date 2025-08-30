@@ -1,6 +1,12 @@
-# FitTrack Workout Creation - Testing Guide
+# DEPRECATED: Use Docs/TestingFramework.md instead
 
-This guide explains the comprehensive testing strategy for the workout creation functionality added to FitTrack. All tests include human-readable commentary to help developers understand failures and maintain the codebase.
+This file has been replaced by the unified testing framework documentation at `Docs/TestingFramework.md` which provides comprehensive guidance for all testing in the FitTrack application.
+
+**Please refer to**: `Docs/TestingFramework.md` for complete testing documentation.
+
+---
+
+# FitTrack Workout Creation - Testing Guide (DEPRECATED)
 
 ## 📋 Testing Overview
 

@@ -24,7 +24,7 @@ The FitTrack duplication system enables users to duplicate workout weeks, preser
 1. **User-Scoped**: Users can only duplicate their own data
 2. **Deep Copy**: Week → Workouts → Exercises → Sets hierarchy
 3. **Selective Field Copying**: Exercise type-specific field handling
-4. **State Resets**: Clear completion status and optionally reset weights
+4. **State Resets**: Clear completion status while preserving performance data
 5. **Atomicity**: All operations succeed or fail together
 6. **Audit Trail**: Return mapping for UI navigation and confirmation
 
@@ -32,14 +32,14 @@ The FitTrack duplication system enables users to duplicate workout weeks, preser
 
 | Exercise Type | Copy Strategy | Reset Fields | Keep Fields |
 |---------------|---------------|--------------|-------------|
-| `strength` | Copy structure, reset weight | `weight` → `null`, `checked` → `false` | `reps`, `restTime`, `notes` |
+| `strength` | Copy all data for progressive overload | `checked` → `false` | `reps`, `weight`, `restTime`, `notes` |
 | `cardio` | Keep performance data | `checked` → `false` | `duration`, `distance`, `notes` |
 | `time-based` | Keep timing data | `checked` → `false` | `duration`, `distance`, `notes` |
 | `bodyweight` | Keep rep structure | `checked` → `false` | `reps`, `restTime`, `notes` |
 | `custom` | Keep all metrics | `checked` → `false` | All fields preserved |
 
 ### Duplication Philosophy
-- **Strength**: Reset weight to encourage progressive overload tracking
+- **Strength**: Preserve weight for progressive overload reference and tracking
 - **Cardio/Time-based**: Keep targets for consistency
 - **Bodyweight**: Maintain rep schemes
 - **Custom**: Preserve user-configured fields
@@ -265,8 +265,8 @@ for (final setDoc in srcSetsSnap.docs) {
   // Exercise type-specific field copying
   if (type == 'strength') {
     if (setData['reps'] != null) newSetPayload['reps'] = setData['reps'];
-    // Reset weight to null to encourage fresh entry
-    newSetPayload['weight'] = null;
+    // Keep weight for progressive overload tracking
+    if (setData['weight'] != null) newSetPayload['weight'] = setData['weight'];
     if (setData['restTime'] != null) newSetPayload['restTime'] = setData['restTime'];
   } else if (type == 'cardio' || type == 'time-based') {
     if (setData['duration'] != null) newSetPayload['duration'] = setData['duration'];
@@ -429,9 +429,9 @@ group('Duplication System', () {
     expect(result['success'], isTrue);
     expect(result['mapping']['newWeekId'], isNotNull);
     
-    // Verify strength-specific duplication (weight reset)
+    // Verify strength-specific duplication (weight preserved)
     final newSets = getNewSets(result['mapping']);
-    expect(newSets.every((set) => set['weight'] == null), isTrue);
+    expect(newSets.every((set) => set['weight'] != null), isTrue);
     expect(newSets.every((set) => set['checked'] == false), isTrue);
   });
 });

@@ -1,19 +1,12 @@
 #!/usr/bin/env dart
 
-/// Comprehensive Test Runner for FitTrack Workout Creation Functionality
+/// DEPRECATED: Use test/test_suite.dart instead
 /// 
-/// This script provides a convenient way to run all tests with proper setup:
-/// - Unit tests for models and providers
-/// - Widget tests for UI components  
-/// - Integration tests against Firebase emulators
+/// This file has been replaced by the unified test suite at test/test_suite.dart
+/// which provides better organization and consolidated test management.
 /// 
-/// Usage:
-/// dart test_runner.dart [--unit] [--widget] [--integration] [--all]
-/// 
-/// Requirements:
-/// - Flutter SDK installed and in PATH
-/// - Firebase CLI installed for integration tests
-/// - Firebase emulators configured for the project
+/// To run tests, use:
+/// dart test/test_suite.dart [--unit] [--widget] [--integration] [--analytics] [--all]
 
 import 'dart:io';
 

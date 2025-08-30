@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/program_provider.dart';
 import '../programs/programs_screen.dart';
+import '../analytics/analytics_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _screens = [
       const ProgramsScreen(),
-      const Center(child: Text('Analytics')), // Placeholder
+      const AnalyticsScreen(),
       const ProfileScreen(),
     ];
     

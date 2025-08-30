@@ -35,7 +35,8 @@ FitTrack is a mobile-first workout tracking application built with Flutter and F
 │  Services                                                   │
 │  ├─ FirestoreService (Data Access Layer)                   │
 │  ├─ NotificationService (Local Notifications)              │
-│  └─ [Future: AnalyticsService, ExportService]             │
+│  ├─ AnalyticsService (Workout Analytics & Personal Records) │
+│  └─ [Future: ExportService, SyncService]                  │
 └─────────────────────────────────────────────────────────────┘
                             │
                             │ Firebase SDKs
@@ -156,6 +157,14 @@ MultiProvider(
 - Workout reminder functionality
 - Platform-specific notification handling
 
+#### AnalyticsService
+- Client-side analytics computation and personal records tracking
+- Workout statistics calculation (volume, duration, frequency)
+- Activity heatmap data generation for consistency visualization
+- Personal record detection and improvement tracking
+- Efficient caching system for performance optimization
+- Integration with existing Firestore data structure
+
 ### UI Layer
 **Location**: `lib/screens/` and `lib/widgets/`
 
@@ -184,6 +193,12 @@ screens/
 │   └── exercise_detail_screen.dart # Exercise management with set tracking
 ├── sets/
 │   └── create_set_screen.dart    # Set logging with type-specific fields
+├── analytics/
+│   ├── analytics_screen.dart     # Workout analytics and insights
+│   └── components/               # Analytics UI components
+│       ├── activity_heatmap_section.dart # GitHub-style activity heatmap
+│       ├── key_statistics_section.dart  # Key metrics dashboard
+│       └── charts_section.dart   # Exercise breakdowns and PRs
 ├── profile/
 │   └── profile_screen.dart       # User profile and settings
 └── settings/
@@ -335,8 +350,18 @@ lib/
 
 ## Future Architecture Enhancements
 
+### Recently Implemented
+1. **✅ Analytics Service**: Client-side analytics and reporting (Phase 1 complete)
+   - Activity heatmap visualization
+   - Key statistics dashboard
+   - Personal records tracking
+   - Exercise type analysis
+
 ### Planned Features
-1. **Analytics Service**: Client-side analytics and reporting
+1. **Analytics Service Phase 2**: Advanced visualizations and features
+   - Volume progress line charts  
+   - Interactive chart drill-downs
+   - Export analytics data
 2. **Export Service**: Data export to various formats
 3. **Sync Service**: Advanced conflict resolution
 4. **Cache Service**: Intelligent local caching

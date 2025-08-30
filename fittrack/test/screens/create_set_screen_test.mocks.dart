@@ -4,8 +4,9 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i8;
-import 'dart:ui' as _i9;
+import 'dart:ui' as _i10;
 
+import 'package:fittrack/models/analytics.dart' as _i9;
 import 'package:fittrack/models/exercise.dart' as _i6;
 import 'package:fittrack/models/exercise_set.dart' as _i7;
 import 'package:fittrack/models/program.dart' as _i3;
@@ -93,6 +94,12 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
   @override
   bool get isLoadingSets => (super.noSuchMethod(
         Invocation.getter(#isLoadingSets),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  bool get isLoadingAnalytics => (super.noSuchMethod(
+        Invocation.getter(#isLoadingAnalytics),
         returnValue: false,
       ) as bool);
 
@@ -491,6 +498,44 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       ) as _i8.Future<bool>);
 
   @override
+  _i8.Future<void> loadAnalytics({_i9.DateRange? dateRange}) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #loadAnalytics,
+          [],
+          {#dateRange: dateRange},
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
+  _i8.Future<_i9.PersonalRecord?> checkForPersonalRecord(
+    _i7.ExerciseSet? set,
+    _i6.Exercise? exercise,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #checkForPersonalRecord,
+          [
+            set,
+            exercise,
+          ],
+        ),
+        returnValue: _i8.Future<_i9.PersonalRecord?>.value(),
+      ) as _i8.Future<_i9.PersonalRecord?>);
+
+  @override
+  _i8.Future<void> refreshAnalytics() => (super.noSuchMethod(
+        Invocation.method(
+          #refreshAnalytics,
+          [],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
   void clearError() => super.noSuchMethod(
         Invocation.method(
           #clearError,
@@ -518,7 +563,7 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       );
 
   @override
-  void addListener(_i9.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i10.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #addListener,
           [listener],
@@ -527,7 +572,7 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       );
 
   @override
-  void removeListener(_i9.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i10.VoidCallback? listener) => super.noSuchMethod(
         Invocation.method(
           #removeListener,
           [listener],

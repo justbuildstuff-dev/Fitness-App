@@ -234,7 +234,7 @@ Duplication is centralized and must be consistent across UI and API. Users may d
 - **Per-user self-duplication only**: A user can only duplicate their own data.
 - **Deep copy**: Duplicating a Week will duplicate Workouts → Exercises → Sets.
 - **Selective Set copying**: Sets should copy only relevant fields based on `exerciseType`. Example:
-  - For `strength` → copy `setNumber`, `reps`, `exerciseType` (keep `weight` optionally reset to null), reset `checked` to false.
+  - For `strength` → copy `setNumber`, `reps`, `weight`, `exerciseType`, reset `checked` to false.
   - For `cardio` → copy `duration`, optional `distance`; reset other irrelevant fields.
 - **Timestamps**: New copies get new `createdAt` and `updatedAt`.
 - **IDs**: New documents get new Firestore-generated IDs.
