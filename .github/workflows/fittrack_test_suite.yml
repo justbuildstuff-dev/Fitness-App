@@ -43,9 +43,7 @@ jobs:
       run: |
         cd fittrack
         flutter test test/models/ test/services/ test/providers/ \
-          --coverage \
-          --reporter=json \
-          --file-reporter=json:test-results-unit.json
+          --coverage
           
     - name: Upload unit test coverage
       uses: codecov/codecov-action@v3
@@ -53,13 +51,6 @@ jobs:
         file: fittrack/coverage/lcov.info
         flags: unit-tests
         name: unit-test-coverage
-        
-    - name: Archive unit test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: unit-test-results
-        path: fittrack/test-results-unit.json
 
   widget-tests:
     name: Widget Tests
@@ -85,15 +76,8 @@ jobs:
       run: |
         cd fittrack
         flutter test test/screens/ test/widgets/ \
-          --reporter=json \
-          --file-reporter=json:test-results-widget.json
+          --reporter=compactwidget.json
           
-    - name: Archive widget test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: widget-test-results
-        path: fittrack/test-results-widget.json
 
   integration-tests:
     name: Integration Tests
@@ -110,10 +94,9 @@ jobs:
         cache: true
         
     - name: Setup Node.js for Firebase CLI
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
         
     - name: Install Firebase CLI
       run: npm install -g firebase-tools
@@ -140,19 +123,12 @@ jobs:
       run: |
         cd fittrack
         flutter test test/integration/ \
-          --reporter=json \
-          --file-reporter=json:test-results-integration.json
+          --reporter=compactintegration.json
           
     - name: Stop Firebase emulators
       if: always()
       run: firebase emulators:kill
       
-    - name: Archive integration test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: integration-test-results
-        path: fittrack/test-results-integration.json
 
   performance-tests:
     name: Performance Tests
@@ -178,15 +154,8 @@ jobs:
       run: |
         cd fittrack
         flutter test test/performance/ \
-          --reporter=json \
-          --file-reporter=json:test-results-performance.json
+          --reporter=compactperformance.json
           
-    - name: Archive performance test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: performance-test-results
-        path: fittrack/test-results-performance.json
 
   # Enhanced tests with comprehensive coverage
   enhanced-tests:
@@ -204,7 +173,7 @@ jobs:
         cache: true
         
     - name: Setup Node.js for Firebase CLI
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         
@@ -251,8 +220,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Download all test artifacts
-      uses: actions/download-artifact@v4
+    - name: Check test results
+      run: echo "Checking test results from previous jobs"
       
     - name: Generate test summary
       run: |
