@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class DeleteConfirmationDialog extends StatelessWidget {
   final String title;
   final String content;
+  final String? itemName;
   final String deleteButtonText;
   final VoidCallback? onConfirm;
   
@@ -10,6 +11,7 @@ class DeleteConfirmationDialog extends StatelessWidget {
     super.key,
     required this.title,
     required this.content,
+    this.itemName,
     this.deleteButtonText = 'Delete',
     this.onConfirm,
   });
