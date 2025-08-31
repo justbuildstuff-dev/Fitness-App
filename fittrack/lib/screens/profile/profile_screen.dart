@@ -30,7 +30,7 @@ class ProfileScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                 ),
                 child: Column(
                   children: [
@@ -58,7 +58,7 @@ class ProfileScreen extends StatelessWidget {
                     Text(
                       user.email ?? '',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -110,7 +110,7 @@ class ProfileScreen extends StatelessWidget {
                 child: Text(
                   'FitTrack v1.0.0',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -170,7 +170,7 @@ class _MenuItem extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: iconColor ?? Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: iconColor ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
       title: Text(
         title,
@@ -181,7 +181,7 @@ class _MenuItem extends StatelessWidget {
       ),
       trailing: Icon(
         Icons.chevron_right,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
       ),
       onTap: onTap,
     );

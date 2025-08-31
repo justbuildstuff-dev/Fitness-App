@@ -207,7 +207,7 @@ class AuthProvider extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      print('Error loading user profile: $e');
+      debugPrint('Error loading user profile: $e');
     }
   }
 
@@ -222,7 +222,7 @@ class AuthProvider extends ChangeNotifier {
         'lastLogin': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print('Error updating last login: $e');
+      debugPrint('Error updating last login: $e');
     }
   }
 

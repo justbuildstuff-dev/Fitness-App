@@ -121,7 +121,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Icon(
                     Icons.analytics_outlined,
                     size: 64,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(

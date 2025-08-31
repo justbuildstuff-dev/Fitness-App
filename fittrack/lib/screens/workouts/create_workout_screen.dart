@@ -92,7 +92,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                     Text(
                       _isEditing ? 'Editing workout for:' : 'Creating workout for:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -134,7 +134,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
 
             // Day of Week (Optional)
             DropdownButtonFormField<int?>(
-              value: _selectedDayOfWeek,
+              initialValue: _selectedDayOfWeek,
               decoration: const InputDecoration(
                 labelText: 'Day of Week (Optional)',
                 border: OutlineInputBorder(),
@@ -180,10 +180,10 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -213,7 +213,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                     '• Use notes to add instructions or reminders\n'
                     '• After creating, you can add exercises to this workout',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

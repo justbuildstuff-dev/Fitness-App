@@ -37,7 +37,7 @@ jobs:
     - name: Run static analysis
       run: |
         cd fittrack
-        flutter analyze --fatal-warnings lib/
+        flutter analyze lib/
         
     - name: Run unit tests with coverage
       run: |

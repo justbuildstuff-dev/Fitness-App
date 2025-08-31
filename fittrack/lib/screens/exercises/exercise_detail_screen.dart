@@ -103,7 +103,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                   Text(
                     error,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -159,7 +159,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             Text(
               '${widget.program.name} → ${widget.week.name} → ${widget.workout.name}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -177,7 +177,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 ),
                 Chip(
                   label: Text(widget.exercise.exerciseType.displayName),
-                  backgroundColor: _getTypeColor().withOpacity(0.1),
+                  backgroundColor: _getTypeColor().withValues(alpha: 0.1),
                   labelStyle: TextStyle(
                     color: _getTypeColor(),
                     fontWeight: FontWeight.w600,
@@ -192,7 +192,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -201,7 +201,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     Icon(
                       Icons.notes,
                       size: 20,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -257,7 +257,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           children: [
             ...requiredFields.map((field) => Chip(
               label: Text('${_getFieldDisplayName(field)} *'),
-              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               labelStyle: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontSize: 12,
@@ -266,9 +266,9 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             )),
             ...optionalFields.map((field) => Chip(
               label: Text(_getFieldDisplayName(field)),
-              backgroundColor: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+              backgroundColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
               labelStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             )),
@@ -286,20 +286,20 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           Icon(
             Icons.list,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'No sets yet',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Add your first set to start tracking this exercise',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             textAlign: TextAlign.center,
           ),
@@ -332,7 +332,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
         leading: CircleAvatar(
           backgroundColor: set.checked 
               ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           child: Text(
             '${set.setNumber}',
             style: TextStyle(
@@ -348,7 +348,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
           style: TextStyle(
             decoration: set.checked ? TextDecoration.lineThrough : null,
             color: set.checked 
-                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)
                 : null,
           ),
         ),
@@ -356,7 +356,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
             ? Text(
                 set.notes!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               )
             : null,

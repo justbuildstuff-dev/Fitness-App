@@ -101,7 +101,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                   Text(
                     error,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -156,7 +156,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             Text(
               '${widget.program.name} → ${widget.week.name}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -174,7 +174,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               const SizedBox(height: 8),
               Chip(
                 label: Text(_getDayName(widget.workout.dayOfWeek!)),
-                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 labelStyle: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,
@@ -188,7 +188,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -197,7 +197,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                     Icon(
                       Icons.notes,
                       size: 20,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -224,20 +224,20 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           Icon(
             Icons.fitness_center_outlined,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'No exercises yet',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Add your first exercise to start building this workout',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             textAlign: TextAlign.center,
           ),
@@ -269,7 +269,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: _getExerciseTypeColor(exercise.exerciseType).withOpacity(0.1),
+          backgroundColor: _getExerciseTypeColor(exercise.exerciseType).withValues(alpha: 0.1),
           child: Icon(
             _getExerciseTypeIcon(exercise.exerciseType),
             color: _getExerciseTypeColor(exercise.exerciseType),
@@ -297,7 +297,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               Text(
                 exercise.notes!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

@@ -15,7 +15,7 @@ class WorkoutAnalytics {
   final Map<ExerciseType, int> exerciseTypeBreakdown;
   final List<String> completedWorkoutIds;
 
-  WorkoutAnalytics({
+  const WorkoutAnalytics({
     required this.userId,
     required this.startDate,
     required this.endDate,
@@ -115,7 +115,7 @@ class PersonalRecord {
   final String workoutId;
   final String setId;
 
-  PersonalRecord({
+  const PersonalRecord({
     required this.id,
     required this.userId,
     required this.exerciseId,
@@ -403,7 +403,7 @@ class HeatmapDay {
   final int workoutCount;
   final HeatmapIntensity intensity;
 
-  HeatmapDay({
+  const HeatmapDay({
     required this.date,
     required this.workoutCount,
     required this.intensity,
@@ -436,7 +436,7 @@ class DateRange {
   final DateTime start;
   final DateTime end;
 
-  DateRange({
+  const DateRange({
     required this.start,
     required this.end,
   });

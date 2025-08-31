@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/program.dart';
 import '../models/week.dart';
 import '../models/workout.dart';
@@ -15,10 +16,10 @@ class FirestoreService {
   /// Enable offline persistence for Firestore
   static Future<void> enableOfflinePersistence() async {
     try {
-      await FirebaseFirestore.instance.enablePersistence();
+      FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
     } catch (e) {
       // Persistence might already be enabled or not supported
-      print('Offline persistence error: $e');
+      debugPrint('Offline persistence error: $e');
     }
   }
 

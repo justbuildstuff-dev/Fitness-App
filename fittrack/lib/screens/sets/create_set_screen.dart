@@ -136,7 +136,7 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
             Text(
               'Adding set to:',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 4),
@@ -149,7 +149,7 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
             const SizedBox(height: 8),
             Chip(
               label: Text(widget.exercise.exerciseType.displayName),
-              backgroundColor: _getTypeColor().withOpacity(0.1),
+              backgroundColor: _getTypeColor().withValues(alpha: 0.1),
               labelStyle: TextStyle(
                 color: _getTypeColor(),
                 fontWeight: FontWeight.w600,
@@ -382,10 +382,10 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -412,7 +412,7 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
           Text(
             _getExerciseTypeDescription(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           if (_requiredFields.isNotEmpty) ...[
