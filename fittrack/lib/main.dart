@@ -31,7 +31,7 @@ void main() async {
     await FirestoreService.enableOfflinePersistence();
   } catch (e) {
     // Offline persistence may fail if already enabled
-    print('Firestore offline persistence: $e');
+    debugPrint('Firestore offline persistence: $e');
   }
   
   // Initialize notifications

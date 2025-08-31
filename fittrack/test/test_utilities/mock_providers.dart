@@ -203,13 +203,13 @@ class ProviderStateBuilder {
     Exception? operationError,
   }) {
     if (operationError != null) {
-      when(_provider.createProgram(any)).thenThrow(operationError);
-      when(_provider.createWorkout(any, any, any)).thenThrow(operationError);
-      when(_provider.createExercise(any, any, any, any)).thenThrow(operationError);
+      when(_provider.createProgram(name: anyNamed('name'), description: anyNamed('description'))).thenThrow(operationError);
+      when(_provider.createWorkout(programId: anyNamed('programId'), weekId: anyNamed('weekId'), name: anyNamed('name'), dayOfWeek: anyNamed('dayOfWeek'), notes: anyNamed('notes'))).thenThrow(operationError);
+      when(_provider.createExercise(programId: anyNamed('programId'), weekId: anyNamed('weekId'), workoutId: anyNamed('workoutId'), name: anyNamed('name'), exerciseType: anyNamed('exerciseType'), notes: anyNamed('notes'))).thenThrow(operationError);
     } else {
-      when(_provider.createProgram(any)).thenAnswer((_) async => createProgramResult ?? 'mock-program-id');
-      when(_provider.createWorkout(any, any, any)).thenAnswer((_) async => createWorkoutResult ?? 'mock-workout-id');
-      when(_provider.createExercise(any, any, any, any)).thenAnswer((_) async => createExerciseResult ?? 'mock-exercise-id');
+      when(_provider.createProgram(name: anyNamed('name'), description: anyNamed('description'))).thenAnswer((_) async => createProgramResult ?? 'mock-program-id');
+      when(_provider.createWorkout(programId: anyNamed('programId'), weekId: anyNamed('weekId'), name: anyNamed('name'), dayOfWeek: anyNamed('dayOfWeek'), notes: anyNamed('notes'))).thenAnswer((_) async => createWorkoutResult ?? 'mock-workout-id');
+      when(_provider.createExercise(programId: anyNamed('programId'), weekId: anyNamed('weekId'), workoutId: anyNamed('workoutId'), name: anyNamed('name'), exerciseType: anyNamed('exerciseType'), notes: anyNamed('notes'))).thenAnswer((_) async => createExerciseResult ?? 'mock-exercise-id');
     }
     return this;
   }

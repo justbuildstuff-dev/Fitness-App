@@ -192,7 +192,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -486,6 +486,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   void _deleteSet(BuildContext context, ExerciseSet set) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -505,8 +507,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       ),
     );
 
-    if (confirmed == true && mounted) {
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
+    if (confirmed == true) {
       await provider.deleteSet(
         widget.program.id,
         widget.week.id,
