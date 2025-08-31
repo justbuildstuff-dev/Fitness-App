@@ -152,6 +152,28 @@ class MockFirestoreService extends _i1.Mock implements _i2.FirestoreService {
       ) as _i3.Future<void>);
 
   @override
+  _i3.Future<void> updateProgramFields({
+    required String? userId,
+    required String? programId,
+    String? name,
+    String? description,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateProgramFields,
+          [],
+          {
+            #userId: userId,
+            #programId: programId,
+            #name: name,
+            #description: description,
+          },
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
   _i3.Future<void> archiveProgram(
     String? userId,
     String? programId,
@@ -176,6 +198,23 @@ class MockFirestoreService extends _i1.Mock implements _i2.FirestoreService {
       (super.noSuchMethod(
         Invocation.method(
           #deleteProgram,
+          [
+            userId,
+            programId,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> deleteProgramCascade(
+    String? userId,
+    String? programId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteProgramCascade,
           [
             userId,
             programId,
@@ -239,6 +278,32 @@ class MockFirestoreService extends _i1.Mock implements _i2.FirestoreService {
         Invocation.method(
           #updateWeek,
           [week],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> updateWeekFields({
+    required String? userId,
+    required String? programId,
+    required String? weekId,
+    String? name,
+    String? notes,
+    int? order,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateWeekFields,
+          [],
+          {
+            #userId: userId,
+            #programId: programId,
+            #weekId: weekId,
+            #name: name,
+            #notes: notes,
+            #order: order,
+          },
         ),
         returnValue: _i3.Future<void>.value(),
         returnValueForMissingStub: _i3.Future<void>.value(),
@@ -347,6 +412,36 @@ class MockFirestoreService extends _i1.Mock implements _i2.FirestoreService {
       ) as _i3.Future<void>);
 
   @override
+  _i3.Future<void> updateWorkoutFields({
+    required String? userId,
+    required String? programId,
+    required String? weekId,
+    required String? workoutId,
+    String? name,
+    int? dayOfWeek,
+    String? notes,
+    int? orderIndex,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateWorkoutFields,
+          [],
+          {
+            #userId: userId,
+            #programId: programId,
+            #weekId: weekId,
+            #workoutId: workoutId,
+            #name: name,
+            #dayOfWeek: dayOfWeek,
+            #notes: notes,
+            #orderIndex: orderIndex,
+          },
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
   _i3.Future<void> deleteWorkout(
     String? userId,
     String? programId,
@@ -431,6 +526,38 @@ class MockFirestoreService extends _i1.Mock implements _i2.FirestoreService {
         Invocation.method(
           #updateExercise,
           [exercise],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> updateExerciseFields({
+    required String? userId,
+    required String? programId,
+    required String? weekId,
+    required String? workoutId,
+    required String? exerciseId,
+    String? name,
+    _i8.ExerciseType? exerciseType,
+    String? notes,
+    int? orderIndex,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateExerciseFields,
+          [],
+          {
+            #userId: userId,
+            #programId: programId,
+            #weekId: weekId,
+            #workoutId: workoutId,
+            #exerciseId: exerciseId,
+            #name: name,
+            #exerciseType: exerciseType,
+            #notes: notes,
+            #orderIndex: orderIndex,
+          },
         ),
         returnValue: _i3.Future<void>.value(),
         returnValueForMissingStub: _i3.Future<void>.value(),

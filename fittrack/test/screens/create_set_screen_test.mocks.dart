@@ -160,6 +160,25 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       ) as _i8.Future<bool>);
 
   @override
+  _i8.Future<void> updateProgramFields(
+    String? programId, {
+    String? name,
+    String? description,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateProgramFields,
+          [programId],
+          {
+            #name: name,
+            #description: description,
+          },
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
   _i8.Future<bool> archiveProgram(String? programId) => (super.noSuchMethod(
         Invocation.method(
           #archiveProgram,
@@ -167,6 +186,16 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
         ),
         returnValue: _i8.Future<bool>.value(false),
       ) as _i8.Future<bool>);
+
+  @override
+  _i8.Future<void> deleteProgram(String? programId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteProgram,
+          [programId],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
   void selectProgram(_i3.Program? program) => super.noSuchMethod(
@@ -215,6 +244,27 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       ) as _i8.Future<bool>);
 
   @override
+  _i8.Future<void> updateWeekFields(
+    String? weekId, {
+    String? name,
+    String? notes,
+    int? order,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateWeekFields,
+          [weekId],
+          {
+            #name: name,
+            #notes: notes,
+            #order: order,
+          },
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
   _i8.Future<bool> deleteWeek(
     String? programId,
     String? weekId,
@@ -229,6 +279,16 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
         ),
         returnValue: _i8.Future<bool>.value(false),
       ) as _i8.Future<bool>);
+
+  @override
+  _i8.Future<void> deleteWeekById(String? weekId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteWeekById,
+          [weekId],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
   _i8.Future<Map<String, dynamic>?> duplicateWeek({
@@ -323,6 +383,39 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
       ) as _i8.Future<bool>);
 
   @override
+  _i8.Future<void> updateWorkoutFields(
+    String? workoutId, {
+    String? name,
+    int? dayOfWeek,
+    String? notes,
+    int? orderIndex,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateWorkoutFields,
+          [workoutId],
+          {
+            #name: name,
+            #dayOfWeek: dayOfWeek,
+            #notes: notes,
+            #orderIndex: orderIndex,
+          },
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> deleteWorkoutById(String? workoutId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteWorkoutById,
+          [workoutId],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
   void selectWorkout(_i5.Workout? workout) => super.noSuchMethod(
         Invocation.method(
           #selectWorkout,
@@ -403,6 +496,40 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
         ),
         returnValue: _i8.Future<bool>.value(false),
       ) as _i8.Future<bool>);
+
+  @override
+  _i8.Future<void> updateExerciseFields(
+    String? exerciseId, {
+    String? name,
+    _i6.ExerciseType? exerciseType,
+    String? notes,
+    int? orderIndex,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateExerciseFields,
+          [exerciseId],
+          {
+            #name: name,
+            #exerciseType: exerciseType,
+            #notes: notes,
+            #orderIndex: orderIndex,
+          },
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> deleteExerciseById(String? exerciseId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteExerciseById,
+          [exerciseId],
+        ),
+        returnValue: _i8.Future<void>.value(),
+        returnValueForMissingStub: _i8.Future<void>.value(),
+      ) as _i8.Future<void>);
 
   @override
   void selectExercise(_i6.Exercise? exercise) => super.noSuchMethod(

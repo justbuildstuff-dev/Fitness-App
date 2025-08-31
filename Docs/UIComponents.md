@@ -135,15 +135,46 @@ BottomNavigationBar(
 ```dart
 Card(
   child: ListTile(
-    leading: CircleAvatar(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      child: Text(program.name.substring(0, 1).toUpperCase()),
+    leading: Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        Icons.fitness_center,
+        color: Theme.of(context).colorScheme.primary,
+      ),
     ),
     title: Text(program.name),
-    subtitle: Text('${program.weekCount} weeks • Created ${formatDate(program.createdAt)}'),
-    trailing: IconButton(
-      icon: Icon(Icons.more_vert),
-      onPressed: () => _showProgramOptions(program),
+    subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (program.description != null) Text(program.description!),
+        Row(
+          children: [
+            Icon(Icons.calendar_today, size: 14),
+            SizedBox(width: 4),
+            Text('Created ${formatDate(program.createdAt)}'),
+          ],
+        ),
+      ],
+    ),
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit, size: 20),
+          onPressed: () => _editProgram(context),
+          tooltip: 'Edit program',
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+          onPressed: () => _deleteProgram(context),
+          tooltip: 'Delete program',
+        ),
+      ],
     ),
     onTap: () => _navigateToProgram(program),
   ),
@@ -176,29 +207,44 @@ Card(
 **Week Card Component**:
 ```dart
 Card(
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      ListTile(
-        title: Text(week.name),
-        subtitle: Text('${week.workoutCount} workouts'),
-        trailing: PopupMenuButton<String>(
-          onSelected: (action) => _handleWeekAction(action, week),
-          itemBuilder: (context) => [
-            PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
-            PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text('Delete')),
-          ],
+  child: ListTile(
+    leading: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(
+          '${week.order}',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
       ),
-      Padding(
-        padding: EdgeInsets.all(16),
-        child: LinearProgressIndicator(
-          value: week.completionPercentage,
-          backgroundColor: Colors.grey[300],
+    ),
+    title: Text(week.name, style: TextStyle(fontWeight: FontWeight.w600)),
+    subtitle: week.notes != null 
+        ? Text(week.notes!, maxLines: 1, overflow: TextOverflow.ellipsis)
+        : null,
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit, size: 20),
+          onPressed: () => _editWeek(context),
+          tooltip: 'Edit week',
         ),
-      ),
-    ],
+        IconButton(
+          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+          onPressed: () => _deleteWeek(context),
+          tooltip: 'Delete week',
+        ),
+      ],
+    ),
+    onTap: () => _navigateToWeek(week),
   ),
 )
 ```
@@ -222,12 +268,46 @@ Card(
 Card(
   child: ListTile(
     leading: CircleAvatar(
-      backgroundColor: _getExerciseTypeColor(exercise.exerciseType),
-      child: Icon(_getExerciseTypeIcon(exercise.exerciseType)),
+      backgroundColor: _getExerciseTypeColor(exercise.exerciseType).withOpacity(0.1),
+      child: Icon(
+        _getExerciseTypeIcon(exercise.exerciseType),
+        color: _getExerciseTypeColor(exercise.exerciseType),
+      ),
     ),
-    title: Text(exercise.name),
-    subtitle: Text('${exercise.exerciseType.displayName} • ${setCount} sets'),
-    trailing: Icon(Icons.chevron_right),
+    title: Text(
+      exercise.name,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          exercise.exerciseType.displayName,
+          style: TextStyle(
+            color: _getExerciseTypeColor(exercise.exerciseType),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (exercise.notes != null) Text(exercise.notes!, maxLines: 2),
+      ],
+    ),
+    trailing: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit, size: 20),
+          onPressed: () => _editExercise(context, exercise),
+          tooltip: 'Edit exercise',
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+          onPressed: () => _deleteExercise(context, exercise),
+          tooltip: 'Delete exercise',
+        ),
+      ],
+    ),
     onTap: () => _navigateToExerciseDetail(exercise),
   ),
 )
@@ -288,18 +368,54 @@ ListView.builder(
     final set = sets[index];
     return Card(
       child: ListTile(
-        leading: Checkbox(
-          value: set.checked,
-          onChanged: (value) => _toggleSetCompletion(set),
+        leading: CircleAvatar(
+          backgroundColor: set.checked 
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+          child: Text(
+            '${set.setNumber}',
+            style: TextStyle(
+              color: set.checked 
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-        title: Text('Set ${index + 1}'),
-        subtitle: Text(set.displayString),
-        trailing: PopupMenuButton(
-          itemBuilder: (context) => [
-            PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text('Delete')),
+        title: Text(
+          set.displayString,
+          style: TextStyle(
+            decoration: set.checked ? TextDecoration.lineThrough : null,
+            color: set.checked 
+                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
+                : null,
+          ),
+        ),
+        subtitle: set.notes != null && set.notes!.isNotEmpty
+            ? Text(set.notes!)
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(
+                set.checked ? Icons.check_box : Icons.check_box_outline_blank,
+                color: set.checked ? Theme.of(context).colorScheme.primary : null,
+              ),
+              onPressed: () => _toggleSetCompletion(set),
+              tooltip: set.checked ? 'Mark incomplete' : 'Mark complete',
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => _editSet(context, set),
+              tooltip: 'Edit set',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+              onPressed: () => _deleteSet(context, set),
+              tooltip: 'Delete set',
+            ),
           ],
-          onSelected: (action) => _handleSetAction(action, set),
         ),
       ),
     );
@@ -505,6 +621,50 @@ class SetCompletionCard extends StatelessWidget {
   }
 }
 ```
+
+## Consistent Edit/Delete UI Pattern
+
+### Universal Action Buttons
+**Status**: ✅ Implemented across all hierarchical levels
+
+All list items (Programs, Weeks, Workouts, Exercises, Sets) now follow a consistent pattern for edit and delete actions:
+
+```dart
+trailing: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    // Additional action buttons (e.g., completion checkbox for sets)
+    IconButton(
+      icon: const Icon(Icons.edit, size: 20),
+      onPressed: () => _editItem(context),
+      tooltip: 'Edit item',
+    ),
+    IconButton(
+      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+      onPressed: () => _deleteItem(context),
+      tooltip: 'Delete item',
+    ),
+  ],
+),
+```
+
+**Design Principles**:
+- **Consistent Icons**: Edit uses `Icons.edit`, Delete uses `Icons.delete`
+- **Size Standardization**: All icons are `size: 20` for visual consistency
+- **Color Coding**: Delete buttons use `Colors.red` to indicate destructive action
+- **Accessibility**: All buttons include descriptive tooltips
+- **Layout**: Actions are right-aligned using `Row` with `MainAxisSize.min`
+
+**Implementation Status**:
+- ✅ Programs: Edit/Delete buttons added to program cards
+- ✅ Weeks: Edit/Delete buttons added to week cards  
+- ✅ Workouts: Edit/Delete buttons added to workout cards
+- ✅ Exercises: Edit/Delete buttons added to exercise cards
+- ✅ Sets: Edit/Delete buttons already implemented (with completion checkbox)
+
+**Backend Implementation**: 
+All UI buttons currently show "functionality coming soon" placeholders. 
+See `@Docs/EditDeleteFunctionality.md` for complete implementation guide.
 
 ## Reusable UI Components
 

@@ -3,15 +3,18 @@ import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
+import '../../models/workout.dart';
 
 class CreateWorkoutScreen extends StatefulWidget {
   final Program program;
   final Week week;
+  final Workout? workout; // null for create, populated for edit
 
   const CreateWorkoutScreen({
     super.key,
     required this.program,
     required this.week,
+    this.workout,
   });
 
   @override
@@ -23,7 +26,9 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
   int? _selectedDayOfWeek;
-  bool _isCreating = false;
+  bool _isLoading = false;
+
+  bool get _isEditing => widget.workout != null;
 
   final List<String> _daysOfWeek = [
     'Monday',
@@ -36,6 +41,18 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    
+    if (_isEditing) {
+      // Populate fields for editing
+      _nameController.text = widget.workout!.name;
+      _notesController.text = widget.workout!.notes ?? '';
+      _selectedDayOfWeek = widget.workout!.dayOfWeek;
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _notesController.dispose();
@@ -46,17 +63,17 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Workout'),
+        title: Text(_isEditing ? 'Edit Workout' : 'Create Workout'),
         actions: [
           TextButton(
-            onPressed: _isCreating ? null : _createWorkout,
-            child: _isCreating
+            onPressed: _isLoading ? null : _saveWorkout,
+            child: _isLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('SAVE'),
+                : Text(_isEditing ? 'SAVE' : 'CREATE'),
           ),
         ],
       ),
@@ -73,7 +90,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Creating workout for:',
+                      _isEditing ? 'Editing workout for:' : 'Creating workout for:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       ),
@@ -208,50 +225,87 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
     );
   }
 
-  void _createWorkout() async {
+  void _saveWorkout() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      _isCreating = true;
+      _isLoading = true;
     });
 
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
 
-    final workoutId = await programProvider.createWorkout(
-      programId: widget.program.id,
-      weekId: widget.week.id,
-      name: _nameController.text.trim(),
-      dayOfWeek: _selectedDayOfWeek,
-      notes: _notesController.text.trim().isEmpty 
-          ? null 
-          : _notesController.text.trim(),
-    );
-
-    setState(() {
-      _isCreating = false;
-    });
-
-    if (mounted) {
-      if (workoutId != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Workout created successfully!'),
-            behavior: SnackBarBehavior.floating,
-          ),
+    try {
+      if (_isEditing) {
+        // Update existing workout
+        await programProvider.updateWorkoutFields(
+          widget.workout!.id,
+          name: _nameController.text.trim(),
+          dayOfWeek: _selectedDayOfWeek,
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
         );
-        Navigator.of(context).pop(true); // Return true to indicate success
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout updated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(true); // Return true to indicate success
+        }
       } else {
+        // Create new workout
+        final workoutId = await programProvider.createWorkout(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          name: _nameController.text.trim(),
+          dayOfWeek: _selectedDayOfWeek,
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
+        );
+
+        if (mounted) {
+          if (workoutId != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Workout created successfully!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.of(context).pop(true); // Return true to indicate success
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  programProvider.error ?? 'Failed to create workout',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              programProvider.error ?? 'Failed to create workout',
-            ),
+            content: Text(_isEditing ? 'Failed to update workout: $e' : 'Failed to create workout: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

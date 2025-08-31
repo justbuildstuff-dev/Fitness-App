@@ -455,14 +455,23 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     }
   }
 
-  void _editSet(BuildContext context, ExerciseSet set) {
-    // TODO: Implement edit set functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit set functionality coming soon!'),
-        behavior: SnackBarBehavior.floating,
+  void _editSet(BuildContext context, ExerciseSet set) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateSetScreen(
+          program: widget.program,
+          week: widget.week,
+          workout: widget.workout,
+          exercise: widget.exercise,
+          exerciseSet: set,
+        ),
       ),
     );
+    
+    if (result == true) {
+      // Set was updated successfully - no action needed as UI updates via stream
+    }
   }
 
   void _toggleSetCompletion(ExerciseSet set) async {

@@ -170,6 +170,33 @@ class ProgramProvider extends ChangeNotifier {
     }
   }
 
+  /// Update program with specific fields
+  Future<void> updateProgramFields(
+    String programId, {
+    String? name,
+    String? description,
+  }) async {
+    if (_userId == null) throw Exception('User not authenticated');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.updateProgramFields(
+        userId: _userId!,
+        programId: programId,
+        name: name,
+        description: description,
+      );
+      
+      // Programs will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to update program: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Archive a program
   Future<bool> archiveProgram(String programId) async {
     if (_userId == null) return false;
@@ -184,6 +211,24 @@ class ProgramProvider extends ChangeNotifier {
       _error = 'Failed to archive program: $e';
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Delete a program (soft delete by archiving)
+  Future<void> deleteProgram(String programId) async {
+    if (_userId == null) throw Exception('User not authenticated');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.deleteProgram(_userId!, programId);
+      
+      // Programs will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to delete program: $e';
+      notifyListeners();
+      rethrow;
     }
   }
 
@@ -288,6 +333,37 @@ class ProgramProvider extends ChangeNotifier {
     }
   }
 
+  /// Update week with specific fields
+  Future<void> updateWeekFields(
+    String weekId, {
+    String? name,
+    String? notes,
+    int? order,
+  }) async {
+    if (_userId == null) throw Exception('User not authenticated');
+    if (_selectedProgram == null) throw Exception('No program selected');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.updateWeekFields(
+        userId: _userId!,
+        programId: _selectedProgram!.id,
+        weekId: weekId,
+        name: name,
+        notes: notes,
+        order: order,
+      );
+      
+      // Weeks will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to update week: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Delete a week
   Future<bool> deleteWeek(String programId, String weekId) async {
     if (_userId == null) return false;
@@ -302,6 +378,25 @@ class ProgramProvider extends ChangeNotifier {
       _error = 'Failed to delete week: $e';
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Delete a week by ID (with exception throwing for UI error handling)
+  Future<void> deleteWeekById(String weekId) async {
+    if (_userId == null) throw Exception('User not authenticated');
+    if (_selectedProgram == null) throw Exception('No program selected');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.deleteWeek(_userId!, _selectedProgram!.id, weekId);
+      
+      // Weeks will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to delete week: $e';
+      notifyListeners();
+      rethrow;
     }
   }
 
@@ -454,6 +549,66 @@ class ProgramProvider extends ChangeNotifier {
     }
   }
 
+  /// Update workout with specific fields
+  Future<void> updateWorkoutFields(
+    String workoutId, {
+    String? name,
+    int? dayOfWeek,
+    String? notes,
+    int? orderIndex,
+  }) async {
+    if (_userId == null) throw Exception('User not authenticated');
+    if (_selectedProgram == null) throw Exception('No program selected');
+    if (_selectedWeek == null) throw Exception('No week selected');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.updateWorkoutFields(
+        userId: _userId!,
+        programId: _selectedProgram!.id,
+        weekId: _selectedWeek!.id,
+        workoutId: workoutId,
+        name: name,
+        dayOfWeek: dayOfWeek,
+        notes: notes,
+        orderIndex: orderIndex,
+      );
+      
+      // Workouts will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to update workout: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Delete a workout by ID (with exception throwing for UI error handling)
+  Future<void> deleteWorkoutById(String workoutId) async {
+    if (_userId == null) throw Exception('User not authenticated');
+    if (_selectedProgram == null) throw Exception('No program selected');
+    if (_selectedWeek == null) throw Exception('No week selected');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.deleteWorkout(
+        _userId!, 
+        _selectedProgram!.id, 
+        _selectedWeek!.id, 
+        workoutId,
+      );
+      
+      // Workouts will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to delete workout: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Select a workout and load its exercises
   void selectWorkout(Workout workout) {
     _selectedWorkout = workout;
@@ -574,6 +729,70 @@ class ProgramProvider extends ChangeNotifier {
       _error = 'Failed to delete exercise: $e';
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Update exercise with specific fields
+  Future<void> updateExerciseFields(
+    String exerciseId, {
+    String? name,
+    ExerciseType? exerciseType,
+    String? notes,
+    int? orderIndex,
+  }) async {
+    if (_userId == null) throw Exception('User not authenticated');
+    if (_selectedProgram == null) throw Exception('No program selected');
+    if (_selectedWeek == null) throw Exception('No week selected');
+    if (_selectedWorkout == null) throw Exception('No workout selected');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.updateExerciseFields(
+        userId: _userId!,
+        programId: _selectedProgram!.id,
+        weekId: _selectedWeek!.id,
+        workoutId: _selectedWorkout!.id,
+        exerciseId: exerciseId,
+        name: name,
+        exerciseType: exerciseType,
+        notes: notes,
+        orderIndex: orderIndex,
+      );
+      
+      // Exercises will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to update exercise: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Delete an exercise by ID (with exception throwing for UI error handling)
+  Future<void> deleteExerciseById(String exerciseId) async {
+    if (_userId == null) throw Exception('User not authenticated');
+    if (_selectedProgram == null) throw Exception('No program selected');
+    if (_selectedWeek == null) throw Exception('No week selected');
+    if (_selectedWorkout == null) throw Exception('No workout selected');
+
+    try {
+      _error = null;
+      notifyListeners();
+
+      await _firestoreService.deleteExercise(
+        _userId!, 
+        _selectedProgram!.id, 
+        _selectedWeek!.id, 
+        _selectedWorkout!.id,
+        exerciseId,
+      );
+      
+      // Exercises will be automatically updated via the stream
+    } catch (e) {
+      _error = 'Failed to delete exercise: $e';
+      notifyListeners();
+      rethrow;
     }
   }
 

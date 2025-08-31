@@ -5,6 +5,7 @@ import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
+import '../../widgets/delete_confirmation_dialog.dart';
 import '../exercises/create_exercise_screen.dart';
 import '../exercises/exercise_detail_screen.dart';
 
@@ -304,7 +305,21 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             ],
           ],
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => _editExercise(context, exercise),
+              tooltip: 'Edit exercise',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+              onPressed: () => _deleteExercise(context, exercise),
+              tooltip: 'Delete exercise',
+            ),
+          ],
+        ),
         onTap: () => _navigateToExerciseDetail(exercise),
       ),
     );
@@ -321,6 +336,60 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       'Sunday'
     ];
     return days[dayOfWeek - 1]; // dayOfWeek is 1-based
+  }
+
+  void _editExercise(BuildContext context, Exercise exercise) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateExerciseScreen(
+          program: widget.program,
+          week: widget.week,
+          workout: widget.workout,
+          exercise: exercise,
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      // Exercise was updated successfully - no action needed as UI updates via stream
+    }
+  }
+
+  void _deleteExercise(BuildContext context, Exercise exercise) async {
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Exercise',
+      content: 'This will permanently delete "${exercise.name}" and all its sets. '
+               'This action cannot be undone.',
+      deleteButtonText: 'Delete Exercise',
+    );
+
+    if (confirmed == true) {
+      try {
+        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+        await programProvider.deleteExerciseById(exercise.id);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Exercise "${exercise.name}" deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete exercise: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Color _getExerciseTypeColor(ExerciseType type) {

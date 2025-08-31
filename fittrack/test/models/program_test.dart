@@ -1,5 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test/test.dart';
 import 'package:fittrack/models/program.dart';
 
 /// Unit tests for the Program model

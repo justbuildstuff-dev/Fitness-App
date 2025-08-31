@@ -136,6 +136,30 @@ class FirestoreService {
         .update(program.toFirestore());
   }
 
+  /// Update program with specific fields
+  Future<void> updateProgramFields({
+    required String userId,
+    required String programId,
+    String? name,
+    String? description,
+  }) async {
+    final updateData = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (name != null) updateData['name'] = name;
+    if (description != null) {
+      updateData['description'] = description.isEmpty ? null : description;
+    }
+
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programs')
+        .doc(programId)
+        .update(updateData);
+  }
+
   /// Archive a program (soft delete)
   Future<void> archiveProgram(String userId, String programId) async {
     await _firestore
@@ -151,14 +175,95 @@ class FirestoreService {
 
   /// Delete a program permanently (with cascade delete)
   Future<void> deleteProgram(String userId, String programId) async {
-    // TODO: Implement cascade delete via Cloud Function
-    // For now, just delete the program document
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('programs')
-        .doc(programId)
-        .delete();
+    try {
+      // Use soft delete (archive) instead of hard delete per specification
+      await archiveProgram(userId, programId);
+    } catch (e) {
+      throw Exception('Failed to delete program: $e');
+    }
+  }
+
+  /// Delete a program permanently with full cascade (dangerous - use with care)
+  Future<void> deleteProgramCascade(String userId, String programId) async {
+    try {
+      const batchLimit = 450;
+      final List<Future<void>> pendingCommits = [];
+      
+      // Helper to manage batch operations
+      WriteBatch batch = _firestore.batch();
+      int batchCount = 0;
+
+      Future<void> commitBatchIfNeeded() async {
+        if (batchCount == 0) return;
+        final commitFuture = batch.commit();
+        pendingCommits.add(commitFuture);
+        batch = _firestore.batch();
+        batchCount = 0;
+      }
+
+      Future<void> addDeleteToBatch(DocumentReference ref) async {
+        batch.delete(ref);
+        batchCount++;
+        if (batchCount >= batchLimit) {
+          await commitBatchIfNeeded();
+        }
+      }
+
+      // Get all weeks for this program
+      final weeksSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .get();
+
+      // For each week, delete all workouts, exercises, and sets
+      for (final weekDoc in weeksSnapshot.docs) {
+        final workoutsSnapshot = await weekDoc.reference
+            .collection('workouts')
+            .get();
+
+        for (final workoutDoc in workoutsSnapshot.docs) {
+          final exercisesSnapshot = await workoutDoc.reference
+              .collection('exercises')
+              .get();
+
+          for (final exerciseDoc in exercisesSnapshot.docs) {
+            // Delete all sets for this exercise
+            final setsSnapshot = await exerciseDoc.reference
+                .collection('sets')
+                .get();
+
+            for (final setDoc in setsSnapshot.docs) {
+              await addDeleteToBatch(setDoc.reference);
+            }
+
+            // Delete the exercise
+            await addDeleteToBatch(exerciseDoc.reference);
+          }
+
+          // Delete the workout
+          await addDeleteToBatch(workoutDoc.reference);
+        }
+
+        // Delete the week
+        await addDeleteToBatch(weekDoc.reference);
+      }
+
+      // Delete the program itself
+      await addDeleteToBatch(_firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId));
+
+      // Commit any remaining operations
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+    } catch (e) {
+      throw Exception('Failed to delete program cascade: $e');
+    }
   }
 
   // ========================================
@@ -217,9 +322,25 @@ class FirestoreService {
         .update(week.toFirestore());
   }
 
-  /// Delete a week
-  Future<void> deleteWeek(String userId, String programId, String weekId) async {
-    // TODO: Implement cascade delete via Cloud Function
+  /// Update week with specific fields
+  Future<void> updateWeekFields({
+    required String userId,
+    required String programId,
+    required String weekId,
+    String? name,
+    String? notes,
+    int? order,
+  }) async {
+    final updateData = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (name != null) updateData['name'] = name;
+    if (notes != null) {
+      updateData['notes'] = notes.isEmpty ? null : notes;
+    }
+    if (order != null) updateData['order'] = order;
+
     await _firestore
         .collection('users')
         .doc(userId)
@@ -227,7 +348,93 @@ class FirestoreService {
         .doc(programId)
         .collection('weeks')
         .doc(weekId)
-        .delete();
+        .update(updateData);
+  }
+
+  /// Delete a week with cascade delete
+  Future<void> deleteWeek(String userId, String programId, String weekId) async {
+    try {
+      await _deleteWeekCascade(userId, programId, weekId);
+    } catch (e) {
+      throw Exception('Failed to delete week: $e');
+    }
+  }
+
+  /// Delete a week with full cascade delete
+  Future<void> _deleteWeekCascade(String userId, String programId, String weekId) async {
+    try {
+      const batchLimit = 450;
+      final List<Future<void>> pendingCommits = [];
+      
+      // Helper to manage batch operations
+      WriteBatch batch = _firestore.batch();
+      int batchCount = 0;
+
+      Future<void> commitBatchIfNeeded() async {
+        if (batchCount == 0) return;
+        final commitFuture = batch.commit();
+        pendingCommits.add(commitFuture);
+        batch = _firestore.batch();
+        batchCount = 0;
+      }
+
+      Future<void> addDeleteToBatch(DocumentReference ref) async {
+        batch.delete(ref);
+        batchCount++;
+        if (batchCount >= batchLimit) {
+          await commitBatchIfNeeded();
+        }
+      }
+
+      // Get all workouts for this week
+      final workoutsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .get();
+
+      for (final workoutDoc in workoutsSnapshot.docs) {
+        final exercisesSnapshot = await workoutDoc.reference
+            .collection('exercises')
+            .get();
+
+        for (final exerciseDoc in exercisesSnapshot.docs) {
+          // Delete all sets for this exercise
+          final setsSnapshot = await exerciseDoc.reference
+              .collection('sets')
+              .get();
+
+          for (final setDoc in setsSnapshot.docs) {
+            await addDeleteToBatch(setDoc.reference);
+          }
+
+          // Delete the exercise
+          await addDeleteToBatch(exerciseDoc.reference);
+        }
+
+        // Delete the workout
+        await addDeleteToBatch(workoutDoc.reference);
+      }
+
+      // Delete the week itself
+      await addDeleteToBatch(_firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId));
+
+      // Commit any remaining operations
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+    } catch (e) {
+      throw Exception('Failed to delete week cascade: $e');
+    }
   }
 
   /// Duplicate a week using client-side batched writes
@@ -509,13 +716,28 @@ class FirestoreService {
         .update(workout.toFirestore());
   }
 
-  /// Delete a workout
-  Future<void> deleteWorkout(
-    String userId,
-    String programId,
-    String weekId,
-    String workoutId,
-  ) async {
+  /// Update workout with specific fields
+  Future<void> updateWorkoutFields({
+    required String userId,
+    required String programId,
+    required String weekId,
+    required String workoutId,
+    String? name,
+    int? dayOfWeek,
+    String? notes,
+    int? orderIndex,
+  }) async {
+    final updateData = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (name != null) updateData['name'] = name;
+    if (dayOfWeek != null) updateData['dayOfWeek'] = dayOfWeek;
+    if (notes != null) {
+      updateData['notes'] = notes.isEmpty ? null : notes;
+    }
+    if (orderIndex != null) updateData['orderIndex'] = orderIndex;
+
     await _firestore
         .collection('users')
         .doc(userId)
@@ -525,7 +747,98 @@ class FirestoreService {
         .doc(weekId)
         .collection('workouts')
         .doc(workoutId)
-        .delete();
+        .update(updateData);
+  }
+
+  /// Delete a workout with cascade delete
+  Future<void> deleteWorkout(
+    String userId,
+    String programId,
+    String weekId,
+    String workoutId,
+  ) async {
+    try {
+      await _deleteWorkoutCascade(userId, programId, weekId, workoutId);
+    } catch (e) {
+      throw Exception('Failed to delete workout: $e');
+    }
+  }
+
+  /// Delete a workout with full cascade delete
+  Future<void> _deleteWorkoutCascade(
+    String userId, 
+    String programId, 
+    String weekId, 
+    String workoutId,
+  ) async {
+    try {
+      const batchLimit = 450;
+      final List<Future<void>> pendingCommits = [];
+      
+      // Helper to manage batch operations
+      WriteBatch batch = _firestore.batch();
+      int batchCount = 0;
+
+      Future<void> commitBatchIfNeeded() async {
+        if (batchCount == 0) return;
+        final commitFuture = batch.commit();
+        pendingCommits.add(commitFuture);
+        batch = _firestore.batch();
+        batchCount = 0;
+      }
+
+      Future<void> addDeleteToBatch(DocumentReference ref) async {
+        batch.delete(ref);
+        batchCount++;
+        if (batchCount >= batchLimit) {
+          await commitBatchIfNeeded();
+        }
+      }
+
+      // Get all exercises for this workout
+      final exercisesSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('exercises')
+          .get();
+
+      for (final exerciseDoc in exercisesSnapshot.docs) {
+        // Delete all sets for this exercise
+        final setsSnapshot = await exerciseDoc.reference
+            .collection('sets')
+            .get();
+
+        for (final setDoc in setsSnapshot.docs) {
+          await addDeleteToBatch(setDoc.reference);
+        }
+
+        // Delete the exercise
+        await addDeleteToBatch(exerciseDoc.reference);
+      }
+
+      // Delete the workout itself
+      await addDeleteToBatch(_firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .doc(workoutId));
+
+      // Commit any remaining operations
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+    } catch (e) {
+      throw Exception('Failed to delete workout cascade: $e');
+    }
   }
 
   // ========================================
@@ -613,14 +926,29 @@ class FirestoreService {
         .update(exercise.toFirestore());
   }
 
-  /// Delete an exercise
-  Future<void> deleteExercise(
-    String userId,
-    String programId,
-    String weekId,
-    String workoutId,
-    String exerciseId,
-  ) async {
+  /// Update exercise with specific fields
+  Future<void> updateExerciseFields({
+    required String userId,
+    required String programId,
+    required String weekId,
+    required String workoutId,
+    required String exerciseId,
+    String? name,
+    ExerciseType? exerciseType,
+    String? notes,
+    int? orderIndex,
+  }) async {
+    final updateData = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (name != null) updateData['name'] = name;
+    if (exerciseType != null) updateData['exerciseType'] = exerciseType.toFirestore();
+    if (notes != null) {
+      updateData['notes'] = notes.isEmpty ? null : notes;
+    }
+    if (orderIndex != null) updateData['orderIndex'] = orderIndex;
+
     await _firestore
         .collection('users')
         .doc(userId)
@@ -632,7 +960,94 @@ class FirestoreService {
         .doc(workoutId)
         .collection('exercises')
         .doc(exerciseId)
-        .delete();
+        .update(updateData);
+  }
+
+  /// Delete an exercise with cascade delete
+  Future<void> deleteExercise(
+    String userId,
+    String programId,
+    String weekId,
+    String workoutId,
+    String exerciseId,
+  ) async {
+    try {
+      await _deleteExerciseCascade(userId, programId, weekId, workoutId, exerciseId);
+    } catch (e) {
+      throw Exception('Failed to delete exercise: $e');
+    }
+  }
+
+  /// Delete an exercise with full cascade delete
+  Future<void> _deleteExerciseCascade(
+    String userId,
+    String programId,
+    String weekId,
+    String workoutId,
+    String exerciseId,
+  ) async {
+    try {
+      const batchLimit = 450;
+      final List<Future<void>> pendingCommits = [];
+      
+      // Helper to manage batch operations
+      WriteBatch batch = _firestore.batch();
+      int batchCount = 0;
+
+      Future<void> commitBatchIfNeeded() async {
+        if (batchCount == 0) return;
+        final commitFuture = batch.commit();
+        pendingCommits.add(commitFuture);
+        batch = _firestore.batch();
+        batchCount = 0;
+      }
+
+      Future<void> addDeleteToBatch(DocumentReference ref) async {
+        batch.delete(ref);
+        batchCount++;
+        if (batchCount >= batchLimit) {
+          await commitBatchIfNeeded();
+        }
+      }
+
+      // Get all sets for this exercise
+      final setsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('exercises')
+          .doc(exerciseId)
+          .collection('sets')
+          .get();
+
+      for (final setDoc in setsSnapshot.docs) {
+        await addDeleteToBatch(setDoc.reference);
+      }
+
+      // Delete the exercise itself
+      await addDeleteToBatch(_firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('exercises')
+          .doc(exerciseId));
+
+      // Commit any remaining operations
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+    } catch (e) {
+      throw Exception('Failed to delete exercise cascade: $e');
+    }
   }
 
   // ========================================

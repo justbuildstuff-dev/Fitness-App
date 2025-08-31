@@ -69,6 +69,7 @@ Every document includes a `userId` field for security and efficient querying.
 3. **Ask for Confirmation**:
   - Propose plans before implementation.
 4. **Test-Driven Development**:
+  - TestingFramework.md should be reviewed before writing tests.
   - Review existing tests to help with understanding functionality flows.
   - write new tests aligned defined by the expected outcomes of the new functionality.
   - Update existing tests if necessary.
@@ -81,8 +82,7 @@ Every document includes a `userId` field for security and efficient querying.
   - If the updates do not fit entirely within an already existing document:
     - Create a new document in @Docs for the new functionality
     - Follow the exact same formatting, tone, and level of detail as other, already existing documents.
-    - CurrentScreens.md should be updated to reflect the completion of a task within the document.
-    - Any new tasks for the next session should be added to CurrentScreens.md or a similar document for tracking status should be created.
+    - Documentation is only required when an integral piece of functionality has been modified or implemented. Documentation does not need to be created as a summary of everything that has been done in that session.
 
 ## Firebase Configuration
 

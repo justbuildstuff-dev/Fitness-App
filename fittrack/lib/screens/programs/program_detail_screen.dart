@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
+import '../../widgets/delete_confirmation_dialog.dart';
 import '../weeks/weeks_screen.dart';
 import '../weeks/create_week_screen.dart';
 
@@ -423,9 +424,76 @@ class _WeekCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               )
             : null,
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => _editWeek(context),
+              tooltip: 'Edit week',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+              onPressed: () => _deleteWeek(context),
+              tooltip: 'Delete week',
+            ),
+          ],
+        ),
         onTap: onTap,
       ),
     );
+  }
+
+  void _editWeek(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateWeekScreen(
+          program: programProvider.selectedProgram!,
+          week: week,
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      // Week was updated successfully - no action needed as UI updates via stream
+    }
+  }
+
+  void _deleteWeek(BuildContext context) async {
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Week',
+      content: 'This will permanently delete "${week.name}" and all its workouts, '
+               'exercises, and sets. This action cannot be undone.',
+      deleteButtonText: 'Delete Week',
+    );
+
+    if (confirmed == true) {
+      try {
+        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+        await programProvider.deleteWeekById(week.id);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Week "${week.name}" deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete week: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 }

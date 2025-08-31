@@ -4,6 +4,7 @@ import '../../providers/program_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
+import '../../widgets/delete_confirmation_dialog.dart';
 import '../workouts/create_workout_screen.dart';
 import '../workouts/workout_detail_screen.dart';
 
@@ -494,9 +495,77 @@ class _WorkoutCard extends StatelessWidget {
             ],
           ],
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: () => _editWorkout(context),
+              tooltip: 'Edit workout',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+              onPressed: () => _deleteWorkout(context),
+              tooltip: 'Delete workout',
+            ),
+          ],
+        ),
         onTap: onTap,
       ),
     );
+  }
+
+  void _editWorkout(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateWorkoutScreen(
+          program: programProvider.selectedProgram!,
+          week: programProvider.selectedWeek!,
+          workout: workout,
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      // Workout was updated successfully - no action needed as UI updates via stream
+    }
+  }
+
+  void _deleteWorkout(BuildContext context) async {
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Workout',
+      content: 'This will permanently delete "${workout.name}" and all its exercises '
+               'and sets. This action cannot be undone.',
+      deleteButtonText: 'Delete Workout',
+    );
+
+    if (confirmed == true) {
+      try {
+        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+        await programProvider.deleteWorkoutById(workout.id);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Workout "${workout.name}" deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete workout: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 }

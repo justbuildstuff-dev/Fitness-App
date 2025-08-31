@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
 import '../../models/program.dart';
+import '../../models/week.dart';
 
 class CreateWeekScreen extends StatefulWidget {
   final Program program;
+  final Week? week; // null for create, populated for edit
 
   const CreateWeekScreen({
     super.key,
     required this.program,
+    this.week,
   });
 
   @override
@@ -19,15 +22,24 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
-  bool _isCreating = false;
+  bool _isLoading = false;
+
+  bool get _isEditing => widget.week != null;
 
   @override
   void initState() {
     super.initState();
-    // Auto-generate week name based on existing weeks
-    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-    final nextWeekNumber = programProvider.weeks.length + 1;
-    _nameController.text = 'Week $nextWeekNumber';
+    
+    if (_isEditing) {
+      // Populate fields for editing
+      _nameController.text = widget.week!.name;
+      _notesController.text = widget.week!.notes ?? '';
+    } else {
+      // Auto-generate week name based on existing weeks
+      final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+      final nextWeekNumber = programProvider.weeks.length + 1;
+      _nameController.text = 'Week $nextWeekNumber';
+    }
   }
 
   @override
@@ -41,17 +53,17 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Week'),
+        title: Text(_isEditing ? 'Edit Week' : 'Create Week'),
         actions: [
           TextButton(
-            onPressed: _isCreating ? null : _createWeek,
-            child: _isCreating
+            onPressed: _isLoading ? null : _saveWeek,
+            child: _isLoading
                 ? const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('CREATE'),
+                : Text(_isEditing ? 'SAVE' : 'CREATE'),
           ),
         ],
       ),
@@ -71,7 +83,9 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
                 children: [
                   Consumer<ProgramProvider>(
                     builder: (context, programProvider, child) {
-                      final nextWeekNumber = programProvider.weeks.length + 1;
+                      final displayNumber = _isEditing 
+                          ? widget.week!.order
+                          : programProvider.weeks.length + 1;
                       return Container(
                         width: 64,
                         height: 64,
@@ -81,7 +95,7 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            '$nextWeekNumber',
+                            '$displayNumber',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.primary,
@@ -93,14 +107,16 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Create New Week',
+                    _isEditing ? 'Edit Week' : 'Create New Week',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Add a new week to "${widget.program.name}"',
+                    _isEditing 
+                        ? 'Update week details'
+                        : 'Add a new week to "${widget.program.name}"',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -145,7 +161,7 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
                 border: OutlineInputBorder(),
                 alignLabelWithHint: true,
               ),
-              onFieldSubmitted: (_) => _createWeek(),
+              onFieldSubmitted: (_) => _saveWeek(),
             ),
             const SizedBox(height: 32),
 
@@ -194,48 +210,82 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
     );
   }
 
-  void _createWeek() async {
+  void _saveWeek() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _isCreating = true;
+      _isLoading = true;
     });
 
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     
-    final weekId = await programProvider.createWeek(
-      programId: widget.program.id,
-      name: _nameController.text,
-      notes: _notesController.text.trim().isEmpty 
-          ? null 
-          : _notesController.text,
-    );
-
-    setState(() {
-      _isCreating = false;
-    });
-
-    if (weekId != null) {
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Week created successfully!'),
-            behavior: SnackBarBehavior.floating,
-          ),
+    try {
+      if (_isEditing) {
+        // Update existing week
+        await programProvider.updateWeekFields(
+          widget.week!.id,
+          name: _nameController.text.trim(),
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
         );
-        Navigator.of(context).pop();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Week updated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(true); // Return true to indicate success
+        }
+      } else {
+        // Create new week
+        final weekId = await programProvider.createWeek(
+          programId: widget.program.id,
+          name: _nameController.text.trim(),
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
+        );
+
+        if (weekId != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Week created successfully!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.of(context).pop();
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(programProvider.error ?? 'Failed to create week'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
       }
-    } else {
-      // Show error message
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(programProvider.error ?? 'Failed to create week'),
+            content: Text(_isEditing ? 'Failed to update week: $e' : 'Failed to create week: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

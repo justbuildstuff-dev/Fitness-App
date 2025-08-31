@@ -10,12 +10,14 @@ class CreateExerciseScreen extends StatefulWidget {
   final Program program;
   final Week week;
   final Workout workout;
+  final Exercise? exercise; // null for create, populated for edit
 
   const CreateExerciseScreen({
     super.key,
     required this.program,
     required this.week,
     required this.workout,
+    this.exercise,
   });
 
   @override
@@ -27,7 +29,21 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
   ExerciseType _selectedType = ExerciseType.strength;
-  bool _isCreating = false;
+  bool _isLoading = false;
+
+  bool get _isEditing => widget.exercise != null;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    if (_isEditing) {
+      // Populate fields for editing
+      _nameController.text = widget.exercise!.name;
+      _notesController.text = widget.exercise!.notes ?? '';
+      _selectedType = widget.exercise!.exerciseType;
+    }
+  }
 
   @override
   void dispose() {
@@ -40,17 +56,17 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Exercise'),
+        title: Text(_isEditing ? 'Edit Exercise' : 'Create Exercise'),
         actions: [
           TextButton(
-            onPressed: _isCreating ? null : _createExercise,
-            child: _isCreating
+            onPressed: _isLoading ? null : _saveExercise,
+            child: _isLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('SAVE'),
+                : Text(_isEditing ? 'SAVE' : 'CREATE'),
           ),
         ],
       ),
@@ -67,7 +83,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Creating exercise for:',
+                      _isEditing ? 'Editing exercise for:' : 'Creating exercise for:',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       ),
@@ -277,51 +293,88 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     );
   }
 
-  void _createExercise() async {
+  void _saveExercise() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      _isCreating = true;
+      _isLoading = true;
     });
 
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
 
-    final exerciseId = await programProvider.createExercise(
-      programId: widget.program.id,
-      weekId: widget.week.id,
-      workoutId: widget.workout.id,
-      name: _nameController.text.trim(),
-      exerciseType: _selectedType,
-      notes: _notesController.text.trim().isEmpty 
-          ? null 
-          : _notesController.text.trim(),
-    );
-
-    setState(() {
-      _isCreating = false;
-    });
-
-    if (mounted) {
-      if (exerciseId != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Exercise created successfully!'),
-            behavior: SnackBarBehavior.floating,
-          ),
+    try {
+      if (_isEditing) {
+        // Update existing exercise
+        await programProvider.updateExerciseFields(
+          widget.exercise!.id,
+          name: _nameController.text.trim(),
+          exerciseType: _selectedType,
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
         );
-        Navigator.of(context).pop(true); // Return true to indicate success
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Exercise updated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(true); // Return true to indicate success
+        }
       } else {
+        // Create new exercise
+        final exerciseId = await programProvider.createExercise(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          workoutId: widget.workout.id,
+          name: _nameController.text.trim(),
+          exerciseType: _selectedType,
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
+        );
+
+        if (mounted) {
+          if (exerciseId != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Exercise created successfully!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.of(context).pop(true); // Return true to indicate success
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  programProvider.error ?? 'Failed to create exercise',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              programProvider.error ?? 'Failed to create exercise',
-            ),
+            content: Text(_isEditing ? 'Failed to update exercise: $e' : 'Failed to create exercise: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

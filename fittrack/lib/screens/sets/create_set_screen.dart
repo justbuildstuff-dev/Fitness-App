@@ -6,12 +6,14 @@ import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_set.dart';
 
 class CreateSetScreen extends StatefulWidget {
   final Program program;
   final Week week;
   final Workout workout;
   final Exercise exercise;
+  final ExerciseSet? exerciseSet; // null for create, populated for edit
 
   const CreateSetScreen({
     super.key,
@@ -19,6 +21,7 @@ class CreateSetScreen extends StatefulWidget {
     required this.week,
     required this.workout,
     required this.exercise,
+    this.exerciseSet,
   });
 
   @override
@@ -34,7 +37,9 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
   final _distanceController = TextEditingController();
   final _restTimeController = TextEditingController();
   final _notesController = TextEditingController();
-  bool _isCreating = false;
+  bool _isLoading = false;
+
+  bool get _isEditing => widget.exerciseSet != null;
 
   // Track which fields are relevant for this exercise type
   late List<String> _requiredFields;
@@ -45,6 +50,22 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
     super.initState();
     _requiredFields = widget.exercise.requiredSetFields;
     _optionalFields = widget.exercise.optionalSetFields;
+
+    if (_isEditing) {
+      // Populate fields for editing
+      final set = widget.exerciseSet!;
+      if (set.reps != null) _repsController.text = set.reps.toString();
+      if (set.weight != null) _weightController.text = set.weight.toString();
+      if (set.duration != null) {
+        final minutes = set.duration! ~/ 60;
+        final seconds = set.duration! % 60;
+        _durationMinutesController.text = minutes.toString();
+        _durationSecondsController.text = seconds.toString();
+      }
+      if (set.distance != null) _distanceController.text = set.distance.toString();
+      if (set.restTime != null) _restTimeController.text = set.restTime.toString();
+      if (set.notes != null) _notesController.text = set.notes!;
+    }
   }
 
   @override
@@ -63,17 +84,17 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Set'),
+        title: Text(_isEditing ? 'Edit Set' : 'Add Set'),
         actions: [
           TextButton(
-            onPressed: _isCreating ? null : _createSet,
-            child: _isCreating
+            onPressed: _isLoading ? null : _saveSet,
+            child: _isLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('SAVE'),
+                : Text(_isEditing ? 'SAVE' : 'ADD'),
           ),
         ],
       ),
@@ -456,7 +477,7 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
     }
   }
 
-  void _createSet() async {
+  void _saveSet() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -479,76 +500,118 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
     }
 
     setState(() {
-      _isCreating = true;
+      _isLoading = true;
     });
 
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
 
-    // Parse values
-    final reps = _repsController.text.trim().isEmpty 
-        ? null 
-        : int.tryParse(_repsController.text);
-    
-    final weight = _weightController.text.trim().isEmpty 
-        ? null 
-        : double.tryParse(_weightController.text);
-    
-    // Convert minutes and seconds to total seconds
-    int? duration;
-    final minutes = int.tryParse(_durationMinutesController.text) ?? 0;
-    final seconds = int.tryParse(_durationSecondsController.text) ?? 0;
-    if (minutes > 0 || seconds > 0) {
-      duration = minutes * 60 + seconds;
-    }
-    
-    // Convert km to meters for storage
-    final distanceKm = _distanceController.text.trim().isEmpty 
-        ? null 
-        : double.tryParse(_distanceController.text);
-    final distance = distanceKm != null ? distanceKm * 1000 : null;
-    
-    final restTime = _restTimeController.text.trim().isEmpty 
-        ? null 
-        : int.tryParse(_restTimeController.text);
-
-    final setId = await programProvider.createSet(
-      programId: widget.program.id,
-      weekId: widget.week.id,
-      workoutId: widget.workout.id,
-      exerciseId: widget.exercise.id,
-      reps: reps,
-      weight: weight,
-      duration: duration,
-      distance: distance,
-      restTime: restTime,
-      notes: _notesController.text.trim().isEmpty 
+    try {
+      // Parse values
+      final reps = _repsController.text.trim().isEmpty 
           ? null 
-          : _notesController.text.trim(),
-    );
+          : int.tryParse(_repsController.text);
+      
+      final weight = _weightController.text.trim().isEmpty 
+          ? null 
+          : double.tryParse(_weightController.text);
+      
+      // Convert minutes and seconds to total seconds
+      int? duration;
+      final minutes = int.tryParse(_durationMinutesController.text) ?? 0;
+      final seconds = int.tryParse(_durationSecondsController.text) ?? 0;
+      if (minutes > 0 || seconds > 0) {
+        duration = minutes * 60 + seconds;
+      }
+      
+      // Convert km to meters for storage
+      final distanceKm = _distanceController.text.trim().isEmpty 
+          ? null 
+          : double.tryParse(_distanceController.text);
+      final distance = distanceKm != null ? distanceKm * 1000 : null;
+      
+      final restTime = _restTimeController.text.trim().isEmpty 
+          ? null 
+          : int.tryParse(_restTimeController.text);
 
-    setState(() {
-      _isCreating = false;
-    });
-
-    if (mounted) {
-      if (setId != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Set added successfully!'),
-            behavior: SnackBarBehavior.floating,
-          ),
+      if (_isEditing) {
+        // Update existing set
+        final updatedSet = widget.exerciseSet!.copyWith(
+          reps: reps,
+          weight: weight,
+          duration: duration,
+          distance: distance,
+          restTime: restTime,
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
+          updatedAt: DateTime.now(),
         );
-        Navigator.of(context).pop(true); // Return true to indicate success
+        
+        await programProvider.updateSet(updatedSet);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Set updated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(true); // Return true to indicate success
+        }
       } else {
+        // Create new set
+        final setId = await programProvider.createSet(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          workoutId: widget.workout.id,
+          exerciseId: widget.exercise.id,
+          reps: reps,
+          weight: weight,
+          duration: duration,
+          distance: distance,
+          restTime: restTime,
+          notes: _notesController.text.trim().isEmpty 
+              ? null 
+              : _notesController.text.trim(),
+        );
+
+        if (mounted) {
+          if (setId != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Set added successfully!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.of(context).pop(true); // Return true to indicate success
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  programProvider.error ?? 'Failed to add set',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              programProvider.error ?? 'Failed to add set',
-            ),
+            content: Text(_isEditing ? 'Failed to update set: $e' : 'Failed to create set: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

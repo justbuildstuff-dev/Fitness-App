@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
+import '../../models/program.dart';
 
 class CreateProgramScreen extends StatefulWidget {
-  const CreateProgramScreen({super.key});
+  final Program? program; // null for create, populated for edit
+  
+  const CreateProgramScreen({super.key, this.program});
 
   @override
   State<CreateProgramScreen> createState() => _CreateProgramScreenState();
@@ -13,7 +16,19 @@ class _CreateProgramScreenState extends State<CreateProgramScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  bool _isCreating = false;
+  bool _isLoading = false;
+  
+  bool get _isEditing => widget.program != null;
+
+  @override
+  void initState() {
+    super.initState();
+    // Populate fields if editing
+    if (_isEditing) {
+      _nameController.text = widget.program!.name;
+      _descriptionController.text = widget.program!.description ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -26,17 +41,17 @@ class _CreateProgramScreenState extends State<CreateProgramScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Program'),
+        title: Text(_isEditing ? 'Edit Program' : 'Create Program'),
         actions: [
           TextButton(
-            onPressed: _isCreating ? null : _createProgram,
-            child: _isCreating
+            onPressed: _isLoading ? null : _saveProgram,
+            child: _isLoading
                 ? const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('CREATE'),
+                : Text(_isEditing ? 'SAVE' : 'CREATE'),
           ),
         ],
       ),
@@ -61,14 +76,16 @@ class _CreateProgramScreenState extends State<CreateProgramScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Create New Program',
+                    _isEditing ? 'Edit Program' : 'Create New Program',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Build a structured workout program to track your fitness journey',
+                    _isEditing 
+                        ? 'Update your program details'
+                        : 'Build a structured workout program to track your fitness journey',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -122,7 +139,7 @@ class _CreateProgramScreenState extends State<CreateProgramScreen> {
                 }
                 return null;
               },
-              onFieldSubmitted: (_) => _createProgram(),
+              onFieldSubmitted: (_) => _saveProgram(),
             ),
             const SizedBox(height: 32),
 
@@ -168,47 +185,81 @@ class _CreateProgramScreenState extends State<CreateProgramScreen> {
     );
   }
 
-  void _createProgram() async {
+  void _saveProgram() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _isCreating = true;
+      _isLoading = true;
     });
 
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     
-    final programId = await programProvider.createProgram(
-      name: _nameController.text,
-      description: _descriptionController.text.trim().isEmpty 
-          ? null 
-          : _descriptionController.text,
-    );
-
-    setState(() {
-      _isCreating = false;
-    });
-
-    if (programId != null) {
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Program created successfully!'),
-            behavior: SnackBarBehavior.floating,
-          ),
+    try {
+      if (_isEditing) {
+        // Update existing program
+        await programProvider.updateProgramFields(
+          widget.program!.id,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty 
+              ? null 
+              : _descriptionController.text.trim(),
         );
-        Navigator.of(context).pop();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Program updated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(true); // Return true to indicate success
+        }
+      } else {
+        // Create new program
+        final programId = await programProvider.createProgram(
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty 
+              ? null 
+              : _descriptionController.text.trim(),
+        );
+
+        if (programId != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Program created successfully!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.of(context).pop();
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(programProvider.error ?? 'Failed to create program'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
       }
-    } else {
-      // Show error message
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(programProvider.error ?? 'Failed to create program'),
+            content: Text(_isEditing ? 'Failed to update program: $e' : 'Failed to create program: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
