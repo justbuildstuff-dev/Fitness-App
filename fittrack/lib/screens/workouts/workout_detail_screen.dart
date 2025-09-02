@@ -359,7 +359,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   void _deleteExercise(BuildContext context, Exercise exercise) async {
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
     
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,

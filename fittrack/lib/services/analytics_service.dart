@@ -137,7 +137,6 @@ class AnalyticsService {
       end: DateTime.now(),
     );
     
-    final exercises = await _getAllUserExercises(exercise.userId, dateRange);
     final allSets = await _getAllUserSets(exercise.userId, dateRange);
     
     // Filter sets for this specific exercise

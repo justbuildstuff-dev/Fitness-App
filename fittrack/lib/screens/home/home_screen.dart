@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/program_provider.dart';
 import '../programs/programs_screen.dart';
 import '../analytics/analytics_screen.dart';
