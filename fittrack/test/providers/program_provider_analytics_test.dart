@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
@@ -17,6 +18,10 @@ void main() {
     late ProgramProvider provider;
     late MockFirestoreService mockFirestoreService;
     late MockAnalyticsService mockAnalyticsService;
+
+    setUpAll(() async {
+      await Firebase.initializeApp();
+    });
 
     setUp(() {
       mockFirestoreService = MockFirestoreService();

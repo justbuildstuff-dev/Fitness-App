@@ -93,7 +93,7 @@ void main() {
         verify(mockProgramDoc.update(argThat(allOf([
           containsPair('name', newName),
           containsPair('description', newDescription),
-          containsKey('updatedAt'),
+          contains('updatedAt'),
         ])))).called(1);
       });
 
@@ -117,7 +117,7 @@ void main() {
         verify(mockProgramDoc.update(argThat(allOf([
           containsPair('name', newName),
           containsPair('description', isNull),
-          containsKey('updatedAt'),
+          contains('updatedAt'),
         ])))).called(1);
       });
 
@@ -135,7 +135,7 @@ void main() {
         // Verify it calls archive instead of hard delete
         verify(mockProgramDoc.update(argThat(allOf([
           containsPair('isArchived', true),
-          containsKey('updatedAt'),
+          contains('updatedAt'),
         ])))).called(1);
       });
     });
@@ -166,7 +166,7 @@ void main() {
           containsPair('name', newName),
           containsPair('notes', newNotes),
           containsPair('order', 2),
-          containsKey('updatedAt'),
+          contains('updatedAt'),
         ])))).called(1);
       });
 

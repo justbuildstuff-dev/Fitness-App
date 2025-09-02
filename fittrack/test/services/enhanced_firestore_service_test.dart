@@ -513,6 +513,7 @@ Workout _generateTestWorkout(String userId) {
     id: 'test-workout-${now.millisecondsSinceEpoch}',
     name: 'Test Workout',
     dayOfWeek: 1, // Monday
+    orderIndex: 0,
     notes: 'Test workout for validation',
     createdAt: now,
     updatedAt: now,

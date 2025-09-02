@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/workout.dart';
@@ -26,6 +27,10 @@ void main() {
     const testUserId = 'test-user-123';
     const testProgramId = 'test-program-456';
     const testWeekId = 'test-week-789';
+
+    setUpAll(() async {
+      await Firebase.initializeApp();
+    });
 
     setUp(() {
       // Set up clean test environment for each test

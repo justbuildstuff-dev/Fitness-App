@@ -103,7 +103,7 @@ void main() {
           containsPair('name', newName),
           containsPair('dayOfWeek', newDayOfWeek),
           containsPair('notes', newNotes),
-          containsKey('updatedAt'),
+          contains('updatedAt'),
         ])))).called(1);
       });
 
@@ -178,7 +178,7 @@ void main() {
           containsPair('name', newName),
           containsPair('exerciseType', newType.toFirestore()),
           containsPair('notes', newNotes),
-          containsKey('updatedAt'),
+          contains('updatedAt'),
         ])))).called(1);
       });
 
