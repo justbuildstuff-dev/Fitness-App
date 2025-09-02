@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
+import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/workout.dart';
 
 import 'program_provider_workout_test.mocks.dart';
@@ -18,7 +19,7 @@ import 'program_provider_workout_test.mocks.dart';
 /// 
 /// Tests use mocked FirestoreService to ensure isolation from actual database
 /// If any test fails, check the ProgramProvider implementation and state management
-@GenerateMocks([FirestoreService])
+@GenerateMocks([FirestoreService, AnalyticsService])
 void main() {
   group('ProgramProvider Workout Methods Tests', () {
     late MockFirestoreService mockFirestoreService;
@@ -36,10 +37,9 @@ void main() {
       // Set up clean test environment for each test
       // Using mocks ensures tests don't depend on external services
       mockFirestoreService = MockFirestoreService();
-      programProvider = ProgramProvider(testUserId);
-      
-      // Mock service injection would be needed for full testing
-      // For now we'll test with the real service structure
+      // Create mock analytics service for dependency injection
+      final mockAnalyticsService = MockAnalyticsService();
+      programProvider = ProgramProvider.withServices(testUserId, mockFirestoreService, mockAnalyticsService);
     });
 
     group('Create Workout', () {

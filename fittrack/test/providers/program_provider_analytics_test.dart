@@ -26,9 +26,7 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
-      provider = ProgramProvider('test_user');
-      
-      // In a real implementation, you'd inject these dependencies
+      provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
     });
 
     group('loadAnalytics', () {

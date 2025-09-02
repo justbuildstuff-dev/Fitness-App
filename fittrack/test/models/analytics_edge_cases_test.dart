@@ -1,10 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
 import 'package:fittrack/models/workout.dart';
 
 void main() {
+  setUpAll(() async {
+    await Firebase.initializeApp();
+  });
+
   group('Analytics Edge Cases & Performance', () {
     group('Large Dataset Handling', () {
       test('handles large number of workouts efficiently', () {

@@ -40,6 +40,7 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
+      provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
       
       // Create test data
       testProgram = Program(
@@ -62,7 +63,6 @@ void main() {
         programId: 'prog123',
       );
 
-      provider = ProgramProvider('user123');
       
       // Set up basic mocks
       when(mockFirestoreService.updateProgramFields(

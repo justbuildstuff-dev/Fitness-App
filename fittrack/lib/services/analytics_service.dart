@@ -9,9 +9,13 @@ import 'firestore_service.dart';
 class AnalyticsService {
   static final AnalyticsService _instance = AnalyticsService._();
   static AnalyticsService get instance => _instance;
-  AnalyticsService._();
-
-  final FirestoreService _firestoreService = FirestoreService.instance;
+  
+  final FirestoreService _firestoreService;
+  
+  AnalyticsService._() : _firestoreService = FirestoreService.instance;
+  
+  // Constructor for testing with dependency injection
+  AnalyticsService.withFirestoreService(this._firestoreService);
 
   // Simple cache to avoid recomputation for short periods
   final Map<String, _CachedAnalytics> _cache = {};

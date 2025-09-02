@@ -10,11 +10,20 @@ import '../services/firestore_service.dart';
 import '../services/analytics_service.dart';
 
 class ProgramProvider extends ChangeNotifier {
-  final FirestoreService _firestoreService = FirestoreService.instance;
-  final AnalyticsService _analyticsService = AnalyticsService.instance;
+  final FirestoreService _firestoreService;
+  final AnalyticsService _analyticsService;
   final String? _userId;
 
-  ProgramProvider(this._userId);
+  ProgramProvider(this._userId) 
+    : _firestoreService = FirestoreService.instance,
+      _analyticsService = AnalyticsService.instance;
+      
+  // Constructor for testing with dependency injection
+  ProgramProvider.withServices(
+    this._userId, 
+    this._firestoreService, 
+    this._analyticsService
+  );
 
   // Programs
   List<Program> _programs = [];

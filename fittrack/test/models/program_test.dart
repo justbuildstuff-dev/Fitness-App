@@ -199,12 +199,12 @@ void main() {
         final programId = 'program-123';
         final program = Program(
           id: programId,
-          name: firestoreData['name'],
-          description: firestoreData['description'],
+          name: firestoreData['name'] as String,
+          description: firestoreData['description'] as String?,
           createdAt: (firestoreData['createdAt'] as Timestamp).toDate(),
           updatedAt: (firestoreData['updatedAt'] as Timestamp).toDate(),
-          userId: firestoreData['userId'],
-          isArchived: firestoreData['isArchived'],
+          userId: firestoreData['userId'] as String,
+          isArchived: firestoreData['isArchived'] as bool,
         );
 
         expect(program.id, equals('program-123'));
@@ -233,12 +233,12 @@ void main() {
         final programId = 'program-456';
         final program = Program(
           id: programId,
-          name: firestoreData['name'],
-          description: firestoreData['description'],
+          name: firestoreData['name'] as String,
+          description: firestoreData['description'] as String?,
           createdAt: (firestoreData['createdAt'] as Timestamp).toDate(),
           updatedAt: (firestoreData['updatedAt'] as Timestamp).toDate(),
-          userId: firestoreData['userId'],
-          isArchived: firestoreData['isArchived'] ?? false,
+          userId: firestoreData['userId'] as String,
+          isArchived: firestoreData['isArchived'] as bool? ?? false,
         );
 
         expect(program.description, isNull,
@@ -264,12 +264,12 @@ void main() {
         final programId = 'program-789';
         final program = Program(
           id: programId,
-          name: firestoreData['name'] ?? '',
-          description: firestoreData['description'],
+          name: firestoreData['name'] as String? ?? '',
+          description: firestoreData['description'] as String?,
           createdAt: (firestoreData['createdAt'] as Timestamp).toDate(),
           updatedAt: (firestoreData['updatedAt'] as Timestamp).toDate(),
-          userId: firestoreData['userId'] ?? '',
-          isArchived: firestoreData['isArchived'] ?? false,
+          userId: firestoreData['userId'] as String? ?? '',
+          isArchived: firestoreData['isArchived'] as bool? ?? false,
         );
 
         expect(program.name, equals(''),

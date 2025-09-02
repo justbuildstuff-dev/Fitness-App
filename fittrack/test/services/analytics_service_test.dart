@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/analytics.dart';
@@ -16,10 +17,13 @@ void main() {
     late AnalyticsService analyticsService;
     late MockFirestoreService mockFirestoreService;
 
+    setUpAll(() async {
+      await Firebase.initializeApp();
+    });
+
     setUp(() {
       mockFirestoreService = MockFirestoreService();
-      analyticsService = AnalyticsService.instance;
-      // Note: In a real implementation, you'd inject the mock service
+      analyticsService = AnalyticsService.withFirestoreService(mockFirestoreService);
     });
 
     tearDown(() {

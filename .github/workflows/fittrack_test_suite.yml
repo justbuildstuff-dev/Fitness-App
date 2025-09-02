@@ -37,7 +37,15 @@ jobs:
     - name: Run static analysis
       run: |
         cd fittrack
-        flutter analyze lib/ --no-fatal-warnings || exit 0
+        flutter analyze lib/ --no-fatal-warnings | tee analyze_output.txt
+        # Check if there are any actual ERROR level issues
+        if grep -q "error •" analyze_output.txt; then
+          echo "ERROR level issues found - failing build"
+          exit 1
+        else
+          echo "Only INFO/WARNING level issues found - continuing build"
+          exit 0
+        fi
         
     - name: Run unit tests with coverage
       run: |

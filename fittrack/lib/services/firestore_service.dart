@@ -9,9 +9,13 @@ import '../models/exercise_set.dart';
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
   static FirestoreService get instance => _instance;
-  FirestoreService._internal();
-
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  final FirebaseFirestore _firestore;
+  
+  FirestoreService._internal() : _firestore = FirebaseFirestore.instance;
+  
+  // Constructor for testing with dependency injection
+  FirestoreService.withFirestore(this._firestore);
 
   /// Enable offline persistence for Firestore
   static Future<void> enableOfflinePersistence() async {
