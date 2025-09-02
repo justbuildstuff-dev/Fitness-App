@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import '../../lib/services/firestore_service.dart';
 import '../../lib/models/program.dart';
 import '../../lib/models/week.dart';
@@ -45,7 +45,7 @@ void main() {
     late MockDocumentReference mockDocument;
     
     setUpAll(() async {
-      await Firebase.initializeApp();
+      // No Firebase initialization needed for fake firestore
     });
     
     setUp(() {

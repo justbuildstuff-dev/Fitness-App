@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
@@ -7,7 +7,7 @@ import 'package:fittrack/models/workout.dart';
 
 void main() {
   setUpAll(() async {
-    await Firebase.initializeApp();
+    // No Firebase initialization needed for fake firestore
   });
 
   group('Analytics Edge Cases & Performance', () {

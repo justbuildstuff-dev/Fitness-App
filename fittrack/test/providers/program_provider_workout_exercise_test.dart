@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
@@ -41,7 +41,7 @@ void main() {
     late ExerciseSet testSet;
 
     setUpAll(() async {
-      await Firebase.initializeApp();
+      // No Firebase initialization needed for fake firestore
     });
 
     setUp(() {
