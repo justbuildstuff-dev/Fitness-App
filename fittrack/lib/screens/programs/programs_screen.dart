@@ -261,6 +261,10 @@ class _ProgramCard extends StatelessWidget {
   }
 
   void _deleteProgram(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Program',
@@ -271,11 +275,10 @@ class _ProgramCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
         await programProvider.deleteProgram(program.id);
         
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Program "${program.name}" deleted successfully'),
               behavior: SnackBarBehavior.floating,
@@ -284,10 +287,10 @@ class _ProgramCard extends StatelessWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Failed to delete program: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: errorColor,
               behavior: SnackBarBehavior.floating,
             ),
           );

@@ -274,24 +274,28 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop();
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final errorColor = Theme.of(context).colorScheme.error;
+              
+              navigator.pop();
               final programProvider = Provider.of<ProgramProvider>(context, listen: false);
               final success = await programProvider.archiveProgram(widget.program.id);
               
               if (context.mounted) {
                 if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     const SnackBar(
                       content: Text('Program archived successfully'),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
-                  Navigator.of(context).pop(); // Go back to programs list
+                  navigator.pop(); // Go back to programs list
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Text(programProvider.error ?? 'Failed to archive program'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
+                      backgroundColor: errorColor,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -306,7 +310,10 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
   }
 
   void _navigateToCreateWeek(BuildContext context) async {
-    await Navigator.of(context).push(
+    final navigator = Navigator.of(context);
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    
+    await navigator.push(
       MaterialPageRoute(
         builder: (_) => CreateWeekScreen(program: widget.program),
       ),
@@ -314,7 +321,6 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     
     // Refresh weeks list when returning from create week screen
     if (mounted) {
-      final programProvider = Provider.of<ProgramProvider>(context, listen: false);
       programProvider.loadWeeks(widget.program.id);
     }
   }
@@ -462,6 +468,10 @@ class _WeekCard extends StatelessWidget {
   }
 
   void _deleteWeek(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Week',
@@ -472,11 +482,10 @@ class _WeekCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
         await programProvider.deleteWeekById(week.id);
         
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Week "${week.name}" deleted successfully'),
               behavior: SnackBarBehavior.floating,
@@ -485,10 +494,10 @@ class _WeekCard extends StatelessWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Failed to delete week: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: errorColor,
               behavior: SnackBarBehavior.floating,
             ),
           );

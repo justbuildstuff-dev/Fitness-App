@@ -357,6 +357,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   void _deleteExercise(BuildContext context, Exercise exercise) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Exercise',
@@ -367,11 +371,11 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+        
         await programProvider.deleteExerciseById(exercise.id);
         
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Exercise "${exercise.name}" deleted successfully'),
               behavior: SnackBarBehavior.floating,
@@ -380,10 +384,12 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
+          final errorColor = Theme.of(context).colorScheme.error;
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Failed to delete exercise: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: errorColor,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -433,7 +439,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   void _addExercise(BuildContext context) async {
-    final result = await Navigator.of(context).push<bool>(
+    final navigator = Navigator.of(context);
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    
+    final result = await navigator.push<bool>(
       MaterialPageRoute(
         builder: (context) => CreateExerciseScreen(
           program: widget.program,
@@ -445,7 +454,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (result == true && mounted) {
       // Refresh exercises list
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
       provider.loadExercises(
         widget.program.id,
         widget.week.id,
@@ -455,7 +463,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   void _navigateToExerciseDetail(Exercise exercise) async {
-    await Navigator.of(context).push(
+    final navigator = Navigator.of(context);
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    
+    await navigator.push(
       MaterialPageRoute(
         builder: (context) => ExerciseDetailScreen(
           program: widget.program,
@@ -468,7 +479,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     // Refresh exercises when returning (in case exercise was deleted)
     if (mounted) {
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
       provider.loadExercises(
         widget.program.id,
         widget.week.id,
@@ -478,6 +488,11 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   void _showDeleteConfirmation(BuildContext context) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -500,7 +515,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
+      
       final success = await provider.deleteWorkout(
         widget.program.id,
         widget.week.id,
@@ -509,18 +524,18 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
       if (mounted) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             const SnackBar(
               content: Text('Workout deleted'),
               behavior: SnackBarBehavior.floating,
             ),
           );
-          Navigator.of(context).pop(); // Go back to weeks screen
+          navigator.pop(); // Go back to weeks screen
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(provider.error ?? 'Failed to delete workout'),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: errorColor,
               behavior: SnackBarBehavior.floating,
             ),
           );

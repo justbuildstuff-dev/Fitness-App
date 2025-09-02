@@ -432,6 +432,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   void _addSet(BuildContext context) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => CreateSetScreen(
@@ -445,7 +447,6 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
     if (result == true && mounted) {
       // Refresh sets list
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
       provider.loadSets(
         widget.program.id,
         widget.week.id,
@@ -487,6 +488,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   void _deleteSet(BuildContext context, ExerciseSet set) async {
     final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     
     final confirmed = await showDialog<bool>(
       context: context,
@@ -517,7 +519,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Set deleted'),
             behavior: SnackBarBehavior.floating,
@@ -528,6 +530,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   void _showDeleteConfirmation(BuildContext context) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -550,7 +556,6 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     );
 
     if (confirmed == true && mounted) {
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
       await provider.deleteExercise(
         widget.program.id,
         widget.week.id,
@@ -559,13 +564,13 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Exercise deleted'),
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.of(context).pop(); // Go back to workout screen
+        navigator.pop(); // Go back to workout screen
       }
     }
   }

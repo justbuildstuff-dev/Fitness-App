@@ -264,7 +264,10 @@ class _WeeksScreenState extends State<WeeksScreen> {
   }
 
   void _navigateToCreateWorkout(BuildContext context) async {
-    final result = await Navigator.of(context).push<bool>(
+    final navigator = Navigator.of(context);
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    
+    final result = await navigator.push<bool>(
       MaterialPageRoute(
         builder: (_) => CreateWorkoutScreen(
           program: widget.program,
@@ -275,7 +278,6 @@ class _WeeksScreenState extends State<WeeksScreen> {
     
     // Refresh workouts list if workout was created
     if (result == true && mounted) {
-      final programProvider = Provider.of<ProgramProvider>(context, listen: false);
       programProvider.loadWorkouts(widget.program.id, widget.week.id);
     }
   }
@@ -534,6 +536,10 @@ class _WorkoutCard extends StatelessWidget {
   }
 
   void _deleteWorkout(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Workout',
@@ -544,11 +550,10 @@ class _WorkoutCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        final programProvider = Provider.of<ProgramProvider>(context, listen: false);
         await programProvider.deleteWorkoutById(workout.id);
         
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Workout "${workout.name}" deleted successfully'),
               behavior: SnackBarBehavior.floating,
@@ -557,10 +562,10 @@ class _WorkoutCard extends StatelessWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Failed to delete workout: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: errorColor,
               behavior: SnackBarBehavior.floating,
             ),
           );
