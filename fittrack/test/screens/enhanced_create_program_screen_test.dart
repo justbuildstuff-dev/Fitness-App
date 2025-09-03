@@ -15,6 +15,7 @@
 /// - User experience and navigation flow
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:mockito/mockito.dart';
@@ -36,7 +37,7 @@ void main() {
       // Set up default mock behavior
       when(mockProvider.isLoadingPrograms).thenReturn(false);
       when(mockProvider.error).thenReturn(null);
-      when(mockProvider.createProgram(any)).thenAnswer((_) async => 'new-program-id');
+      when(mockProvider.createProgram(name: any, description: any)).thenAnswer((_) async => 'new-program-id');
     });
 
     group('Screen Rendering and Layout', () {
@@ -121,7 +122,7 @@ void main() {
         expect(find.text('Please enter a program name'), findsOneWidget);
         
         // Verify provider method was not called
-        verifyNever(mockProvider.createProgram(any));
+        verifyNever(mockProvider.createProgram(name: any, description: any));
       });
 
       testWidgets('validates program name length constraints', (WidgetTester tester) async {
@@ -150,7 +151,7 @@ void main() {
 
         // Should show length validation error
         expect(find.textContaining('too long'), findsOneWidget);
-        verifyNever(mockProvider.createProgram(any));
+        verifyNever(mockProvider.createProgram(name: any, description: any));
       });
 
       testWidgets('accepts valid program name input', (WidgetTester tester) async {
@@ -181,7 +182,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify provider method was called
-        verify(mockProvider.createProgram(any)).called(1);
+        verify(mockProvider.createProgram(name: any, description: any)).called(1);
       });
 
       testWidgets('handles optional description field correctly', (WidgetTester tester) async {
@@ -209,7 +210,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should succeed without description
-        verify(mockProvider.createProgram(any)).called(1);
+        verify(mockProvider.createProgram(name: any, description: any)).called(1);
       });
     });
 
@@ -284,7 +285,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify provider was called with correct data
-        final capturedProgram = verify(mockProvider.createProgram(captureAny)).captured.single as Program;
+        verify(mockProvider.createProgram(name: captureAny, description: captureAny)).called(1);
         expect(capturedProgram.name, 'Test Program Name');
         expect(capturedProgram.description, 'Test program description');
       });
@@ -428,7 +429,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify provider method was called
-        verify(mockProvider.createProgram(any)).called(1);
+        verify(mockProvider.createProgram(name: any, description: any)).called(1);
       });
     });
 
@@ -458,7 +459,7 @@ void main() {
 
         // Should show validation error
         expect(find.textContaining('enter a program name'), findsOneWidget);
-        verifyNever(mockProvider.createProgram(any));
+        verifyNever(mockProvider.createProgram(name: any, description: any));
       });
 
       testWidgets('trims whitespace from program name and description', (WidgetTester tester) async {
@@ -490,7 +491,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify trimmed data was passed to provider
-        final capturedProgram = verify(mockProvider.createProgram(captureAny)).captured.single as Program;
+        verify(mockProvider.createProgram(name: captureAny, description: captureAny)).called(1);
         expect(capturedProgram.name, 'Trimmed Program');
         expect(capturedProgram.description, 'Trimmed description');
       });
@@ -524,7 +525,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify unicode input was handled correctly
-        final capturedProgram = verify(mockProvider.createProgram(captureAny)).captured.single as Program;
+        verify(mockProvider.createProgram(name: captureAny, description: captureAny)).called(1);
         expect(capturedProgram.name, contains('Программа'));
         expect(capturedProgram.name, contains('🏋️‍♂️'));
         expect(capturedProgram.description, contains('émojis'));
