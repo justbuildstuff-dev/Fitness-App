@@ -30,26 +30,27 @@ dart test/unified_test_runner.dart --performance
 ```
 test/
 ├── README.md                              # This file
-├── unified_test_runner.dart               # Main test runner
+├── unified_test_runner.dart               # Main test runner  
 ├── COMPREHENSIVE_TESTING_GUIDE.md         # Complete testing guide
 ├── TESTING_BEST_PRACTICES.md              # Best practices and patterns
-├── models/                                # Unit tests for data models
+├── models/                                # Pure Dart unit tests (fast)
 │   ├── enhanced_exercise_test.dart        # Exercise model validation
-│   ├── enhanced_exercise_set_test.dart    # ExerciseSet model validation  
+│   ├── enhanced_exercise_set_test.dart    # ExerciseSet model validation
 │   ├── enhanced_program_test.dart         # Program model validation
-│   └── [existing model tests...]
-├── services/                              # Unit tests for service layer
-│   ├── enhanced_firestore_service_test.dart  # FirestoreService validation
-│   └── [existing service tests...]
-├── screens/                               # Widget tests for UI screens
-│   ├── enhanced_create_program_screen_test.dart  # Screen validation
-│   └── [existing screen tests...]
-├── widgets/                               # Widget tests for custom components
-│   ├── enhanced_delete_confirmation_dialog_test.dart  # Dialog validation
-│   └── [existing widget tests...]
-├── integration/                           # Integration and E2E tests
-│   ├── enhanced_complete_workflow_test.dart  # End-to-end workflows
-│   └── [existing integration tests...]
+│   └── [other model tests...]            # All use package:test
+├── services/                              # Pure business logic tests
+│   └── firestore_service_logic_test.dart # Service logic (no Firebase)
+├── screens/                               # Flutter widget tests
+│   ├── enhanced_create_program_screen_test.dart  # Screen UI testing
+│   └── [screen tests...]                 # Use flutter_test + mocked providers
+├── widgets/                               # Custom component tests
+│   ├── enhanced_delete_confirmation_dialog_test.dart  # Dialog testing
+│   └── [widget tests...]                 # Use flutter_test + mocked providers
+├── integration/                           # Firebase + Flutter integration
+│   ├── enhanced_complete_workflow_test.dart      # End-to-end workflows
+│   ├── program_provider_edit_delete_test.dart    # Provider + Firebase
+│   ├── enhanced_firestore_service_test.dart      # Service + Firebase  
+│   └── [Firebase-dependent tests...]             # Use emulator
 ├── mocks/                                 # Mock utilities and configurations
 │   └── firebase_mocks.dart               # Firebase mocking utilities
 ├── test_utilities/                        # Test helpers and utilities
@@ -74,34 +75,38 @@ test/
 
 ## 🧪 Test Categories
 
-### 1. Unit Tests (40% of suite)
-Test individual components in isolation with mocked dependencies.
+### 1. Unit Tests (50% of suite) - **Pure Dart, Super Fast**
+Test individual components in isolation without any Flutter or Firebase dependencies.
 
-**Coverage**: Models, Services, Providers  
-**Speed**: < 100ms per test  
-**Dependencies**: None (fully mocked)
+**Coverage**: Models, Pure business logic  
+**Framework**: `package:test` (not flutter_test)  
+**Speed**: < 50ms per test  
+**Dependencies**: None (no Flutter, no Firebase)
 
 ```bash
-flutter test test/models/ test/services/ test/providers/
+# Fast unit tests using Dart VM directly
+dart test test/models/ test/services/
 ```
 
-### 2. Widget Tests (30% of suite)  
+### 2. Widget Tests (30% of suite) - **Flutter UI Testing**  
 Test UI components and user interactions with mocked backends.
 
 **Coverage**: Screens, Custom Widgets, Forms  
+**Framework**: `flutter_test` with mocked providers  
 **Speed**: < 5 seconds per test  
-**Dependencies**: Mocked providers/services
+**Dependencies**: Mocked providers/services (no Firebase calls)
 
 ```bash
 flutter test test/screens/ test/widgets/
 ```
 
-### 3. Integration Tests (20% of suite)
-Test component interactions with real Firebase emulators.
+### 3. Integration Tests (20% of suite) - **Firebase + Flutter**
+Test complete component interactions with Firebase emulators.
 
-**Coverage**: Firebase integration, Cross-component workflows  
+**Coverage**: Providers + Firebase, Service + Firebase, E2E workflows  
+**Framework**: `flutter_test` + Firebase emulator  
 **Speed**: < 30 seconds per test  
-**Dependencies**: Firebase emulators
+**Dependencies**: Firebase emulators, Flutter framework
 
 ```bash
 firebase emulators:start --only auth,firestore --detached
