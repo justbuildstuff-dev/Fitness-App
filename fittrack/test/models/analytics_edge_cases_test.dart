@@ -125,7 +125,7 @@ void main() {
         expect(heatmapData.totalWorkouts, equals(workouts.length));
         expect(heatmapData.dailyWorkoutCounts.length, greaterThan(200)); // Should have many days with workouts
         
-        // Generate all heatmap days (366 for leap year)
+        // Generate all heatmap days (366 for leap year 2024)
         final heatmapDays = heatmapData.getHeatmapDays();
         expect(heatmapDays.length, equals(366));
         
@@ -492,8 +492,8 @@ void main() {
             id: 'w$i',
             name: 'Workout $i',
             orderIndex: i,
-            createdAt: DateTime.now().subtract(Duration(days: i)),
-            updatedAt: DateTime.now().subtract(Duration(days: i)),
+            createdAt: DateTime.now().subtract(Duration(days: i % 300)), // Keep within date range
+            updatedAt: DateTime.now().subtract(Duration(days: i % 300)),
             userId: 'test_user',
             weekId: 'week1',
             programId: 'prog1',

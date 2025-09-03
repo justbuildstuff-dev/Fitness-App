@@ -303,9 +303,8 @@ void main() {
         );
 
         final updated = original.copyWith(
-          name: null, // Should preserve original
-          description: null, // Should preserve original
-          isArchived: null, // Should preserve original
+          // Don't pass parameters to preserve original values
+          updatedAt: testDate.add(Duration(hours: 1)),
         );
 
         expect(updated.name, 'Null Test Program');

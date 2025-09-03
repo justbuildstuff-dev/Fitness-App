@@ -151,7 +151,14 @@ class PersonalRecord {
       case PRType.maxDuration:
         final minutes = value ~/ 60;
         final seconds = (value % 60).toInt();
-        return minutes > 0 ? '${minutes}m ${seconds}s' : '${seconds}s';
+        // For durations under 2 minutes, show seconds only for simplicity
+        if (value < 120) {
+          return '${value.toInt()}s';
+        } else if (minutes > 0 && seconds == 0) {
+          return '${minutes}m';
+        } else {
+          return '${minutes}m ${seconds}s';
+        }
       case PRType.maxDistance:
         return value >= 1000 
             ? '${(value / 1000).toStringAsFixed(2)}km'

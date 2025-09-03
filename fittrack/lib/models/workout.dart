@@ -34,8 +34,7 @@ class Workout {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
-      'weekId': weekId,
-      'programId': programId,
+      // weekId and programId are path parameters, not document fields
     };
   }
 
