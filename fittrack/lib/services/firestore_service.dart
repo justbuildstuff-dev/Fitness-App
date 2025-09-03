@@ -600,7 +600,7 @@ class FirestoreService {
 
           for (final setDoc in srcSetsSnap.docs) {
             // Create ExerciseSet object from source data to use its built-in duplication logic
-            final sourceSet = ExerciseSet.fromFirestore(
+            final sourceSet = ExerciseSetConverter.fromFirestore(
               setDoc,
               exerciseDoc.id,
               workoutDoc.id,

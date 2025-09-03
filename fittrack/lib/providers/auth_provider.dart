@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
+import '../converters/user_profile_converter.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -186,7 +187,7 @@ class AuthProvider extends ChangeNotifier {
     await _firestore
         .collection('users')
         .doc(user.uid)
-        .set(userProfile.toFirestore());
+        .set(UserProfileConverter.toFirestore(userProfile));
   }
 
   Future<void> _loadUserProfile() async {
