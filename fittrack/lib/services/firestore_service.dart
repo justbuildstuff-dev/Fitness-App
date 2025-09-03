@@ -5,6 +5,7 @@ import '../models/week.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../converters/program_converter.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -106,7 +107,7 @@ class FirestoreService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Program.fromFirestore(doc))
+            .map((doc) => ProgramConverter.fromFirestore(doc))
             .toList());
   }
 
@@ -118,7 +119,7 @@ class FirestoreService {
         .collection('programs')
         .doc(programId)
         .snapshots()
-        .map((snapshot) => snapshot.exists ? Program.fromFirestore(snapshot) : null);
+        .map((snapshot) => snapshot.exists ? ProgramConverter.fromFirestore(snapshot) : null);
   }
 
   /// Create a new program
@@ -127,7 +128,7 @@ class FirestoreService {
         .collection('users')
         .doc(program.userId)
         .collection('programs')
-        .add(program.toFirestore());
+        .add(ProgramConverter.toFirestore(program));
     return docRef.id;
   }
 
@@ -138,7 +139,7 @@ class FirestoreService {
         .doc(program.userId)
         .collection('programs')
         .doc(program.id)
-        .update(program.toFirestore());
+        .update(ProgramConverter.toFirestore(program));
   }
 
   /// Update program with specific fields

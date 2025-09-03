@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 // Helper class to distinguish between null and not provided in copyWith
 class _NoValue {
   const _NoValue();
@@ -24,25 +22,13 @@ class Program {
     this.isArchived = false,
   });
 
-  factory Program.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Program(
-      id: doc.id,
-      name: data['name'] ?? '',
-      description: data['description'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      userId: data['userId'] ?? '',
-      isArchived: data['isArchived'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  /// Convert Program to basic Map format (Firebase conversion handled by converter)
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'description': description,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
       'isArchived': isArchived,
     };

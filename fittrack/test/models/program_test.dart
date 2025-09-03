@@ -136,7 +136,7 @@ void main() {
     });
 
     group('Data Serialization', () {
-      test('toFirestore includes all necessary fields', () {
+      test('toMap includes all necessary fields', () {
         /// Test Purpose: Verify that program data serializes correctly for storage
         /// Missing or incorrectly formatted fields could cause database write failures
         
@@ -150,30 +150,32 @@ void main() {
           isArchived: true,
         );
 
-        final firestoreData = program.toFirestore();
+        final mapData = program.toMap();
 
         // Verify all fields are present with correct values
-        expect(firestoreData['name'], equals('Full Body Routine'));
-        expect(firestoreData['description'], equals('A complete full body workout program'));
-        expect(firestoreData['userId'], equals('user-456'));
-        expect(firestoreData['isArchived'], isTrue);
+        expect(mapData['name'], equals('Full Body Routine'));
+        expect(mapData['description'], equals('A complete full body workout program'));
+        expect(mapData['userId'], equals('user-456'));
+        expect(mapData['isArchived'], isTrue);
         
-        // Verify timestamps are included
-        expect(firestoreData.containsKey('createdAt'), isTrue);
-        expect(firestoreData.containsKey('updatedAt'), isTrue);
+        // Verify timestamps are included as ISO strings
+        expect(mapData.containsKey('createdAt'), isTrue);
+        expect(mapData.containsKey('updatedAt'), isTrue);
+        expect(mapData['createdAt'], isA<String>());
+        expect(mapData['updatedAt'], isA<String>());
 
         // Verify ID is NOT included (it's a document ID, not a field)
-        expect(firestoreData, isNot(contains('id')));
+        expect(mapData, isNot(contains('id')));
       });
 
-      test('toFirestore handles null description correctly', () {
+      test('toMap handles null description correctly', () {
         /// Test Purpose: Verify that null optional fields are preserved in data
         /// Null values should be explicitly included to match storage rules
         
         final program = _createTestProgram(description: null);
-        final firestoreData = program.toFirestore();
+        final mapData = program.toMap();
 
-        expect(firestoreData['description'], isNull,
+        expect(mapData['description'], isNull,
           reason: 'Null description should be preserved, not omitted');
       });
     });
