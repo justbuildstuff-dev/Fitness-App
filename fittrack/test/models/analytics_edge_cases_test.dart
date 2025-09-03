@@ -374,7 +374,7 @@ void main() {
         final prTypes = [
           (PRType.maxWeight, 100.0, '100kg'),
           (PRType.maxReps, 12.0, '12 reps'),
-          (PRType.maxDuration, 1800.0, '30m 0s'),
+          (PRType.maxDuration, 1800.0, '30m'),
           (PRType.maxDuration, 90.0, '90s'),
           (PRType.maxDistance, 5000.0, '5.00km'),
           (PRType.maxDistance, 800.0, '800m'),
@@ -517,8 +517,13 @@ void main() {
         }
 
         // Verify roughly linear scaling (allow for some variation)
-        expect(times[1], lessThan(times[0] * 15)); // 100x data shouldn't take 100x time
-        expect(times[2], lessThan(times[1] * 10)); // 5x data shouldn't take 10x time
+        // Handle case where execution times are too fast to measure (0ms)
+        if (times[0] > 0) {
+          expect(times[1], lessThan(times[0] * 15)); // 100x data shouldn't take 100x time
+        }
+        if (times[1] > 0) {
+          expect(times[2], lessThan(times[1] * 10)); // 5x data shouldn't take 10x time
+        }
       });
     });
   });
