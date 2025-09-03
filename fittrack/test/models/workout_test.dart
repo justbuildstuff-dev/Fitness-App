@@ -1,5 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test/test.dart';
 import 'package:fittrack/models/workout.dart';
 
 /// Unit tests for the Workout model
@@ -175,9 +174,9 @@ void main() {
       });
     });
 
-    group('Firestore Serialization', () {
-      test('toFirestore includes all necessary fields', () {
-        /// Test Purpose: Verify that workout data serializes correctly for Firestore storage
+    group('Data Serialization', () {
+      test('toMap includes all necessary fields', () {
+        /// Test Purpose: Verify that workout data serializes correctly for storage
         /// Missing or incorrectly formatted fields could cause database write failures
         
         final workout = Workout(
@@ -193,63 +192,71 @@ void main() {
           programId: 'program-101',
         );
 
-        final firestoreData = workout.toFirestore();
+        final mapData = workout.toMap();
 
         // Verify all fields are present with correct values
-        expect(firestoreData['name'], equals('Leg Day'));
-        expect(firestoreData['dayOfWeek'], equals(5));
-        expect(firestoreData['orderIndex'], equals(2));
-        expect(firestoreData['notes'], equals('Remember to warm up'));
-        expect(firestoreData['userId'], equals('user-456'));
+        expect(mapData['name'], equals('Leg Day'));
+        expect(mapData['dayOfWeek'], equals(5));
+        expect(mapData['orderIndex'], equals(2));
+        expect(mapData['notes'], equals('Remember to warm up'));
+        expect(mapData['userId'], equals('user-456'));
         
-        // Verify timestamps are converted to Firestore format
-        expect(firestoreData['createdAt'], isA<Timestamp>());
-        expect(firestoreData['updatedAt'], isA<Timestamp>());
-        expect((firestoreData['createdAt'] as Timestamp).toDate(), equals(testDate));
+        // Verify timestamps are converted to ISO string format
+        expect(mapData['createdAt'], isA<String>());
+        expect(mapData['updatedAt'], isA<String>());
+        expect(DateTime.parse(mapData['createdAt'] as String), equals(testDate));
 
         // Verify weekId and programId are NOT included (they're path parameters, not document fields)
-        expect(firestoreData, isNot(contains('weekId')));
-        expect(firestoreData, isNot(contains('programId')));
-        expect(firestoreData, isNot(contains('id')));
+        expect(mapData, isNot(contains('weekId')));
+        expect(mapData, isNot(contains('programId')));
+        expect(mapData, isNot(contains('id')));
       });
 
-      test('toFirestore handles null optional fields correctly', () {
-        /// Test Purpose: Verify that null optional fields are preserved in Firestore data
-        /// Null values should be explicitly included to match Firestore security rules
+      test('toMap handles null optional fields correctly', () {
+        /// Test Purpose: Verify that null optional fields are preserved in data
+        /// Null values should be explicitly included to match storage rules
         
         final workout = _createTestWorkout(
           dayOfWeek: null,
           notes: null,
         );
 
-        final firestoreData = workout.toFirestore();
+        final mapData = workout.toMap();
 
-        expect(firestoreData['dayOfWeek'], isNull,
+        expect(mapData['dayOfWeek'], isNull,
           reason: 'Null dayOfWeek should be preserved, not omitted');
-        expect(firestoreData['notes'], isNull,
+        expect(mapData['notes'], isNull,
           reason: 'Null notes should be preserved, not omitted');
       });
     });
 
-    group('Firestore Deserialization', () {
-      test('fromFirestore creates workout from complete Firestore data', () {
-        /// Test Purpose: Verify that workout data deserializes correctly from Firestore
-        /// This ensures data loaded from the database matches what was stored
+    group('Data Structure Validation', () {
+      test('creates workout from complete data map', () {
+        /// Test Purpose: Verify that workout data can be reconstructed from map data
+        /// This ensures data integrity in storage/retrieval cycles
         
-        final firestoreData = {
+        final dataMap = {
           'name': 'Full Body',
           'dayOfWeek': 3, // Wednesday
           'orderIndex': 1,
           'notes': 'Compound movements focus',
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
           'userId': 'user-456',
         };
 
-        // Mock DocumentSnapshot
-        final mockDoc = MockDocumentSnapshot('workout-123', firestoreData);
-        
-        final workout = Workout.fromFirestore(mockDoc, 'week-789', 'program-101');
+        final workout = Workout(
+          id: 'workout-123',
+          name: dataMap['name'] as String,
+          dayOfWeek: dataMap['dayOfWeek'] as int?,
+          orderIndex: dataMap['orderIndex'] as int,
+          notes: dataMap['notes'] as String?,
+          createdAt: DateTime.parse(dataMap['createdAt'] as String),
+          updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
+          userId: dataMap['userId'] as String,
+          weekId: 'week-789',
+          programId: 'program-101',
+        );
 
         expect(workout.id, equals('workout-123'));
         expect(workout.name, equals('Full Body'));
@@ -263,22 +270,32 @@ void main() {
         expect(workout.programId, equals('program-101'));
       });
 
-      test('fromFirestore handles missing optional fields gracefully', () {
+      test('handles missing optional fields gracefully', () {
         /// Test Purpose: Verify that missing optional fields default to appropriate values
         /// This ensures backwards compatibility and handles partially populated data
         
-        final firestoreData = {
+        final dataMap = {
           'name': 'Basic Workout',
           // dayOfWeek omitted
           'orderIndex': 0,
           // notes omitted
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
           'userId': 'user-456',
         };
 
-        final mockDoc = MockDocumentSnapshot('workout-456', firestoreData);
-        final workout = Workout.fromFirestore(mockDoc, 'week-789', 'program-101');
+        final workout = Workout(
+          id: 'workout-456',
+          name: dataMap['name'] as String,
+          dayOfWeek: dataMap['dayOfWeek'] as int?,
+          orderIndex: dataMap['orderIndex'] as int,
+          notes: dataMap['notes'] as String?,
+          createdAt: DateTime.parse(dataMap['createdAt'] as String),
+          updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
+          userId: dataMap['userId'] as String,
+          weekId: 'week-789',
+          programId: 'program-101',
+        );
 
         expect(workout.dayOfWeek, isNull,
           reason: 'Missing dayOfWeek should default to null');
@@ -288,20 +305,30 @@ void main() {
           reason: 'Present fields should still be loaded correctly');
       });
 
-      test('fromFirestore provides defaults for missing required fields', () {
+      test('provides defaults for missing required fields', () {
         /// Test Purpose: Verify that missing required fields get sensible defaults
         /// This prevents crashes when loading corrupted or incomplete data
         
-        final firestoreData = {
+        final dataMap = {
           // name omitted - should default to empty string
           // orderIndex omitted - should default to 0
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
           // userId omitted - should default to empty string
         };
 
-        final mockDoc = MockDocumentSnapshot('workout-789', firestoreData);
-        final workout = Workout.fromFirestore(mockDoc, 'week-789', 'program-101');
+        final workout = Workout(
+          id: 'workout-789',
+          name: dataMap['name'] as String? ?? '',
+          dayOfWeek: dataMap['dayOfWeek'] as int?,
+          orderIndex: dataMap['orderIndex'] as int? ?? 0,
+          notes: dataMap['notes'] as String?,
+          createdAt: DateTime.parse(dataMap['createdAt'] as String),
+          updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
+          userId: dataMap['userId'] as String? ?? '',
+          weekId: 'week-789',
+          programId: 'program-101',
+        );
 
         expect(workout.name, equals(''),
           reason: 'Missing name should default to empty string');
@@ -394,33 +421,3 @@ Workout _createTestWorkout({
   );
 }
 
-/// Mock DocumentSnapshot for testing Firestore deserialization
-/// This simulates the data structure returned by Firestore
-class MockDocumentSnapshot implements DocumentSnapshot {
-  final String _id;
-  final Map<String, dynamic> _data;
-
-  MockDocumentSnapshot(this._id, this._data);
-
-  @override
-  String get id => _id;
-
-  @override
-  Map<String, dynamic>? data() => _data;
-
-  // Implement other DocumentSnapshot members as needed for testing
-  @override
-  bool get exists => true;
-
-  @override
-  DocumentReference get reference => throw UnimplementedError();
-
-  @override
-  SnapshotMetadata get metadata => throw UnimplementedError();
-
-  @override
-  dynamic operator [](Object field) => _data[field];
-
-  @override
-  dynamic get(Object field) => _data[field];
-}

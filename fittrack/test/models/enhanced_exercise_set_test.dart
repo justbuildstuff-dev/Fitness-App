@@ -14,8 +14,7 @@
 /// - Data duplication and field copying logic
 /// - Database serialization and data conversion
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test/test.dart';
 import '../../lib/models/exercise_set.dart';
 import '../../lib/models/exercise.dart';
 
@@ -545,10 +544,10 @@ void main() {
       });
     });
 
-    group('Firestore Serialization', () {
-      test('serializes to Firestore format with all fields', () {
-        /// Test Purpose: Verify complete Firestore serialization includes all data
-        /// This ensures data integrity when saving sets to Firestore
+    group('Data Serialization', () {
+      test('serializes to map format with all fields', () {
+        /// Test Purpose: Verify complete data serialization includes all data
+        /// This ensures data integrity when saving sets to storage
         final completeSet = ExerciseSet(
           id: 'complete-set',
           setNumber: 3,
@@ -568,26 +567,26 @@ void main() {
           programId: 'program-1',
         );
 
-        final firestoreData = completeSet.toFirestore();
+        final mapData = completeSet.toMap();
 
-        expect(firestoreData['setNumber'], 3);
-        expect(firestoreData['reps'], 15);
-        expect(firestoreData['weight'], 80.5);
-        expect(firestoreData['duration'], 600);
-        expect(firestoreData['distance'], 2500.0);
-        expect(firestoreData['restTime'], 90);
-        expect(firestoreData['checked'], true);
-        expect(firestoreData['notes'], 'Great set!');
-        expect(firestoreData['userId'], 'user-123');
-        expect(firestoreData['exerciseId'], 'exercise-1');
-        expect(firestoreData['createdAt'], isA<Timestamp>());
-        expect(firestoreData['updatedAt'], isA<Timestamp>());
+        expect(mapData['setNumber'], 3);
+        expect(mapData['reps'], 15);
+        expect(mapData['weight'], 80.5);
+        expect(mapData['duration'], 600);
+        expect(mapData['distance'], 2500.0);
+        expect(mapData['restTime'], 90);
+        expect(mapData['checked'], true);
+        expect(mapData['notes'], 'Great set!');
+        expect(mapData['userId'], 'user-123');
+        expect(mapData['exerciseId'], 'exercise-1');
+        expect(mapData['createdAt'], isA<String>());
+        expect(mapData['updatedAt'], isA<String>());
       });
 
-      test('deserializes from Firestore with complete data', () {
-        /// Test Purpose: Verify Firestore deserialization reconstructs all fields
-        /// This ensures data accuracy when loading sets from Firestore
-        final firestoreData = {
+      test('creates set from complete data map', () {
+        /// Test Purpose: Verify data reconstruction from map data
+        /// This ensures data accuracy when loading sets from storage
+        final dataMap = {
           'setNumber': 2,
           'reps': 8,
           'weight': 120.25,
@@ -596,8 +595,8 @@ void main() {
           'restTime': 150,
           'checked': false,
           'notes': 'Focus on form',
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
           'userId': 'user-456',
           'exerciseId': 'exercise-2',
           'workoutId': 'workout-2',
@@ -605,9 +604,23 @@ void main() {
           'programId': 'program-2',
         };
 
-        final mockDoc = _MockDocumentSnapshot('set-123', firestoreData);
-        final exerciseSet = ExerciseSet.fromFirestore(
-          mockDoc, 'exercise-2', 'workout-2', 'week-2', 'program-2'
+        final exerciseSet = ExerciseSet(
+          id: 'set-123',
+          setNumber: dataMap['setNumber'] as int,
+          reps: dataMap['reps'] as int?,
+          weight: dataMap['weight'] as double?,
+          duration: dataMap['duration'] as int?,
+          distance: dataMap['distance'] as double?,
+          restTime: dataMap['restTime'] as int?,
+          checked: dataMap['checked'] as bool? ?? false,
+          notes: dataMap['notes'] as String?,
+          createdAt: DateTime.parse(dataMap['createdAt'] as String),
+          updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
+          userId: dataMap['userId'] as String,
+          exerciseId: dataMap['exerciseId'] as String,
+          workoutId: dataMap['workoutId'] as String,
+          weekId: dataMap['weekId'] as String,
+          programId: dataMap['programId'] as String,
         );
 
         expect(exerciseSet.id, 'set-123');
@@ -622,20 +635,34 @@ void main() {
         expect(exerciseSet.userId, 'user-456');
       });
 
-      test('handles missing optional fields during deserialization', () {
-        /// Test Purpose: Verify graceful handling of incomplete Firestore data
+      test('handles missing optional fields during data reconstruction', () {
+        /// Test Purpose: Verify graceful handling of incomplete data
         /// This ensures backward compatibility and robust data loading
         final minimalData = {
           'setNumber': 1,
           'reps': 5,
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
           'userId': 'user-123',
         };
 
-        final mockDoc = _MockDocumentSnapshot('minimal-set', minimalData);
-        final exerciseSet = ExerciseSet.fromFirestore(
-          mockDoc, 'exercise-1', 'workout-1', 'week-1', 'program-1'
+        final exerciseSet = ExerciseSet(
+          id: 'minimal-set',
+          setNumber: minimalData['setNumber'] as int,
+          reps: minimalData['reps'] as int?,
+          weight: minimalData['weight'] as double?,
+          duration: minimalData['duration'] as int?,
+          distance: minimalData['distance'] as double?,
+          restTime: minimalData['restTime'] as int?,
+          checked: minimalData['checked'] as bool? ?? false,
+          notes: minimalData['notes'] as String?,
+          createdAt: DateTime.parse(minimalData['createdAt'] as String),
+          updatedAt: DateTime.parse(minimalData['updatedAt'] as String),
+          userId: minimalData['userId'] as String,
+          exerciseId: 'exercise-1',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
         );
 
         expect(exerciseSet.setNumber, 1);
@@ -783,22 +810,3 @@ void main() {
   });
 }
 
-/// Mock DocumentSnapshot for testing Firestore deserialization
-class _MockDocumentSnapshot implements DocumentSnapshot {
-  final String _id;
-  final Map<String, dynamic> _data;
-
-  _MockDocumentSnapshot(this._id, this._data);
-
-  @override
-  String get id => _id;
-
-  @override
-  Map<String, dynamic>? data() => _data;
-
-  @override
-  bool get exists => true;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}

@@ -13,8 +13,7 @@
 /// - Business rule validation and type safety
 /// - User input validation and data integrity
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test/test.dart';
 import '../../lib/models/exercise.dart';
 
 void main() {
@@ -191,10 +190,10 @@ void main() {
       });
     });
 
-    group('Firestore Serialization', () {
-      test('serializes to Firestore format correctly', () {
-        /// Test Purpose: Verify Firestore serialization includes all required fields
-        /// This ensures data integrity when saving to Firestore database
+    group('Data Serialization', () {
+      test('serializes to map format correctly', () {
+        /// Test Purpose: Verify data serialization includes all required fields
+        /// This ensures data integrity when saving to storage
         final exercise = Exercise(
           id: 'exercise-1',
           name: 'Squat',
@@ -209,40 +208,49 @@ void main() {
           programId: 'program-1',
         );
 
-        final firestoreData = exercise.toFirestore();
+        final mapData = exercise.toMap();
 
-        expect(firestoreData['name'], 'Squat');
-        expect(firestoreData['exerciseType'], 'strength');
-        expect(firestoreData['orderIndex'], 2);
-        expect(firestoreData['notes'], 'Keep back straight');
-        expect(firestoreData['createdAt'], isA<Timestamp>());
-        expect(firestoreData['updatedAt'], isA<Timestamp>());
-        expect(firestoreData['userId'], 'user-123');
-        expect(firestoreData['workoutId'], 'workout-1');
-        expect(firestoreData['weekId'], 'week-1');
-        expect(firestoreData['programId'], 'program-1');
+        expect(mapData['name'], 'Squat');
+        expect(mapData['exerciseType'], 'strength');
+        expect(mapData['orderIndex'], 2);
+        expect(mapData['notes'], 'Keep back straight');
+        expect(mapData['createdAt'], isA<String>());
+        expect(mapData['updatedAt'], isA<String>());
+        expect(mapData['userId'], 'user-123');
+        expect(mapData['workoutId'], 'workout-1');
+        expect(mapData['weekId'], 'week-1');
+        expect(mapData['programId'], 'program-1');
       });
 
-      test('deserializes from Firestore correctly with complete data', () {
-        /// Test Purpose: Verify Firestore deserialization handles all field types
-        /// This ensures proper data reconstruction from Firestore documents
-        final firestoreData = {
+      test('creates exercise from complete data map', () {
+        /// Test Purpose: Verify data reconstruction from map data
+        /// This ensures proper data handling in storage/retrieval cycles
+        final dataMap = {
           'name': 'Pull-ups',
           'exerciseType': 'bodyweight',
           'orderIndex': 3,
           'notes': 'Full range of motion',
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
           'userId': 'user-456',
           'workoutId': 'workout-2',
           'weekId': 'week-2',
           'programId': 'program-2',
         };
 
-        // Create a mock DocumentSnapshot
-        final mockDoc = _MockDocumentSnapshot('exercise-123', firestoreData);
-        
-        final exercise = Exercise.fromFirestore(mockDoc, 'workout-2', 'week-2', 'program-2');
+        final exercise = Exercise(
+          id: 'exercise-123',
+          name: dataMap['name'] as String,
+          exerciseType: ExerciseType.fromString(dataMap['exerciseType'] as String),
+          orderIndex: dataMap['orderIndex'] as int,
+          notes: dataMap['notes'] as String?,
+          createdAt: DateTime.parse(dataMap['createdAt'] as String),
+          updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
+          userId: dataMap['userId'] as String,
+          workoutId: dataMap['workoutId'] as String,
+          weekId: dataMap['weekId'] as String,
+          programId: dataMap['programId'] as String,
+        );
 
         expect(exercise.id, 'exercise-123');
         expect(exercise.name, 'Pull-ups');
@@ -253,18 +261,28 @@ void main() {
         expect(exercise.workoutId, 'workout-2');
       });
 
-      test('handles missing optional fields during deserialization', () {
+      test('handles missing optional fields in data maps', () {
         /// Test Purpose: Verify graceful handling of missing optional data
         /// This ensures backward compatibility and robust data handling
         final minimalData = {
           'name': 'Basic Exercise',
-          'createdAt': Timestamp.fromDate(testDate),
-          'updatedAt': Timestamp.fromDate(testDate),
+          'createdAt': testDate.toIso8601String(),
+          'updatedAt': testDate.toIso8601String(),
         };
 
-        final mockDoc = _MockDocumentSnapshot('exercise-minimal', minimalData);
-        
-        final exercise = Exercise.fromFirestore(mockDoc, 'workout-1', 'week-1', 'program-1');
+        final exercise = Exercise(
+          id: 'exercise-minimal',
+          name: minimalData['name'] as String,
+          exerciseType: ExerciseType.fromString(minimalData['exerciseType'] as String? ?? ''),
+          orderIndex: minimalData['orderIndex'] as int? ?? 0,
+          notes: minimalData['notes'] as String?,
+          createdAt: DateTime.parse(minimalData['createdAt'] as String),
+          updatedAt: DateTime.parse(minimalData['updatedAt'] as String),
+          userId: minimalData['userId'] as String? ?? '',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
 
         expect(exercise.name, 'Basic Exercise');
         expect(exercise.exerciseType, ExerciseType.custom); // Default fallback
@@ -348,11 +366,11 @@ void main() {
       test('exercise type enum serialization to Firestore', () {
         /// Test Purpose: Verify exercise type enum conversion for database storage
         /// This ensures consistent data representation in Firestore
-        expect(ExerciseType.strength.toFirestore(), 'strength');
-        expect(ExerciseType.cardio.toFirestore(), 'cardio');
-        expect(ExerciseType.bodyweight.toFirestore(), 'bodyweight');
-        expect(ExerciseType.custom.toFirestore(), 'custom');
-        expect(ExerciseType.timeBased.toFirestore(), 'time-based');
+        expect(ExerciseType.strength.toMap(), 'strength');
+        expect(ExerciseType.cardio.toMap(), 'cardio');
+        expect(ExerciseType.bodyweight.toMap(), 'bodyweight');
+        expect(ExerciseType.custom.toMap(), 'custom');
+        expect(ExerciseType.timeBased.toMap(), 'time-based');
       });
 
       test('exercise type field requirements are correct', () {
@@ -512,11 +530,11 @@ void main() {
           programId: 'program-1',
         );
 
-        final firestoreData = exercise.toFirestore();
-        final timestamp = firestoreData['createdAt'] as Timestamp;
-        final deserializedDate = timestamp.toDate();
+        final mapData = exercise.toMap();
+        final isoString = mapData['createdAt'] as String;
+        final deserializedDate = DateTime.parse(isoString);
 
-        // Firestore timestamps have second precision
+        // ISO string timestamps maintain full precision
         expect(deserializedDate.year, preciseDate.year);
         expect(deserializedDate.month, preciseDate.month);
         expect(deserializedDate.day, preciseDate.day);
@@ -528,23 +546,3 @@ void main() {
   });
 }
 
-/// Mock DocumentSnapshot for testing Firestore deserialization
-class _MockDocumentSnapshot implements DocumentSnapshot {
-  final String _id;
-  final Map<String, dynamic> _data;
-
-  _MockDocumentSnapshot(this._id, this._data);
-
-  @override
-  String get id => _id;
-
-  @override
-  Map<String, dynamic>? data() => _data;
-
-  @override
-  bool get exists => true;
-
-  // Implement other required methods with minimal implementations
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}

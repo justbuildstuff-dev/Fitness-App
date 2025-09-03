@@ -176,7 +176,7 @@ void main() {
 
         verify(mockExerciseDoc.update(argThat(allOf([
           containsPair('name', newName),
-          containsPair('exerciseType', newType.toFirestore()),
+          containsPair('exerciseType', newType.toMap()),
           containsPair('notes', newNotes),
           contains('updatedAt'),
         ])))).called(1);
@@ -205,7 +205,7 @@ void main() {
         );
 
         verify(mockExerciseDoc.update(argThat(
-          containsPair('exerciseType', ExerciseType.cardio.toFirestore())
+          containsPair('exerciseType', ExerciseType.cardio.toMap())
         ))).called(1);
       });
 
