@@ -222,6 +222,23 @@ enum PRType {
     }
   }
 
+  String toMap() {
+    switch (this) {
+      case PRType.oneRepMax:
+        return 'onerepmax';
+      case PRType.maxWeight:
+        return 'maxweight';
+      case PRType.maxReps:
+        return 'maxreps';
+      case PRType.maxVolume:
+        return 'maxvolume';
+      case PRType.maxDuration:
+        return 'maxduration';
+      case PRType.maxDistance:
+        return 'maxdistance';
+    }
+  }
+
   static PRType fromString(String value) {
     switch (value.toLowerCase()) {
       case 'onerepmax':
@@ -247,22 +264,6 @@ enum PRType {
     }
   }
 
-  String toFirestore() {
-    switch (this) {
-      case PRType.oneRepMax:
-        return 'one_rep_max';
-      case PRType.maxWeight:
-        return 'max_weight';
-      case PRType.maxReps:
-        return 'max_reps';
-      case PRType.maxVolume:
-        return 'max_volume';
-      case PRType.maxDuration:
-        return 'max_duration';
-      case PRType.maxDistance:
-        return 'max_distance';
-    }
-  }
 }
 
 /// Activity heatmap data for GitHub-style visualization
