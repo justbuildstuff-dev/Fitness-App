@@ -84,7 +84,7 @@ jobs:
       run: |
         cd fittrack
         flutter test test/screens/ test/widgets/ \
-          --reporter=compactwidget.json
+          --reporter=github
           
 
   integration-tests:
@@ -131,7 +131,7 @@ jobs:
       run: |
         cd fittrack
         flutter test test/integration/ \
-          --reporter=compactintegration.json
+          --reporter=github
           
     - name: Stop Firebase emulators
       if: always()
@@ -161,8 +161,8 @@ jobs:
     - name: Run performance tests
       run: |
         cd fittrack
-        flutter test test/performance/ \
-          --reporter=compactperformance.json
+        flutter test test/models/analytics_edge_cases_test.dart \
+          --reporter=github
           
 
   # Enhanced tests with comprehensive coverage
@@ -199,7 +199,7 @@ jobs:
         cd fittrack
         flutter test test/models/enhanced_*.dart test/services/enhanced_*.dart \
           --coverage \
-          --reporter=verbose
+          --reporter=github
           
     - name: Start Firebase emulators for enhanced integration
       run: |
@@ -211,7 +211,7 @@ jobs:
       run: |
         cd fittrack
         flutter test test/integration/enhanced_*.dart \
-          --reporter=verbose
+          --reporter=github
           
     - name: Stop emulators
       if: always()
