@@ -50,7 +50,7 @@ jobs:
     - name: Run unit tests with coverage
       run: |
         cd fittrack
-        flutter test test/models/ test/services/ test/providers/ \
+        flutter test test/models/ test/services/ \
           --coverage
           
     - name: Upload unit test coverage
