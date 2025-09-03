@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'exercise.dart';
 
 class ExerciseSet {
@@ -38,35 +37,8 @@ class ExerciseSet {
     required this.programId,
   });
 
-  factory ExerciseSet.fromFirestore(
-    DocumentSnapshot doc,
-    String exerciseId,
-    String workoutId,
-    String weekId,
-    String programId,
-  ) {
-    final data = doc.data() as Map<String, dynamic>;
-    return ExerciseSet(
-      id: doc.id,
-      setNumber: data['setNumber'] ?? 1,
-      reps: data['reps']?.toInt(),
-      weight: data['weight']?.toDouble(),
-      duration: data['duration']?.toInt(),
-      distance: data['distance']?.toDouble(),
-      restTime: data['restTime']?.toInt(),
-      checked: data['checked'] ?? false,
-      notes: data['notes'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      userId: data['userId'] ?? '',
-      exerciseId: exerciseId,
-      workoutId: workoutId,
-      weekId: weekId,
-      programId: programId,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  /// Convert ExerciseSet to basic Map format (Firebase conversion handled by converter)
+  Map<String, dynamic> toMap() {
     return {
       'setNumber': setNumber,
       'reps': reps,
@@ -76,8 +48,8 @@ class ExerciseSet {
       'restTime': restTime,
       'checked': checked,
       'notes': notes,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
       'exerciseId': exerciseId,
       'workoutId': workoutId,

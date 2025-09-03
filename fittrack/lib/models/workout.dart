@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Workout {
   final String id;
@@ -25,34 +24,15 @@ class Workout {
     required this.programId,
   });
 
-  factory Workout.fromFirestore(
-    DocumentSnapshot doc, 
-    String weekId, 
-    String programId,
-  ) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Workout(
-      id: doc.id,
-      name: data['name'] ?? '',
-      dayOfWeek: data['dayOfWeek'],
-      orderIndex: data['orderIndex'] ?? 0,
-      notes: data['notes'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      userId: data['userId'] ?? '',
-      weekId: weekId,
-      programId: programId,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  /// Convert Workout to basic Map format (Firebase conversion handled by converter)
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'dayOfWeek': dayOfWeek,
       'orderIndex': orderIndex,
       'notes': notes,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
       'weekId': weekId,
       'programId': programId,

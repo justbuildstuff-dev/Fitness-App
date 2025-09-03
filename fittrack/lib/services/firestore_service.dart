@@ -6,6 +6,10 @@ import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
 import '../converters/program_converter.dart';
+import '../converters/week_converter.dart';
+import '../converters/workout_converter.dart';
+import '../converters/exercise_converter.dart';
+import '../converters/exercise_set_converter.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -287,7 +291,7 @@ class FirestoreService {
         .orderBy('order')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Week.fromFirestore(doc, programId))
+            .map((doc) => WeekConverter.fromFirestore(doc, programId: programId))
             .toList());
   }
 
@@ -301,7 +305,7 @@ class FirestoreService {
         .collection('weeks')
         .doc(weekId)
         .snapshots()
-        .map((snapshot) => snapshot.exists ? Week.fromFirestore(snapshot, programId) : null);
+        .map((snapshot) => snapshot.exists ? WeekConverter.fromFirestore(snapshot, programId: programId) : null);
   }
 
   /// Create a new week
@@ -312,7 +316,7 @@ class FirestoreService {
         .collection('programs')
         .doc(week.programId)
         .collection('weeks')
-        .add(week.toFirestore());
+        .add(WeekConverter.toFirestore(week));
     return docRef.id;
   }
 
@@ -325,7 +329,7 @@ class FirestoreService {
         .doc(week.programId)
         .collection('weeks')
         .doc(week.id)
-        .update(week.toFirestore());
+        .update(WeekConverter.toFirestore(week));
   }
 
   /// Update week with specific fields
@@ -620,7 +624,7 @@ class FirestoreService {
             );
 
             // Convert to Firestore format and add to batch
-            final newSetPayload = duplicatedSet.toFirestore();
+            final newSetPayload = ExerciseSetConverter.toFirestore(duplicatedSet);
             // Use server timestamp instead of client timestamp for consistency
             newSetPayload['createdAt'] = FieldValue.serverTimestamp();
             newSetPayload['updatedAt'] = FieldValue.serverTimestamp();
@@ -668,7 +672,7 @@ class FirestoreService {
         .orderBy('orderIndex')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Workout.fromFirestore(doc, weekId, programId))
+            .map((doc) => WorkoutConverter.fromFirestore(doc, weekId, programId))
             .toList());
   }
 
@@ -690,7 +694,7 @@ class FirestoreService {
         .doc(workoutId)
         .snapshots()
         .map((snapshot) => snapshot.exists
-            ? Workout.fromFirestore(snapshot, weekId, programId) 
+            ? WorkoutConverter.fromFirestore(snapshot, weekId, programId) 
             : null);
   }
 
@@ -704,7 +708,7 @@ class FirestoreService {
         .collection('weeks')
         .doc(workout.weekId)
         .collection('workouts')
-        .add(workout.toFirestore());
+        .add(WorkoutConverter.toFirestore(workout));
     return docRef.id;
   }
 
@@ -719,7 +723,7 @@ class FirestoreService {
         .doc(workout.weekId)
         .collection('workouts')
         .doc(workout.id)
-        .update(workout.toFirestore());
+        .update(WorkoutConverter.toFirestore(workout));
   }
 
   /// Update workout with specific fields
@@ -871,7 +875,7 @@ class FirestoreService {
         .orderBy('orderIndex')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Exercise.fromFirestore(doc, workoutId, weekId, programId))
+            .map((doc) => ExerciseConverter.fromFirestore(doc, workoutId, weekId, programId))
             .toList());
   }
 
@@ -896,7 +900,7 @@ class FirestoreService {
         .doc(exerciseId)
         .snapshots()
         .map((snapshot) => snapshot.exists
-            ? Exercise.fromFirestore(snapshot, workoutId, weekId, programId) 
+            ? ExerciseConverter.fromFirestore(snapshot, workoutId, weekId, programId) 
             : null);
   }
 
@@ -912,7 +916,7 @@ class FirestoreService {
         .collection('workouts')
         .doc(exercise.workoutId)
         .collection('exercises')
-        .add(exercise.toFirestore());
+        .add(ExerciseConverter.toFirestore(exercise));
     return docRef.id;
   }
 
@@ -929,7 +933,7 @@ class FirestoreService {
         .doc(exercise.workoutId)
         .collection('exercises')
         .doc(exercise.id)
-        .update(exercise.toFirestore());
+        .update(ExerciseConverter.toFirestore(exercise));
   }
 
   /// Update exercise with specific fields
@@ -949,7 +953,7 @@ class FirestoreService {
     };
 
     if (name != null) updateData['name'] = name;
-    if (exerciseType != null) updateData['exerciseType'] = exerciseType.toFirestore();
+    if (exerciseType != null) updateData['exerciseType'] = exerciseType.toMap();
     if (notes != null) {
       updateData['notes'] = notes.isEmpty ? null : notes;
     }
@@ -1083,7 +1087,7 @@ class FirestoreService {
         .orderBy('setNumber')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ExerciseSet.fromFirestore(
+            .map((doc) => ExerciseSetConverter.fromFirestore(
                 doc, exerciseId, workoutId, weekId, programId))
             .toList());
   }
@@ -1112,7 +1116,7 @@ class FirestoreService {
         .doc(setId)
         .snapshots()
         .map((snapshot) => snapshot.exists
-            ? ExerciseSet.fromFirestore(
+            ? ExerciseSetConverter.fromFirestore(
                 snapshot, exerciseId, workoutId, weekId, programId) 
             : null);
   }
@@ -1131,7 +1135,7 @@ class FirestoreService {
         .collection('exercises')
         .doc(set.exerciseId)
         .collection('sets')
-        .add(set.toFirestore());
+        .add(ExerciseSetConverter.toFirestore(set));
     return docRef.id;
   }
 
@@ -1150,7 +1154,7 @@ class FirestoreService {
         .doc(set.exerciseId)
         .collection('sets')
         .doc(set.id)
-        .update(set.toFirestore());
+        .update(ExerciseSetConverter.toFirestore(set));
   }
 
   /// Delete a set
@@ -1201,7 +1205,7 @@ class FirestoreService {
           .collection('sets')
           .doc(set.id);
       
-      batch.update(docRef, set.toFirestore());
+      batch.update(docRef, ExerciseSetConverter.toFirestore(set));
     }
     
     await batch.commit();

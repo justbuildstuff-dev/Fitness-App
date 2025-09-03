@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Week {
   final String id;
@@ -21,27 +20,14 @@ class Week {
     required this.programId,
   });
 
-  factory Week.fromFirestore(DocumentSnapshot doc, String programId) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Week(
-      id: doc.id,
-      name: data['name'] ?? 'Week ${data['order'] ?? 1}',
-      order: data['order'] ?? 1,
-      notes: data['notes'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      userId: data['userId'] ?? '',
-      programId: data['programId'] ?? programId,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  /// Convert Week to basic Map format (Firebase conversion handled by converter)
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'order': order,
       'notes': notes,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
       'programId': programId,
     };
