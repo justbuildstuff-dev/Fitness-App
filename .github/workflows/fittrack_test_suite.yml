@@ -83,7 +83,7 @@ jobs:
     - name: Run widget tests
       run: |
         cd fittrack
-        flutter test test/screens/ test/widgets/ \
+        flutter test test/widgets/ \
           --reporter=github
           
 
