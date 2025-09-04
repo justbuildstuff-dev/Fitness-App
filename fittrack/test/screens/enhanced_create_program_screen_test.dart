@@ -46,7 +46,7 @@ void main() {
         /// This ensures the UI provides all necessary inputs for program creation
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -79,7 +79,7 @@ void main() {
         /// This ensures consistent UI structure and proper widget hierarchy
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -105,7 +105,7 @@ void main() {
         /// This ensures data quality and prevents invalid program creation
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -130,7 +130,7 @@ void main() {
         /// This ensures UI prevents names that exceed database constraints
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -159,7 +159,7 @@ void main() {
         /// This ensures proper form handling for valid input
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -190,7 +190,7 @@ void main() {
         /// This ensures optional fields don't prevent valid program creation
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -222,7 +222,7 @@ void main() {
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: Builder(
                 builder: (context) => Scaffold(
@@ -260,7 +260,7 @@ void main() {
         /// This ensures data integrity from UI to business logic layer
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -285,9 +285,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify provider was called with correct data
-        verify(mockProvider.createProgram(name: captureAny, description: captureAny)).called(1);
-        expect(capturedProgram.name, 'Test Program Name');
-        expect(capturedProgram.description, 'Test program description');
+        final captured = verify(mockProvider.createProgram(name: captureAny, description: captureAny)).captured;
+        expect(captured[0], 'Test Program Name'); // name
+        expect(captured[1], 'Test program description'); // description
       });
     });
 
@@ -299,7 +299,7 @@ void main() {
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -324,7 +324,7 @@ void main() {
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -345,7 +345,7 @@ void main() {
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -373,7 +373,7 @@ void main() {
         /// This ensures reactive UI behavior with state management
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -401,7 +401,7 @@ void main() {
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: Builder(
                 builder: (context) => CreateProgramScreen(),
@@ -439,7 +439,7 @@ void main() {
         /// This ensures data quality by rejecting whitespace-only input
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -467,7 +467,7 @@ void main() {
         /// This ensures consistent data formatting and prevents whitespace issues
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -491,9 +491,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify trimmed data was passed to provider
-        verify(mockProvider.createProgram(name: captureAny, description: captureAny)).called(1);
-        expect(capturedProgram.name, 'Trimmed Program');
-        expect(capturedProgram.description, 'Trimmed description');
+        final captured = verify(mockProvider.createProgram(name: captureAny, description: captureAny)).captured;
+        expect(captured[0], 'Trimmed Program'); // name
+        expect(captured[1], 'Trimmed description'); // description
       });
 
       testWidgets('handles special characters and unicode input', (WidgetTester tester) async {
@@ -501,7 +501,7 @@ void main() {
         /// This ensures global usability and proper text handling
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -525,11 +525,11 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify unicode input was handled correctly
-        verify(mockProvider.createProgram(name: captureAny, description: captureAny)).called(1);
-        expect(capturedProgram.name, contains('Программа'));
-        expect(capturedProgram.name, contains('🏋️‍♂️'));
-        expect(capturedProgram.description, contains('émojis'));
-        expect(capturedProgram.description, contains('💪'));
+        final captured = verify(mockProvider.createProgram(name: captureAny, description: captureAny)).captured;
+        expect(captured[0], contains('Программа')); // name
+        expect(captured[0], contains('🏋️‍♂️')); // name
+        expect(captured[1], contains('émojis')); // description
+        expect(captured[1], contains('💪')); // description
       });
     });
 
@@ -539,7 +539,7 @@ void main() {
         /// This ensures reactive UI behavior throughout the operation lifecycle
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -571,7 +571,7 @@ void main() {
         /// This ensures proper error display and recovery
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -607,7 +607,7 @@ void main() {
         /// This ensures the app is usable by users with visual impairments
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -627,7 +627,7 @@ void main() {
         /// This ensures accessibility and desktop usability
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -654,7 +654,7 @@ void main() {
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -684,7 +684,7 @@ void main() {
         /// This ensures the screen doesn't cause memory leaks
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -711,7 +711,7 @@ void main() {
         /// This ensures responsive UI during fast typing
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: CreateProgramScreen(),
             ),
@@ -740,7 +740,7 @@ void main() {
         /// This ensures consistent design language across the application
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               theme: ThemeData.light(),
               home: CreateProgramScreen(),
@@ -762,7 +762,7 @@ void main() {
         /// This ensures theme consistency and user preference support
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
-            create: (_) => mockProvider,
+            create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               theme: ThemeData.dark(),
               home: CreateProgramScreen(),
