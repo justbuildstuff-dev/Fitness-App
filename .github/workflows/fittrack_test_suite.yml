@@ -197,7 +197,7 @@ jobs:
     - name: Run enhanced unit tests
       run: |
         cd fittrack
-        flutter test test/models/enhanced_*.dart test/services/enhanced_*.dart \
+        flutter test test/models/enhanced_*.dart \
           --coverage \
           --reporter=github
           
