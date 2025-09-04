@@ -109,7 +109,10 @@ void main() {
         await tester.tap(find.text('Delete Exercise'));
         await tester.pumpAndSettle();
         
-        expect(find.text('Delete Exercise'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byType(AlertDialog), 
+          matching: find.text('Delete Exercise')
+        ), findsOneWidget);
         expect(find.text('Bench Press'), findsOneWidget);
         expect(find.textContaining('sets'), findsOneWidget);
         
@@ -267,12 +270,8 @@ void main() {
         await tester.tap(find.text('Show Dialog'));
         await tester.pumpAndSettle();
 
-        // Simulate back button press
-        await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
-          'flutter/navigation',
-          const StandardMethodCodec().encodeMethodCall(const MethodCall('routePopped')),
-          (data) {},
-        );
+        // Simulate back button press by tapping outside the dialog or pressing escape key
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await tester.pumpAndSettle();
 
         // Back gesture should be equivalent to cancel
