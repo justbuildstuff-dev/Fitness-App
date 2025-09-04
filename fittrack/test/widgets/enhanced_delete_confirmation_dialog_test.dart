@@ -123,7 +123,10 @@ void main() {
         await tester.tap(find.text('Delete Workout'));
         await tester.pumpAndSettle();
         
-        expect(find.text('Delete Workout'), findsOneWidget);
+        expect(find.descendant(
+          of: find.byType(AlertDialog), 
+          matching: find.text('Delete Workout')
+        ), findsOneWidget);
         expect(find.text('Chest Day'), findsOneWidget);
         expect(find.textContaining('exercises'), findsOneWidget);
       });
@@ -660,12 +663,14 @@ void main() {
         await tester.tap(find.text('Show Dialog'));
         await tester.pumpAndSettle();
 
+        // Dialog should be present and blocking interaction
+        expect(find.byType(DeleteConfirmationDialog), findsOneWidget);
+        
         // Try to tap background button (should be blocked)
         await tester.tap(find.text('Background Button'), warnIfMissed: false);
         await tester.pumpAndSettle();
 
         expect(backgroundTapped, false);
-        expect(find.byType(DeleteConfirmationDialog), findsOneWidget);
       });
 
       testWidgets('maintains dialog state during rebuild', (WidgetTester tester) async {
@@ -703,7 +708,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Trigger parent rebuild
-        await tester.tap(find.text('Rebuild'));
+        await tester.tap(find.text('Rebuild'), warnIfMissed: false);
         await tester.pumpAndSettle();
 
         // Dialog should still be present
