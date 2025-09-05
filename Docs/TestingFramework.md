@@ -10,7 +10,7 @@ This document outlines the comprehensive testing strategy and framework for the 
 
 ```
 test/
-├── test_suite.dart              # Unified test runner (main entry point)
+├── unified_test_runner.dart     # Unified test runner (main entry point)
 ├── test_config.dart             # Centralized configuration and utilities
 ├── models/                      # Unit tests for data models
 │   ├── analytics_test.dart
@@ -53,22 +53,22 @@ test/
 
 #### Run All Tests (Recommended)
 ```bash
-dart test/test_suite.dart --all
+dart test/unified_test_runner.dart --all
 ```
 
 #### Run Specific Test Categories
 ```bash
 # Unit tests only (models, services, providers - no UI)
-dart test/test_suite.dart --unit
+dart test/unified_test_runner.dart --unit
 
 # Widget tests only (UI components)  
-dart test/test_suite.dart --widget
+dart test/unified_test_runner.dart --widget
 
 # Analytics tests only (all analytics functionality)
-dart test/test_suite.dart --analytics
+dart test/unified_test_runner.dart --analytics
 
 # Integration tests only (requires Firebase emulators)
-dart test/test_suite.dart --integration
+dart test/unified_test_runner.dart --integration
 ```
 
 #### Run Individual Test Files
@@ -301,13 +301,27 @@ setUp(() {
 });
 ```
 
-2. **Provider Mocking**:
+2. **Firebase Mocking with Comprehensive Utilities**:
 ```dart
+// Use firebase_mocks.dart for Firebase operations
+FirebaseMockSetup.configureMocks(
+  userId: 'test-user-123',
+  isAuthenticated: true,
+);
+
+// Use test data factory for realistic data
+final testProgram = TestDataFactory.createProgram(
+  name: 'Test Program',
+  userId: 'test-user-123',
+);
+```
+
+3. **Provider Mocking with Auto-Generated Mocks**:
+```dart
+// Use auto-generated mocks from @GenerateMocks annotation
 when(mockProvider.currentAnalytics).thenReturn(testAnalytics);
 when(mockProvider.isLoadingAnalytics).thenReturn(false);
 ```
-
-3. **Data Mocking**: Use `TestDataGenerator` for consistent test data
 
 ## Firebase Emulator Setup
 
@@ -397,18 +411,18 @@ open coverage/html/index.html
 **Test Pipeline** (`.github/workflows/test.yml`):
 ```yaml
 - name: Run Unit Tests
-  run: dart test/test_suite.dart --unit
+  run: dart test/unified_test_runner.dart --unit
 
 - name: Run Widget Tests  
-  run: dart test/test_suite.dart --widget
+  run: dart test/unified_test_runner.dart --widget
 
 - name: Run Analytics Tests
-  run: dart test/test_suite.dart --analytics
+  run: dart test/unified_test_runner.dart --analytics
 
 - name: Run Integration Tests
   run: |
     firebase emulators:start --only auth,firestore --detached
-    dart test/test_suite.dart --integration
+    dart test/unified_test_runner.dart --integration
     firebase emulators:kill
 ```
 
@@ -465,7 +479,7 @@ flutter test test/screens/ --start-paused
 ### Adding New Tests
 
 1. **Follow Existing Patterns**: Use established test structure and documentation
-2. **Update Test Suite**: Add new test files to appropriate category in `test_suite.dart`
+2. **Update Test Suite**: Add new test files to appropriate category in `unified_test_runner.dart`
 3. **Include Performance Tests**: Add performance validation for new computations
 4. **Update Documentation**: Add test coverage details to this document
 
@@ -525,8 +539,8 @@ flutter test --profile test/models/analytics_edge_cases_test.dart
 
 ### Deprecated Files
 
-- `test_runner.dart` → Use `test/test_suite.dart`
-- `test/analytics_test_suite.dart` → Use `test/test_suite.dart --analytics`
+- `test_runner.dart` → Use `test/unified_test_runner.dart`
+- `test/analytics_test_suite.dart` → Use `test/unified_test_runner.dart --analytics`
 - `test/README_ANALYTICS_TESTING.md` → Consolidated into this document
 
 ## Future Enhancements

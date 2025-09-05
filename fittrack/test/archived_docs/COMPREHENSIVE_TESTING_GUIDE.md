@@ -84,9 +84,10 @@ test/
 │   ├── firebase_integration_test.dart
 │   └── analytics_integration_test.dart
 ├── mocks/                            # Mock utilities and configurations
-│   └── firebase_mocks.dart
+│   ├── firebase_mocks.dart
+│   └── firebase_mocks.mocks.dart    # Auto-generated Firebase mocks
 ├── test_utilities/                   # Test helpers and utilities
-│   ├── mock_providers.dart
+│   ├── mock_providers.mocks.dart    # Auto-generated provider mocks
 │   ├── test_data_factory.dart
 │   └── test_config.dart
 └── performance/                      # Performance and load tests
@@ -161,8 +162,9 @@ void main() {
 testWidgets('CreateProgramScreen validates form correctly', (WidgetTester tester) async {
   /// Test Purpose: Verify form validation and submission flow
   
-  // Arrange: Set up mocks and test environment
-  final mockProvider = MockProviderSetup.createProgramProvider();
+  // Arrange: Set up mocks and test environment  
+  final mockProvider = MockProgramProvider();
+  when(mockProvider.createProgram(any)).thenAnswer((_) async => 'test-id');
   
   await tester.pumpWidget(
     ChangeNotifierProvider<ProgramProvider>(
@@ -347,14 +349,19 @@ void main() {
 }
 ```
 
-**Provider Mocking**:
+**Provider Mocking with Auto-Generated Mocks**:
 ```dart
+// Use auto-generated mocks from @GenerateMocks annotation
+@GenerateMocks([ProgramProvider])
+import 'your_test.mocks.dart';
+
 testWidgets('screen handles provider state changes', (tester) async {
-  final mockProvider = MockProviderSetup.createProgramProvider(
-    programs: [TestDataFactory.createProgram()],
-    isLoading: false,
-    error: null,
-  );
+  final mockProvider = MockProgramProvider();
+  
+  // Configure mock behavior
+  when(mockProvider.programs).thenReturn([TestDataFactory.createProgram()]);
+  when(mockProvider.isLoadingPrograms).thenReturn(false);
+  when(mockProvider.error).thenReturn(null);
   
   await tester.pumpWidget(
     ChangeNotifierProvider<ProgramProvider>(
@@ -385,13 +392,21 @@ final weeks = testData['weeks'][program.id];
 
 **Mock Firebase Responses**:
 ```dart
-// Use Firebase mock utilities
+// Use comprehensive Firebase mock utilities from firebase_mocks.dart
 FirebaseMockSetup.configureMocks(
   userId: 'test-user-123',
+  userEmail: 'test@fittrack.test',
   isAuthenticated: true,
 );
 
+// Generate realistic mock data
+final testProgram = MockDataGenerator.generateProgram(
+  name: 'Test Program',
+  userId: 'test-user-123',
+);
+
 // Simulate specific scenarios
+MockScenarios.configureSuccessScenario();
 MockScenarios.configureNetworkFailureScenario();
 MockScenarios.configureLargeDatasetScenario();
 ```

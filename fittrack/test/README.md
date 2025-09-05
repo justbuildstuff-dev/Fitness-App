@@ -29,10 +29,9 @@ dart test/unified_test_runner.dart --performance
 
 ```
 test/
-├── README.md                              # This file
-├── unified_test_runner.dart               # Main test runner  
-├── COMPREHENSIVE_TESTING_GUIDE.md         # Complete testing guide
-├── TESTING_BEST_PRACTICES.md              # Best practices and patterns
+├── README.md                              # This file (quick reference)
+├── TESTING_GUIDE.md                       # Complete testing guide
+├── unified_test_runner.dart               # Main test runner
 ├── models/                                # Pure Dart unit tests (fast)
 │   ├── enhanced_exercise_test.dart        # Exercise model validation
 │   ├── enhanced_exercise_set_test.dart    # ExerciseSet model validation
@@ -211,9 +210,9 @@ firebase emulators:exec --only firestore "rm -rf firestore-debug.log"
 ## 📚 Documentation
 
 ### Essential Reads
-1. **[COMPREHENSIVE_TESTING_GUIDE.md](COMPREHENSIVE_TESTING_GUIDE.md)** - Complete testing guide
-2. **[TESTING_BEST_PRACTICES.md](TESTING_BEST_PRACTICES.md)** - Best practices and patterns
-3. **[Firebase Emulator Setup](integration/firebase_emulator_setup.dart)** - Integration test setup
+1. **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Complete testing guide with best practices and examples
+2. **[Firebase Emulator Setup](integration/firebase_emulator_setup.dart)** - Integration test setup
+3. **[TestingFramework.md](../Docs/TestingFramework.md)** - High-level framework overview
 
 ### Test Examples
 - **[Enhanced Exercise Test](models/enhanced_exercise_test.dart)** - Model testing patterns
@@ -291,4 +290,4 @@ firebase emulators:list
 
 ---
 
-**For detailed information, see [COMPREHENSIVE_TESTING_GUIDE.md](COMPREHENSIVE_TESTING_GUIDE.md)**
+**For detailed information, see [TESTING_GUIDE.md](TESTING_GUIDE.md)**
