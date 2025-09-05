@@ -118,7 +118,8 @@ jobs:
     - name: Start Firebase emulators
       run: |
         cd fittrack
-        firebase emulators:start --only auth,firestore --detached
+        firebase emulators:start --only auth,firestore &
+        echo $! > emulator.pid
         
     - name: Wait for emulators
       run: |
@@ -135,7 +136,14 @@ jobs:
           
     - name: Stop Firebase emulators
       if: always()
-      run: firebase emulators:kill
+      run: |
+        cd fittrack
+        if [ -f emulator.pid ]; then
+          kill $(cat emulator.pid) || true
+          rm emulator.pid
+        fi
+        pkill -f "firebase" || true
+        pkill -f "java.*firestore" || true
       
 
   performance-tests:
@@ -204,7 +212,8 @@ jobs:
     - name: Start Firebase emulators for enhanced integration
       run: |
         cd fittrack
-        firebase emulators:start --only auth,firestore --detached
+        firebase emulators:start --only auth,firestore &
+        echo $! > emulator.pid
         sleep 10
         
     - name: Run enhanced integration tests
@@ -215,7 +224,14 @@ jobs:
           
     - name: Stop emulators
       if: always()
-      run: firebase emulators:kill
+      run: |
+        cd fittrack
+        if [ -f emulator.pid ]; then
+          kill $(cat emulator.pid) || true
+          rm emulator.pid
+        fi
+        pkill -f "firebase" || true
+        pkill -f "java.*firestore" || true
 
   # Aggregate results and generate reports
   test-summary:
