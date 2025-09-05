@@ -1,7 +1,6 @@
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
@@ -359,7 +358,7 @@ void main() {
           programId: anyNamed('programId'),
           name: anyNamed('name'),
         )).thenAnswer((_) async {
-          await Future.delayed(Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 100));
         });
 
         // Start operation (don't await to check intermediate state)

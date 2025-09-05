@@ -260,7 +260,7 @@ void main() {
         exerciseType: anyNamed('exerciseType'),
         notes: anyNamed('notes'),
       )).thenAnswer((_) async {
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 100));
         return 'new-exercise-id';
       });
       

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/analytics.dart';
@@ -221,6 +220,7 @@ void main() {
           id: 'ex1', 
           exerciseType: ExerciseType.strength,
         );
+        expect(exercise.id, 'ex1'); // Use the variable to prevent unused warning
 
         final oldSet = ExerciseSet(
           id: 'set1',

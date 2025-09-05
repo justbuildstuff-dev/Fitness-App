@@ -133,7 +133,7 @@ class FirebaseEmulatorSetup {
   /// Used to verify emulator availability before running tests
   static Future<bool> _isPortListening(String host, int port) async {
     try {
-      final socket = await Socket.connect(host, port, timeout: Duration(seconds: 2));
+      final socket = await Socket.connect(host, port, timeout: const Duration(seconds: 2));
       await socket.close();
       return true;
     } catch (e) {

@@ -14,6 +14,7 @@
 /// - Component interaction and data flow
 /// - Authentication and security implementation
 /// - Application performance and scalability
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,17 +22,11 @@ import 'package:integration_test/integration_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
 
-import '../../lib/main.dart' as app;
-import '../../lib/providers/auth_provider.dart';
-import '../../lib/providers/program_provider.dart';
-import '../../lib/services/firestore_service.dart';
-import '../../lib/models/program.dart';
-import '../../lib/models/week.dart';
-import '../../lib/models/workout.dart';
-import '../../lib/models/exercise.dart';
-import '../../lib/models/exercise_set.dart';
+import 'package:fittrack/main.dart' as app;
+import 'package:fittrack/services/firestore_service.dart';
+import 'package:fittrack/models/program.dart';
+import 'package:fittrack/models/workout.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -90,12 +85,12 @@ void main() {
         /// Test Purpose: Verify complete program creation workflow from start to finish
         /// This tests the entire user journey for creating a structured workout program
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         // Authenticate test user
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to programs screen
         expect(find.text('Programs'), findsOneWidget);
@@ -106,11 +101,11 @@ void main() {
         await tester.tap(find.byIcon(Icons.add));
         await tester.pumpAndSettle();
 
-        await tester.enterText(find.byKey(Key('program-name-field')), 'Integration Test Program');
-        await tester.enterText(find.byKey(Key('program-description-field')), 'Complete workflow test program');
+        await tester.enterText(find.byKey(const Key('program-name-field')), 'Integration Test Program');
+        await tester.enterText(find.byKey(const Key('program-description-field')), 'Complete workflow test program');
         
-        await tester.tap(find.byKey(Key('save-program-button')));
-        await tester.pumpAndSettle(Duration(seconds: 3));
+        await tester.tap(find.byKey(const Key('save-program-button')));
+        await tester.pumpAndSettle(const Duration(seconds: 3));
 
         // Verify program appears in list
         expect(find.text('Integration Test Program'), findsOneWidget);
@@ -120,44 +115,44 @@ void main() {
         await tester.pumpAndSettle();
 
         // Create week
-        await tester.tap(find.byKey(Key('add-week-button')));
+        await tester.tap(find.byKey(const Key('add-week-button')));
         await tester.pumpAndSettle();
 
-        await tester.enterText(find.byKey(Key('week-name-field')), 'Week 1');
-        await tester.tap(find.byKey(Key('save-week-button')));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.enterText(find.byKey(const Key('week-name-field')), 'Week 1');
+        await tester.tap(find.byKey(const Key('save-week-button')));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to week details
         await tester.tap(find.text('Week 1'));
         await tester.pumpAndSettle();
 
         // Create workout
-        await tester.tap(find.byKey(Key('add-workout-button')));
+        await tester.tap(find.byKey(const Key('add-workout-button')));
         await tester.pumpAndSettle();
 
-        await tester.enterText(find.byKey(Key('workout-name-field')), 'Chest Day');
-        await tester.tap(find.byKey(Key('workout-day-dropdown')));
+        await tester.enterText(find.byKey(const Key('workout-name-field')), 'Chest Day');
+        await tester.tap(find.byKey(const Key('workout-day-dropdown')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Monday'));
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(Key('save-workout-button')));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.tap(find.byKey(const Key('save-workout-button')));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to workout details
         await tester.tap(find.text('Chest Day'));
         await tester.pumpAndSettle();
 
         // Create exercise
-        await tester.tap(find.byKey(Key('add-exercise-button')));
+        await tester.tap(find.byKey(const Key('add-exercise-button')));
         await tester.pumpAndSettle();
 
-        await tester.enterText(find.byKey(Key('exercise-name-field')), 'Bench Press');
-        await tester.tap(find.byKey(Key('exercise-type-dropdown')));
+        await tester.enterText(find.byKey(const Key('exercise-name-field')), 'Bench Press');
+        await tester.tap(find.byKey(const Key('exercise-type-dropdown')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Strength'));
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(Key('save-exercise-button')));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.tap(find.byKey(const Key('save-exercise-button')));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to exercise details
         await tester.tap(find.text('Bench Press'));
@@ -165,13 +160,13 @@ void main() {
 
         // Create sets
         for (int i = 1; i <= 3; i++) {
-          await tester.tap(find.byKey(Key('add-set-button')));
+          await tester.tap(find.byKey(const Key('add-set-button')));
           await tester.pumpAndSettle();
 
-          await tester.enterText(find.byKey(Key('reps-field')), '${8 + i}');
-          await tester.enterText(find.byKey(Key('weight-field')), '${135 + (i * 10)}');
-          await tester.tap(find.byKey(Key('save-set-button')));
-          await tester.pumpAndSettle(Duration(seconds: 1));
+          await tester.enterText(find.byKey(const Key('reps-field')), '${8 + i}');
+          await tester.enterText(find.byKey(const Key('weight-field')), '${135 + (i * 10)}');
+          await tester.tap(find.byKey(const Key('save-set-button')));
+          await tester.pumpAndSettle(const Duration(seconds: 1));
         }
 
         // Verify all data was created and persisted
@@ -200,11 +195,11 @@ void main() {
         /// Test Purpose: Verify complete program duplication functionality
         /// This tests the complex duplication logic with realistic data
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Create source program with complete data structure
         final sourceProgram = await _createCompleteTestProgram(testUserId);
@@ -224,9 +219,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Enter new program name
-        await tester.enterText(find.byKey(Key('duplicate-name-field')), 'Duplicated Program');
-        await tester.tap(find.byKey(Key('confirm-duplicate-button')));
-        await tester.pumpAndSettle(Duration(seconds: 5)); // Duplication takes time
+        await tester.enterText(find.byKey(const Key('duplicate-name-field')), 'Duplicated Program');
+        await tester.tap(find.byKey(const Key('confirm-duplicate-button')));
+        await tester.pumpAndSettle(const Duration(seconds: 5)); // Duplication takes time
 
         // Verify both programs exist
         final programs = await FirestoreService.instance.getPrograms(testUserId).first;
@@ -248,19 +243,20 @@ void main() {
         /// Test Purpose: Verify analytics generation from complete workout data
         /// This tests the integration between workout tracking and analytics
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Create program with workout data
         final program = await _createProgramWithWorkoutData(testUserId);
+        expect(program.id, isNotNull); // Use the variable
         await tester.pumpAndSettle();
 
         // Navigate to analytics
         await tester.tap(find.text('Analytics'));
-        await tester.pumpAndSettle(Duration(seconds: 3)); // Analytics computation time
+        await tester.pumpAndSettle(const Duration(seconds: 3)); // Analytics computation time
 
         // Verify analytics are displayed
         expect(find.textContaining('Total Workouts'), findsOneWidget);
@@ -268,7 +264,7 @@ void main() {
         expect(find.byType(Chart), findsAtLeastNWidgets(1)); // Charts are displayed
         
         // Verify heatmap shows activity
-        expect(find.byKey(Key('activity-heatmap')), findsOneWidget);
+        expect(find.byKey(const Key('activity-heatmap')), findsOneWidget);
         
         // Verify personal records
         expect(find.textContaining('Personal Records'), findsOneWidget);
@@ -278,21 +274,22 @@ void main() {
         /// Test Purpose: Verify analytics performance with substantial data
         /// This tests scalability and performance with realistic data volumes
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Create large dataset (6 months of workout data)
         final program = await _createLargeDataset(testUserId, monthsOfData: 6);
+        expect(program.id, isNotNull); // Use the variable
         await tester.pumpAndSettle();
 
         final stopwatch = Stopwatch()..start();
 
         // Navigate to analytics
         await tester.tap(find.text('Analytics'));
-        await tester.pumpAndSettle(Duration(seconds: 10)); // Allow time for computation
+        await tester.pumpAndSettle(const Duration(seconds: 10)); // Allow time for computation
 
         stopwatch.stop();
 
@@ -311,11 +308,11 @@ void main() {
         /// Test Purpose: Verify offline functionality and data synchronization
         /// This tests offline capability and proper sync when connection resumes
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Create initial program
         final program = await _createBasicTestProgram(testUserId);
@@ -326,8 +323,8 @@ void main() {
 
         // Create workout while offline
         await _navigateToCreateWorkout(tester, program.id);
-        await tester.enterText(find.byKey(Key('workout-name-field')), 'Offline Workout');
-        await tester.tap(find.byKey(Key('save-workout-button')));
+        await tester.enterText(find.byKey(const Key('workout-name-field')), 'Offline Workout');
+        await tester.tap(find.byKey(const Key('save-workout-button')));
         await tester.pumpAndSettle();
 
         // Verify offline creation feedback
@@ -335,7 +332,7 @@ void main() {
 
         // Simulate return to online state
         await _simulateOnlineState();
-        await tester.pumpAndSettle(Duration(seconds: 3)); // Allow sync time
+        await tester.pumpAndSettle(const Duration(seconds: 3)); // Allow sync time
 
         // Verify data synced successfully
         final workouts = await FirestoreService.instance.getWorkouts(testUserId, program.id, 'week-1').first;
@@ -346,11 +343,11 @@ void main() {
         /// Test Purpose: Verify conflict resolution during data synchronization
         /// This tests data integrity when offline changes conflict with server data
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Create program and workout
         final program = await _createBasicTestProgram(testUserId);
@@ -380,11 +377,11 @@ void main() {
         
         final stopwatch = Stopwatch()..start();
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 5)); // Allow data loading
+        await tester.pumpAndSettle(const Duration(seconds: 5)); // Allow data loading
 
         stopwatch.stop();
 
@@ -394,7 +391,7 @@ void main() {
 
         // Navigate to programs and verify data loads efficiently
         await tester.tap(find.text('Programs'));
-        await tester.pumpAndSettle(Duration(seconds: 3));
+        await tester.pumpAndSettle(const Duration(seconds: 3));
 
         expect(find.byType(ListView), findsOneWidget);
         expect(find.textContaining('months ago'), findsAtLeastNWidgets(1));
@@ -404,25 +401,26 @@ void main() {
         /// Test Purpose: Verify app remains responsive during rapid user interactions
         /// This tests UI responsiveness under stress conditions
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         final program = await _createBasicTestProgram(testUserId);
+        expect(program.id, isNotNull); // Use the variable
         await tester.pumpAndSettle();
 
         // Rapid navigation testing
         for (int i = 0; i < 10; i++) {
           await tester.tap(find.text('Programs'));
-          await tester.pump(Duration(milliseconds: 100));
+          await tester.pump(const Duration(milliseconds: 100));
           
           await tester.tap(find.text('Analytics'));
-          await tester.pump(Duration(milliseconds: 100));
+          await tester.pump(const Duration(milliseconds: 100));
           
           await tester.tap(find.text('Profile'));
-          await tester.pump(Duration(milliseconds: 100));
+          await tester.pump(const Duration(milliseconds: 100));
         }
 
         // App should remain responsive
@@ -436,11 +434,11 @@ void main() {
         /// Test Purpose: Verify graceful handling of network interruptions
         /// This tests error handling and recovery mechanisms
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Start creating program
         await tester.tap(find.text('Programs'));
@@ -448,13 +446,13 @@ void main() {
         await tester.tap(find.byIcon(Icons.add));
         await tester.pumpAndSettle();
 
-        await tester.enterText(find.byKey(Key('program-name-field')), 'Network Test Program');
+        await tester.enterText(find.byKey(const Key('program-name-field')), 'Network Test Program');
 
         // Simulate network interruption (would need actual network control)
         // For now, test error handling UI
         
-        await tester.tap(find.byKey(Key('save-program-button')));
-        await tester.pumpAndSettle(Duration(seconds: 3));
+        await tester.tap(find.byKey(const Key('save-program-button')));
+        await tester.pumpAndSettle(const Duration(seconds: 3));
 
         // If network error occurs, verify error handling
         final errorWidgets = find.textContaining('error');
@@ -471,11 +469,11 @@ void main() {
         /// Test Purpose: Verify app handles authentication token expiration
         /// This tests session management and re-authentication flow
         
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Create some data
         final program = await _createBasicTestProgram(testUserId);
@@ -490,7 +488,7 @@ void main() {
         
         // Re-authenticate
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify data is still accessible
         await tester.tap(find.text('Programs'));
@@ -505,11 +503,11 @@ void main() {
         /// This tests data security and proper user scoping
         
         // Create first user and data
-        await tester.pumpWidget(app.FitTrackApp());
+        await tester.pumpWidget(const app.FitTrackApp());
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         final user1Program = await _createBasicTestProgram(testUserId);
         await FirebaseAuth.instance.signOut();
@@ -526,7 +524,7 @@ void main() {
         final testUserId2 = userCredential2.user!.uid;
 
         await _authenticateTestUser(tester, testEmail2, testPassword);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify second user cannot see first user's data
         await tester.tap(find.text('Programs'));
@@ -565,9 +563,9 @@ Future<void> _configureFirebaseEmulators() async {
 
 Future<void> _authenticateTestUser(WidgetTester tester, String email, String password) async {
   /// Authenticate test user through the UI
-  await tester.enterText(find.byKey(Key('email-field')), email);
-  await tester.enterText(find.byKey(Key('password-field')), password);
-  await tester.tap(find.byKey(Key('sign-in-button')));
+  await tester.enterText(find.byKey(const Key('email-field')), email);
+  await tester.enterText(find.byKey(const Key('password-field')), password);
+  await tester.tap(find.byKey(const Key('sign-in-button')));
 }
 
 Future<Program> _createCompleteTestProgram(String userId) async {
@@ -610,6 +608,7 @@ Future<Workout> _createBasicTestWorkout(String userId, String programId) async {
     id: 'basic-test-workout',
     name: 'Basic Test Workout',
     dayOfWeek: 1,
+    orderIndex: 0,
     notes: 'Test workout for integration',
     createdAt: now,
     updatedAt: now,
@@ -674,11 +673,11 @@ class Chart extends StatelessWidget {
   final String title;
   final Map<String, dynamic> data;
   
-  const Chart({Key? key, required this.title, required this.data}) : super(key: key);
+  const Chart({super.key, required this.title, required this.data});
   
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 200,
       child: Center(child: Text('$title Chart')),
     );

@@ -39,10 +39,10 @@ class DeleteConfirmationDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.error.withValues(alpha: 0.2),
                 ),
               ),
               child: Text(

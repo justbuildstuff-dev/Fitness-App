@@ -138,8 +138,8 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addExercise(context),
-        child: const Icon(Icons.add),
         tooltip: 'Add Exercise',
+        child: const Icon(Icons.add),
       ),
     );
   }

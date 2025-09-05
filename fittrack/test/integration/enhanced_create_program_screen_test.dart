@@ -13,6 +13,7 @@
 /// - Form validation and user input handling
 /// - State management and provider integration
 /// - User experience and navigation flow
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,9 +21,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import '../../lib/screens/programs/create_program_screen.dart';
-import '../../lib/providers/program_provider.dart';
-import '../../lib/models/program.dart';
+import 'package:fittrack/screens/programs/create_program_screen.dart';
+import 'package:fittrack/providers/program_provider.dart';
 
 @GenerateMocks([ProgramProvider])
 import 'enhanced_create_program_screen_test.mocks.dart';
@@ -47,7 +47,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -80,7 +80,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -106,7 +106,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -131,7 +131,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -160,7 +160,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -191,7 +191,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -231,11 +231,11 @@ void main() {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CreateProgramScreen(),
+                          builder: (_) => const CreateProgramScreen(),
                         ),
                       ).then((_) => navigatedBack = true);
                     },
-                    child: Text('Open Create Screen'),
+                    child: const Text('Open Create Screen'),
                   ),
                 ),
               ),
@@ -261,7 +261,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -300,7 +300,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -325,7 +325,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -346,7 +346,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -374,7 +374,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -404,13 +404,13 @@ void main() {
             create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               home: Builder(
-                builder: (context) => CreateProgramScreen(),
+                builder: (context) => const CreateProgramScreen(),
               ),
               onGenerateRoute: (settings) {
                 if (settings.name == '/') {
                   navigationOccurred = true;
                 }
-                return MaterialPageRoute(builder: (_) => Scaffold());
+                return MaterialPageRoute(builder: (_) => const Scaffold());
               },
             ),
           ),
@@ -440,7 +440,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -468,7 +468,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -502,7 +502,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -540,7 +540,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -572,7 +572,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -608,7 +608,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -628,7 +628,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -650,12 +650,12 @@ void main() {
         /// This ensures consistent user experience across devices
         
         // Test with small screen
-        await tester.binding.setSurfaceSize(Size(320, 568)); // iPhone SE size
+        await tester.binding.setSurfaceSize(const Size(320, 568)); // iPhone SE size
         
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -669,7 +669,7 @@ void main() {
         expect(find.byType(ElevatedButton), findsOneWidget);
 
         // Test with large screen
-        await tester.binding.setSurfaceSize(Size(1024, 768)); // Tablet size
+        await tester.binding.setSurfaceSize(const Size(1024, 768)); // Tablet size
         await tester.pumpAndSettle();
 
         // Should still render correctly
@@ -685,7 +685,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -695,7 +695,7 @@ void main() {
 
         // Navigate away from screen
         await tester.pumpWidget(
-          MaterialApp(
+          const MaterialApp(
             home: Scaffold(body: Text('Different Screen')),
           ),
         );
@@ -712,7 +712,7 @@ void main() {
         await tester.pumpWidget(
           ChangeNotifierProvider<ProgramProvider>(
             create: (_) => mockProvider as ProgramProvider,
-            child: MaterialApp(
+            child: const MaterialApp(
               home: CreateProgramScreen(),
             ),
           ),
@@ -726,7 +726,7 @@ void main() {
             find.byType(TextFormField).first,
             'Program Name $i',
           );
-          await tester.pump(Duration(milliseconds: 10)); // Very fast updates
+          await tester.pump(const Duration(milliseconds: 10)); // Very fast updates
         }
 
         // Should handle rapid updates without issues
@@ -743,7 +743,7 @@ void main() {
             create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               theme: ThemeData.light(),
-              home: CreateProgramScreen(),
+              home: const CreateProgramScreen(),
             ),
           ),
         );
@@ -765,7 +765,7 @@ void main() {
             create: (_) => mockProvider as ProgramProvider,
             child: MaterialApp(
               theme: ThemeData.dark(),
-              home: CreateProgramScreen(),
+              home: const CreateProgramScreen(),
             ),
           ),
         );

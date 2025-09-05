@@ -9,10 +9,10 @@ class ChartsSection extends StatelessWidget {
   final List<PersonalRecord> personalRecords;
 
   const ChartsSection({
-    Key? key,
+    super.key,
     this.analytics,
     required this.personalRecords,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +88,14 @@ class ExerciseTypeChart extends StatelessWidget {
   final Map<ExerciseType, int> data;
 
   const ExerciseTypeChart({
-    Key? key,
+    super.key,
     required this.data,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) {
-      return Container(
+      return SizedBox(
         height: 120,
         child: Center(
           child: Text(
@@ -112,7 +112,7 @@ class ExerciseTypeChart extends StatelessWidget {
     final sortedEntries = data.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Container(
+    return SizedBox(
       height: 120,
       child: Column(
         children: [
@@ -218,9 +218,9 @@ class PersonalRecordsList extends StatelessWidget {
   final List<PersonalRecord> records;
 
   const PersonalRecordsList({
-    Key? key,
+    super.key,
     required this.records,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -267,9 +267,9 @@ class PersonalRecordTile extends StatelessWidget {
   final PersonalRecord record;
 
   const PersonalRecordTile({
-    Key? key,
+    super.key,
     required this.record,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -417,17 +417,17 @@ class PersonalRecordTile extends StatelessWidget {
 
 /// Simple progress indicator for analytics loading
 class AnalyticsLoadingIndicator extends StatelessWidget {
-  const AnalyticsLoadingIndicator({Key? key}) : super(key: key);
+  const AnalyticsLoadingIndicator({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 120,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
+            const CircularProgressIndicator(),
             const SizedBox(height: 16),
             Text(
               'Computing analytics...',

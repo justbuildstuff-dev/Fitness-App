@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:fittrack/main.dart' as app;
-import 'package:fittrack/providers/auth_provider.dart';
-import 'package:fittrack/providers/program_provider.dart';
-import 'package:fittrack/screens/auth/sign_in_screen.dart';
 import 'package:fittrack/screens/programs/programs_screen.dart';
 import 'package:fittrack/screens/programs/program_detail_screen.dart';
 import 'package:fittrack/screens/weeks/weeks_screen.dart';
@@ -64,7 +60,7 @@ void main() {
 
         // Step 3: Seed baseline test data (program and week)
         testData = await FirebaseEmulatorSetup.seedTestData(testUser.user!.uid);
-        print('✅ Test data seeded: ${testData}');
+        print('✅ Test data seeded: $testData');
 
         print('🎯 Integration test environment ready!\n');
         
@@ -111,8 +107,8 @@ void main() {
         print('\n📱 Testing complete workout creation workflow...');
 
         // Step 1: Launch the app
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         print('✅ App launched');
 
@@ -126,7 +122,7 @@ void main() {
           reason: 'Should find the seeded test program');
         
         await tester.tap(programTile);
-        await tester.pumpAndSettle(Duration(seconds: 1));
+        await tester.pumpAndSettle(const Duration(seconds: 1));
         print('✅ Navigated to program detail');
 
         // Step 4: Navigate to program detail and find test week
@@ -138,7 +134,7 @@ void main() {
           reason: 'Should find the seeded test week');
 
         await tester.tap(weekTile);
-        await tester.pumpAndSettle(Duration(seconds: 1));
+        await tester.pumpAndSettle(const Duration(seconds: 1));
         print('✅ Navigated to week detail');
 
         // Step 5: Verify we're on the weeks screen and it shows empty state
@@ -154,7 +150,7 @@ void main() {
           reason: 'Should have create workout FAB');
 
         await tester.tap(createWorkoutFAB);
-        await tester.pumpAndSettle(Duration(seconds: 1));
+        await tester.pumpAndSettle(const Duration(seconds: 1));
         print('✅ Navigated to create workout screen');
 
         // Step 7: Verify we're on create workout screen
@@ -191,14 +187,14 @@ void main() {
           reason: 'Should have save button');
 
         await tester.tap(saveButton);
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
         print('✅ Submitted workout creation form');
 
         // Step 10: Verify success feedback and navigation back to weeks screen
         expect(find.text('Workout created successfully!'), findsOneWidget,
           reason: 'Should show success message');
 
-        await tester.pumpAndSettle(Duration(seconds: 1));
+        await tester.pumpAndSettle(const Duration(seconds: 1));
 
         expect(find.byType(WeeksScreen), findsOneWidget,
           reason: 'Should navigate back to weeks screen');
@@ -254,8 +250,8 @@ void main() {
         print('\n📱 Testing minimal workout creation...');
 
         // Launch app and navigate to create workout screen
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate through the app to create workout screen
         // (Similar navigation steps as above, condensed for brevity)
@@ -274,7 +270,7 @@ void main() {
 
         // Save without filling optional fields
         await tester.tap(find.text('SAVE'));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify success and workout appears
         expect(find.text('Workout created successfully!'), findsOneWidget,
@@ -319,8 +315,8 @@ void main() {
         print('\n📱 Testing workout creation error handling...');
 
         // Launch app and navigate to create workout screen
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
@@ -366,8 +362,8 @@ void main() {
         
         print('\n📱 Testing multiple workouts creation and management...');
 
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to weeks screen
         await tester.tap(find.text('Integration Test Program'));
@@ -392,7 +388,7 @@ void main() {
 
           // Save workout
           await tester.tap(find.text('SAVE'));
-          await tester.pumpAndSettle(Duration(seconds: 1));
+          await tester.pumpAndSettle(const Duration(seconds: 1));
 
           // Verify success and return to weeks screen
           expect(find.text('Workout created successfully!'), findsOneWidget);
@@ -427,8 +423,8 @@ void main() {
         print('\n📱 Testing workout data persistence across app restarts...');
 
         // First app session - create a workout
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
@@ -444,7 +440,7 @@ void main() {
         await tester.enterText(nameField, persistentWorkoutName);
 
         await tester.tap(find.text('SAVE'));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify workout was created
         expect(find.text(persistentWorkoutName), findsOneWidget);
@@ -454,15 +450,15 @@ void main() {
         await FirebaseEmulatorSetup.waitForFirestoreSync();
 
         // Simulate app restart by creating new app instance
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 3));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 3));
 
         // Navigate back to the weeks screen
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
         
         await tester.tap(find.text('Integration Test Week'));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify workout data persisted across restart
         expect(find.text(persistentWorkoutName), findsOneWidget,
@@ -498,8 +494,8 @@ void main() {
           password: 'testpassword456',
         );
 
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate and create workout as second user
         await tester.tap(find.text('Integration Test Program'));
@@ -516,7 +512,7 @@ void main() {
         await tester.enterText(nameField, secondUserWorkout);
 
         await tester.tap(find.text('SAVE'));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         expect(find.text(secondUserWorkout), findsOneWidget);
         print('✅ Second user workout created');
@@ -528,15 +524,15 @@ void main() {
           password: 'testpassword123',
         );
 
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to first user's workouts
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
         
         await tester.tap(find.text('Integration Test Week'));
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify first user cannot see second user's workout
         expect(find.text(secondUserWorkout), findsNothing,
@@ -555,8 +551,8 @@ void main() {
         
         print('\n📱 Testing real-time data synchronization...');
 
-        await tester.pumpWidget(app.FitTrackApp());
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpWidget(const app.FitTrackApp());
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to weeks screen
         await tester.tap(find.text('Integration Test Program'));
@@ -590,7 +586,7 @@ void main() {
         print('✅ Added workout directly to Firestore');
 
         // Wait for real-time update to propagate
-        await tester.pumpAndSettle(Duration(seconds: 2));
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify workout appears in UI automatically
         expect(find.text('Real-time Sync Workout'), findsOneWidget,

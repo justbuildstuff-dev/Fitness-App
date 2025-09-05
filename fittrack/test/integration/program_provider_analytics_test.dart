@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
@@ -142,7 +141,7 @@ void main() {
         // Complete the future
         completer.complete(WorkoutAnalytics(
           userId: 'test_user',
-          startDate: DateTime.now().subtract(Duration(days: 30)),
+          startDate: DateTime.now().subtract(const Duration(days: 30)),
           endDate: DateTime.now(),
           totalWorkouts: 0,
           totalSets: 0,

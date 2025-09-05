@@ -12,9 +12,10 @@
 /// - Firestore integration and data conversion
 /// - Business rule validation and type safety
 /// - User input validation and data integrity
+library;
 
 import 'package:test/test.dart';
-import '../../lib/models/exercise.dart';
+import 'package:fittrack/models/exercise.dart';
 
 void main() {
   group('Exercise Model - Core Functionality', () {
@@ -273,12 +274,12 @@ void main() {
         final exercise = Exercise(
           id: 'exercise-minimal',
           name: minimalData['name'] as String,
-          exerciseType: ExerciseType.fromString(minimalData['exerciseType'] as String? ?? ''),
+          exerciseType: ExerciseType.fromString(minimalData['exerciseType'] ?? ''),
           orderIndex: minimalData['orderIndex'] as int? ?? 0,
-          notes: minimalData['notes'] as String?,
+          notes: minimalData['notes'],
           createdAt: DateTime.parse(minimalData['createdAt'] as String),
           updatedAt: DateTime.parse(minimalData['updatedAt'] as String),
-          userId: minimalData['userId'] as String? ?? '',
+          userId: minimalData['userId'] ?? '',
           workoutId: 'workout-1',
           weekId: 'week-1',
           programId: 'program-1',
@@ -313,7 +314,7 @@ void main() {
         final updated = original.copyWith(
           name: 'Updated Exercise',
           orderIndex: 2,
-          updatedAt: testDate.add(Duration(hours: 1)),
+          updatedAt: testDate.add(const Duration(hours: 1)),
         );
 
         expect(updated.id, 'original-id'); // Unchanged
@@ -322,7 +323,7 @@ void main() {
         expect(updated.orderIndex, 2); // Changed
         expect(updated.notes, 'Original notes'); // Unchanged
         expect(updated.createdAt, testDate); // Unchanged
-        expect(updated.updatedAt, testDate.add(Duration(hours: 1))); // Changed
+        expect(updated.updatedAt, testDate.add(const Duration(hours: 1))); // Changed
       });
 
       test('equality operator works correctly', () {

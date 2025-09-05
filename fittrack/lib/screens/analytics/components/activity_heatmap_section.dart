@@ -7,9 +7,9 @@ class ActivityHeatmapSection extends StatelessWidget {
   final ActivityHeatmapData data;
 
   const ActivityHeatmapSection({
-    Key? key,
+    super.key,
     required this.data,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -87,9 +87,9 @@ class HeatmapCalendar extends StatelessWidget {
   final ActivityHeatmapData data;
 
   const HeatmapCalendar({
-    Key? key,
+    super.key,
     required this.data,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +125,7 @@ class HeatmapCalendar extends StatelessWidget {
     return Column(
       children: [
         // Month labels
-        Container(
+        SizedBox(
           height: 20,
           child: Row(
             children: [
@@ -153,7 +153,7 @@ class HeatmapCalendar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Day labels (M, T, W, T, F, S, S)
-              Container(
+              SizedBox(
                 width: 20,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -286,11 +286,11 @@ class HeatmapSquare extends StatelessWidget {
   final double size;
 
   const HeatmapSquare({
-    Key? key,
+    super.key,
     required this.day,
     this.onTap,
     this.size = 16,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
@@ -209,7 +208,7 @@ void main() {
         programProvider.loadWorkouts(testProgramId, testWeekId);
 
         // Wait for stream to emit values
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 100));
 
         // Verify state updates
         expect(programProvider.workouts, hasLength(3),
@@ -233,7 +232,7 @@ void main() {
             .thenAnswer((_) => Stream.value([]));
 
         programProvider.loadWorkouts(testProgramId, testWeekId);
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 100));
 
         expect(programProvider.workouts, isEmpty,
           reason: 'Should handle empty workout list gracefully');
@@ -260,7 +259,7 @@ void main() {
 
         // Complete the stream
         streamController.add([]);
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 100));
 
         // Verify loading state is cleared
         expect(programProvider.isLoadingWorkouts, isFalse,
@@ -281,7 +280,7 @@ void main() {
             .thenAnswer((_) => Stream.error(Exception(errorMessage)));
 
         programProvider.loadWorkouts(testProgramId, testWeekId);
-        await Future.delayed(Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 100));
 
         expect(programProvider.error, contains(errorMessage),
           reason: 'Should capture and expose stream errors');

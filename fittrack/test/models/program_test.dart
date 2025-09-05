@@ -241,7 +241,7 @@ void main() {
         final updated = original.copyWith(
           name: 'Updated Name',
           description: 'Updated description',
-          updatedAt: testDate.add(Duration(hours: 1)),
+          updatedAt: testDate.add(const Duration(hours: 1)),
           isArchived: true,
         );
 
@@ -249,7 +249,7 @@ void main() {
         expect(updated.name, equals('Updated Name'));
         expect(updated.description, equals('Updated description'));
         expect(updated.isArchived, isTrue);
-        expect(updated.updatedAt, equals(testDate.add(Duration(hours: 1))));
+        expect(updated.updatedAt, equals(testDate.add(const Duration(hours: 1))));
 
         // Verify unchanged fields remained the same
         expect(updated.id, equals(original.id));
@@ -268,14 +268,14 @@ void main() {
         );
 
         final updated = original.copyWith(
-          updatedAt: testDate.add(Duration(minutes: 30)),
+          updatedAt: testDate.add(const Duration(minutes: 30)),
           // name, description, isArchived not specified - should remain unchanged
         );
 
         expect(updated.name, equals('Keep This Name'));
         expect(updated.description, equals('Keep This Description'));
         expect(updated.isArchived, isTrue);
-        expect(updated.updatedAt, equals(testDate.add(Duration(minutes: 30))));
+        expect(updated.updatedAt, equals(testDate.add(const Duration(minutes: 30))));
       });
 
       test('copyWith can clear description by setting it to null', () {

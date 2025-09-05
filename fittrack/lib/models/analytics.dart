@@ -38,8 +38,8 @@ class WorkoutAnalytics {
   }) {
     // Filter workouts within date range
     final filteredWorkouts = workouts.where((w) =>
-        w.createdAt.isAfter(startDate.subtract(Duration(days: 1))) &&
-        w.createdAt.isBefore(endDate.add(Duration(days: 1)))).toList();
+        w.createdAt.isAfter(startDate.subtract(const Duration(days: 1))) &&
+        w.createdAt.isBefore(endDate.add(const Duration(days: 1)))).toList();
 
     // Get exercise type breakdown
     final Map<ExerciseType, int> typeBreakdown = {};
@@ -302,8 +302,8 @@ class ActivityHeatmapData {
 
     // Filter workouts for the specified year
     final yearWorkouts = workouts.where((w) =>
-        w.createdAt.isAfter(yearStart.subtract(Duration(days: 1))) &&
-        w.createdAt.isBefore(yearEnd.add(Duration(days: 1)))).toList();
+        w.createdAt.isAfter(yearStart.subtract(const Duration(days: 1))) &&
+        w.createdAt.isBefore(yearEnd.add(const Duration(days: 1)))).toList();
 
     // Group workouts by date
     final Map<DateTime, int> dailyCounts = {};
@@ -335,8 +335,8 @@ class ActivityHeatmapData {
     final startDate = DateTime(year, 1, 1);
     final endDate = DateTime(year, 12, 31);
 
-    for (var date = startDate; date.isBefore(endDate.add(Duration(days: 1))); 
-         date = date.add(Duration(days: 1))) {
+    for (var date = startDate; date.isBefore(endDate.add(const Duration(days: 1))); 
+         date = date.add(const Duration(days: 1))) {
       final workoutCount = getWorkoutCountForDate(date);
       final intensity = getIntensityForDate(date);
       
@@ -398,7 +398,7 @@ class ActivityHeatmapData {
     while (dailyCounts.containsKey(checkDate) && 
            dailyCounts[checkDate]! > 0) {
       currentStreak++;
-      checkDate = checkDate.subtract(Duration(days: 1));
+      checkDate = checkDate.subtract(const Duration(days: 1));
     }
 
     return (current: currentStreak, longest: longestStreak);
@@ -452,7 +452,7 @@ class DateRange {
   factory DateRange.thisWeek() {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    final weekEnd = weekStart.add(Duration(days: 6));
+    final weekEnd = weekStart.add(const Duration(days: 6));
     return DateRange(
       start: DateTime(weekStart.year, weekStart.month, weekStart.day),
       end: DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59),
@@ -463,7 +463,7 @@ class DateRange {
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
     final monthEnd = DateTime(now.year, now.month + 1, 1)
-        .subtract(Duration(microseconds: 1));
+        .subtract(const Duration(microseconds: 1));
     return DateRange(start: monthStart, end: monthEnd);
   }
 
@@ -477,14 +477,14 @@ class DateRange {
   factory DateRange.last30Days() {
     final now = DateTime.now();
     final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    final start = end.subtract(Duration(days: 29));
+    final start = end.subtract(const Duration(days: 29));
     return DateRange(start: start, end: end);
   }
 
   /// Check if a date falls within this range
   bool contains(DateTime date) {
-    return date.isAfter(start.subtract(Duration(microseconds: 1))) &&
-           date.isBefore(end.add(Duration(microseconds: 1)));
+    return date.isAfter(start.subtract(const Duration(microseconds: 1))) &&
+           date.isBefore(end.add(const Duration(microseconds: 1)));
   }
 
   /// Duration of the range in days

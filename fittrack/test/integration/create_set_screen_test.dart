@@ -406,7 +406,7 @@ void main() {
         restTime: anyNamed('restTime'),
         notes: anyNamed('notes'),
       )).thenAnswer((_) async {
-        await Future.delayed(Duration(milliseconds: 200));
+        await Future.delayed(const Duration(milliseconds: 200));
         return 'new-set-id';
       });
       

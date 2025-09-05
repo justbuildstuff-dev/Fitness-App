@@ -13,10 +13,11 @@
 /// - User interface display formatting
 /// - Data duplication and field copying logic
 /// - Database serialization and data conversion
+library;
 
 import 'package:test/test.dart';
-import '../../lib/models/exercise_set.dart';
-import '../../lib/models/exercise.dart';
+import 'package:fittrack/models/exercise_set.dart';
+import 'package:fittrack/models/exercise.dart';
 
 void main() {
   group('ExerciseSet Model - Core Functionality', () {
@@ -700,7 +701,7 @@ void main() {
           reps: 12,
           weight: 110.0,
           checked: true,
-          updatedAt: testDate.add(Duration(minutes: 5)),
+          updatedAt: testDate.add(const Duration(minutes: 5)),
         );
 
         expect(updated.id, 'original'); // Unchanged
@@ -710,7 +711,7 @@ void main() {
         expect(updated.checked, true); // Changed
         expect(updated.notes, 'Original notes'); // Unchanged
         expect(updated.createdAt, testDate); // Unchanged
-        expect(updated.updatedAt, testDate.add(Duration(minutes: 5))); // Changed
+        expect(updated.updatedAt, testDate.add(const Duration(minutes: 5))); // Changed
       });
     });
 

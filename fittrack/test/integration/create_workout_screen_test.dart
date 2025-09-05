@@ -348,7 +348,7 @@ void main() {
           dayOfWeek: anyNamed('dayOfWeek'),
           notes: anyNamed('notes'),
         )).thenAnswer((_) async {
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
           return 'delayed-workout-id';
         });
 
@@ -357,7 +357,7 @@ void main() {
         await tester.tap(find.text('SAVE'));
         
         // Verify loading indicator appears
-        await tester.pump(Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 100));
         expect(find.byType(CircularProgressIndicator), findsOneWidget,
           reason: 'Should show loading indicator during submission');
 
@@ -382,13 +382,13 @@ void main() {
           dayOfWeek: anyNamed('dayOfWeek'),
           notes: anyNamed('notes'),
         )).thenAnswer((_) async {
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
           return 'disabled-test-workout-id';
         });
 
         await tester.enterText(find.byType(TextFormField).first, 'Disable Test');
         await tester.tap(find.text('SAVE'));
-        await tester.pump(Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 100));
 
         // Try to tap save button again while processing
         await tester.tap(find.text('SAVE'));

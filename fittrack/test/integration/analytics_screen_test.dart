@@ -388,7 +388,7 @@ void main() {
 
     testWidgets('displays empty state when no data', (tester) async {
       // Act
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(const MaterialApp(
         home: Scaffold(
           body: ChartsSection(
             analytics: null,

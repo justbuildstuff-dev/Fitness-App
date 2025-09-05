@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/exercise.dart';
-import 'package:fittrack/models/workout.dart';
 
 /// Unit tests for FirestoreService workout, exercise, and set operations
 /// 

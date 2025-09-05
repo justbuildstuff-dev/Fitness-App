@@ -319,13 +319,13 @@ void main() {
 
         final workout = Workout(
           id: 'workout-789',
-          name: dataMap['name'] as String? ?? '',
+          name: dataMap['name'] ?? '',
           dayOfWeek: dataMap['dayOfWeek'] as int?,
           orderIndex: dataMap['orderIndex'] as int? ?? 0,
-          notes: dataMap['notes'] as String?,
+          notes: dataMap['notes'],
           createdAt: DateTime.parse(dataMap['createdAt'] as String),
           updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
-          userId: dataMap['userId'] as String? ?? '',
+          userId: dataMap['userId'] ?? '',
           weekId: 'week-789',
           programId: 'program-101',
         );

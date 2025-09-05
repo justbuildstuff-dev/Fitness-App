@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:provider/provider.dart';
 import 'package:fittrack/main.dart';
-import 'package:fittrack/providers/auth_provider.dart';
-import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';

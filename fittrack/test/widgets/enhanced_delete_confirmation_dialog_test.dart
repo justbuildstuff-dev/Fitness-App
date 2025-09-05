@@ -12,11 +12,12 @@
 /// - User interaction flow and navigation
 /// - Accessibility and usability features
 /// - Consistent design implementation
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/widgets/delete_confirmation_dialog.dart';
+import 'package:fittrack/widgets/delete_confirmation_dialog.dart';
 
 void main() {
   group('DeleteConfirmationDialog Widget Tests', () {
@@ -35,7 +36,7 @@ void main() {
                   onPressed: () async {
                     final result = await showDialog<bool>(
                       context: context,
-                      builder: (context) => DeleteConfirmationDialog(
+                      builder: (context) => const DeleteConfirmationDialog(
                         title: 'Delete Program',
                         content: 'Are you sure you want to delete this program? This action cannot be undone.',
                         itemName: 'Test Program',
@@ -43,7 +44,7 @@ void main() {
                     );
                     dialogResult = result ?? false;
                   },
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -79,24 +80,24 @@ void main() {
                     ElevatedButton(
                       onPressed: () => showDialog(
                         context: context,
-                        builder: (context) => DeleteConfirmationDialog(
+                        builder: (context) => const DeleteConfirmationDialog(
                           title: 'Delete Exercise',
                           content: 'This will remove the exercise and all its sets.',
                           itemName: 'Bench Press',
                         ),
                       ),
-                      child: Text('Delete Exercise'),
+                      child: const Text('Delete Exercise'),
                     ),
                     ElevatedButton(
                       onPressed: () => showDialog(
                         context: context,
-                        builder: (context) => DeleteConfirmationDialog(
+                        builder: (context) => const DeleteConfirmationDialog(
                           title: 'Delete Workout',
                           content: 'This will remove the workout and all exercises.',
                           itemName: 'Chest Day',
                         ),
                       ),
-                      child: Text('Delete Workout'),
+                      child: const Text('Delete Workout'),
                     ),
                   ],
                 ),
@@ -134,8 +135,8 @@ void main() {
       testWidgets('handles long item names and content gracefully', (WidgetTester tester) async {
         /// Test Purpose: Verify dialog layout with very long text content
         /// This ensures UI remains usable with edge case content lengths
-        final longItemName = 'Very Long Program Name That Might Wrap To Multiple Lines And Test Layout';
-        final longContent = 'This is a very long confirmation message that tests how the dialog handles extensive content and ensures the layout remains readable and functional even with large amounts of text that might wrap to multiple lines.';
+        const longItemName = 'Very Long Program Name That Might Wrap To Multiple Lines And Test Layout';
+        const longContent = 'This is a very long confirmation message that tests how the dialog handles extensive content and ensures the layout remains readable and functional even with large amounts of text that might wrap to multiple lines.';
         
         await tester.pumpWidget(
           MaterialApp(
@@ -144,13 +145,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Program',
                       content: longContent,
                       itemName: longItemName,
                     ),
                   ),
-                  child: Text('Show Long Dialog'),
+                  child: const Text('Show Long Dialog'),
                 ),
               ),
             ),
@@ -184,14 +185,14 @@ void main() {
                   onPressed: () async {
                     dialogResult = await showDialog<bool>(
                       context: context,
-                      builder: (context) => DeleteConfirmationDialog(
+                      builder: (context) => const DeleteConfirmationDialog(
                         title: 'Delete Item',
                         content: 'Are you sure?',
                         itemName: 'Test Item',
                       ),
                     );
                   },
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -220,14 +221,14 @@ void main() {
                   onPressed: () async {
                     dialogResult = await showDialog<bool>(
                       context: context,
-                      builder: (context) => DeleteConfirmationDialog(
+                      builder: (context) => const DeleteConfirmationDialog(
                         title: 'Delete Item',
                         content: 'Are you sure?',
                         itemName: 'Test Item',
                       ),
                     );
                   },
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -256,14 +257,14 @@ void main() {
                   onPressed: () async {
                     dialogResult = await showDialog<bool>(
                       context: context,
-                      builder: (context) => DeleteConfirmationDialog(
+                      builder: (context) => const DeleteConfirmationDialog(
                         title: 'Delete Item',
                         content: 'Are you sure?',
                         itemName: 'Test Item',
                       ),
                     );
                   },
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -294,7 +295,7 @@ void main() {
                   onPressed: () async {
                     final result = await showDialog<bool>(
                       context: context,
-                      builder: (context) => DeleteConfirmationDialog(
+                      builder: (context) => const DeleteConfirmationDialog(
                         title: 'Delete Important Data',
                         content: 'This action cannot be undone. All related data will be permanently deleted.',
                         itemName: 'Critical Program',
@@ -302,7 +303,7 @@ void main() {
                     );
                     if (result == true) deleteAttempts++;
                   },
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -335,13 +336,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Program',
                       content: 'Are you sure you want to delete this program?',
                       itemName: 'Accessibility Test Program',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -366,13 +367,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Item',
                       content: 'Keyboard navigation test',
                       itemName: 'Test Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -404,14 +405,14 @@ void main() {
                   onPressed: () async {
                     dialogResult = await showDialog<bool>(
                       context: context,
-                      builder: (context) => DeleteConfirmationDialog(
+                      builder: (context) => const DeleteConfirmationDialog(
                         title: 'Delete Item',
                         content: 'Escape key test',
                         itemName: 'Test Item',
                       ),
                     );
                   },
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -442,13 +443,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Item',
                       content: 'Light theme test',
                       itemName: 'Light Theme Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -474,13 +475,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Item',
                       content: 'Dark theme test',
                       itemName: 'Dark Theme Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -505,13 +506,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Critical Data',
                       content: 'This will permanently delete important information.',
                       itemName: 'Critical Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -544,13 +545,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Program',
                       content: 'Deleting this program will remove all weeks, workouts, exercises, and sets. This action cannot be undone.',
                       itemName: 'Advanced Strength Program',
                     ),
                   ),
-                  child: Text('Delete Program'),
+                  child: const Text('Delete Program'),
                 ),
               ),
             ),
@@ -575,13 +576,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Exercise',
                       content: 'This will remove the exercise and all recorded sets.',
                       itemName: 'Deadlift',
                     ),
                   ),
-                  child: Text('Delete Exercise'),
+                  child: const Text('Delete Exercise'),
                 ),
               ),
             ),
@@ -605,13 +606,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Set',
                       content: 'Remove this set from the exercise?',
                       itemName: 'Set 3: 10 reps × 225kg',
                     ),
                   ),
-                  child: Text('Delete Set'),
+                  child: const Text('Delete Set'),
                 ),
               ),
             ),
@@ -640,18 +641,18 @@ void main() {
                   children: [
                     ElevatedButton(
                       onPressed: () => backgroundTapped = true,
-                      child: Text('Background Button'),
+                      child: const Text('Background Button'),
                     ),
                     ElevatedButton(
                       onPressed: () => showDialog(
                         context: context,
-                        builder: (context) => DeleteConfirmationDialog(
+                        builder: (context) => const DeleteConfirmationDialog(
                           title: 'Delete Item',
                           content: 'Modal test',
                           itemName: 'Test Item',
                         ),
                       ),
-                      child: Text('Show Dialog'),
+                      child: const Text('Show Dialog'),
                     ),
                   ],
                 ),
@@ -684,18 +685,18 @@ void main() {
                   children: [
                     ElevatedButton(
                       onPressed: () => setState(() {}), // Trigger rebuild
-                      child: Text('Rebuild'),
+                      child: const Text('Rebuild'),
                     ),
                     ElevatedButton(
                       onPressed: () => showDialog(
                         context: context,
-                        builder: (context) => DeleteConfirmationDialog(
+                        builder: (context) => const DeleteConfirmationDialog(
                           title: 'Delete Item',
                           content: 'Rebuild test',
                           itemName: 'Stable Item',
                         ),
                       ),
-                      child: Text('Show Dialog'),
+                      child: const Text('Show Dialog'),
                     ),
                   ],
                 ),
@@ -730,13 +731,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Performance Test',
                       content: 'Testing dialog performance',
                       itemName: 'Performance Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -763,13 +764,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Memory Test',
                       content: 'Testing resource disposal',
                       itemName: 'Memory Test Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -802,13 +803,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: '',
                       content: '',
                       itemName: '',
                     ),
                   ),
-                  child: Text('Show Empty Dialog'),
+                  child: const Text('Show Empty Dialog'),
                 ),
               ),
             ),
@@ -827,7 +828,7 @@ void main() {
       testWidgets('handles very long item names correctly', (WidgetTester tester) async {
         /// Test Purpose: Verify dialog layout with extremely long item names
         /// This ensures UI remains functional with edge case content
-        final veryLongName = 'This is an extremely long item name that might wrap to multiple lines and could potentially cause layout issues if not handled properly in the dialog component';
+        const veryLongName = 'This is an extremely long item name that might wrap to multiple lines and could potentially cause layout issues if not handled properly in the dialog component';
         
         await tester.pumpWidget(
           MaterialApp(
@@ -836,13 +837,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Delete Long Named Item',
                       content: 'Testing with very long item name',
                       itemName: veryLongName,
                     ),
                   ),
-                  child: Text('Show Long Name Dialog'),
+                  child: const Text('Show Long Name Dialog'),
                 ),
               ),
             ),
@@ -868,13 +869,13 @@ void main() {
                 body: ElevatedButton(
                   onPressed: () => showDialog(
                     context: context,
-                    builder: (context) => DeleteConfirmationDialog(
+                    builder: (context) => const DeleteConfirmationDialog(
                       title: 'Rapid Test',
                       content: 'Testing rapid open/close',
                       itemName: 'Rapid Test Item',
                     ),
                   ),
-                  child: Text('Show Dialog'),
+                  child: const Text('Show Dialog'),
                 ),
               ),
             ),
@@ -884,10 +885,10 @@ void main() {
         // Rapidly open and close dialog
         for (int i = 0; i < 3; i++) {
           await tester.tap(find.text('Show Dialog'));
-          await tester.pump(Duration(milliseconds: 100)); // Fast pump
+          await tester.pump(const Duration(milliseconds: 100)); // Fast pump
           
           await tester.tap(find.text('Cancel'));
-          await tester.pump(Duration(milliseconds: 100)); // Fast pump
+          await tester.pump(const Duration(milliseconds: 100)); // Fast pump
         }
 
         // Should remain functional
@@ -922,7 +923,7 @@ class DialogTestUtils {
                   itemName: itemName,
                 ),
               ),
-              child: Text('Show Test Dialog'),
+              child: const Text('Show Test Dialog'),
             ),
           ),
         ),

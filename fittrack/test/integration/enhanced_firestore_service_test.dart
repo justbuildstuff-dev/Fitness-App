@@ -13,18 +13,16 @@
 /// - Data validation and business rule enforcement
 /// - Service layer architecture and patterns
 /// - Security and authorization requirements
+library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import '../../lib/services/firestore_service.dart';
-import '../../lib/models/program.dart';
-import '../../lib/models/week.dart';
-import '../../lib/models/workout.dart';
-import '../../lib/models/exercise.dart';
-import '../../lib/models/exercise_set.dart';
+import 'package:fittrack/services/firestore_service.dart';
+import 'package:fittrack/models/program.dart';
+import 'package:fittrack/models/workout.dart';
+import 'package:fittrack/models/exercise.dart';
+import 'package:fittrack/models/exercise_set.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -477,7 +475,7 @@ void main() {
       const maxBatchSize = 500;
       
       final batchCount = (itemCount / maxBatchSize).ceil();
-      final lastBatchSize = itemCount % maxBatchSize;
+      const lastBatchSize = itemCount % maxBatchSize;
 
       expect(batchCount, equals(2));
       expect(lastBatchSize, equals(0)); // Evenly divisible

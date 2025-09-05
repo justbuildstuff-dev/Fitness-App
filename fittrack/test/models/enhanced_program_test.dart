@@ -12,9 +12,10 @@
 /// - User data scoping and security requirements
 /// - Firestore integration and data conversion
 /// - Program lifecycle management
+library;
 
 import 'package:test/test.dart';
-import '../../lib/models/program.dart';
+import 'package:fittrack/models/program.dart';
 
 void main() {
   group('Program Model - Core Functionality', () {
@@ -135,7 +136,7 @@ void main() {
 
         final unarchivedProgram = archivedProgram.copyWith(
           isArchived: false,
-          updatedAt: updatedDate.add(Duration(hours: 1)),
+          updatedAt: updatedDate.add(const Duration(hours: 1)),
         );
 
         expect(program.isArchived, false);
@@ -218,10 +219,10 @@ void main() {
         final program = Program(
           id: 'minimal-program',
           name: minimalData['name'] as String,
-          description: minimalData['description'] as String?,
+          description: minimalData['description'],
           createdAt: DateTime.parse(minimalData['createdAt'] as String),
           updatedAt: DateTime.parse(minimalData['updatedAt'] as String),
-          userId: minimalData['userId'] as String? ?? '',
+          userId: minimalData['userId'] ?? '',
           isArchived: minimalData['isArchived'] as bool? ?? false,
         );
 
@@ -245,11 +246,11 @@ void main() {
 
         final program = Program(
           id: 'malformed-program',
-          name: malformedData['name'] as String? ?? '',
-          description: malformedData['description'] as String?,
+          name: malformedData['name'] ?? '',
+          description: malformedData['description'],
           createdAt: DateTime.parse(malformedData['createdAt'] as String),
           updatedAt: DateTime.parse(malformedData['updatedAt'] as String),
-          userId: malformedData['userId'] as String? ?? '',
+          userId: malformedData['userId'] ?? '',
           isArchived: malformedData['isArchived'] as bool? ?? false,
         );
 
@@ -304,7 +305,7 @@ void main() {
 
         final updated = original.copyWith(
           // Don't pass parameters to preserve original values
-          updatedAt: testDate.add(Duration(hours: 1)),
+          updatedAt: testDate.add(const Duration(hours: 1)),
         );
 
         expect(updated.name, 'Null Test Program');
@@ -581,7 +582,7 @@ void main() {
           id: 'valid-timestamps',
           name: 'Valid Timestamps',
           createdAt: testDate,
-          updatedAt: testDate.add(Duration(hours: 1)), // After creation
+          updatedAt: testDate.add(const Duration(hours: 1)), // After creation
           userId: 'user-123',
         );
 

@@ -8,14 +8,13 @@ import 'components/charts_section.dart';
 
 /// Analytics screen providing comprehensive workout insights
 class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({Key? key}) : super(key: key);
+  const AnalyticsScreen({super.key});
 
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
-  DateRange _selectedDateRange = DateRange.thisYear();
 
   @override
   void initState() {
@@ -47,19 +46,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: DateRange.thisWeek(),
-                child: Text('This Week'),
+                child: const Text('This Week'),
               ),
               PopupMenuItem(
                 value: DateRange.thisMonth(),
-                child: Text('This Month'),
+                child: const Text('This Month'),
               ),
               PopupMenuItem(
                 value: DateRange.last30Days(),
-                child: Text('Last 30 Days'),
+                child: const Text('Last 30 Days'),
               ),
               PopupMenuItem(
                 value: DateRange.thisYear(),
-                child: Text('This Year'),
+                child: const Text('This Year'),
               ),
             ],
           ),
@@ -184,7 +183,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   void _onDateRangeChanged(DateRange newRange) {
     setState(() {
-      _selectedDateRange = newRange;
+      // Update analytics with new date range
     });
     
     // Reload analytics with new date range

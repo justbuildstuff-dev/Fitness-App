@@ -262,12 +262,12 @@ void main() {
 
         final week = Week(
           id: 'week-789',
-          name: dataMap['name'] as String? ?? 'Week 1',
+          name: dataMap['name'] ?? 'Week 1',
           order: dataMap['order'] as int? ?? 1,
-          notes: dataMap['notes'] as String?,
+          notes: dataMap['notes'],
           createdAt: DateTime.parse(dataMap['createdAt'] as String),
           updatedAt: DateTime.parse(dataMap['updatedAt'] as String),
-          userId: dataMap['userId'] as String? ?? '',
+          userId: dataMap['userId'] ?? '',
           programId: 'program-789',
         );
 
@@ -297,14 +297,14 @@ void main() {
           name: 'Updated Name',
           order: 2,
           notes: 'Updated notes',
-          updatedAt: testDate.add(Duration(hours: 1)),
+          updatedAt: testDate.add(const Duration(hours: 1)),
         );
 
         // Verify updated fields changed
         expect(updated.name, equals('Updated Name'));
         expect(updated.order, equals(2));
         expect(updated.notes, equals('Updated notes'));
-        expect(updated.updatedAt, equals(testDate.add(Duration(hours: 1))));
+        expect(updated.updatedAt, equals(testDate.add(const Duration(hours: 1))));
 
         // Verify unchanged fields remained the same
         expect(updated.id, equals(original.id));
@@ -324,14 +324,14 @@ void main() {
         );
 
         final updated = original.copyWith(
-          updatedAt: testDate.add(Duration(minutes: 30)),
+          updatedAt: testDate.add(const Duration(minutes: 30)),
           // name, order, notes not specified - should remain unchanged
         );
 
         expect(updated.name, equals('Keep This Name'));
         expect(updated.order, equals(5));
         expect(updated.notes, equals('Keep These Notes'));
-        expect(updated.updatedAt, equals(testDate.add(Duration(minutes: 30))));
+        expect(updated.updatedAt, equals(testDate.add(const Duration(minutes: 30))));
       });
     });
 
@@ -373,7 +373,7 @@ void main() {
         /// Test Purpose: Verify model handles large order values
         /// Users might create many weeks in a program
         
-        final largeOrder = 999999;
+        const largeOrder = 999999;
         final week = _createTestWeek(order: largeOrder);
 
         expect(week.order, equals(largeOrder));
@@ -385,7 +385,7 @@ void main() {
         /// Test Purpose: Verify model handles various text content
         /// Users might enter emoji, special characters, or formatted text
         
-        final specialNotes = 'Week notes with emojis 💪 and symbols: @#\$%^&*()';
+        const specialNotes = 'Week notes with emojis 💪 and symbols: @#\$%^&*()';
         final week = _createTestWeek(notes: specialNotes);
 
         expect(week.notes, equals(specialNotes));

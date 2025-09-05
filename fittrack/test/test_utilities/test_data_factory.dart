@@ -12,14 +12,15 @@
 /// - Use DatasetBuilder for complex hierarchical data
 /// - Use EdgeCaseGenerator for boundary testing
 /// - Use PerformanceDatasets for load testing
+library;
 
 import 'dart:math';
-import '../lib/models/program.dart';
-import '../lib/models/week.dart';
-import '../lib/models/workout.dart';
-import '../lib/models/exercise.dart';
-import '../lib/models/exercise_set.dart';
-import '../lib/models/analytics.dart';
+import '../../lib/models/program.dart';
+import '../../lib/models/week.dart';
+import '../../lib/models/workout.dart';
+import '../../lib/models/exercise.dart';
+import '../../lib/models/exercise_set.dart';
+import '../../lib/models/analytics.dart';
 
 /// Main factory for generating test data
 class TestDataFactory {
@@ -59,7 +60,7 @@ class TestDataFactory {
   static Week createWeek({
     String? id,
     String? name,
-    int? weekNumber,
+    int? order,
     String programId = 'test-program-1',
     String userId = 'test-user-123',
     WeekTemplate template = WeekTemplate.standard,
@@ -70,7 +71,7 @@ class TestDataFactory {
     return Week(
       id: id ?? generateId('week'),
       name: name ?? weekData['name'],
-      weekNumber: weekNumber ?? weekData['weekNumber'],
+      order: order ?? weekData['order'],
       notes: weekData['notes'],
       createdAt: now.subtract(Duration(days: _random.nextInt(90))),
       updatedAt: now.subtract(Duration(hours: _random.nextInt(48))),
@@ -96,6 +97,7 @@ class TestDataFactory {
       id: id ?? generateId('workout'),
       name: name ?? workoutData['name'],
       dayOfWeek: dayOfWeek ?? workoutData['dayOfWeek'],
+      orderIndex: 0,
       notes: workoutData['notes'],
       createdAt: now.subtract(Duration(days: _random.nextInt(30))),
       updatedAt: now.subtract(Duration(hours: _random.nextInt(72))),
@@ -176,7 +178,7 @@ class TestDataFactory {
     DateTime? endDate,
     AnalyticsComplexity complexity = AnalyticsComplexity.moderate,
   }) {
-    final start = startDate ?? DateTime.now().subtract(Duration(days: 90));
+    final start = startDate ?? DateTime.now().subtract(const Duration(days: 90));
     final end = endDate ?? DateTime.now();
     final days = end.difference(start).inDays;
     
@@ -186,16 +188,29 @@ class TestDataFactory {
       userId: userId,
       startDate: start,
       endDate: end,
-      totalWorkouts: baseMetrics['workouts'],
-      totalExercises: baseMetrics['exercises'],
-      totalSets: baseMetrics['sets'],
-      totalVolume: baseMetrics['volume'],
-      averageWorkoutDuration: Duration(minutes: baseMetrics['avgDuration']),
-      workoutFrequency: baseMetrics['frequency'],
-      personalRecords: _generatePersonalRecords(complexity),
-      exerciseProgress: _generateExerciseProgress(complexity),
-      weeklyVolumes: _generateWeeklyVolumes(start, end, complexity),
+      totalWorkouts: baseMetrics['workouts'] as int,
+      totalSets: baseMetrics['sets'] as int,
+      totalVolume: (baseMetrics['volume'] as int).toDouble(),
+      totalDuration: (baseMetrics['avgDuration'] as int) * 60, // Convert minutes to seconds
+      exerciseTypeBreakdown: _generateExerciseTypeBreakdown(),
+      completedWorkoutIds: _generateCompletedWorkoutIds(baseMetrics['workouts'] as int),
     );
+  }
+
+  /// Generate exercise type breakdown for analytics
+  static Map<ExerciseType, int> _generateExerciseTypeBreakdown() {
+    return {
+      ExerciseType.strength: _random.nextInt(20) + 5,
+      ExerciseType.cardio: _random.nextInt(15) + 3,
+      ExerciseType.bodyweight: _random.nextInt(10) + 2,
+      ExerciseType.timeBased: _random.nextInt(5) + 1,
+      ExerciseType.custom: _random.nextInt(8) + 1,
+    };
+  }
+
+  /// Generate completed workout IDs for analytics
+  static List<String> _generateCompletedWorkoutIds(int workoutCount) {
+    return List.generate(workoutCount, (index) => 'completed-workout-$index');
   }
 
   /// Template-based data generation helpers
@@ -223,7 +238,6 @@ class TestDataFactory {
           'description': 'Mixed training approach combining strength, cardio, and bodyweight',
         };
       case ProgramTemplate.general:
-      default:
         return {
           'name': 'General Fitness Program',
           'description': 'Balanced fitness program for overall health and wellness',
@@ -236,20 +250,19 @@ class TestDataFactory {
       case WeekTemplate.deload:
         return {
           'name': 'Deload Week',
-          'weekNumber': 4,
+          'order': 4,
           'notes': 'Recovery week with reduced intensity',
         };
       case WeekTemplate.peak:
         return {
           'name': 'Peak Week',
-          'weekNumber': 8,
+          'order': 8,
           'notes': 'Maximum intensity training week',
         };
       case WeekTemplate.standard:
-      default:
         return {
           'name': 'Week ${_random.nextInt(12) + 1}',
-          'weekNumber': _random.nextInt(12) + 1,
+          'order': _random.nextInt(12) + 1,
           'notes': 'Standard training week with progressive overload',
         };
     }
@@ -318,7 +331,7 @@ class TestDataFactory {
     
     // Account for fatigue in later sets
     final fatigueReduction = (setNumber - 1) * 1;
-    return math.max(1, baseReps - fatigueReduction + _random.nextInt(3) - 1);
+    return max(1, baseReps - fatigueReduction + _random.nextInt(3) - 1);
   }
 
   static double? _getRealisticWeight(ExerciseType type, SetIntensity intensity, int setNumber) {
@@ -432,89 +445,6 @@ class TestDataFactory {
     };
   }
 
-  static List<PersonalRecord> _generatePersonalRecords(AnalyticsComplexity complexity) {
-    final recordCount = {
-      AnalyticsComplexity.simple: 2,
-      AnalyticsComplexity.moderate: 5,
-      AnalyticsComplexity.complex: 10,
-      AnalyticsComplexity.extreme: 20,
-    }[complexity]!;
-
-    return List.generate(recordCount, (index) {
-      final exercises = ['Bench Press', 'Squat', 'Deadlift', 'Running', 'Pull-ups'];
-      final recordTypes = ['Max Weight', 'Max Reps', 'Best Time', 'Longest Distance'];
-      
-      return PersonalRecord(
-        exerciseName: exercises[index % exercises.length],
-        recordType: recordTypes[index % recordTypes.length],
-        value: 100.0 + (index * 25),
-        unit: index % 2 == 0 ? 'kg' : (index % 3 == 0 ? 'reps' : 'min'),
-        achievedDate: DateTime.now().subtract(Duration(days: _random.nextInt(90))),
-      );
-    });
-  }
-
-  static Map<String, ExerciseProgress> _generateExerciseProgress(AnalyticsComplexity complexity) {
-    final progressCount = {
-      AnalyticsComplexity.simple: 3,
-      AnalyticsComplexity.moderate: 8,
-      AnalyticsComplexity.complex: 15,
-      AnalyticsComplexity.extreme: 30,
-    }[complexity]!;
-
-    final progress = <String, ExerciseProgress>{};
-    final exercises = ['Bench Press', 'Squat', 'Deadlift', 'Running', 'Pull-ups', 'Push-ups'];
-
-    for (int i = 0; i < progressCount; i++) {
-      final exerciseName = exercises[i % exercises.length];
-      final currentMax = 100.0 + (i * 15);
-      final previousMax = currentMax - (5 + _random.nextInt(20));
-      
-      progress[exerciseName] = ExerciseProgress(
-        exerciseName: exerciseName,
-        currentMaxWeight: currentMax,
-        previousMaxWeight: previousMax,
-        weightProgress: currentMax - previousMax,
-        volumeProgress: 10.0 + _random.nextDouble() * 30,
-        lastPerformed: DateTime.now().subtract(Duration(days: _random.nextInt(14))),
-      );
-    }
-
-    return progress;
-  }
-
-  static List<WeeklyVolume> _generateWeeklyVolumes(
-    DateTime start, 
-    DateTime end, 
-    AnalyticsComplexity complexity
-  ) {
-    final volumes = <WeeklyVolume>[];
-    var current = start;
-    var baseVolume = 2000.0;
-    
-    final volumeMultiplier = {
-      AnalyticsComplexity.simple: 0.8,
-      AnalyticsComplexity.moderate: 1.0,
-      AnalyticsComplexity.complex: 1.5,
-      AnalyticsComplexity.extreme: 3.0,
-    }[complexity]!;
-
-    while (current.isBefore(end)) {
-      // Simulate realistic volume progression with some variation
-      baseVolume += _random.nextDouble() * 200 - 100; // ±100 variation
-      baseVolume = math.max(1000, baseVolume); // Minimum volume
-      
-      volumes.add(WeeklyVolume(
-        weekStart: current,
-        totalVolume: baseVolume * volumeMultiplier,
-        workoutCount: 3 + _random.nextInt(3), // 3-5 workouts per week
-      ));
-      
-      current = current.add(Duration(days: 7));
-    }
-
-    return volumes;
-  }
 }
 
 /// Builder pattern for complex hierarchical data

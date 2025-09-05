@@ -13,6 +13,7 @@
 /// dart test/unified_test_runner.dart --widget
 /// dart test/unified_test_runner.dart --integration
 /// dart test/unified_test_runner.dart --performance
+library;
 
 import 'dart:io';
 import 'dart:convert';
@@ -227,14 +228,14 @@ class UnifiedTestRunner {
     );
     
     // Give emulators time to start
-    await Future.delayed(Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 3));
     
     return process;
   }
 
   /// Wait for Firebase emulators to be ready
   Future<void> _waitForEmulators() async {
-    final maxAttempts = 30;
+    const maxAttempts = 30;
     var attempts = 0;
     
     while (attempts < maxAttempts) {
@@ -253,7 +254,7 @@ class UnifiedTestRunner {
       }
       
       attempts++;
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
     }
     
     throw Exception('Firebase emulators failed to start within timeout');
@@ -399,7 +400,7 @@ class UnifiedTestRunner {
     if (minutes > 0) {
       return '${minutes}m ${seconds}s';
     } else if (seconds > 0) {
-      return '${seconds}.${(milliseconds / 100).floor()}s';
+      return '$seconds.${(milliseconds / 100).floor()}s';
     } else {
       return '${milliseconds}ms';
     }
@@ -513,11 +514,11 @@ class TestExecutionUtils {
 /// Performance monitoring utilities
 class PerformanceMonitor {
   static final Map<String, Duration> _benchmarks = {
-    'unit_tests': Duration(seconds: 30),
-    'widget_tests': Duration(minutes: 2),
-    'integration_tests': Duration(minutes: 3),
-    'performance_tests': Duration(minutes: 1),
-    'full_suite': Duration(minutes: 5),
+    'unit_tests': const Duration(seconds: 30),
+    'widget_tests': const Duration(minutes: 2),
+    'integration_tests': const Duration(minutes: 3),
+    'performance_tests': const Duration(minutes: 1),
+    'full_suite': const Duration(minutes: 5),
   };
 
   /// Validate test suite performance
@@ -574,7 +575,7 @@ class MemoryMonitor {
     var peakMemory = initialMemory;
     
     // Monitor memory during execution
-    final memoryTimer = Stream.periodic(Duration(milliseconds: 100), (_) async {
+    final memoryTimer = Stream.periodic(const Duration(milliseconds: 100), (_) async {
       final currentMemory = await getCurrentMemoryUsage();
       if (currentMemory > peakMemory) {
         peakMemory = currentMemory;

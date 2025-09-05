@@ -12,17 +12,18 @@
 /// - Use FirebaseMockSetup.configureMocks() to set up consistent mocking
 /// - Use MockDataGenerator for realistic test data
 /// - Use ErrorSimulator for testing error conditions
+library;
 
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../lib/models/program.dart';
-import '../lib/models/week.dart';
-import '../lib/models/workout.dart';
-import '../lib/models/exercise.dart';
-import '../lib/models/exercise_set.dart';
-import '../lib/models/analytics.dart';
+import '../../lib/models/program.dart';
+import '../../lib/models/week.dart';
+import '../../lib/models/workout.dart';
+import '../../lib/models/exercise.dart';
+import '../../lib/models/exercise_set.dart';
+import '../../lib/models/analytics.dart';
 
 @GenerateMocks([
   FirebaseAuth,
@@ -164,7 +165,7 @@ class MockDataGenerator {
       id: id ?? 'program-${now.millisecondsSinceEpoch}',
       name: name ?? 'Test Program ${now.millisecondsSinceEpoch % 1000}',
       description: description ?? 'Generated test program for comprehensive testing',
-      createdAt: createdAt ?? now.subtract(Duration(days: 30)),
+      createdAt: createdAt ?? now.subtract(const Duration(days: 30)),
       updatedAt: now,
       userId: userId ?? defaultUserId,
       isArchived: isArchived,
@@ -177,15 +178,15 @@ class MockDataGenerator {
     String? name,
     String? programId,
     String? userId,
-    int weekNumber = 1,
+    int order = 1,
   }) {
     final now = DateTime.now();
     return Week(
       id: id ?? 'week-${now.millisecondsSinceEpoch}',
-      name: name ?? 'Week $weekNumber',
-      weekNumber: weekNumber,
+      name: name ?? 'Week $order',
+      order: order,
       notes: 'Generated test week',
-      createdAt: now.subtract(Duration(days: 20)),
+      createdAt: now.subtract(const Duration(days: 20)),
       updatedAt: now,
       userId: userId ?? defaultUserId,
       programId: programId ?? 'test-program-1',
@@ -206,8 +207,9 @@ class MockDataGenerator {
       id: id ?? 'workout-${now.millisecondsSinceEpoch}',
       name: name ?? 'Test Workout',
       dayOfWeek: dayOfWeek ?? 1, // Monday
+      orderIndex: 0,
       notes: 'Generated test workout',
-      createdAt: now.subtract(Duration(days: 10)),
+      createdAt: now.subtract(const Duration(days: 10)),
       updatedAt: now,
       userId: userId ?? defaultUserId,
       weekId: weekId ?? 'test-week-1',
@@ -235,7 +237,7 @@ class MockDataGenerator {
       exerciseType: type,
       orderIndex: orderIndex,
       notes: 'Generated ${type.displayName.toLowerCase()} exercise',
-      createdAt: now.subtract(Duration(days: 5)),
+      createdAt: now.subtract(const Duration(days: 5)),
       updatedAt: now,
       userId: userId ?? defaultUserId,
       workoutId: workoutId ?? 'test-workout-1',
@@ -268,7 +270,7 @@ class MockDataGenerator {
       restTime: _getDefaultRestTime(exerciseType),
       checked: checked,
       notes: 'Generated set $setNumber',
-      createdAt: now.subtract(Duration(minutes: 30)),
+      createdAt: now.subtract(const Duration(minutes: 30)),
       updatedAt: now,
       userId: userId ?? defaultUserId,
       exerciseId: exerciseId ?? 'test-exercise-1',
@@ -296,7 +298,7 @@ class MockDataGenerator {
       final week = generateWeek(
         programId: program.id,
         userId: program.userId,
-        weekNumber: w,
+        order: w,
       );
       weeks.add(week);
 
@@ -353,7 +355,7 @@ class MockDataGenerator {
     DateTime? startDate,
     DateTime? endDate,
   }) {
-    final start = startDate ?? DateTime.now().subtract(Duration(days: 30));
+    final start = startDate ?? DateTime.now().subtract(const Duration(days: 30));
     final end = endDate ?? DateTime.now();
     
     return WorkoutAnalytics(
@@ -361,14 +363,15 @@ class MockDataGenerator {
       startDate: start,
       endDate: end,
       totalWorkouts: 24,
-      totalExercises: 120,
       totalSets: 360,
       totalVolume: 12500.0,
-      averageWorkoutDuration: Duration(minutes: 75),
-      workoutFrequency: 6.0, // per week
-      personalRecords: _generatePersonalRecords(),
-      exerciseProgress: _generateExerciseProgress(),
-      weeklyVolumes: _generateWeeklyVolumes(start, end),
+      totalDuration: 4500, // 75 minutes in seconds
+      exerciseTypeBreakdown: {
+        ExerciseType.strength: 15,
+        ExerciseType.cardio: 5,
+        ExerciseType.bodyweight: 4,
+      },
+      completedWorkoutIds: ['workout-1', 'workout-2', 'workout-3'],
     );
   }
 
@@ -399,6 +402,7 @@ class MockDataGenerator {
       case ExerciseType.custom:
         return 10;
     }
+    return null;
   }
 
   static double? _getDefaultWeight(ExerciseType type, int setNumber) {
@@ -412,6 +416,7 @@ class MockDataGenerator {
       case ExerciseType.custom:
         return 50.0;
     }
+    return null;
   }
 
   static int? _getDefaultDuration(ExerciseType type) {
@@ -425,6 +430,7 @@ class MockDataGenerator {
       case ExerciseType.custom:
         return 300; // 5 minutes
     }
+    return null;
   }
 
   static double? _getDefaultDistance(ExerciseType type) {
@@ -449,61 +455,15 @@ class MockDataGenerator {
       case ExerciseType.custom:
         return 120; // 2 minutes
     }
+    return null;
   }
 
-  static List<PersonalRecord> _generatePersonalRecords() {
-    return [
-      PersonalRecord(
-        exerciseName: 'Bench Press',
-        recordType: 'Max Weight',
-        value: 225.0,
-        unit: 'kg',
-        achievedDate: DateTime.now().subtract(Duration(days: 5)),
-      ),
-      PersonalRecord(
-        exerciseName: 'Running',
-        recordType: 'Longest Distance',
-        value: 10.0,
-        unit: 'km',
-        achievedDate: DateTime.now().subtract(Duration(days: 12)),
-      ),
-    ];
-  }
-
-  static Map<String, ExerciseProgress> _generateExerciseProgress() {
-    return {
-      'Bench Press': ExerciseProgress(
-        exerciseName: 'Bench Press',
-        currentMaxWeight: 215.0,
-        previousMaxWeight: 205.0,
-        weightProgress: 10.0,
-        volumeProgress: 15.5,
-        lastPerformed: DateTime.now().subtract(Duration(days: 2)),
-      ),
-    };
-  }
-
-  static List<WeeklyVolume> _generateWeeklyVolumes(DateTime start, DateTime end) {
-    final weeks = <WeeklyVolume>[];
-    var current = start;
-    
-    while (current.isBefore(end)) {
-      weeks.add(WeeklyVolume(
-        weekStart: current,
-        totalVolume: 2500.0 + (weeks.length * 100), // Progressive volume
-        workoutCount: 3 + (weeks.length % 2),
-      ));
-      current = current.add(Duration(days: 7));
-    }
-    
-    return weeks;
-  }
 
   /// Get mocks for injection
   static Map<String, dynamic> getMocks() => {
-    'auth': _mockAuth,
-    'firestore': _mockFirestore,
-    'user': _mockUser,
+    'auth': FirebaseMockSetup._mockAuth,
+    'firestore': FirebaseMockSetup._mockFirestore,
+    'user': FirebaseMockSetup._mockUser,
   };
 }
 
@@ -586,7 +546,7 @@ class MockResponseGenerator {
     final mockDocs = programs.map((program) {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn(program.id);
-      when(mockDoc.data()).thenReturn(program.toFirestore());
+      when(mockDoc.data()).thenReturn(program.toMap());
       when(mockDoc.exists).thenReturn(true);
       return mockDoc;
     }).toList();
@@ -713,7 +673,7 @@ class TestConfig {
   static void validatePerformance(Duration elapsed, String operation) {
     final benchmark = performanceBenchmarks[operation];
     if (benchmark != null && elapsed > benchmark) {
-      throw TestFailure(
+      throw Exception(
         'Performance benchmark failed for $operation: '
         'Expected <${benchmark.inMilliseconds}ms, '
         'Actual: ${elapsed.inMilliseconds}ms'
@@ -770,32 +730,27 @@ class MockScenarios {
   }
 }
 
-/// Custom matchers for testing Firebase data
-class FirebaseMatchers {
-  /// Matcher for valid Firestore data structure
-  static Matcher hasValidFirestoreStructure() {
-    return predicate<Map<String, dynamic>>((data) {
-      return data.containsKey('userId') &&
-             data.containsKey('createdAt') &&
-             data.containsKey('updatedAt') &&
-             data['userId'] is String &&
-             data['userId'].isNotEmpty;
-    }, 'has valid Firestore structure');
+/// Custom validation utilities for testing Firebase data
+class FirebaseValidators {
+  /// Validate Firestore data structure
+  static bool hasValidFirestoreStructure(Map<String, dynamic> data) {
+    return data.containsKey('userId') &&
+           data.containsKey('createdAt') &&
+           data.containsKey('updatedAt') &&
+           data['userId'] is String &&
+           data['userId'].toString().isNotEmpty;
   }
 
-  /// Matcher for valid program hierarchy
-  static Matcher hasValidProgramHierarchy() {
-    return predicate<Map<String, dynamic>>((data) {
-      return data.containsKey('programId') &&
-             data.containsKey('userId') &&
-             data['programId'] is String &&
-             data['programId'].isNotEmpty;
-    }, 'has valid program hierarchy');
+  /// Validate program hierarchy
+  static bool hasValidProgramHierarchy(Map<String, dynamic> data) {
+    return data.containsKey('programId') &&
+           data.containsKey('userId') &&
+           data['programId'] is String &&
+           data['programId'].toString().isNotEmpty;
   }
 
-  /// Matcher for performance requirements
-  static Matcher meetsPerformanceRequirement(Duration maxDuration) {
-    return predicate<Duration>((elapsed) => elapsed <= maxDuration,
-        'completes within ${maxDuration.inMilliseconds}ms');
+  /// Validate performance requirements
+  static bool meetsPerformanceRequirement(Duration elapsed, Duration maxDuration) {
+    return elapsed <= maxDuration;
   }
 }

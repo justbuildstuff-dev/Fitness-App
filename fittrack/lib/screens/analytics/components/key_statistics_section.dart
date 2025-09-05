@@ -5,9 +5,9 @@ class KeyStatisticsSection extends StatelessWidget {
   final Map<String, dynamic> statistics;
 
   const KeyStatisticsSection({
-    Key? key,
+    super.key,
     required this.statistics,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -189,13 +189,13 @@ class StatCard extends StatelessWidget {
   final Color color;
 
   const StatCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.subtitle,
     required this.icon,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -260,9 +260,9 @@ class StatisticsOverview extends StatelessWidget {
   final Map<String, dynamic> statistics;
 
   const StatisticsOverview({
-    Key? key,
+    super.key,
     required this.statistics,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

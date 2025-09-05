@@ -19,7 +19,7 @@ class AnalyticsService {
 
   // Simple cache to avoid recomputation for short periods
   final Map<String, _CachedAnalytics> _cache = {};
-  final Duration _cacheValidDuration = Duration(minutes: 5);
+  static const Duration _cacheValidDuration = Duration(minutes: 5);
 
   /// Compute workout analytics for a date range
   Future<WorkoutAnalytics> computeWorkoutAnalytics({
@@ -137,7 +137,7 @@ class AnalyticsService {
   }) async {
     // Get historical data for this exercise
     final dateRange = DateRange(
-      start: DateTime.now().subtract(Duration(days: 365)),
+      start: DateTime.now().subtract(const Duration(days: 365)),
       end: DateTime.now(),
     );
     
