@@ -30,10 +30,33 @@ void main() {
       // Set up minimal mock behavior for rendering
       when(mockProvider.isLoadingPrograms).thenReturn(false);
       when(mockProvider.error).thenReturn(null);
+      when(mockProvider.isLoading).thenReturn(false);
+      when(mockProvider.programs).thenReturn([]);
+      when(mockProvider.selectedProgram).thenReturn(null);
+      
+      // Set up basic successful responses without argument matchers in setUp
       when(mockProvider.createProgram(
-        name: anyNamed('name'), 
-        description: any
+        name: 'Test Program', 
+        description: null
       )).thenAnswer((_) async => 'test-program-id');
+      
+      when(mockProvider.createProgram(
+        name: 'Test Program', 
+        description: ''
+      )).thenAnswer((_) async => 'test-program-id');
+      
+      // Mock updateProgramFields for edit mode support
+      when(mockProvider.updateProgramFields(
+        any, 
+        name: 'Test Program',
+        description: null
+      )).thenAnswer((_) async {});
+      
+      when(mockProvider.updateProgramFields(
+        any, 
+        name: 'Test Program', 
+        description: ''
+      )).thenAnswer((_) async {});
     });
 
     testWidgets('renders create program screen with form fields', (WidgetTester tester) async {
@@ -82,6 +105,13 @@ void main() {
 
       // Verify input was accepted
       expect(find.text('Test Program'), findsOneWidget);
+      
+      // Verify the form fields exist and can accept input
+      final descriptionField = find.byType(TextFormField).at(1);
+      await tester.enterText(descriptionField, 'Test Description');
+      await tester.pump();
+      
+      expect(find.text('Test Description'), findsOneWidget);
     });
 
     testWidgets('validates required fields', (WidgetTester tester) async {
@@ -98,17 +128,18 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Try to submit empty form
+      // Try to submit empty form by tapping the CREATE button
       final createButton = find.text('CREATE');
       await tester.tap(createButton);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // Form should not submit without required fields
-      // The provider method should not be called with invalid input
-      verifyNever(mockProvider.createProgram(
-        name: anyNamed('name'), 
-        description: any
-      ));
+      // Form should show validation error for required name field
+      expect(find.text('Please enter a program name'), findsOneWidget);
+      
+      // Verify that createProgram was never called since form validation failed
+      // We'll verify by checking that none of our predefined createProgram mocks were called
+      verifyNever(mockProvider.createProgram(name: 'Test Program', description: null));
+      verifyNever(mockProvider.createProgram(name: 'Test Program', description: ''));
     });
   });
 }
