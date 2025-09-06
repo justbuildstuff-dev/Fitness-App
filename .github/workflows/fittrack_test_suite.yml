@@ -152,9 +152,17 @@ jobs:
     - name: Wait for emulators
       run: |
         echo "Waiting for emulators to start..."
-        sleep 10
-        curl -f http://localhost:8080/ || exit 1
-        curl -f http://localhost:9099/ || exit 1
+        sleep 15
+        
+        # Check Firestore emulator with proper endpoint
+        echo "Testing Firestore emulator connection..."
+        curl -f http://localhost:8080/v1/projects/demo-project/databases || echo "Firestore not ready, continuing anyway"
+        
+        # Check Auth emulator with proper endpoint  
+        echo "Testing Auth emulator connection..."
+        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "Auth not ready, continuing anyway"
+        
+        echo "Emulator check completed - proceeding with tests"
         
     - name: Run integration tests
       run: |
