@@ -43,16 +43,18 @@ void main() {
       expect(program.isValidName, isTrue);
     });
     
-    test('program model validation rejects invalid names', () {
+    test('program model validation flags invalid names correctly', () {
       /// Test Purpose: Verify Program model validation for invalid names
       
-      expect(() => Program(
+      final emptyNameProgram = Program(
         id: 'test-id',
         name: '', // Empty name should be invalid
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(), 
         userId: 'test-user-id',
-      ), throwsA(isA<AssertionError>()));
+      );
+      
+      expect(emptyNameProgram.isValidName, isFalse);
     });
     
     test('program model validates name length constraints', () {
@@ -68,35 +70,64 @@ void main() {
       
       expect(shortName.isValidName, isTrue);
       
-      final longName = 'A' * 201; // Exceeds maximum length
-      expect(() => Program(
+      final longName = 'A' * 101; // Exceeds maximum length (100)
+      final longNameProgram = Program(
         id: 'test-id',
         name: longName,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         userId: 'test-user-id',
-      ), throwsA(isA<AssertionError>()));
+      );
+      
+      expect(longNameProgram.isValidName, isFalse);
     });
 
-    test('service handles null user ID appropriately', () {
-      /// Test Purpose: Verify service methods handle null user authentication
+    test('program model validates description length constraints', () {
+      /// Test Purpose: Verify Program model validates description length properly
+      
+      final validDescription = Program(
+        id: 'test-id',
+        name: 'Test Program',
+        description: 'A valid description',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'test-user-id',
+      );
+      
+      expect(validDescription.isValidDescription, isTrue);
+      
+      final longDescription = 'A' * 501; // Exceeds maximum length (500)
+      final longDescProgram = Program(
+        id: 'test-id',
+        name: 'Test Program',
+        description: longDescription,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'test-user-id',
+      );
+      
+      expect(longDescProgram.isValidDescription, isFalse);
+    });
+
+    test('service handles empty user ID appropriately', () {
+      /// Test Purpose: Verify service methods handle empty user authentication
       
       final service = FirestoreService.instance;
       
-      // Service should exist even with null user context
+      // Service should exist even with empty user context
       expect(service, isNotNull);
       
-      // Methods requiring user ID should handle null appropriately
-      // This tests the error handling logic without Firebase dependency
-      expect(() async {
-        await service.createProgram(Program(
-          id: '',
-          name: 'Test Program',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          userId: '', // Empty user ID
-        ));
-      }, isNotNull); // Method exists and can be called
+      // Test that program with empty user ID can be created (validation handled elsewhere)
+      final programWithEmptyUserId = Program(
+        id: 'test-id',
+        name: 'Test Program',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: '', // Empty user ID
+      );
+      
+      expect(programWithEmptyUserId.userId, equals(''));
+      expect(programWithEmptyUserId.name, equals('Test Program'));
     });
   });
   
@@ -112,6 +143,10 @@ void main() {
       expect(service.updateProgramFields, isA<Function>());
       expect(service.deleteProgram, isA<Function>());
       expect(service.getPrograms, isA<Function>());
+      
+      // Verify service is actually the singleton instance
+      final anotherInstance = FirestoreService.instance;
+      expect(service, same(anotherInstance));
     });
   });
 }
