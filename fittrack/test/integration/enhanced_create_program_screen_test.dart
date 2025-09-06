@@ -30,8 +30,10 @@ void main() {
       // Set up minimal mock behavior for rendering
       when(mockProvider.isLoadingPrograms).thenReturn(false);
       when(mockProvider.error).thenReturn(null);
-      when(mockProvider.createProgram(name: anyNamed('name'), description: anyNamed('description')))
-          .thenAnswer((_) async => 'test-program-id');
+      when(mockProvider.createProgram(
+        name: anyNamed('name'), 
+        description: any
+      )).thenAnswer((_) async => 'test-program-id');
     });
 
     testWidgets('renders create program screen with form fields', (WidgetTester tester) async {
@@ -103,7 +105,10 @@ void main() {
 
       // Form should not submit without required fields
       // The provider method should not be called with invalid input
-      verifyNever(mockProvider.createProgram(name: anyNamed('name'), description: anyNamed('description')));
+      verifyNever(mockProvider.createProgram(
+        name: anyNamed('name'), 
+        description: any
+      ));
     });
   });
 }

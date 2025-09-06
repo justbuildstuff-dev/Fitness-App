@@ -68,7 +68,7 @@ void main() {
         userId: anyNamed('userId'),
         programId: anyNamed('programId'),
         name: anyNamed('name'),
-        description: anyNamed('description'),
+        description: any,
       )).thenAnswer((_) async {});
 
       when(mockFirestoreService.deleteProgram(any, any))

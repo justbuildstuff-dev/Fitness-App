@@ -139,10 +139,10 @@ void main() {
       final service = FirestoreService.instance;
       
       // Verify key methods exist (without calling them with Firebase dependency)
-      expect(service.createProgram, isA<Function>());
-      expect(service.updateProgramFields, isA<Function>());
-      expect(service.deleteProgram, isA<Function>());
-      expect(service.getPrograms, isA<Function>());
+      expect(service.createProgram, isA<Future<String> Function(Program)>());
+      expect(service.updateProgramFields, isA<Future<void> Function({required String userId, required String programId, required Map<String, dynamic> updates})>());
+      expect(service.deleteProgram, isA<Future<void> Function(String, String)>());
+      expect(service.getPrograms, isA<Stream<List<Program>> Function(String)>());
       
       // Verify service is actually the singleton instance
       final anotherInstance = FirestoreService.instance;

@@ -245,10 +245,10 @@ void main() {
         expect(firestoreService, isNotNull);
         
         // Verify key methods exist on the service
-        expect(firestoreService.updateWorkoutFields, isA<Function>());
-        expect(firestoreService.updateExerciseFields, isA<Function>());
-        expect(firestoreService.deleteWorkout, isA<Function>());
-        expect(firestoreService.deleteExercise, isA<Function>());
+        expect(firestoreService.updateWorkoutFields, isA<Future<void> Function({required String userId, required String programId, required String weekId, required String workoutId, String? name})>());
+        expect(firestoreService.updateExerciseFields, isA<Future<void> Function({required String userId, required String programId, required String weekId, required String workoutId, required String exerciseId})>());
+        expect(firestoreService.deleteWorkout, isA<Future<void> Function(String, String, String, String)>());
+        expect(firestoreService.deleteExercise, isA<Future<void> Function(String, String, String, String, String)>());
       });
     });
   });

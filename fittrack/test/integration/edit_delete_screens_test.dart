@@ -54,9 +54,9 @@ void main() {
       );
 
       // Set up basic mock responses
-      when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: anyNamed('description')))
+      when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: any))
           .thenAnswer((_) async {});
-      when(mockProvider.createProgram(name: anyNamed('name'), description: anyNamed('description')))
+      when(mockProvider.createProgram(name: anyNamed('name'), description: any))
           .thenAnswer((_) async => 'new_program_id');
       when(mockProvider.updateWeekFields(any, name: anyNamed('name'), notes: anyNamed('notes')))
           .thenAnswer((_) async {});
@@ -170,7 +170,7 @@ void main() {
         /// Test Purpose: Verify error handling during program updates
         /// Users should see meaningful error messages when updates fail
         
-        when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: anyNamed('description')))
+        when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: any))
             .thenThrow(Exception('Update failed'));
 
         await tester.pumpWidget(
