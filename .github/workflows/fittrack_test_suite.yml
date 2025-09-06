@@ -169,7 +169,9 @@ jobs:
       run: |
         cd fittrack
         # Run remaining integration tests (allow failures)
-        flutter test test/integration/ \
+        # Exclude tests that require fake_cloud_firestore dependency
+        find test/integration/ -name "*.dart" -not -name "*firestore_workout_exercise_set*" | \
+        xargs flutter test \
           --exclude-tags=flaky \
           --timeout=120s \
           --reporter=github || echo "Additional integration tests completed"
