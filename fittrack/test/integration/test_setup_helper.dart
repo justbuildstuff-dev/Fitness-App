@@ -7,6 +7,11 @@ import 'package:provider/provider.dart';
 import 'package:mockito/mockito.dart';
 import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/models/program.dart';
+import 'package:fittrack/models/week.dart';
+import 'package:fittrack/models/workout.dart';
+import 'package:fittrack/models/exercise.dart';
+import 'package:fittrack/models/exercise_set.dart';
 
 /// Test setup utilities for integration tests
 /// 
@@ -44,17 +49,19 @@ class TestSetupHelper {
     app_auth.AuthProvider? authProvider,
     ProgramProvider? programProvider,
   }) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<app_auth.AuthProvider>.value(
-          value: authProvider ?? MockAuthProvider(),
-        ),
-        ChangeNotifierProvider<ProgramProvider>.value(
-          value: programProvider ?? MockProgramProvider(),
-        ),
-      ],
-      child: MaterialApp(
-        home: child,
+    return MaterialApp(
+      home: MultiProvider(
+        providers: [
+          if (authProvider != null)
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(
+              value: authProvider,
+            ),
+          if (programProvider != null)
+            ChangeNotifierProvider<ProgramProvider>.value(
+              value: programProvider,
+            ),
+        ],
+        child: child,
       ),
     );
   }
@@ -67,64 +74,3 @@ class TestSetupHelper {
   }
 }
 
-/// Mock AuthProvider for widget tests
-class MockAuthProvider extends Mock implements app_auth.AuthProvider {
-  @override
-  bool get isAuthenticated => false;
-  
-  @override
-  bool get isLoading => false;
-  
-  @override
-  String? get error => null;
-  
-  @override
-  String? get successMessage => null;
-  
-  @override
-  void dispose() {
-    // Override to prevent calling super.dispose() on mock
-  }
-  
-  @override
-  void notifyListeners() {
-    // Override to prevent issues with mock
-  }
-}
-
-/// Mock ProgramProvider for widget tests  
-class MockProgramProvider extends Mock implements ProgramProvider {
-  @override
-  bool get isLoading => false;
-  
-  @override
-  bool get isLoadingAnalytics => false;
-  
-  @override
-  String? get error => null;
-  
-  @override
-  List get programs => [];
-  
-  @override
-  List get weeks => [];
-  
-  @override
-  List get workouts => [];
-  
-  @override
-  List get exercises => [];
-  
-  @override
-  List get sets => [];
-  
-  @override
-  void dispose() {
-    // Override to prevent calling super.dispose() on mock
-  }
-  
-  @override
-  void notifyListeners() {
-    // Override to prevent issues with mock
-  }
-}
