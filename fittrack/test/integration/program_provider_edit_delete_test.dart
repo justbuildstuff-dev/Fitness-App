@@ -63,27 +63,27 @@ void main() {
       );
 
       
-      // Set up basic mocks
+      // Set up basic mocks  
       when(mockFirestoreService.updateProgramFields(
-        userId: anyNamed('userId'),
-        programId: anyNamed('programId'),
-        name: anyNamed('name'),
-        description: any,
+        userId: 'test_user',
+        programId: 'prog123',
+        name: 'Updated Program',
+        description: null,
       )).thenAnswer((_) async {});
 
-      when(mockFirestoreService.deleteProgram(any, any))
+      when(mockFirestoreService.deleteProgram('test_user', 'prog123'))
           .thenAnswer((_) async {});
 
       when(mockFirestoreService.updateWeekFields(
-        userId: anyNamed('userId'),
-        programId: anyNamed('programId'),
-        weekId: anyNamed('weekId'),
-        name: anyNamed('name'),
-        notes: anyNamed('notes'),
-        order: anyNamed('order'),
+        userId: 'test_user',
+        programId: 'prog123',
+        weekId: 'week123',
+        name: 'Updated Week',
+        notes: null,
+        order: 1,
       )).thenAnswer((_) async {});
 
-      when(mockFirestoreService.deleteWeek(any, any, any))
+      when(mockFirestoreService.deleteWeek('test_user', 'prog123', 'week123'))
           .thenAnswer((_) async {});
     });
 
