@@ -351,16 +351,16 @@ void main() {
       
       // Should succeed with just reps
       verify(mockProvider.createSet(
-        programId: anyNamed('programId'),
-        weekId: anyNamed('weekId'),
-        workoutId: anyNamed('workoutId'),
-        exerciseId: anyNamed('exerciseId'),
+        programId: 'program-1',
+        weekId: 'week-1',
+        workoutId: 'workout-1',
+        exerciseId: 'exercise-1',
         reps: 10,
         weight: null,
-        duration: anyNamed('duration'),
-        distance: anyNamed('distance'),
-        restTime: anyNamed('restTime'),
-        notes: anyNamed('notes'),
+        duration: null,
+        distance: null,
+        restTime: null,
+        notes: null,
       )).called(1);
     });
 
@@ -399,16 +399,16 @@ void main() {
       
       // Make createSet return a delayed future to see loading state
       when(mockProvider.createSet(
-        programId: anyNamed('programId'),
-        weekId: anyNamed('weekId'),
-        workoutId: anyNamed('workoutId'),
-        exerciseId: anyNamed('exerciseId'),
-        reps: anyNamed('reps'),
-        weight: anyNamed('weight'),
-        duration: anyNamed('duration'),
-        distance: anyNamed('distance'),
-        restTime: anyNamed('restTime'),
-        notes: anyNamed('notes'),
+        programId: 'program-1',
+        weekId: 'week-1', 
+        workoutId: 'workout-1',
+        exerciseId: 'exercise-1',
+        reps: 10,
+        weight: 50,
+        duration: null,
+        distance: null,
+        restTime: 60,
+        notes: null,
       )).thenAnswer((_) async {
         await Future.delayed(const Duration(milliseconds: 200));
         return 'new-set-id';
@@ -437,16 +437,16 @@ void main() {
       
       // Mock creation failure
       when(mockProvider.createSet(
-        programId: anyNamed('programId'),
-        weekId: anyNamed('weekId'),
-        workoutId: anyNamed('workoutId'),
-        exerciseId: anyNamed('exerciseId'),
-        reps: anyNamed('reps'),
-        weight: anyNamed('weight'),
-        duration: anyNamed('duration'),
-        distance: anyNamed('distance'),
-        restTime: anyNamed('restTime'),
-        notes: anyNamed('notes'),
+        programId: 'program-1',
+        weekId: 'week-1', 
+        workoutId: 'workout-1',
+        exerciseId: 'exercise-1',
+        reps: 10,
+        weight: 50,
+        duration: null,
+        distance: null,
+        restTime: 60,
+        notes: null,
       )).thenAnswer((_) async => null);
       
       when(mockProvider.error).thenReturn('Failed to create set');
