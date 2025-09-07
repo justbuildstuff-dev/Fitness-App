@@ -172,16 +172,26 @@ jobs:
           --timeout=120s \
           --reporter=github || echo "Integration tests completed with some failures"
           
-    - name: Run integration tests (modern structure)
-      continue-on-error: true
+    - name: Run Analytics Integration Test
       run: |
         cd fittrack
-        # Run integration tests from modern integration_test/ directory
         flutter test integration_test/analytics_integration_test.dart \
-                     integration_test/enhanced_complete_workflow_test.dart \
-                     integration_test/workout_creation_integration_test.dart \
           --timeout=120s \
-          --reporter=github || echo "Integration tests completed"
+          --reporter=github
+          
+    - name: Run Workout Creation Integration Test
+      run: |
+        cd fittrack
+        flutter test integration_test/workout_creation_integration_test.dart \
+          --timeout=120s \
+          --reporter=github
+          
+    - name: Run Complete Workflow Integration Test
+      run: |
+        cd fittrack
+        flutter test integration_test/enhanced_complete_workflow_test.dart \
+          --timeout=120s \
+          --reporter=github
           
     - name: Stop Firebase emulators
       if: always()
