@@ -90,17 +90,21 @@ void main() {
 
       // Setup default mock behavior
       when(mockProvider.error).thenReturn(null);
+      when(mockProvider.isLoading).thenReturn(false);
+      when(mockProvider.isLoadingSets).thenReturn(false);
+      
+      // Set up basic createSet mock without argument matchers in setUp
       when(mockProvider.createSet(
-        programId: anyNamed('programId'),
-        weekId: anyNamed('weekId'),
-        workoutId: anyNamed('workoutId'),
-        exerciseId: anyNamed('exerciseId'),
-        reps: anyNamed('reps'),
-        weight: anyNamed('weight'),
-        duration: anyNamed('duration'),
-        distance: anyNamed('distance'),
-        restTime: anyNamed('restTime'),
-        notes: anyNamed('notes'),
+        programId: 'program-1',
+        weekId: 'week-1',
+        workoutId: 'workout-1',
+        exerciseId: 'exercise-1',
+        reps: 10,
+        weight: null,
+        duration: null,
+        distance: null,
+        restTime: null,
+        notes: null,
       )).thenAnswer((_) async => 'new-set-id');
     });
 

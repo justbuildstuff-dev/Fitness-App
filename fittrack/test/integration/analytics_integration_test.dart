@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:fittrack/main.dart';
+import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
@@ -12,7 +12,7 @@ void main() {
   group('Analytics Integration Tests', () {
     testWidgets('complete analytics flow with real data', (tester) async {
       // Launch the app
-      await tester.pumpWidget(const FitTrackApp());
+      await tester.pumpWidget(const app.FitTrackApp());
       await tester.pumpAndSettle();
 
       // Skip if we're not on the sign-in screen (already signed in)
@@ -54,7 +54,7 @@ void main() {
     });
 
     testWidgets('analytics personal records detection', (tester) async {
-      await tester.pumpWidget(const FitTrackApp());
+      await tester.pumpWidget(const app.FitTrackApp());
       await tester.pumpAndSettle();
 
       // Ensure we're signed in
@@ -81,7 +81,7 @@ void main() {
     });
 
     testWidgets('analytics heatmap accuracy', (tester) async {
-      await tester.pumpWidget(const FitTrackApp());
+      await tester.pumpWidget(const app.FitTrackApp());
       await tester.pumpAndSettle();
 
       await _ensureSignedIn(tester);
@@ -113,7 +113,7 @@ void main() {
     });
 
     testWidgets('analytics date range filtering', (tester) async {
-      await tester.pumpWidget(const FitTrackApp());
+      await tester.pumpWidget(const app.FitTrackApp());
       await tester.pumpAndSettle();
 
       await _ensureSignedIn(tester);
@@ -146,7 +146,7 @@ void main() {
     });
 
     testWidgets('analytics refresh functionality', (tester) async {
-      await tester.pumpWidget(const FitTrackApp());
+      await tester.pumpWidget(const app.FitTrackApp());
       await tester.pumpAndSettle();
 
       await _ensureSignedIn(tester);
@@ -170,7 +170,7 @@ void main() {
     });
 
     testWidgets('analytics error handling', (tester) async {
-      await tester.pumpWidget(const FitTrackApp());
+      await tester.pumpWidget(const app.FitTrackApp());
       await tester.pumpAndSettle();
 
       // Test with no network or Firebase issues
