@@ -24,7 +24,7 @@ class FirebaseEmulatorSetup {
   static const _authEmulatorHost = '127.0.0.1';
   static const _authEmulatorPort = 9099;
   static const _firestoreEmulatorHost = '127.0.0.1';  
-  static const _firestoreEmulatorPort = 8082;
+  static const _firestoreEmulatorPort = 8080;
   static const _emulatorUIPort = 4000;
 
   /// Flag to track if emulators have been configured

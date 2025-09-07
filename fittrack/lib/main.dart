@@ -23,7 +23,7 @@ void main() async {
   // Configure emulators in debug mode
   if (kDebugMode) {
     FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
-    FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8082);
+    FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
   }
   
   // Enable Firestore offline persistence (spec requirement from Section 11)
