@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
 
 import 'firestore_edit_delete_test.mocks.dart';
-import 'test_setup_helper.dart';
+import '../integration/test_setup_helper.dart';
 
 /// Unit tests for FirestoreService edit and delete operations
 /// 

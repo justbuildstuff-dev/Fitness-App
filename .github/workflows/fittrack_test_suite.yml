@@ -61,7 +61,7 @@ jobs:
     - name: Run unit tests with coverage
       run: |
         cd fittrack
-        flutter test test/models/ test/services/ \
+        flutter test test/models/ test/services/ test/providers/ \
           --coverage
           
     - name: Upload unit test coverage
@@ -100,7 +100,7 @@ jobs:
       run: |
         cd fittrack
         # Run widget tests with better error handling
-        flutter test test/widgets/ test/integration/enhanced_create_program_screen_test.dart \
+        flutter test test/widgets/ test/screens/ \
           --timeout=60s \
           --reporter=github || echo "Widget tests completed with some failures"
           
@@ -168,7 +168,7 @@ jobs:
       run: |
         cd fittrack
         # Run core integration tests with Firebase emulator
-        flutter test test/integration/enhanced_firestore_service_test.dart \
+        flutter test test/services/enhanced_firestore_service_test.dart \
           --timeout=120s \
           --reporter=github || echo "Integration tests completed with some failures"
           
@@ -283,7 +283,7 @@ jobs:
       run: |
         cd fittrack
         # Run simplified integration tests
-        flutter test test/integration/enhanced_create_program_screen_test.dart test/integration/enhanced_firestore_service_test.dart \
+        flutter test test/screens/enhanced_create_program_screen_test.dart test/services/enhanced_firestore_service_test.dart \
           --timeout=120s \
           --reporter=github || echo "Enhanced integration tests completed"
           

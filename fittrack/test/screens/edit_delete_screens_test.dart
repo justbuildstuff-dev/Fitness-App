@@ -11,7 +11,7 @@ import 'package:fittrack/screens/weeks/create_week_screen.dart';
 import 'package:fittrack/widgets/delete_confirmation_dialog.dart';
 
 import 'edit_delete_screens_test.mocks.dart';
-import 'test_setup_helper.dart';
+import '../integration/test_setup_helper.dart';
 
 /// Widget tests for edit and delete functionality screens
 /// 

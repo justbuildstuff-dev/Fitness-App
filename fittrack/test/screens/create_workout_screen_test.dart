@@ -9,7 +9,7 @@ import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 
 import 'create_workout_screen_test.mocks.dart';
-import 'test_setup_helper.dart';
+import '../integration/test_setup_helper.dart';
 
 /// Widget tests for CreateWorkoutScreen
 /// 

@@ -11,7 +11,7 @@ import 'package:fittrack/models/workout.dart';
 import 'package:fittrack/models/exercise.dart';
 
 import 'create_set_screen_test.mocks.dart';
-import 'test_setup_helper.dart';
+import '../integration/test_setup_helper.dart';
 
 @GenerateMocks([ProgramProvider])
 void main() {

@@ -19,7 +19,7 @@ import 'package:fittrack/providers/program_provider.dart';
 
 @GenerateMocks([ProgramProvider])
 import 'enhanced_create_program_screen_test.mocks.dart';
-import 'test_setup_helper.dart';
+import '../integration/test_setup_helper.dart';
 
 void main() {
   group('CreateProgramScreen Widget Tests', () {
