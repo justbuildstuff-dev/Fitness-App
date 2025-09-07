@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
 
 import 'firestore_edit_delete_test.mocks.dart';
+import 'test_setup_helper.dart';
 
 /// Unit tests for FirestoreService edit and delete operations
 /// 
@@ -30,6 +31,11 @@ import 'firestore_edit_delete_test.mocks.dart';
 void main() {
   group('FirestoreService Edit/Delete Operations', () {
     late MockFirebaseFirestore mockFirestore;
+
+    setUpAll(() async {
+      // Initialize Firebase to prevent crashes when FirestoreService.instance is accessed
+      await TestSetupHelper.initializeFirebaseForWidgetTests();
+    });
     late MockCollectionReference<Map<String, dynamic>> mockUsersCollection;
     late MockCollectionReference<Map<String, dynamic>> mockProgramsCollection;
     late MockCollectionReference<Map<String, dynamic>> mockWeeksCollection;

@@ -19,10 +19,15 @@ import 'package:fittrack/providers/program_provider.dart';
 
 @GenerateMocks([ProgramProvider])
 import 'enhanced_create_program_screen_test.mocks.dart';
+import 'test_setup_helper.dart';
 
 void main() {
   group('CreateProgramScreen Widget Tests', () {
     late MockProgramProvider mockProvider;
+
+    setUpAll(() async {
+      await TestSetupHelper.initializeFirebaseForWidgetTests();
+    });
     
     setUp(() {
       mockProvider = MockProgramProvider();
@@ -63,11 +68,9 @@ void main() {
       /// Test Purpose: Verify basic screen rendering and form elements are present
       
       await tester.pumpWidget(
-        ChangeNotifierProvider<ProgramProvider>.value(
-          value: mockProvider,
-          child: const MaterialApp(
-            home: CreateProgramScreen(),
-          ),
+        TestSetupHelper.createTestAppWithMockedProviders(
+          programProvider: mockProvider,
+          child: const CreateProgramScreen(),
         ),
       );
 
@@ -88,11 +91,9 @@ void main() {
       /// Test Purpose: Verify form accepts user input
       
       await tester.pumpWidget(
-        ChangeNotifierProvider<ProgramProvider>.value(
-          value: mockProvider,
-          child: const MaterialApp(
-            home: CreateProgramScreen(),
-          ),
+        TestSetupHelper.createTestAppWithMockedProviders(
+          programProvider: mockProvider,
+          child: const CreateProgramScreen(),
         ),
       );
 
@@ -118,11 +119,9 @@ void main() {
       /// Test Purpose: Verify form validation works for empty required fields
       
       await tester.pumpWidget(
-        ChangeNotifierProvider<ProgramProvider>.value(
-          value: mockProvider,
-          child: const MaterialApp(
-            home: CreateProgramScreen(),
-          ),
+        TestSetupHelper.createTestAppWithMockedProviders(
+          programProvider: mockProvider,
+          child: const CreateProgramScreen(),
         ),
       );
 

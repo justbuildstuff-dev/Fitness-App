@@ -9,6 +9,7 @@ import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 
 import 'create_workout_screen_test.mocks.dart';
+import 'test_setup_helper.dart';
 
 /// Widget tests for CreateWorkoutScreen
 /// 
@@ -24,6 +25,10 @@ import 'create_workout_screen_test.mocks.dart';
 void main() {
   group('CreateWorkoutScreen Widget Tests', () {
     late MockProgramProvider mockProvider;
+
+    setUpAll(() async {
+      await TestSetupHelper.initializeFirebaseForWidgetTests();
+    });
     late Program testProgram;
     late Week testWeek;
 
@@ -57,13 +62,11 @@ void main() {
     /// Helper method to create the widget under test with necessary providers and routing
     /// This ensures consistent test setup and simulates the real app environment
     Widget createTestWidget() {
-      return MaterialApp(
-        home: ChangeNotifierProvider<ProgramProvider>.value(
-          value: mockProvider,
-          child: CreateWorkoutScreen(
-            program: testProgram,
-            week: testWeek,
-          ),
+      return TestSetupHelper.createTestAppWithMockedProviders(
+        programProvider: mockProvider,
+        child: CreateWorkoutScreen(
+          program: testProgram,
+          week: testWeek,
         ),
       );
     }

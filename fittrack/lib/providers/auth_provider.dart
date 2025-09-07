@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,6 +14,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String? _successMessage;
+  StreamSubscription<User?>? _authStateSubscription;
 
   User? get user => _user;
   UserProfile? get userProfile => _userProfile;
@@ -23,7 +25,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     // Listen to auth state changes
-    _auth.authStateChanges().listen((User? user) {
+    _authStateSubscription = _auth.authStateChanges().listen((User? user) {
       _user = user;
       if (user != null) {
         _loadUserProfile();
@@ -288,5 +290,11 @@ class AuthProvider extends ChangeNotifier {
   void clearSuccessMessage() {
     _clearSuccessMessage();
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _authStateSubscription?.cancel();
+    super.dispose();
   }
 }

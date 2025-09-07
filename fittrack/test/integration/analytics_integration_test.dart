@@ -5,11 +5,19 @@ import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
+import 'firebase_emulator_setup.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Analytics Integration Tests', () {
+    setUpAll(() async {
+      await setupFirebaseEmulators();
+    });
+
+    tearDownAll(() async {
+      await cleanupFirebaseEmulators();
+    });
     testWidgets('complete analytics flow with real data', (tester) async {
       // Launch the app
       await tester.pumpWidget(const app.FitTrackApp());

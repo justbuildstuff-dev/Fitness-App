@@ -11,6 +11,7 @@ import 'package:fittrack/screens/weeks/create_week_screen.dart';
 import 'package:fittrack/widgets/delete_confirmation_dialog.dart';
 
 import 'edit_delete_screens_test.mocks.dart';
+import 'test_setup_helper.dart';
 
 /// Widget tests for edit and delete functionality screens
 /// 
@@ -27,6 +28,10 @@ import 'edit_delete_screens_test.mocks.dart';
 void main() {
   group('Edit/Delete Screens Widget Tests', () {
     late MockProgramProvider mockProvider;
+
+    setUpAll(() async {
+      await TestSetupHelper.initializeFirebaseForWidgetTests();
+    });
     late Program testProgram;
     late Week testWeek;
 
@@ -66,19 +71,21 @@ void main() {
       when(mockProvider.selectedProgram).thenReturn(testProgram);
     });
 
+    Widget createTestWidget({required Widget child}) {
+      return TestSetupHelper.createTestAppWithMockedProviders(
+        programProvider: mockProvider,
+        child: child,
+      );
+    }
+
     group('CreateProgramScreen Edit Mode', () {
       testWidgets('displays edit mode UI when program is provided', (tester) async {
         /// Test Purpose: Verify edit mode shows correct title and button text
         /// Users should clearly understand they're editing an existing program
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: CreateProgramScreen(program: testProgram),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateProgramScreen(program: testProgram),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -92,14 +99,9 @@ void main() {
         /// Test Purpose: Verify form fields are populated with current values
         /// Users should see existing data when editing programs
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: CreateProgramScreen(program: testProgram),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateProgramScreen(program: testProgram),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -112,14 +114,9 @@ void main() {
         /// Test Purpose: Verify edit mode saves updates correctly
         /// Form submission should call update method instead of create
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: CreateProgramScreen(program: testProgram),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateProgramScreen(program: testProgram),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -200,14 +197,9 @@ void main() {
         /// Test Purpose: Verify create mode shows correct UI elements
         /// Users should understand they're creating a new program
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: const CreateProgramScreen(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: const CreateProgramScreen(),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -221,14 +213,9 @@ void main() {
         /// Test Purpose: Verify create mode creates new programs
         /// Form submission should call create method
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: const CreateProgramScreen(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: const CreateProgramScreen(),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -260,14 +247,9 @@ void main() {
         /// Test Purpose: Verify week edit mode shows correct UI
         /// Users should understand they're editing an existing week
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: CreateWeekScreen(program: testProgram, week: testWeek),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateWeekScreen(program: testProgram, week: testWeek),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -280,14 +262,9 @@ void main() {
         /// Test Purpose: Verify week form fields are populated correctly
         /// Users should see existing data when editing weeks
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: CreateWeekScreen(program: testProgram, week: testWeek),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateWeekScreen(program: testProgram, week: testWeek),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -300,14 +277,9 @@ void main() {
         /// Test Purpose: Verify week edit saves updates correctly
         /// Form submission should call week update method
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: CreateWeekScreen(program: testProgram, week: testWeek),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateWeekScreen(program: testProgram, week: testWeek),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -473,14 +445,9 @@ void main() {
         /// Test Purpose: Verify form validation prevents invalid submissions
         /// Users should see validation errors for empty required fields
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: const CreateProgramScreen(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: const CreateProgramScreen(),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -499,14 +466,9 @@ void main() {
         /// Test Purpose: Verify form accepts valid input
         /// Properly filled forms should submit successfully
         
-        await tester.pumpWidget(
-          MaterialApp(
-            home: ChangeNotifierProvider<ProgramProvider>.value(
-              value: mockProvider,
-              child: const CreateProgramScreen(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: const CreateProgramScreen(),
+        ));
 
         await tester.pumpAndSettle();
 

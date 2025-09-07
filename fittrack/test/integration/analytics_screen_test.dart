@@ -12,11 +12,16 @@ import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 
 import 'analytics_screen_test.mocks.dart';
+import 'test_setup_helper.dart';
 
 @GenerateMocks([ProgramProvider])
 void main() {
   group('AnalyticsScreen', () {
     late MockProgramProvider mockProvider;
+
+    setUpAll(() async {
+      await TestSetupHelper.initializeFirebaseForWidgetTests();
+    });
 
     setUp(() {
       mockProvider = MockProgramProvider();
@@ -33,11 +38,9 @@ void main() {
     });
 
     Widget createTestApp({MockProgramProvider? provider}) {
-      return MaterialApp(
-        home: ChangeNotifierProvider<ProgramProvider>.value(
-          value: provider ?? mockProvider,
-          child: const AnalyticsScreen(),
-        ),
+      return TestSetupHelper.createTestAppWithMockedProviders(
+        programProvider: provider ?? mockProvider,
+        child: const AnalyticsScreen(),
       );
     }
 
