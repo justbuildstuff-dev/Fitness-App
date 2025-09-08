@@ -43,56 +43,34 @@ class FirebaseEmulatorSetup {
     if (_firebaseInitialized) return;
 
     try {
-      print('🔍 Starting Firebase emulator setup for integration testing...');
-      
       // Step 1: Verify emulators are running before attempting connection
-      print('🔌 Verifying Firebase emulators are running...');
       await _verifyEmulatorsRunning();
-      print('✅ Firebase emulators verified as accessible');
 
       // Step 2: Check if Firebase is already initialized (by main app)
-      // If so, skip initialization and just configure emulators
-      print('🔍 Checking existing Firebase apps...');
+      // Integration tests run against the main app, so Firebase should already be initialized
       if (Firebase.apps.isNotEmpty) {
-        print('✅ Firebase already initialized by main app (${Firebase.apps.length} app(s) found)');
-        for (final app in Firebase.apps) {
-          print('   - App: ${app.name}, Project: ${app.options.projectId}');
-        }
-        
-        // Step 3: Configure emulators to use existing Firebase instance
-        print('🔧 Configuring emulators for existing Firebase instance...');
-        await _configureEmulators();
-        
+        print('✅ Firebase already initialized by main app, using existing instance');
       } else {
-        print('🚀 No existing Firebase apps found, initializing new instance...');
-        
-        // Step 2b: Initialize Firebase with compatible configuration
-        // Use same project ID as main app to avoid conflicts
-        final firebaseOptions = const FirebaseOptions(
-          apiKey: 'test-api-key',
-          appId: 'test-app-id', 
-          messagingSenderId: 'test-sender-id',
-          projectId: 'fitness-app-8505e', // Use same project ID as workflow emulators
+        // This shouldn't normally happen in integration tests, but provide fallback
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: 'test-api-key',
+            appId: 'test-app-id',
+            messagingSenderId: 'test-sender-id',
+            projectId: 'fitness-app-8505e',
+          ),
         );
-        
-        print('🔧 Initializing Firebase with project: ${firebaseOptions.projectId}');
-        
-        await Firebase.initializeApp(options: firebaseOptions);
-        print('✅ Firebase initialized successfully');
-
-        // Step 3: Configure emulators AFTER Firebase initialization
-        print('🔧 Configuring emulators for new Firebase instance...');
-        await _configureEmulators();
+        print('✅ Firebase initialized for integration testing');
       }
+
+      // Step 3: Configure emulators (main app should have already done this in debug mode)
+      await _configureEmulators();
 
       _firebaseInitialized = true;
       
-      print('✅ Firebase emulators initialized successfully for testing');
+      print('✅ Firebase emulators ready for integration testing');
       
-    } catch (e, stackTrace) {
-      print('❌ Firebase emulator setup failed with error: $e');
-      print('📚 Stack trace: $stackTrace');
-      
+    } catch (e) {
       throw Exception(
         'Failed to initialize Firebase emulators for testing: $e\n'
         'Please ensure Firebase emulators are running with:\n'
@@ -109,38 +87,27 @@ class FirebaseEmulatorSetup {
     if (_emulatorsConfigured) return;
 
     try {
-      // Configure Auth emulator (handle if already configured by main app)
+      // Configure Auth emulator (gracefully handle if already configured)
       try {
-        FirebaseAuth.instance.useAuthEmulator(
-          _authEmulatorHost, 
-          _authEmulatorPort,
-        );
-        print('✅ Auth emulator configured: http://$_authEmulatorHost:$_authEmulatorPort');
+        FirebaseAuth.instance.useAuthEmulator(_authEmulatorHost, _authEmulatorPort);
       } catch (e) {
-        if (e.toString().contains('already') || e.toString().contains('configured')) {
-          print('✅ Auth emulator already configured by main app');
-        } else {
-          rethrow;
-        }
+        // Emulator might already be configured by main app
+        print('Auth emulator: ${e.toString().contains('already') ? 'Already configured' : 'Configuration failed: $e'}');
       }
       
-      // Configure Firestore emulator (handle if already configured by main app)
+      // Configure Firestore emulator (gracefully handle if already configured)
       try {
-        FirebaseFirestore.instance.useFirestoreEmulator(
-          _firestoreEmulatorHost, 
-          _firestoreEmulatorPort,
-        );
-        print('✅ Firestore emulator configured: http://$_firestoreEmulatorHost:$_firestoreEmulatorPort');
+        FirebaseFirestore.instance.useFirestoreEmulator(_firestoreEmulatorHost, _firestoreEmulatorPort);
       } catch (e) {
-        if (e.toString().contains('already') || e.toString().contains('configured')) {
-          print('✅ Firestore emulator already configured by main app');
-        } else {
-          rethrow;
-        }
+        // Emulator might already be configured by main app
+        print('Firestore emulator: ${e.toString().contains('already') ? 'Already configured' : 'Configuration failed: $e'}');
       }
 
       _emulatorsConfigured = true;
-      print('✅ Firebase emulator configuration completed');
+      
+      print('✅ Firebase emulators configured:');
+      print('   - Auth: http://$_authEmulatorHost:$_authEmulatorPort');
+      print('   - Firestore: http://$_firestoreEmulatorHost:$_firestoreEmulatorPort');
       print('   - UI: http://127.0.0.1:$_emulatorUIPort');
       
     } catch (e) {

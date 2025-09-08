@@ -6,45 +6,17 @@ import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
 import 'firebase_emulator_setup.dart';
-import 'firebase_web_setup.dart';
-import 'dart:io' show Platform;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Analytics Integration Tests', () {
-    bool useFirebase = true;
-    
     setUpAll(() async {
-      // Use different Firebase setup based on platform with fallback
-      try {
-        if (Platform.isLinux) {
-          print('🐧 Running on Linux - using web-compatible Firebase setup');
-          await setupFirebaseEmulatorsLinux();
-        } else {
-          print('📱 Running on mobile platform - using standard Firebase setup');
-          await setupFirebaseEmulators();
-        }
-        print('✅ Firebase setup completed successfully');
-      } catch (e) {
-        print('❌ Firebase setup failed: $e');
-        print('⚠️ Falling back to UI-only testing without Firebase backend');
-        useFirebase = false;
-      }
+      await setupFirebaseEmulators();
     });
 
     tearDownAll(() async {
-      if (useFirebase) {
-        try {
-          if (Platform.isLinux) {
-            await cleanupFirebaseEmulatorsLinux();
-          } else {
-            await cleanupFirebaseEmulators();
-          }
-        } catch (e) {
-          print('⚠️ Firebase cleanup failed: $e');
-        }
-      }
+      await cleanupFirebaseEmulators();
     });
     testWidgets('complete analytics flow with real data', (tester) async {
       // Launch the app
