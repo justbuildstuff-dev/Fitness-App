@@ -32,10 +32,7 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return linux;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -79,5 +76,13 @@ class DefaultFirebaseOptions {
     storageBucket: 'your-project-id.appspot.com',
     iosClientId: 'your-ios-client-id',
     iosBundleId: 'com.fittrack.app.fittrack',
+  );
+
+  static const FirebaseOptions linux = FirebaseOptions(
+    apiKey: 'test-api-key',
+    appId: 'test-app-id',
+    messagingSenderId: 'test-sender-id',
+    projectId: 'fitness-app-8505e',  // Use same project ID as web for consistency
+    storageBucket: 'fitness-app-8505e.firebasestorage.app',
   );
 }

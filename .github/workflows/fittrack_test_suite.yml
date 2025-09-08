@@ -151,7 +151,9 @@ jobs:
     - name: Start Firebase emulators
       run: |
         cd fittrack
-        firebase emulators:start --only auth,firestore &
+        # Ensure we're using the correct project for emulators
+        firebase use fitness-app-8505e --quiet || echo "Project already set"
+        firebase emulators:start --only auth,firestore --project=fitness-app-8505e &
         echo $! > emulator.pid
         
     - name: Wait for emulators
