@@ -240,26 +240,27 @@ jobs:
           curl -f http://localhost:8080/ && echo "✅ Firestore emulator responding" || echo "❌ Firestore emulator not responding"
           curl -f http://localhost:9099/ && echo "✅ Auth emulator responding" || echo "❌ Auth emulator not responding"
           
-          echo "🚀 Running analytics integration test on Android..."
+          echo "🚀 Running integration tests on Android with flutter drive..."
           cd fittrack
-          flutter test integration_test \
+          
+          echo "Running analytics integration test..."
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/analytics_integration_test.dart \
             --device-id=emulator-5554
           
-    - name: Run Additional Android Integration Tests
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: 33
-        target: google_apis
-        arch: x86_64
-        profile: Nexus 6
-        ram-size: 2048M
-        heap-size: 512M
-        disable-animations: true
-        script: |
-          cd fittrack
+          echo "Running workout creation integration test..."
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/workout_creation_integration_test.dart \
+            --device-id=emulator-5554
           
-          echo "🚀 All integration tests already run in previous step"
-          echo "✅ Integration test execution completed"
+          echo "Running complete workflow integration test..."
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/enhanced_complete_workflow_test.dart \
+            --device-id=emulator-5554
+          
           
     - name: Stop Firebase emulators
       if: always()
