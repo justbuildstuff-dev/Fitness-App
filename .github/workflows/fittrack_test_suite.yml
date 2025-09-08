@@ -242,7 +242,7 @@ jobs:
           
           echo "🚀 Running analytics integration test on Android..."
           cd fittrack
-          flutter test integration_test/analytics_integration_test.dart \
+          flutter test integration_test \
             --device-id=emulator-5554
           
     - name: Run Additional Android Integration Tests
@@ -258,13 +258,8 @@ jobs:
         script: |
           cd fittrack
           
-          echo "🚀 Running workout creation integration test..."
-          flutter test integration_test/workout_creation_integration_test.dart \
-            --device-id=emulator-5554
-          
-          echo "🚀 Running complete workflow integration test..."
-          flutter test integration_test/enhanced_complete_workflow_test.dart \
-            --device-id=emulator-5554
+          echo "🚀 All integration tests already run in previous step"
+          echo "✅ Integration test execution completed"
           
     - name: Stop Firebase emulators
       if: always()
