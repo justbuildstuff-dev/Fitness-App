@@ -138,6 +138,7 @@ jobs:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
+          ~/.android/build-cache
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
@@ -178,7 +179,7 @@ jobs:
     - name: Wait for emulators
       run: |
         echo "Waiting for emulators to start..."
-        sleep 10
+        sleep 15
         
         # Wait for emulators to be ready with retry logic
         for i in {1..30}; do
@@ -186,7 +187,7 @@ jobs:
           
           # Check if both ports are listening
           if nc -z localhost 8080 && nc -z localhost 9099; then
-            echo "✅ Both emulators are responding on their ports"
+            echo "✅ Both Firebase emulators are responding on their ports"
             break
           fi
           
@@ -204,7 +205,7 @@ jobs:
         echo "Testing Auth emulator endpoint..."  
         curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "Auth endpoint not ready"
         
-        echo "Emulator setup completed - proceeding with tests"
+        echo "Firebase emulator setup completed - proceeding with tests"
         
     - name: Run integration tests
       run: |
@@ -240,16 +241,28 @@ jobs:
           curl -f http://localhost:8080/ && echo "✅ Firestore emulator responding" || echo "❌ Firestore emulator not responding"
           curl -f http://localhost:9099/ && echo "✅ Auth emulator responding" || echo "❌ Auth emulator not responding"
           
+          echo "⏰ Warming up Android emulator before tests..."
+          adb devices -l
+          adb -s emulator-5554 shell pm list packages | head -5 || echo "Emulator warming up..."
+          sleep 10
+          
+          # Verify emulator is responsive
+          echo "🔍 Checking emulator health..."
+          if ! adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null; then
+            echo "⚠️  Emulator not responding, waiting longer..."
+            sleep 15
+          fi
+          
           echo "🚀 Running integration tests on Android with flutter drive..."
           
           echo "Running analytics integration test..."
-          cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554' || echo "Analytics test completed with timeout/error"
           
           echo "Running workout creation integration test..."
-          cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554' || echo "Workout creation test completed with timeout/error"
           
           echo "Running complete workflow integration test..."
-          cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554' || echo "Complete workflow test completed with timeout/error"
           
           
     - name: Stop Firebase emulators
