@@ -198,10 +198,19 @@ jobs:
     - name: Run Analytics Integration Test
       run: |
         cd fittrack
+        echo "🔍 Starting Analytics Integration Test with detailed logging..."
+        echo "📱 Flutter version and platform info:"
+        flutter --version
+        echo "🔗 Checking emulator connectivity before test:"
+        curl -f http://localhost:8080/ || echo "❌ Firestore emulator not responding"
+        curl -f http://localhost:9099/ || echo "❌ Auth emulator not responding"
+        
+        echo "🚀 Running integration test with verbose logging..."
         xvfb-run -a flutter test integration_test/analytics_integration_test.dart \
           --device-id=linux \
           --timeout=120s \
-          --reporter=expanded
+          --reporter=expanded \
+          --verbose
           
     - name: Run Workout Creation Integration Test
       run: |

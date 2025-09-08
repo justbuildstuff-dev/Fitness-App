@@ -43,30 +43,45 @@ class FirebaseEmulatorSetup {
     if (_firebaseInitialized) return;
 
     try {
+      print('🔍 Starting Firebase emulator setup for integration testing...');
+      
       // Step 1: Verify emulators are running before attempting connection
+      print('🔌 Verifying Firebase emulators are running...');
       await _verifyEmulatorsRunning();
+      print('✅ Firebase emulators verified as accessible');
 
       // Step 2: Check if Firebase is already initialized (by main app)
       // If so, skip initialization and just configure emulators
+      print('🔍 Checking existing Firebase apps...');
       if (Firebase.apps.isNotEmpty) {
-        print('✅ Firebase already initialized by main app, using existing instance');
+        print('✅ Firebase already initialized by main app (${Firebase.apps.length} app(s) found)');
+        for (final app in Firebase.apps) {
+          print('   - App: ${app.name}, Project: ${app.options.projectId}');
+        }
         
         // Step 3: Configure emulators to use existing Firebase instance
+        print('🔧 Configuring emulators for existing Firebase instance...');
         await _configureEmulators();
         
       } else {
+        print('🚀 No existing Firebase apps found, initializing new instance...');
+        
         // Step 2b: Initialize Firebase with compatible configuration
         // Use same project ID as main app to avoid conflicts
-        await Firebase.initializeApp(
-          options: const FirebaseOptions(
-            apiKey: 'test-api-key',
-            appId: 'test-app-id', 
-            messagingSenderId: 'test-sender-id',
-            projectId: 'fitness-app-8505e', // Use same project ID as workflow emulators
-          ),
+        final firebaseOptions = const FirebaseOptions(
+          apiKey: 'test-api-key',
+          appId: 'test-app-id', 
+          messagingSenderId: 'test-sender-id',
+          projectId: 'fitness-app-8505e', // Use same project ID as workflow emulators
         );
+        
+        print('🔧 Initializing Firebase with project: ${firebaseOptions.projectId}');
+        
+        await Firebase.initializeApp(options: firebaseOptions);
+        print('✅ Firebase initialized successfully');
 
         // Step 3: Configure emulators AFTER Firebase initialization
+        print('🔧 Configuring emulators for new Firebase instance...');
         await _configureEmulators();
       }
 
@@ -74,7 +89,10 @@ class FirebaseEmulatorSetup {
       
       print('✅ Firebase emulators initialized successfully for testing');
       
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Firebase emulator setup failed with error: $e');
+      print('📚 Stack trace: $stackTrace');
+      
       throw Exception(
         'Failed to initialize Firebase emulators for testing: $e\n'
         'Please ensure Firebase emulators are running with:\n'
