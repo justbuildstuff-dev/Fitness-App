@@ -121,7 +121,7 @@ jobs:
     - name: Install Linux dependencies for Flutter desktop
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+        sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev xvfb
         
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
@@ -180,7 +180,7 @@ jobs:
     - name: Run Analytics Integration Test
       run: |
         cd fittrack
-        flutter test integration_test/analytics_integration_test.dart \
+        xvfb-run -a flutter test integration_test/analytics_integration_test.dart \
           --device-id=linux \
           --timeout=120s \
           --reporter=expanded
@@ -188,7 +188,7 @@ jobs:
     - name: Run Workout Creation Integration Test
       run: |
         cd fittrack
-        flutter test integration_test/workout_creation_integration_test.dart \
+        xvfb-run -a flutter test integration_test/workout_creation_integration_test.dart \
           --device-id=linux \
           --timeout=120s \
           --reporter=expanded
@@ -196,7 +196,7 @@ jobs:
     - name: Run Complete Workflow Integration Test
       run: |
         cd fittrack
-        flutter test integration_test/enhanced_complete_workflow_test.dart \
+        xvfb-run -a flutter test integration_test/enhanced_complete_workflow_test.dart \
           --device-id=linux \
           --timeout=120s \
           --reporter=expanded
