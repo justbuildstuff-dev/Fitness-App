@@ -25,7 +25,7 @@ android {
         applicationId = "com.example.fittrack"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion(21)  // Required for core library desugaring
+        minSdkVersion(23)  // Flutter 3.35.1 minimum requirement
         targetSdkVersion(flutter.targetSdkVersion)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
