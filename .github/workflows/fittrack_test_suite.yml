@@ -248,10 +248,7 @@ jobs:
           
           # Verify emulator is responsive
           echo "🔍 Checking emulator health..."
-          if ! adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null; then
-            echo "⚠️  Emulator not responding, waiting longer..."
-            sleep 15
-          fi
+          adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null || (echo "⚠️  Emulator not responding, waiting longer..." && sleep 15)
           
           echo "🚀 Running integration tests on Android with flutter drive..."
           
