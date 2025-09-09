@@ -53,15 +53,23 @@ class FirebaseEmulatorSetup {
         print('✅ Firebase already initialized by main app, using existing instance');
       } else {
         // This shouldn't normally happen in integration tests, but provide fallback
-        await Firebase.initializeApp(
-          options: const FirebaseOptions(
-            apiKey: 'test-api-key',
-            appId: 'test-app-id',
-            messagingSenderId: 'test-sender-id',
-            projectId: 'fitness-app-8505e',
-          ),
-        );
-        print('✅ Firebase initialized for integration testing');
+        try {
+          await Firebase.initializeApp(
+            options: const FirebaseOptions(
+              apiKey: 'test-api-key',
+              appId: 'test-app-id',
+              messagingSenderId: 'test-sender-id',
+              projectId: 'fitness-app-8505e',
+            ),
+          );
+          print('✅ Firebase initialized for integration testing');
+        } catch (e) {
+          if (e.toString().contains('duplicate-app')) {
+            print('✅ Firebase already initialized, continuing with existing instance');
+          } else {
+            rethrow;
+          }
+        }
       }
 
       // Step 3: Configure emulators (main app should have already done this in debug mode)
