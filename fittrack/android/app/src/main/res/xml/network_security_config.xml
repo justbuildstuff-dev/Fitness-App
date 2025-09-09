@@ -4,12 +4,12 @@
     <!-- This configuration ONLY applies to debug builds and allows -->
     <!-- cleartext HTTP traffic to the Android emulator host address -->
     <!-- Production/release builds maintain full HTTPS enforcement -->
-    <debug-overrides>
+    <debug-overrides cleartextTrafficPermitted="true">
         <!-- Allow HTTP traffic to Android emulator host (10.0.2.2) -->
         <!-- This enables Firebase emulator connectivity during integration tests -->
-        <domain-config cleartextTrafficPermitted="true">
-            <domain includeSubdomains="false">10.0.2.2</domain>
-        </domain-config>
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
     </debug-overrides>
     
     <!-- Base configuration for production builds -->
