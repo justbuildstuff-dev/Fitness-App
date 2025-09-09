@@ -224,16 +224,16 @@ jobs:
     - name: Run Android Integration Test
       uses: reactivecircus/android-emulator-runner@v2
       with:
-        api-level: 33
+        api-level: 29
         target: google_apis
         arch: x86_64
-        profile: Nexus 6
-        ram-size: 2048M
-        heap-size: 512M
-        disk-size: 6000M
+        profile: pixel_2
+        ram-size: 1536M
+        heap-size: 256M
+        disk-size: 4096M
         avd-name: test
         disable-animations: true
-        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -partition-size 4096 -data-dir /tmp
         script: |
           echo "🔍 Starting Android Integration Test..."
           echo "📱 Flutter and emulator info:"
