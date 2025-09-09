@@ -230,7 +230,10 @@ jobs:
         profile: Nexus 6
         ram-size: 2048M
         heap-size: 512M
+        disk-size: 6000M
+        avd-name: test
         disable-animations: true
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
         script: |
           echo "🔍 Starting Android Integration Test..."
           echo "📱 Flutter and emulator info:"
