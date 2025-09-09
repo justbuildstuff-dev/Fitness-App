@@ -21,9 +21,10 @@ class FirebaseEmulatorSetup {
   
   /// Configuration for Firebase emulators
   /// These settings must match your production Firebase project configuration
-  static const _authEmulatorHost = '127.0.0.1';
+  /// Using 10.0.2.2 to access host machine from Android emulator
+  static const _authEmulatorHost = '10.0.2.2';
   static const _authEmulatorPort = 9099;
-  static const _firestoreEmulatorHost = '127.0.0.1';  
+  static const _firestoreEmulatorHost = '10.0.2.2';  
   static const _firestoreEmulatorPort = 8080;
   static const _emulatorUIPort = 4000;
 
