@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Debug-only configuration for Firebase emulator access -->
-    <!-- This configuration ONLY applies to debug builds and allows -->
-    <!-- cleartext HTTP traffic to the Android emulator host address -->
-    <!-- Production/release builds maintain full HTTPS enforcement -->
-    <debug-overrides cleartextTrafficPermitted="true">
-        <!-- Allow HTTP traffic to Android emulator host (10.0.2.2) -->
-        <!-- This enables Firebase emulator connectivity during integration tests -->
-        <trust-anchors>
-            <certificates src="system"/>
-        </trust-anchors>
-    </debug-overrides>
+    <!-- Allow all cleartext traffic for debug builds only -->
+    <!-- This enables Firebase emulator connectivity during testing -->
+    <debug-overrides cleartextTrafficPermitted="true" />
     
-    <!-- Base configuration for production builds -->
-    <!-- Enforces HTTPS for all network traffic in release builds -->
+    <!-- Production builds - HTTPS only for security -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system"/>
