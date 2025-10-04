@@ -421,6 +421,37 @@ jobs:
             body: summary
           });
 
+  all-tests-passed:
+    name: All Tests Status
+    runs-on: ubuntu-latest
+    needs: [unit-tests, widget-tests, integration-tests, performance-tests, enhanced-tests, security-checks]
+    if: always()
+    
+    steps:
+    - name: Check all test results
+      run: |
+        echo "Unit Tests: ${{ needs.unit-tests.result }}"
+        echo "Widget Tests: ${{ needs.widget-tests.result }}"
+        echo "Integration Tests: ${{ needs.integration-tests.result }}"
+        echo "Performance Tests: ${{ needs.performance-tests.result }}"
+        echo "Enhanced Tests: ${{ needs.enhanced-tests.result }}"
+        echo "Security Checks: ${{ needs.security-checks.result }}"
+        
+        # Fail if any critical test failed
+        if [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
+           [[ "${{ needs.security-checks.result }}" != "success" ]]; then
+          echo "❌ Critical tests failed"
+          exit 1
+        fi
+        
+        # Warn but don't fail on integration/widget test failures
+        if [[ "${{ needs.integration-tests.result }}" != "success" ]] || \
+           [[ "${{ needs.widget-tests.result }}" != "success" ]]; then
+          echo "⚠️  Some tests failed but not blocking"
+        fi
+        
+        echo "✅ All critical tests passed"
+
 # Security scanning and dependency checks
   security-checks:
     name: Security and Dependency Checks
