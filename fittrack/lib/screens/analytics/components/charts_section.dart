@@ -49,32 +49,32 @@ class ChartsSection extends StatelessWidget {
                   ],
                 ),
               
-              // Personal records
-              if (personalRecords.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Recent Personal Records',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+              // Personal records - always show this section
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recent Personal Records',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                      if (personalRecords.isNotEmpty)
                         Text(
                           '${personalRecords.length} PR${personalRecords.length == 1 ? '' : 's'}',
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    PersonalRecordsList(records: personalRecords),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  PersonalRecordsList(records: personalRecords),
+                ],
+              ),
             ],
           ),
         ),

@@ -3,7 +3,14 @@
     "allow": [
       "Bash(flutter:*)",
       "Bash(firebase --version)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(gh run view:*)",
+      "Bash(powershell:*)",
+      "Read(//c/Users/joelh/**)",
+      "Bash(npx:*)",
+      "Bash(where npx)"
     ],
     "deny": [],
     "ask": []

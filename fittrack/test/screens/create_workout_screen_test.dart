@@ -5,11 +5,11 @@ import 'package:mockito/annotations.dart';
 import 'package:provider/provider.dart';
 import 'package:fittrack/screens/workouts/create_workout_screen.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 
 import 'create_workout_screen_test.mocks.dart';
-import '../integration/test_setup_helper.dart';
 
 /// Widget tests for CreateWorkoutScreen
 /// 
@@ -21,13 +21,14 @@ import '../integration/test_setup_helper.dart';
 /// 
 /// Widget tests focus on UI behavior and user interactions
 /// If tests fail, check the screen's UI logic, form validation, or provider integration
-@GenerateMocks([ProgramProvider])
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 void main() {
   group('CreateWorkoutScreen Widget Tests', () {
     late MockProgramProvider mockProvider;
+    late MockAuthProvider mockAuthProvider;
 
     setUpAll(() async {
-      await TestSetupHelper.initializeFirebaseForWidgetTests();
+      TestWidgetsFlutterBinding.ensureInitialized();
     });
     late Program testProgram;
     late Week testWeek;
@@ -36,6 +37,7 @@ void main() {
       // Set up test data and mocks for each test
       // Clean state ensures tests don't interfere with each other
       mockProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
       
       testProgram = Program(
         id: 'test-program-123',
@@ -57,16 +59,26 @@ void main() {
 
       // Set up default mock behavior for provider
       when(mockProvider.error).thenReturn(null);
+      
+      // Set up auth provider mocks to prevent Firebase calls
+      when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
     });
 
     /// Helper method to create the widget under test with necessary providers and routing
     /// This ensures consistent test setup and simulates the real app environment
     Widget createTestWidget() {
-      return TestSetupHelper.createTestAppWithMockedProviders(
-        programProvider: mockProvider,
-        child: CreateWorkoutScreen(
-          program: testProgram,
-          week: testWeek,
+      return MaterialApp(
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+          ],
+          child: CreateWorkoutScreen(
+            program: testProgram,
+            week: testWeek,
+          ),
         ),
       );
     }

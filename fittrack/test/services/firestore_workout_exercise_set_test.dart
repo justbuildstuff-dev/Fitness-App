@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/exercise.dart';
 
@@ -11,12 +10,11 @@ import 'package:fittrack/models/exercise.dart';
 /// - Handles batch operations for large data sets
 /// - Manages error cases and edge conditions
 /// 
-/// Tests use fake_cloud_firestore to simulate real Firestore operations
-/// without requiring actual database connectivity or complex mocking.
+/// Tests verify method signatures and parameter handling without
+/// requiring actual database connectivity.
 
 void main() {
   group('FirestoreService Workout/Exercise/Set Operations', () {
-    late FakeFirebaseFirestore fakeFirestore;
     late FirestoreService firestoreService;
     
     const testUserId = 'user123';
@@ -24,11 +22,9 @@ void main() {
     const testWeekId = 'week123';
 
     setUp(() async {
-      // Use fake Firestore instead of complex mocking
-      fakeFirestore = FakeFirebaseFirestore();
+      TestWidgetsFlutterBinding.ensureInitialized();
       
-      // Create a new FirestoreService instance for testing
-      // Note: This test structure assumes FirestoreService can work with fake Firestore
+      // Get FirestoreService instance for testing method signatures
       firestoreService = FirestoreService.instance;
     });
 

@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:provider/provider.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/screens/programs/create_program_screen.dart';
@@ -11,7 +12,6 @@ import 'package:fittrack/screens/weeks/create_week_screen.dart';
 import 'package:fittrack/widgets/delete_confirmation_dialog.dart';
 
 import 'edit_delete_screens_test.mocks.dart';
-import '../integration/test_setup_helper.dart';
 
 /// Widget tests for edit and delete functionality screens
 /// 
@@ -24,19 +24,21 @@ import '../integration/test_setup_helper.dart';
 /// Tests use mocked providers to isolate UI behavior
 /// and ensure reliable test execution.
 
-@GenerateMocks([ProgramProvider])
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 void main() {
   group('Edit/Delete Screens Widget Tests', () {
     late MockProgramProvider mockProvider;
+    late MockAuthProvider mockAuthProvider;
 
     setUpAll(() async {
-      await TestSetupHelper.initializeFirebaseForWidgetTests();
+      TestWidgetsFlutterBinding.ensureInitialized();
     });
     late Program testProgram;
     late Week testWeek;
 
     setUp(() {
       mockProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
       
       testProgram = Program(
         id: 'prog123',
@@ -69,12 +71,22 @@ void main() {
           .thenAnswer((_) async => 'new_week_id');
       when(mockProvider.weeks).thenReturn([]);
       when(mockProvider.selectedProgram).thenReturn(testProgram);
+      
+      // Set up auth provider mocks to prevent Firebase calls
+      when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
     });
 
     Widget createTestWidget({required Widget child}) {
-      return TestSetupHelper.createTestAppWithMockedProviders(
-        programProvider: mockProvider,
-        child: child,
+      return MaterialApp(
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+          ],
+          child: child,
+        ),
       );
     }
 

@@ -16,21 +16,24 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:fittrack/screens/programs/create_program_screen.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 
-@GenerateMocks([ProgramProvider])
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 import 'enhanced_create_program_screen_test.mocks.dart';
-import '../integration/test_setup_helper.dart';
 
 void main() {
   group('CreateProgramScreen Widget Tests', () {
     late MockProgramProvider mockProvider;
+    late MockAuthProvider mockAuthProvider;
 
     setUpAll(() async {
-      await TestSetupHelper.initializeFirebaseForWidgetTests();
+      // Initialize Flutter test binding only - no Firebase needed
+      TestWidgetsFlutterBinding.ensureInitialized();
     });
     
     setUp(() {
       mockProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
       
       // Set up minimal mock behavior for rendering
       when(mockProvider.isLoadingPrograms).thenReturn(false);
@@ -38,6 +41,11 @@ void main() {
       when(mockProvider.isLoading).thenReturn(false);
       when(mockProvider.programs).thenReturn([]);
       when(mockProvider.selectedProgram).thenReturn(null);
+      
+      // Set up auth provider mocks to prevent Firebase calls
+      when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
       
       // Set up basic successful responses without argument matchers in setUp
       when(mockProvider.createProgram(
@@ -68,9 +76,14 @@ void main() {
       /// Test Purpose: Verify basic screen rendering and form elements are present
       
       await tester.pumpWidget(
-        TestSetupHelper.createTestAppWithMockedProviders(
-          programProvider: mockProvider,
-          child: const CreateProgramScreen(),
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ],
+            child: const CreateProgramScreen(),
+          ),
         ),
       );
 
@@ -91,9 +104,14 @@ void main() {
       /// Test Purpose: Verify form accepts user input
       
       await tester.pumpWidget(
-        TestSetupHelper.createTestAppWithMockedProviders(
-          programProvider: mockProvider,
-          child: const CreateProgramScreen(),
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ],
+            child: const CreateProgramScreen(),
+          ),
         ),
       );
 
@@ -119,9 +137,14 @@ void main() {
       /// Test Purpose: Verify form validation works for empty required fields
       
       await tester.pumpWidget(
-        TestSetupHelper.createTestAppWithMockedProviders(
-          programProvider: mockProvider,
-          child: const CreateProgramScreen(),
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ],
+            child: const CreateProgramScreen(),
+          ),
         ),
       );
 

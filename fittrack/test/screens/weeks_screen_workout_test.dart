@@ -5,12 +5,12 @@ import 'package:mockito/annotations.dart';
 import 'package:provider/provider.dart';
 import 'package:fittrack/screens/weeks/weeks_screen.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
 
 import 'weeks_screen_workout_test.mocks.dart';
-import '../integration/test_setup_helper.dart';
 
 /// Widget tests for WeeksScreen workout functionality
 /// 
@@ -23,13 +23,14 @@ import '../integration/test_setup_helper.dart';
 /// 
 /// Widget tests focus on the workout display and interaction aspects of WeeksScreen
 /// If tests fail, check workout list rendering, state management, or provider integration
-@GenerateMocks([ProgramProvider])
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 void main() {
   group('WeeksScreen Workout Functionality Tests', () {
     late MockProgramProvider mockProvider;
+    late MockAuthProvider mockAuthProvider;
 
     setUpAll(() async {
-      await TestSetupHelper.initializeFirebaseForWidgetTests();
+      TestWidgetsFlutterBinding.ensureInitialized();
     });
     late Program testProgram;
     late Week testWeek;
@@ -38,6 +39,7 @@ void main() {
       // Set up test data and mocks for consistent test environment
       // Clean state ensures tests don't interfere with each other
       mockProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
       
       testProgram = Program(
         id: 'test-program-123',
@@ -62,16 +64,26 @@ void main() {
       when(mockProvider.error).thenReturn(null);
       when(mockProvider.isLoadingWorkouts).thenReturn(false);
       when(mockProvider.workouts).thenReturn([]);
+      
+      // Set up auth provider mocks to prevent Firebase calls
+      when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
     });
 
     /// Helper method to create the widget under test with necessary providers and routing
     /// This ensures consistent test setup and simulates the real app environment
     Widget createTestWidget() {
-      return TestSetupHelper.createTestAppWithMockedProviders(
-        programProvider: mockProvider,
-        child: WeeksScreen(
-          program: testProgram,
-          week: testWeek,
+      return MaterialApp(
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+          ],
+          child: WeeksScreen(
+            program: testProgram,
+            week: testWeek,
+          ),
         ),
       );
     }

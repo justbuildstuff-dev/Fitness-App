@@ -20,26 +20,15 @@ import 'package:fittrack/models/exercise_set.dart';
 class TestSetupHelper {
   
   /// Initialize Firebase for widget tests that don't need real Firebase functionality
-  /// This creates a minimal Firebase app to prevent initialization errors
+  /// This method does NOT initialize Firebase to avoid platform channel errors
   static Future<void> initializeFirebaseForWidgetTests() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     
-    // Check if Firebase is already initialized
-    try {
-      Firebase.app();
-      return; // Already initialized
-    } catch (e) {
-      // Firebase not initialized, proceed with initialization
-    }
-
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'test-api-key',
-        appId: 'test-app-id',
-        messagingSenderId: 'test-sender-id',
-        projectId: 'test-fittrack-widget',
-      ),
-    );
+    // For widget tests, we don't need to initialize Firebase at all
+    // The providers should be mocked and won't use Firebase platform channels
+    // This prevents PlatformException channel-error issues
+    
+    return;
   }
 
   /// Create a test app wrapper with mocked providers

@@ -8,23 +8,25 @@ import 'package:fittrack/screens/analytics/components/activity_heatmap_section.d
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
 import 'package:fittrack/screens/analytics/components/charts_section.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 
 import 'analytics_screen_test.mocks.dart';
-import '../integration/test_setup_helper.dart';
 
-@GenerateMocks([ProgramProvider])
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 void main() {
   group('AnalyticsScreen', () {
     late MockProgramProvider mockProvider;
+    late MockAuthProvider mockAuthProvider;
 
     setUpAll(() async {
-      await TestSetupHelper.initializeFirebaseForWidgetTests();
+      TestWidgetsFlutterBinding.ensureInitialized();
     });
 
     setUp(() {
       mockProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
       
       // Default mock responses
       when(mockProvider.isLoadingAnalytics).thenReturn(false);
@@ -35,12 +37,22 @@ void main() {
       when(mockProvider.recentPRs).thenReturn([]);
       when(mockProvider.loadAnalytics()).thenAnswer((_) async {});
       when(mockProvider.refreshAnalytics()).thenAnswer((_) async {});
+      
+      // Set up auth provider mocks to prevent Firebase calls
+      when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
     });
 
     Widget createTestApp({MockProgramProvider? provider}) {
-      return TestSetupHelper.createTestAppWithMockedProviders(
-        programProvider: provider ?? mockProvider,
-        child: const AnalyticsScreen(),
+      return MaterialApp(
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ProgramProvider>.value(value: provider ?? mockProvider),
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+          ],
+          child: const AnalyticsScreen(),
+        ),
       );
     }
 
