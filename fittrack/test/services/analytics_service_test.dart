@@ -60,7 +60,7 @@ void main() {
         // Assert
         expect(analytics.totalWorkouts, equals(2));
         expect(analytics.totalSets, equals(4));
-        expect(analytics.totalVolume, equals(2200.0)); // 100*10 + 80*15 = 2200
+        expect(analytics.totalVolume, equals(1840.0)); // 100*10 + 105*8 = 1840 (sets 3&4 have no weight)
         expect(analytics.exerciseTypeBreakdown.length, greaterThan(0));
         expect(analytics.averageSetsPerWorkout, equals(2.0));
       });

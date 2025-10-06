@@ -382,11 +382,32 @@ void main() {
   });
 
   group('Helper Methods', () {
+    late MockFirestoreService mockFirestoreService;
+    late MockAnalyticsService mockAnalyticsService;
+    late ProgramProvider provider;
+
+    setUp(() {
+      mockFirestoreService = MockFirestoreService();
+      mockAnalyticsService = MockAnalyticsService();
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
+
+      // Set up basic mocks
+      when(mockFirestoreService.getWeeks(any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getPrograms(any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getWorkouts(any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getExercises(any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getSets(any, any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+    });
+
     test('setSelectedProgram updates provider state', () {
       /// Test Purpose: Verify helper methods work correctly
       /// These methods are needed for testing provider behavior
-      
-      final provider = ProgramProvider('user123');
+
       final testProgram = Program(
         id: 'test123',
         name: 'Test Program',
@@ -402,8 +423,7 @@ void main() {
     test('setError updates error state', () {
       /// Test Purpose: Verify error state management helpers
       /// These are needed for comprehensive testing
-      
-      final provider = ProgramProvider('user123');
+
       const errorMessage = 'Test error message';
 
       provider.setError(errorMessage);

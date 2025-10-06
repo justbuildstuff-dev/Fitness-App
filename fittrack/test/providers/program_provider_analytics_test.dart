@@ -132,9 +132,34 @@ void main() {
           dateRange: anyNamed('dateRange'),
         )).thenAnswer((_) => completer.future);
 
+        // Mock all other analytics service methods that loadAnalytics calls
+        when(mockAnalyticsService.generateHeatmapData(
+          userId: anyNamed('userId'),
+          year: anyNamed('year'),
+        )).thenAnswer((_) async => ActivityHeatmapData(
+          userId: 'test_user',
+          year: DateTime.now().year,
+          dailyWorkoutCounts: {},
+          currentStreak: 0,
+          longestStreak: 0,
+          totalWorkouts: 0,
+        ));
+
+        when(mockAnalyticsService.getPersonalRecords(
+          userId: anyNamed('userId'),
+          limit: anyNamed('limit'),
+        )).thenAnswer((_) async => []);
+
+        when(mockAnalyticsService.computeKeyStatistics(
+          userId: anyNamed('userId'),
+          dateRange: anyNamed('dateRange'),
+        )).thenAnswer((_) async => {});
+
         // Act
         final future = provider.loadAnalytics();
-        
+        // Give event loop a chance to process the synchronous loading state change
+        await Future.delayed(Duration.zero);
+
         // Assert - Check loading state is true
         expect(provider.isLoadingAnalytics, isTrue);
 

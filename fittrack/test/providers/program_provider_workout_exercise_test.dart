@@ -491,12 +491,32 @@ void main() {
   });
 
   group('Helper Methods', () {
+    late MockFirestoreService mockFirestoreService;
+    late MockAnalyticsService mockAnalyticsService;
+    late ProgramProvider provider;
+
+    setUp(() {
+      mockFirestoreService = MockFirestoreService();
+      mockAnalyticsService = MockAnalyticsService();
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
+
+      // Set up basic mocks
+      when(mockFirestoreService.getWeeks(any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getPrograms(any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getWorkouts(any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getExercises(any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getSets(any, any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+    });
+
     test('context setting methods work correctly', () {
       /// Test Purpose: Verify helper methods work correctly for testing
       /// These methods are needed for comprehensive provider testing
-      
-      final provider = ProgramProvider('user123');
-      
+
       final testProgram = Program(
         id: 'test123',
         name: 'Test Program',
@@ -529,7 +549,7 @@ void main() {
       provider.setSelectedProgram(testProgram);
       provider.setSelectedWeek(testWeek);
       provider.setSelectedWorkout(testWorkout);
-      
+
       expect(provider.selectedProgram, equals(testProgram));
       expect(provider.selectedWeek, equals(testWeek));
       expect(provider.selectedWorkout, equals(testWorkout));
@@ -538,8 +558,7 @@ void main() {
     test('error management methods work correctly', () {
       /// Test Purpose: Verify error state management helpers
       /// These are needed for comprehensive testing
-      
-      final provider = ProgramProvider('user123');
+
       const errorMessage = 'Test error message';
 
       provider.setError(errorMessage);
