@@ -107,8 +107,21 @@ void main() {
         programId: 'prog123',
       );
 
-      
-      // Set up basic mocks
+
+
+      // Set up basic mocks for common methods that provider calls internally
+      when(mockFirestoreService.getWeeks(any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getPrograms(any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getWorkouts(any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getExercises(any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getSets(any, any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+
+      // Set up mocks for edit/delete operations
       when(mockFirestoreService.updateWorkoutFields(
         userId: anyNamed('userId'),
         programId: anyNamed('programId'),
