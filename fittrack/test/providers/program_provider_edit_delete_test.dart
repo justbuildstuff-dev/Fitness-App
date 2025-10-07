@@ -39,8 +39,9 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
-      provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
-      
+      // Use consistent userId throughout tests
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
+
       // Create test data
       testProgram = Program(
         id: 'prog123',
@@ -154,8 +155,8 @@ void main() {
       test('updateProgramFields requires authentication', () async {
         /// Test Purpose: Verify authentication is enforced for update operations
         /// Unauthenticated users should not be able to perform updates
-        
-        final unauthenticatedProvider = ProgramProvider(null);
+
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         expect(() async {
           await unauthenticatedProvider.updateProgramFields(
@@ -197,8 +198,8 @@ void main() {
       test('deleteProgram requires authentication', () async {
         /// Test Purpose: Verify authentication is enforced for delete operations
         /// Security check to prevent unauthorized deletions
-        
-        final unauthenticatedProvider = ProgramProvider(null);
+
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         expect(() async {
           await unauthenticatedProvider.deleteProgram('prog123');
@@ -312,8 +313,8 @@ void main() {
       test('deleteWeekById requires authentication', () async {
         /// Test Purpose: Verify authentication is enforced for week deletions
         /// Unauthenticated users should not be able to delete data
-        
-        final unauthenticatedProvider = ProgramProvider(null);
+
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         expect(() async {
           await unauthenticatedProvider.deleteWeekById('week123');

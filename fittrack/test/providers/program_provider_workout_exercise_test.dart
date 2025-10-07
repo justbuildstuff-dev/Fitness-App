@@ -425,8 +425,8 @@ void main() {
       test('all operations require authentication', () async {
         /// Test Purpose: Verify authentication is enforced for all operations
         /// Unauthenticated users should not be able to perform any operations
-        
-        final unauthenticatedProvider = ProgramProvider(null);
+
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         expect(() async {
           await unauthenticatedProvider.updateWorkoutFields('workout123', name: 'Test');

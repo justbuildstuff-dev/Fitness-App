@@ -22,8 +22,9 @@ import 'program_provider_workout_test.mocks.dart';
 void main() {
   group('ProgramProvider Workout Methods Tests', () {
     late MockFirestoreService mockFirestoreService;
+    late MockAnalyticsService mockAnalyticsService;
     late ProgramProvider programProvider;
-    
+
     const testUserId = 'test-user-123';
     const testProgramId = 'test-program-456';
     const testWeekId = 'test-week-789';
@@ -36,8 +37,7 @@ void main() {
       // Set up clean test environment for each test
       // Using mocks ensures tests don't depend on external services
       mockFirestoreService = MockFirestoreService();
-      // Create mock analytics service for dependency injection
-      final mockAnalyticsService = MockAnalyticsService();
+      mockAnalyticsService = MockAnalyticsService();
       programProvider = ProgramProvider.withServices(testUserId, mockFirestoreService, mockAnalyticsService);
     });
 
@@ -147,9 +147,9 @@ void main() {
         /// Failure indicates security vulnerability
         
         const workoutName = 'Unauthorized Workout';
-        
+
         // Create provider without authenticated user
-        final unauthenticatedProvider = ProgramProvider(null);
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         final result = await unauthenticatedProvider.createWorkout(
           programId: testProgramId,
@@ -294,8 +294,8 @@ void main() {
         /// Test Purpose: Verify authentication requirement for data access
         /// Unauthenticated users should not be able to load workout data
         /// Failure indicates security vulnerability
-        
-        final unauthenticatedProvider = ProgramProvider(null);
+
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         unauthenticatedProvider.loadWorkouts(testProgramId, testWeekId);
 
@@ -420,10 +420,10 @@ void main() {
         /// Test Purpose: Verify authentication requirement for deletion
         /// Unauthenticated users should not be able to delete workouts
         /// Failure indicates security vulnerability
-        
+
         const workoutIdToDelete = 'unauthorized-delete';
-        
-        final unauthenticatedProvider = ProgramProvider(null);
+
+        final unauthenticatedProvider = ProgramProvider.withServices(null, mockFirestoreService, mockAnalyticsService);
 
         final result = await unauthenticatedProvider.deleteWorkout(
           testProgramId, testWeekId, workoutIdToDelete);
