@@ -1052,4 +1052,16 @@ class ProgramProvider extends ChangeNotifier {
     _setsSubscription?.cancel();
     super.dispose();
   }
+
+  // ========================================
+  // Testing Helper Methods
+  // ========================================
+
+  /// Sets error state for testing purposes
+  /// This method is only intended for use in unit tests
+  @visibleForTesting
+  void setErrorForTesting(String error) {
+    _error = error;
+    notifyListeners();
+  }
 }

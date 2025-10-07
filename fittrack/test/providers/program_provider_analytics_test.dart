@@ -156,12 +156,21 @@ void main() {
         )).thenAnswer((_) async => {});
 
         // Act
-        final future = provider.loadAnalytics();
-        // Give event loop a chance to process the synchronous loading state change
-        await Future.delayed(Duration.zero);
+        bool loadingStateChecked = false;
+        provider.addListener(() {
+          if (!loadingStateChecked && provider.isLoadingAnalytics) {
+            loadingStateChecked = true;
+            expect(provider.isLoadingAnalytics, isTrue);
+          }
+        });
 
-        // Assert - Check loading state is true
-        expect(provider.isLoadingAnalytics, isTrue);
+        final future = provider.loadAnalytics();
+
+        // Wait for the loading state to be set and listener to be called
+        await Future.delayed(const Duration(milliseconds: 10));
+
+        // Assert - Verify loading state was checked
+        expect(loadingStateChecked, isTrue, reason: 'Loading state should have been set to true');
 
         // Complete the future
         completer.complete(WorkoutAnalytics(

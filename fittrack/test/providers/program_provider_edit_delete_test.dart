@@ -434,15 +434,13 @@ void main() {
 }
 
 /// Extension methods to support testing
-/// These methods would be added to ProgramProvider for testing purposes
+/// These methods provide access to ProgramProvider methods for test setup
 extension ProgramProviderTestHelpers on ProgramProvider {
   void setSelectedProgram(Program program) {
-    // Implementation would set _selectedProgram field
     selectProgram(program);
   }
 
   void setError(String errorMessage) {
-    // Implementation would set _error field and notifyListeners()
-    // This is used for testing error state management
+    setErrorForTesting(errorMessage);
   }
 }

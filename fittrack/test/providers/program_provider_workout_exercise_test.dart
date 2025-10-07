@@ -46,7 +46,8 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
-      provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
+      // Use consistent userId throughout tests
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
       
       // Create test data
       testProgram = Program(
@@ -581,24 +582,21 @@ void main() {
 }
 
 /// Extension methods to support testing
-/// These methods would be added to ProgramProvider for testing purposes
+/// These methods provide access to ProgramProvider methods for test setup
 extension ProgramProviderTestHelpers on ProgramProvider {
   void setSelectedProgram(Program program) {
     selectProgram(program);
   }
 
   void setSelectedWeek(Week week) {
-    // Implementation would set _selectedWeek field
-    // This would be implemented in the actual ProgramProvider class
+    selectWeek(week);
   }
 
   void setSelectedWorkout(Workout workout) {
-    // Implementation would set _selectedWorkout field
-    // This would be implemented in the actual ProgramProvider class
+    selectWorkout(workout);
   }
 
   void setError(String errorMessage) {
-    // Implementation would set _error field and notifyListeners()
-    // This is used for testing error state management
+    setErrorForTesting(errorMessage);
   }
 }
