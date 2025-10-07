@@ -487,18 +487,32 @@ class ProgramProvider extends ChangeNotifier {
   }) async {
     if (_userId == null) return null;
 
+    // Validate workout name
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      _error = 'Workout name cannot be empty';
+      notifyListeners();
+      return null;
+    }
+
+    if (trimmedName.length > 200) {
+      _error = 'Workout name must be 200 characters or less';
+      notifyListeners();
+      return null;
+    }
+
     try {
       _error = null;
       notifyListeners();
 
       // Calculate next order index
-      final nextOrderIndex = _workouts.isEmpty 
-          ? 0 
+      final nextOrderIndex = _workouts.isEmpty
+          ? 0
           : _workouts.map((w) => w.orderIndex).reduce((a, b) => a > b ? a : b) + 1;
 
       final workout = Workout(
         id: '',
-        name: name.trim(),
+        name: trimmedName,
         dayOfWeek: dayOfWeek,
         orderIndex: nextOrderIndex,
         notes: notes?.trim(),

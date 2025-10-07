@@ -155,22 +155,11 @@ void main() {
           dateRange: anyNamed('dateRange'),
         )).thenAnswer((_) async => {});
 
-        // Act
-        bool loadingStateChecked = false;
-        provider.addListener(() {
-          if (!loadingStateChecked && provider.isLoadingAnalytics) {
-            loadingStateChecked = true;
-            expect(provider.isLoadingAnalytics, isTrue);
-          }
-        });
-
+        // Act - Start loading (don't await yet)
         final future = provider.loadAnalytics();
 
-        // Wait for the loading state to be set and listener to be called
-        await Future.delayed(const Duration(milliseconds: 10));
-
-        // Assert - Verify loading state was checked
-        expect(loadingStateChecked, isTrue, reason: 'Loading state should have been set to true');
+        // Assert - Loading state should be true immediately
+        expect(provider.isLoadingAnalytics, isTrue);
 
         // Complete the future
         completer.complete(WorkoutAnalytics(

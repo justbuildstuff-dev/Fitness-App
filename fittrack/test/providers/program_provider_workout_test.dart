@@ -39,6 +39,14 @@ void main() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
       programProvider = ProgramProvider.withServices(testUserId, mockFirestoreService, mockAnalyticsService);
+
+      // Set up common mock stubs for methods called by provider internally
+      when(mockFirestoreService.createWorkout(any))
+          .thenAnswer((_) async => 'default-workout-id');
+      when(mockFirestoreService.getExercises(any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getSets(any, any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
     });
 
     group('Create Workout', () {
