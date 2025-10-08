@@ -149,9 +149,9 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       
       // Try to save without entering name
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump();
-      
+
       expect(find.text('Please enter an exercise name'), findsOneWidget);
       verifyNever(mockProvider.createExercise(
         programId: anyNamed('programId'),
@@ -176,9 +176,9 @@ void main() {
         longName,
       );
       
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump();
-      
+
       expect(find.text('Exercise name must be 200 characters or less'), findsOneWidget);
     });
 
@@ -195,10 +195,10 @@ void main() {
       );
       
       // Save the exercise
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump(); // Trigger form validation
       await tester.pump(); // Allow async operation to start
-      
+
       // Verify createExercise was called with correct parameters
       verify(mockProvider.createExercise(
         programId: 'program-1',
@@ -235,10 +235,10 @@ void main() {
       );
       
       // Save the exercise
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump();
       await tester.pump();
-      
+
       // Verify createExercise was called with all parameters
       verify(mockProvider.createExercise(
         programId: 'program-1',
@@ -276,12 +276,12 @@ void main() {
       );
       
       // Tap save
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump(); // Start async operation
-      
+
       // Should show loading indicator
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('SAVE'), findsNothing);
+      expect(find.text('CREATE'), findsNothing);
       
       // Complete the async operation
       await tester.pumpAndSettle();
@@ -312,10 +312,10 @@ void main() {
       );
       
       // Save the exercise
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump();
       await tester.pumpAndSettle();
-      
+
       // Should show error message
       expect(find.text('Failed to create exercise'), findsOneWidget);
     });
@@ -333,10 +333,10 @@ void main() {
       );
       
       // Save the exercise
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('CREATE'));
       await tester.pump();
       await tester.pumpAndSettle();
-      
+
       // Verify createExercise was called (this is the core functionality)
       verify(mockProvider.createExercise(
         programId: 'program-1',

@@ -328,7 +328,10 @@ void main() {
         /// Users should see appropriate error states throughout operations
         
         provider.setSelectedProgram(testProgram);
-        
+
+        // Wait for initial load to complete
+        await Future.delayed(const Duration(milliseconds: 10));
+
         // Start with clean state
         expect(provider.error, isNull);
 

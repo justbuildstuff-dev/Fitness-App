@@ -115,7 +115,7 @@ void main() {
           reason: 'Should have notes field');
 
         // Verify action buttons
-        expect(find.text('SAVE'), findsOneWidget,
+        expect(find.text('CREATE'), findsOneWidget,
           reason: 'Should have save button in app bar');
         
         // Verify helpful tips section
@@ -177,7 +177,7 @@ void main() {
         await tester.pumpWidget(createTestWidget());
 
         // Try to save without entering a name
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify validation error appears
@@ -204,7 +204,7 @@ void main() {
         // Enter a name that's too long (over 200 characters)
         final tooLongName = 'A' * 201;
         await tester.enterText(find.byType(TextFormField).first, tooLongName);
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         expect(find.text('Workout name must be 200 characters or less'), findsOneWidget,
@@ -229,7 +229,7 @@ void main() {
 
         // Enter valid name
         await tester.enterText(find.byType(TextFormField).first, 'Valid Workout Name');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify no validation errors
@@ -256,7 +256,7 @@ void main() {
 
         // Enter only required field (name), leave notes empty
         await tester.enterText(find.byType(TextFormField).first, 'Workout Without Notes');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify workout creation was attempted
@@ -303,7 +303,7 @@ void main() {
         await tester.enterText(notesField, 'Focus on progressive overload');
 
         // Submit form
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify correct data was submitted
@@ -335,7 +335,7 @@ void main() {
         await tester.enterText(find.byType(TextFormField).first, 'Quick Workout');
 
         // Submit without selecting day or adding notes
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify submission with null optional fields
@@ -369,7 +369,7 @@ void main() {
 
         // Fill form and submit
         await tester.enterText(find.byType(TextFormField).first, 'Loading Test Workout');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         
         // Verify loading indicator appears
         await tester.pump(const Duration(milliseconds: 100));
@@ -402,11 +402,11 @@ void main() {
         });
 
         await tester.enterText(find.byType(TextFormField).first, 'Disable Test');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pump(const Duration(milliseconds: 100));
 
         // Try to tap save button again while processing
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify createWorkout was only called once
@@ -443,7 +443,7 @@ void main() {
         when(mockProvider.error).thenReturn(errorMessage);
 
         await tester.enterText(find.byType(TextFormField).first, 'Error Test Workout');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify error is displayed to user
@@ -469,7 +469,7 @@ void main() {
         )).thenAnswer((_) async => 'success-workout-id');
 
         await tester.enterText(find.byType(TextFormField).first, 'Success Test Workout');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Verify success message appears
@@ -485,7 +485,7 @@ void main() {
         await tester.pumpWidget(createTestWidget());
 
         // Trigger validation error
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
         
         expect(find.text('Please enter a workout name'), findsOneWidget,
@@ -520,7 +520,7 @@ void main() {
         )).thenAnswer((_) async => 'navigation-test-workout');
 
         await tester.enterText(find.byType(TextFormField).first, 'Navigation Test');
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // In a real test, you would verify:

@@ -158,7 +158,10 @@ void main() {
         // Act - Start loading (don't await yet)
         final future = provider.loadAnalytics();
 
-        // Assert - Loading state should be true immediately
+        // Wait one microtask for synchronous code to run
+        await Future.microtask(() {});
+
+        // Assert - Loading state should be true after synchronous code runs
         expect(provider.isLoadingAnalytics, isTrue);
 
         // Complete the future

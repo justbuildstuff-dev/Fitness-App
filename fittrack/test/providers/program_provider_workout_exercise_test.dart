@@ -466,7 +466,10 @@ void main() {
         provider.setSelectedProgram(testProgram);
         provider.setSelectedWeek(testWeek);
         provider.setSelectedWorkout(testWorkout);
-        
+
+        // Wait for initial loads to complete
+        await Future.delayed(const Duration(milliseconds: 10));
+
         // Start with clean state
         expect(provider.error, isNull);
 
