@@ -27,8 +27,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+      ),
+      child: Scaffold(
+        appBar: AppBar(
         title: const Text('Analytics'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
@@ -177,6 +181,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }
