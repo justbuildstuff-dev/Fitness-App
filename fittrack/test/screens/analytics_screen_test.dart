@@ -234,7 +234,7 @@ void main() {
         // Reset mock after initial load
         clearInteractions(mockProvider);
 
-        await tester.fling(find.byType(SingleChildScrollView), const Offset(0, 300), 1000);
+        await tester.fling(find.byType(SingleChildScrollView).first, const Offset(0, 300), 1000);
         await tester.pump();
         await tester.pump(const Duration(seconds: 1)); // Allow refresh to complete
 

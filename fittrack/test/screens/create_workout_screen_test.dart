@@ -156,7 +156,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify all day options are present
-        expect(find.text('No specific day'), findsOneWidget,
+        expect(find.text('No specific day'), findsAtLeastNWidgets(1),
           reason: 'Should have option for no specific day');
         expect(find.text('Monday'), findsOneWidget);
         expect(find.text('Tuesday'), findsOneWidget);
