@@ -61,11 +61,11 @@ void main() {
       );
 
       // Set up basic mock responses
-      when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: any))
+      when(mockProvider.updateProgramFields(anyNamed('programId'), name: anyNamed('name'), description: anyNamed('description')))
           .thenAnswer((_) async {});
-      when(mockProvider.createProgram(name: anyNamed('name'), description: any))
+      when(mockProvider.createProgram(name: anyNamed('name'), description: anyNamed('description')))
           .thenAnswer((_) async => 'new_program_id');
-      when(mockProvider.updateWeekFields(any, name: anyNamed('name'), notes: anyNamed('notes')))
+      when(mockProvider.updateWeekFields(anyNamed('weekId'), name: anyNamed('name'), notes: anyNamed('notes')))
           .thenAnswer((_) async {});
       when(mockProvider.createWeek(programId: anyNamed('programId'), name: anyNamed('name'), notes: anyNamed('notes')))
           .thenAnswer((_) async => 'new_week_id');

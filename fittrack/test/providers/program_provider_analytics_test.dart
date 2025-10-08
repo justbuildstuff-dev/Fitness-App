@@ -125,58 +125,66 @@ void main() {
       });
 
       test('sets loading state correctly during analytics loading', () async {
-        // Arrange
-        final completer = Completer<WorkoutAnalytics>();
+        // Arrange - Mock with delayed responses to simulate async loading
         when(mockAnalyticsService.computeWorkoutAnalytics(
           userId: anyNamed('userId'),
           dateRange: anyNamed('dateRange'),
-        )).thenAnswer((_) => completer.future);
+        )).thenAnswer((_) async {
+          await Future.delayed(const Duration(milliseconds: 50));
+          return WorkoutAnalytics(
+            userId: 'test_user',
+            startDate: DateTime.now().subtract(const Duration(days: 30)),
+            endDate: DateTime.now(),
+            totalWorkouts: 0,
+            totalSets: 0,
+            totalVolume: 0.0,
+            totalDuration: 0,
+            exerciseTypeBreakdown: {},
+            completedWorkoutIds: [],
+          );
+        });
 
-        // Mock all other analytics service methods that loadAnalytics calls
         when(mockAnalyticsService.generateHeatmapData(
           userId: anyNamed('userId'),
           year: anyNamed('year'),
-        )).thenAnswer((_) async => ActivityHeatmapData(
-          userId: 'test_user',
-          year: DateTime.now().year,
-          dailyWorkoutCounts: {},
-          currentStreak: 0,
-          longestStreak: 0,
-          totalWorkouts: 0,
-        ));
+        )).thenAnswer((_) async {
+          await Future.delayed(const Duration(milliseconds: 50));
+          return ActivityHeatmapData(
+            userId: 'test_user',
+            year: DateTime.now().year,
+            dailyWorkoutCounts: {},
+            currentStreak: 0,
+            longestStreak: 0,
+            totalWorkouts: 0,
+          );
+        });
 
         when(mockAnalyticsService.getPersonalRecords(
           userId: anyNamed('userId'),
           limit: anyNamed('limit'),
-        )).thenAnswer((_) async => []);
+        )).thenAnswer((_) async {
+          await Future.delayed(const Duration(milliseconds: 50));
+          return [];
+        });
 
         when(mockAnalyticsService.computeKeyStatistics(
           userId: anyNamed('userId'),
           dateRange: anyNamed('dateRange'),
-        )).thenAnswer((_) async => {});
+        )).thenAnswer((_) async {
+          await Future.delayed(const Duration(milliseconds: 50));
+          return {};
+        });
 
         // Act - Start loading (don't await yet)
         final future = provider.loadAnalytics();
 
-        // Wait one microtask for synchronous code to run
-        await Future.microtask(() {});
+        // Wait for synchronous code to execute
+        await Future.delayed(const Duration(milliseconds: 10));
 
-        // Assert - Loading state should be true after synchronous code runs
+        // Assert - Loading state should be true during loading
         expect(provider.isLoadingAnalytics, isTrue);
 
-        // Complete the future
-        completer.complete(WorkoutAnalytics(
-          userId: 'test_user',
-          startDate: DateTime.now().subtract(const Duration(days: 30)),
-          endDate: DateTime.now(),
-          totalWorkouts: 0,
-          totalSets: 0,
-          totalVolume: 0.0,
-          totalDuration: 0,
-          exerciseTypeBreakdown: {},
-          completedWorkoutIds: [],
-        ));
-
+        // Wait for completion
         await future;
 
         // Assert - Check loading state is false after completion

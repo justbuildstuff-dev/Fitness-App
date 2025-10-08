@@ -191,7 +191,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(strengthExercise));
       
       // Try to save without entering reps
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       
       expect(find.text('Please enter number of reps'), findsOneWidget);
@@ -204,7 +204,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(cardioExercise));
       
       // Try to save without entering duration
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       
       expect(find.text('Duration required'), findsOneWidget);
@@ -220,7 +220,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '10');
       
       // Save the set
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pump();
       
@@ -252,7 +252,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Notes (Optional)'), 'Good form');
       
       // Save the set
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pump();
       
@@ -282,7 +282,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Seconds'), '30');
       
       // Save the set
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pump();
       
@@ -312,7 +312,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Distance (km)'), '5.5');
       
       // Save the set
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pump();
       
@@ -339,7 +339,7 @@ void main() {
       
       // The reps field only allows digits, so test by clearing field (empty = invalid)
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '');
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       
       expect(find.text('Please enter number of reps'), findsOneWidget);
@@ -348,7 +348,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '10');
       // Clear any existing weight and don't enter anything (test passes because weight is optional for strength)
       await tester.enterText(find.widgetWithText(TextFormField, 'Weight (kg)'), '');
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pump();
       
@@ -376,7 +376,7 @@ void main() {
       // Enter invalid seconds (over 59)
       await tester.enterText(find.widgetWithText(TextFormField, 'Minutes *'), '5');
       await tester.enterText(find.widgetWithText(TextFormField, 'Seconds'), '75');
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       
       expect(find.text('Must be 0-59'), findsOneWidget);
@@ -389,7 +389,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(customExercise));
       
       // Try to save without entering any metrics
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pumpAndSettle();
       
@@ -423,12 +423,12 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '10');
       
       // Tap save
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump(); // Start async operation
       
       // Should show loading indicator
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('SAVE'), findsNothing);
+      expect(find.text('ADD'), findsNothing);
       
       // Complete the async operation
       await tester.pumpAndSettle();
@@ -460,7 +460,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '10');
       
       // Save the set
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pumpAndSettle();
       
@@ -506,7 +506,7 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '12');
       
       // Save the set
-      await tester.tap(find.text('SAVE'));
+      await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pumpAndSettle();
       
