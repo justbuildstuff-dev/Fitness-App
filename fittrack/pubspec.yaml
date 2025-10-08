@@ -29,6 +29,7 @@ dependencies:
   # Utilities
   intl: ^0.20.2
   uuid: ^4.2.1
+  shared_preferences: ^2.2.2
   
   # Export functionality
   csv: ^6.0.0
