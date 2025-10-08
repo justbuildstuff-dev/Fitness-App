@@ -158,12 +158,16 @@ void main() {
       testWidgets('selecting date range calls loadAnalytics with range', (tester) async {
         // Act
         await tester.pumpWidget(createTestApp());
+
+        // Reset mock after initial load
+        clearInteractions(mockProvider);
+
         await tester.tap(find.byIcon(Icons.date_range));
         await tester.pumpAndSettle();
         await tester.tap(find.text('This Month'));
         await tester.pumpAndSettle();
 
-        // Assert
+        // Assert - should be called once after reset
         verify(mockProvider.loadAnalytics(dateRange: anyNamed('dateRange'))).called(1);
       });
     });
@@ -226,11 +230,15 @@ void main() {
 
         // Act
         await tester.pumpWidget(createTestApp());
+
+        // Reset mock after initial load
+        clearInteractions(mockProvider);
+
         await tester.fling(find.byType(SingleChildScrollView), const Offset(0, 300), 1000);
         await tester.pump();
         await tester.pump(const Duration(seconds: 1)); // Allow refresh to complete
 
-        // Assert
+        // Assert - should be called once after reset
         verify(mockProvider.refreshAnalytics()).called(1);
       });
     });

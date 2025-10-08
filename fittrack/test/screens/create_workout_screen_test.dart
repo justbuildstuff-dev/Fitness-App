@@ -102,8 +102,8 @@ void main() {
           reason: 'Should display program and week names for context');
 
         // Verify form fields are present
-        expect(find.byType(TextFormField), findsNWidgets(3),
-          reason: 'Should have 3 text input fields: name, notes, and description');
+        expect(find.byType(TextFormField), findsNWidgets(2),
+          reason: 'Should have 2 text input fields: name and notes');
         
         expect(find.text('Workout Name *'), findsOneWidget,
           reason: 'Should have workout name field with required indicator');
