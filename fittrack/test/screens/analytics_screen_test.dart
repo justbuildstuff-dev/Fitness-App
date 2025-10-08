@@ -341,7 +341,7 @@ void main() {
         'totalWorkouts': 1000,
         'totalSets': 5000,
         'totalVolume': 1500000.0, // Should format to 1.5M
-        'averageDuration': 125.7, // Should format to 125m
+        'averageDuration': 125.7, // Should format to 125m 42s (125 + 0.7*60)
       };
 
       // Act
@@ -353,7 +353,7 @@ void main() {
 
       // Assert
       expect(find.text('1.5M'), findsOneWidget);
-      expect(find.text('125m'), findsOneWidget);
+      expect(find.text('125m 42s'), findsOneWidget);
     });
   });
 
