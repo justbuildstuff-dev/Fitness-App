@@ -10,7 +10,10 @@
       "Bash(powershell:*)",
       "Read(//c/Users/joelh/**)",
       "Bash(npx:*)",
-      "Bash(where npx)"
+      "Bash(where npx)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []
