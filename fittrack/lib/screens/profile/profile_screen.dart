@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -85,7 +86,12 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.settings_outlined,
                 title: 'Settings',
                 onTap: () {
-                  // TODO: Navigate to settings
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
                 },
               ),
               _MenuItem(
