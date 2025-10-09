@@ -45,6 +45,17 @@ The SA handoff message will contain:
 
 **Your first actions:**
 
+**CRITICAL: Work on ONE task at a time**
+
+Do NOT create branches for all tasks upfront. Follow this sequence:
+1. Implement task #10 completely (code + tests + PR + merge)
+2. Close issue #10
+3. THEN move to task #11
+4. Repeat
+
+Only create a branch for the task you're currently implementing.
+
+
 1. **Acknowledge the handoff**
 "Received handoff for [Feature Name].Reading technical design and task breakdown..."
 
@@ -303,13 +314,23 @@ After PR is merged:
 3. Close the issue
 4. Move to next task
 
-## Phase 3: Handle Multiple Tasks
-**Task sequence strategy:**
-**If tasks have dependencies:**
+### Phase 3: Handle Multiple Tasks
 
-- Complete in order: Task #10 → #11 → #12
-- Don't start dependent task until previous PR merged
-- Each task = separate branch + separate PR
+**CRITICAL: Sequential implementation, not parallel**
+
+Do NOT create all branches at once. Work sequentially:
+
+**Task sequence strategy:**
+
+**If tasks have dependencies (most common):**
+1. Implement ONLY task #10
+2. Create branch for #10 only
+3. Code, test, PR, wait for merge
+4. Close issue #10
+5. THEN create branch for #11
+6. Repeat until all tasks complete
+
+**One task, one branch, one PR at a time.**
 
 **If tasks are independent:**
 
