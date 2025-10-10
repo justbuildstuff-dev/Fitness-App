@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.fittrack"
+    namespace = "com.fittrack.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -22,8 +22,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.fittrack"
+        applicationId = "com.fittrack.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdkVersion(24)  // Required for integration_test plugin
