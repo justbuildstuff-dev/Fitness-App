@@ -117,7 +117,39 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
+    - name: Free Disk Space for Android Emulator
+      run: |
+        echo "=== Disk space BEFORE cleanup ==="
+        df -h
+        echo ""
+
+        echo "=== Removing unused components ==="
+        # Remove .NET runtime (~2.7GB)
+        sudo rm -rf /usr/share/dotnet
+
+        # Remove Haskell (~5.3GB)
+        sudo rm -rf /opt/ghc
+
+        # Remove CodeQL (~5GB)
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+        # Remove large misc packages (~4GB)
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/local/share/boost
+
+        # Clean Docker system (~4GB)
+        sudo docker system prune -af
+
+        # Clean apt cache (~1GB)
+        sudo apt-get clean
+
+        echo ""
+        echo "=== Disk space AFTER cleanup ==="
+        df -h
+        echo ""
+        echo "✅ Cleanup complete"
+
     - name: Setup Java for Android
       uses: actions/setup-java@v4
       with:
