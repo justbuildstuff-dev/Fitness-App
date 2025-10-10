@@ -94,15 +94,15 @@ void main() {
       testWidgets('displays edit mode UI when program is provided', (tester) async {
         /// Test Purpose: Verify edit mode shows correct title and button text
         /// Users should clearly understand they're editing an existing program
-        
+
         await tester.pumpWidget(createTestWidget(
           child: CreateProgramScreen(program: testProgram),
         ));
 
         await tester.pumpAndSettle();
 
-        // Verify edit mode UI elements
-        expect(find.text('Edit Program'), findsOneWidget);
+        // Verify edit mode UI elements (AppBar + Body both show "Edit Program")
+        expect(find.widgetWithText(AppBar, 'Edit Program'), findsOneWidget);
         expect(find.text('SAVE'), findsOneWidget);
         expect(find.text('CREATE'), findsNothing);
       });
@@ -153,17 +153,10 @@ void main() {
       testWidgets('shows success message and navigates back after successful edit', (tester) async {
         /// Test Purpose: Verify successful edit provides user feedback
         /// Users should see confirmation and return to previous screen
-        
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ChangeNotifierProvider<ProgramProvider>.value(
-                value: mockProvider,
-                child: CreateProgramScreen(program: testProgram),
-              ),
-            ),
-          ),
-        );
+
+        await tester.pumpWidget(createTestWidget(
+          child: CreateProgramScreen(program: testProgram),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -178,20 +171,13 @@ void main() {
       testWidgets('handles update errors gracefully', (tester) async {
         /// Test Purpose: Verify error handling during program updates
         /// Users should see meaningful error messages when updates fail
-        
-        when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: any))
+
+        when(mockProvider.updateProgramFields(any, name: anyNamed('name'), description: anyNamed('description')))
             .thenThrow(Exception('Update failed'));
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ChangeNotifierProvider<ProgramProvider>.value(
-                value: mockProvider,
-                child: CreateProgramScreen(program: testProgram),
-              ),
-            ),
-          ),
-        );
+        await tester.pumpWidget(createTestWidget(
+          child: CreateProgramScreen(program: testProgram),
+        ));
 
         await tester.pumpAndSettle();
 
@@ -258,15 +244,15 @@ void main() {
       testWidgets('displays edit mode UI when week is provided', (tester) async {
         /// Test Purpose: Verify week edit mode shows correct UI
         /// Users should understand they're editing an existing week
-        
+
         await tester.pumpWidget(createTestWidget(
           child: CreateWeekScreen(program: testProgram, week: testWeek),
         ));
 
         await tester.pumpAndSettle();
 
-        // Verify edit mode UI elements
-        expect(find.text('Edit Week'), findsOneWidget);
+        // Verify edit mode UI elements (AppBar contains "Edit Week")
+        expect(find.widgetWithText(AppBar, 'Edit Week'), findsOneWidget);
         expect(find.text('SAVE'), findsOneWidget);
       });
 
