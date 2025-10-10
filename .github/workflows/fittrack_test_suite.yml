@@ -172,7 +172,7 @@ jobs:
       run: |
         cd fittrack
         # Ensure we're using the correct project for emulators
-        firebase use fitness-app-8505e --quiet || echo "Project already set"
+        firebase use fitness-app-8505e 2>/dev/null || echo "Project already set"
         firebase emulators:start --only auth,firestore --project=fitness-app-8505e &
         echo $! > emulator.pid
         
@@ -230,7 +230,7 @@ jobs:
         profile: pixel_2
         ram-size: 1536M
         heap-size: 256M
-        disk-size: 4096M
+        disk-size: 2048M
         avd-name: test
         disable-animations: true
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
