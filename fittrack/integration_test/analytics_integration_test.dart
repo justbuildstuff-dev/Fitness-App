@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
@@ -19,8 +20,12 @@ void main() {
       await cleanupFirebaseEmulators();
     });
     testWidgets('complete analytics flow with real data', (tester) async {
+      // Initialize SharedPreferences for testing
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
       // Launch the app
-      await tester.pumpWidget(const app.FitTrackApp());
+      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
       await tester.pumpAndSettle();
 
       // Skip if we're not on the sign-in screen (already signed in)
@@ -62,7 +67,11 @@ void main() {
     });
 
     testWidgets('analytics personal records detection', (tester) async {
-      await tester.pumpWidget(const app.FitTrackApp());
+      // Initialize SharedPreferences for testing
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
       await tester.pumpAndSettle();
 
       // Ensure we're signed in
@@ -89,7 +98,11 @@ void main() {
     });
 
     testWidgets('analytics heatmap accuracy', (tester) async {
-      await tester.pumpWidget(const app.FitTrackApp());
+      // Initialize SharedPreferences for testing
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
       await tester.pumpAndSettle();
 
       await _ensureSignedIn(tester);
@@ -121,7 +134,11 @@ void main() {
     });
 
     testWidgets('analytics date range filtering', (tester) async {
-      await tester.pumpWidget(const app.FitTrackApp());
+      // Initialize SharedPreferences for testing
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
       await tester.pumpAndSettle();
 
       await _ensureSignedIn(tester);
@@ -154,7 +171,11 @@ void main() {
     });
 
     testWidgets('analytics refresh functionality', (tester) async {
-      await tester.pumpWidget(const app.FitTrackApp());
+      // Initialize SharedPreferences for testing
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
       await tester.pumpAndSettle();
 
       await _ensureSignedIn(tester);
@@ -178,7 +199,11 @@ void main() {
     });
 
     testWidgets('analytics error handling', (tester) async {
-      await tester.pumpWidget(const app.FitTrackApp());
+      // Initialize SharedPreferences for testing
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
       await tester.pumpAndSettle();
 
       // Test with no network or Firebase issues

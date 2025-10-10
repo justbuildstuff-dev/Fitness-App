@@ -22,6 +22,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/services/firestore_service.dart';
@@ -85,7 +86,11 @@ void main() {
         /// Test Purpose: Verify complete program creation workflow from start to finish
         /// This tests the entire user journey for creating a structured workout program
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         // Authenticate test user
@@ -195,7 +200,11 @@ void main() {
         /// Test Purpose: Verify complete program duplication functionality
         /// This tests the complex duplication logic with realistic data
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -243,7 +252,11 @@ void main() {
         /// Test Purpose: Verify analytics generation from complete workout data
         /// This tests the integration between workout tracking and analytics
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -274,7 +287,11 @@ void main() {
         /// Test Purpose: Verify analytics performance with substantial data
         /// This tests scalability and performance with realistic data volumes
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -308,7 +325,11 @@ void main() {
         /// Test Purpose: Verify offline functionality and data synchronization
         /// This tests offline capability and proper sync when connection resumes
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -343,7 +364,11 @@ void main() {
         /// Test Purpose: Verify conflict resolution during data synchronization
         /// This tests data integrity when offline changes conflict with server data
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -377,7 +402,11 @@ void main() {
         
         final stopwatch = Stopwatch()..start();
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -401,7 +430,11 @@ void main() {
         /// Test Purpose: Verify app remains responsive during rapid user interactions
         /// This tests UI responsiveness under stress conditions
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -434,7 +467,11 @@ void main() {
         /// Test Purpose: Verify graceful handling of network interruptions
         /// This tests error handling and recovery mechanisms
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -469,7 +506,11 @@ void main() {
         /// Test Purpose: Verify app handles authentication token expiration
         /// This tests session management and re-authentication flow
         
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -503,7 +544,11 @@ void main() {
         /// This tests data security and proper user scoping
         
         // Create first user and data
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);

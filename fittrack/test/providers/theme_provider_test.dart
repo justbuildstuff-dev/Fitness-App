@@ -140,7 +140,13 @@ void main() {
       test('sets theme mode to system and persists', () async {
         /// Test Purpose: Verify setting system mode updates state and persists
 
-        // Execute
+        // First set to a different mode so we can test changing to system
+        await themeProvider.setThemeMode(ThemeMode.dark);
+
+        // Reset mock call count to isolate this test
+        clearInteractions(mockPrefs);
+
+        // Execute - change from dark to system
         await themeProvider.setThemeMode(ThemeMode.system);
 
         // Verify state updated

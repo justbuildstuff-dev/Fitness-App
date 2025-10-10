@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/screens/programs/programs_screen.dart';
@@ -107,7 +108,11 @@ void main() {
         print('\n📱 Testing complete workout creation workflow...');
 
         // Step 1: Launch the app
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         print('✅ App launched');
@@ -250,7 +255,11 @@ void main() {
         print('\n📱 Testing minimal workout creation...');
 
         // Launch app and navigate to create workout screen
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate through the app to create workout screen
@@ -315,7 +324,11 @@ void main() {
         print('\n📱 Testing workout creation error handling...');
 
         // Launch app and navigate to create workout screen
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         await tester.tap(find.text('Integration Test Program'));
@@ -362,7 +375,11 @@ void main() {
         
         print('\n📱 Testing multiple workouts creation and management...');
 
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to weeks screen
@@ -423,7 +440,11 @@ void main() {
         print('\n📱 Testing workout data persistence across app restarts...');
 
         // First app session - create a workout
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         await tester.tap(find.text('Integration Test Program'));
@@ -450,7 +471,11 @@ void main() {
         await FirebaseEmulatorSetup.waitForFirestoreSync();
 
         // Simulate app restart by creating new app instance
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 3));
 
         // Navigate back to the weeks screen
@@ -494,7 +519,11 @@ void main() {
           password: 'testpassword456',
         );
 
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate and create workout as second user
@@ -524,7 +553,11 @@ void main() {
           password: 'testpassword123',
         );
 
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to first user's workouts
@@ -551,7 +584,11 @@ void main() {
         
         print('\n📱 Testing real-time data synchronization...');
 
-        await tester.pumpWidget(const app.FitTrackApp());
+        // Initialize SharedPreferences for testing
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to weeks screen
