@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "123456789000",
+    "project_number": "841613661728",
     "project_id": "fitness-app-8505e",
-    "storage_bucket": "fitness-app-8505e.appspot.com"
+    "storage_bucket": "fitness-app-8505e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789000:android:abcdef123456789",
+        "mobilesdk_app_id": "1:841613661728:android:8625544da25c4f93924e45",
         "android_client_info": {
-          "package_name": "com.example.fittrack"
+          "package_name": "com.fittrack.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "123456789000-abcdefghijklmnop.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIza-test-api-key-for-emulator-testing"
+          "current_key": "AIzaSyBiQw6LpGnVnYAG_ZQl_GEdoYK0cItkBkI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "123456789000-abcdefghijklmnop.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
