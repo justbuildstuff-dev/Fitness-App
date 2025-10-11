@@ -210,7 +210,7 @@ void main() {
     });
 
     group('loadThemeMode', () {
-      test('loads and applies saved theme mode', () async {
+      test('loads and applies saved theme mode', () {
         /// Test Purpose: Verify explicit load of theme mode
 
         // Mock saved dark mode
@@ -219,14 +219,14 @@ void main() {
         themeProvider = ThemeProvider(mockPrefs);
 
         // Execute explicit load
-        await themeProvider.loadThemeMode();
+        themeProvider.loadThemeMode();
 
         // Verify loaded state
         expect(themeProvider.currentThemeMode, equals(ThemeMode.dark),
           reason: 'Should load and apply saved theme mode');
       });
 
-      test('notifies listeners after loading theme mode', () async {
+      test('notifies listeners after loading theme mode', () {
         /// Test Purpose: Verify listeners notified after load
 
         when(mockPrefs.getString('theme_mode')).thenReturn('light');
@@ -239,7 +239,7 @@ void main() {
         });
 
         // Execute
-        await themeProvider.loadThemeMode();
+        themeProvider.loadThemeMode();
 
         // Verify listener was called
         expect(listenerCalled, isTrue,
