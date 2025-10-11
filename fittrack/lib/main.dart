@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,11 +19,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Configure emulators in debug mode
-  if (kDebugMode) {
-    FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
-    FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
-  }
+  // Configure emulators ONLY for local development
+  // Note: This should be commented out for physical device testing
+  // Uncomment ONLY when running against local Firebase emulators
+  // if (kDebugMode) {
+  //   FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
+  //   FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
+  // }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)
   try {
