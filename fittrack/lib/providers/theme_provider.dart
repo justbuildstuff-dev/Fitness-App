@@ -21,7 +21,7 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadThemeMode() async {
+  void _loadThemeMode() {
     final String? savedMode = _prefs.getString(_themeModeKey);
 
     if (savedMode != null) {
@@ -44,7 +44,7 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadThemeMode() async {
-    await _loadThemeMode();
+  void loadThemeMode() {
+    _loadThemeMode();
   }
 }
