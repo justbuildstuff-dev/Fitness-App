@@ -14,10 +14,20 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase with timeout to prevent indefinite hangs
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        throw Exception('Firebase initialization timed out after 10 seconds. Check your internet connection and Firebase configuration.');
+      },
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+    // Run app with error state - AuthProvider will handle the error gracefully
+  }
 
   // Configure emulators ONLY for local development
   // Note: This should be commented out for physical device testing
@@ -28,15 +38,17 @@ void main() async {
   // }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)
-  try {
-    await FirestoreService.enableOfflinePersistence();
-  } catch (e) {
+  // Non-blocking: Run in background, don't wait for completion
+  FirestoreService.enableOfflinePersistence().catchError((e) {
     // Offline persistence may fail if already enabled
     debugPrint('Firestore offline persistence: $e');
-  }
+  });
 
   // Initialize notifications
-  await NotificationService.instance.initialize();
+  // Non-blocking: Run in background, don't wait for completion
+  NotificationService.instance.initialize().catchError((e) {
+    debugPrint('Notification service initialization: $e');
+  });
 
   // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
