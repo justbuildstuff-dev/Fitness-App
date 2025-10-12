@@ -123,7 +123,7 @@ class ExerciseTypeChart extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: sortedEntries.map((entry) {
                 final percentage = entry.value / total;
-                final color = _getColorForExerciseType(entry.key);
+                final color = _getColorForExerciseType(context, entry.key);
                 
                 return Expanded(
                   child: Container(
@@ -179,7 +179,7 @@ class ExerciseTypeChart extends StatelessWidget {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: _getColorForExerciseType(entry.key),
+                      color: _getColorForExerciseType(context, entry.key),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -197,18 +197,20 @@ class ExerciseTypeChart extends StatelessWidget {
     );
   }
 
-  Color _getColorForExerciseType(ExerciseType type) {
+  Color _getColorForExerciseType(BuildContext context, ExerciseType type) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     switch (type) {
       case ExerciseType.strength:
-        return Colors.blue;
+        return colorScheme.primary;
       case ExerciseType.cardio:
-        return Colors.red;
+        return colorScheme.error;
       case ExerciseType.bodyweight:
-        return Colors.green;
+        return colorScheme.tertiary;
       case ExerciseType.timeBased:
-        return Colors.orange;
+        return colorScheme.secondary;
       case ExerciseType.custom:
-        return Colors.purple;
+        return colorScheme.primaryContainer;
     }
   }
 }
@@ -291,12 +293,12 @@ class PersonalRecordTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _getColorForPRType(record.prType).withValues(alpha: 0.1),
+              color: _getColorForPRType(context, record.prType).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               _getIconForPRType(record.prType),
-              color: _getColorForPRType(record.prType),
+              color: _getColorForPRType(context, record.prType),
               size: 20,
             ),
           ),
@@ -322,7 +324,7 @@ class PersonalRecordTile extends StatelessWidget {
                     Text(
                       record.displayValue,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: _getColorForPRType(record.prType),
+                        color: _getColorForPRType(context, record.prType),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -334,13 +336,13 @@ class PersonalRecordTile extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
+                          color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           record.improvementString,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.green,
+                            color: Theme.of(context).colorScheme.tertiary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -380,20 +382,22 @@ class PersonalRecordTile extends StatelessWidget {
     }
   }
 
-  Color _getColorForPRType(PRType prType) {
+  Color _getColorForPRType(BuildContext context, PRType prType) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     switch (prType) {
       case PRType.maxWeight:
-        return Colors.blue;
+        return colorScheme.primary;
       case PRType.maxReps:
-        return Colors.green;
+        return colorScheme.tertiary;
       case PRType.maxDuration:
-        return Colors.orange;
+        return colorScheme.secondary;
       case PRType.maxDistance:
-        return Colors.purple;
+        return colorScheme.primaryContainer;
       case PRType.maxVolume:
-        return Colors.red;
+        return colorScheme.error;
       case PRType.oneRepMax:
-        return Colors.amber;
+        return colorScheme.tertiaryContainer;
     }
   }
 
