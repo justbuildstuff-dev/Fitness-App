@@ -4,6 +4,11 @@ on:
   issues:
     types: [labeled]
 
+# Required permissions for commenting on issues and managing labels
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   beta-build:
     name: Build & Distribute Beta (Android)

@@ -12,6 +12,12 @@ on:
       - 'fittrack/**'
       - '.github/workflows/fittrack_test_suite.yml'
 
+# Required permissions for PR comments and test reports
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   # Parallel test execution for faster feedback
   unit-tests:
