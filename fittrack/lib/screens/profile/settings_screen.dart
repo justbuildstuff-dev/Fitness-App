@@ -27,51 +27,105 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // ignore: deprecated_member_use
-              RadioListTile<ThemeMode>(
-                title: const Text('Light'),
-                subtitle: const Text('Always use light theme'),
-                value: ThemeMode.light,
-                // ignore: deprecated_member_use
-                groupValue: themeProvider.currentThemeMode,
-                // ignore: deprecated_member_use
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
-              ),
-              // ignore: deprecated_member_use
-              RadioListTile<ThemeMode>(
-                title: const Text('Dark'),
-                subtitle: const Text('Always use dark theme'),
-                value: ThemeMode.dark,
-                // ignore: deprecated_member_use
-                groupValue: themeProvider.currentThemeMode,
-                // ignore: deprecated_member_use
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
-              ),
-              // ignore: deprecated_member_use
-              RadioListTile<ThemeMode>(
-                title: const Text('System Default'),
-                subtitle: const Text('Use system theme setting'),
-                value: ThemeMode.system,
-                // ignore: deprecated_member_use
-                groupValue: themeProvider.currentThemeMode,
-                // ignore: deprecated_member_use
-                onChanged: (ThemeMode? value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
+              // Compact Theme Selector
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Theme',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _ThemeIconButton(
+                          icon: Icons.brightness_auto,
+                          label: 'System',
+                          themeMode: ThemeMode.system,
+                          currentThemeMode: themeProvider.currentThemeMode,
+                          onPressed: () => themeProvider.setThemeMode(ThemeMode.system),
+                        ),
+                        const SizedBox(width: 8),
+                        _ThemeIconButton(
+                          icon: Icons.wb_sunny,
+                          label: 'Light',
+                          themeMode: ThemeMode.light,
+                          currentThemeMode: themeProvider.currentThemeMode,
+                          onPressed: () => themeProvider.setThemeMode(ThemeMode.light),
+                        ),
+                        const SizedBox(width: 8),
+                        _ThemeIconButton(
+                          icon: Icons.nights_stay,
+                          label: 'Dark',
+                          themeMode: ThemeMode.dark,
+                          currentThemeMode: themeProvider.currentThemeMode,
+                          onPressed: () => themeProvider.setThemeMode(ThemeMode.dark),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ThemeIconButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ThemeMode themeMode;
+  final ThemeMode currentThemeMode;
+  final VoidCallback onPressed;
+
+  const _ThemeIconButton({
+    required this.icon,
+    required this.label,
+    required this.themeMode,
+    required this.currentThemeMode,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = themeMode == currentThemeMode;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Semantics(
+      label: '$label theme',
+      selected: isSelected,
+      button: true,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primaryContainer
+                : colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outline.withValues(alpha: 0.3),
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: isSelected
+                ? colorScheme.onPrimaryContainer
+                : colorScheme.onSurfaceVariant,
+            size: 24,
+          ),
+        ),
       ),
     );
   }
