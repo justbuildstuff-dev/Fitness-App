@@ -51,11 +51,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'your-android-api-key',
-    appId: 'your-android-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyBiQw6LpGnVnYAG_ZQl_GEdoYK0cItkBkI',
+    appId: '1:841613661728:android:8625544da25c4f93924e45',
+    messagingSenderId: '841613661728',
+    projectId: 'fitness-app-8505e',
+    storageBucket: 'fitness-app-8505e.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
