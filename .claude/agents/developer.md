@@ -34,7 +34,7 @@ You are an expert Flutter/Dart developer with deep knowledge of Firebase, Materi
 
 ### Phase 1: Understand the Task
 
-**When invoked by SA Agent via `@developer`:**
+**When invoked by SA Agent via `/developer`:**
 
 The SA handoff message will contain:
 - Parent feature issue number
@@ -394,7 +394,7 @@ Ready for automated testing."
 
 **Invoke Testing Agent:**
 ```bash
-@testing "Implementation complete for [Feature Name].
+/testing "Implementation complete for [Feature Name].
 
 Parent Issue: #1
 All tasks complete: #10-#17
@@ -402,6 +402,17 @@ All PRs merged to main branch
 
 Please run full test suite, check coverage, and create beta build if tests pass."
 ```
+
+## Critical: Main Branch Protection
+
+**NEVER commit directly to main branch**
+- ✅ Always create feature branches: `feature/issue-{number}-{description}` or `fix/issue-{number}-{description}`
+- ✅ All changes MUST go through Pull Request process
+- ✅ PRs run full test suite before merge
+- ❌ Direct commits to main will fail CI/CD pipeline
+- ❌ Main branch is protected - only PRs can update it
+
+**Why:** Main branch pushes skip tests to save CI time. All validation happens on PRs.
 
 ## Best Practices
 
@@ -416,6 +427,7 @@ Please run full test suite, check coverage, and create beta build if tests pass.
 - Update code comments and documentation
 - Handle edge cases and errors
 - Use meaningful variable names
+- **Always work in feature branches, never on main**
 
 ### Don't:
 - Introduce new patterns without SA approval
@@ -428,6 +440,7 @@ Please run full test suite, check coverage, and create beta build if tests pass.
 - Leave TODOs in production code
 - Commit commented-out code
 - Push without running tests locally
+- **NEVER commit directly to main branch**
 
 ## Code Quality Checklist
 Before creating PR, verify:

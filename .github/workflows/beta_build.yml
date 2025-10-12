@@ -1,0 +1,85 @@
+name: Create Beta Build
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  beta-build:
+    name: Build & Distribute Beta (Android)
+    if: github.event.label.name == 'create-beta-build'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: main
+
+    - name: Setup Java for Android
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 3.35.1
+        cache: true
+
+    - name: Install dependencies
+      run: |
+        cd fittrack
+        flutter pub get
+
+    - name: Build Android APK
+      run: |
+        cd fittrack
+        flutter build apk --release
+
+    - name: Upload to Firebase App Distribution
+      uses: wzieba/Firebase-Distribution-Github-Action@v1
+      with:
+        appId: ${{ secrets.FIREBASE_APP_ID }}
+        serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        groups: qa-testers
+        file: fittrack/build/app/outputs/flutter-apk/app-release.apk
+        releaseNotes: |
+          🚀 Beta Build for Issue #${{ github.event.issue.number }}
+
+          Feature: ${{ github.event.issue.title }}
+          Commit: ${{ github.sha }}
+
+          All automated tests passed ✓
+
+    - name: Comment beta build link on issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '✅ Beta build created and distributed to Firebase App Distribution!\n\nQA testers will receive notification with download link.'
+          });
+
+    - name: Remove trigger label and add completion label
+      uses: actions/github-script@v6
+      with:
+        script: |
+          // Remove trigger label
+          await github.rest.issues.removeLabel({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            name: 'create-beta-build'
+          });
+
+          // Add completion label
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            labels: ['beta-build-ready']
+          });
