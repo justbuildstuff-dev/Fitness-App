@@ -121,6 +121,56 @@ void main() {
       });
     });
 
+    group('Theme Support', () {
+      testWidgets('respects dark theme setting', (tester) async {
+        // Arrange - wrap in dark theme
+        final darkThemeApp = MaterialApp(
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: ThemeMode.dark,
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ],
+            child: const AnalyticsScreen(),
+          ),
+        );
+
+        // Act
+        await tester.pumpWidget(darkThemeApp);
+        await tester.pumpAndSettle();
+
+        // Assert - verify scaffold uses dark theme
+        final context = tester.element(find.byType(Scaffold).first);
+        expect(Theme.of(context).brightness, Brightness.dark);
+      });
+
+      testWidgets('respects light theme setting', (tester) async {
+        // Arrange - wrap in light theme
+        final lightThemeApp = MaterialApp(
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: ThemeMode.light,
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ],
+            child: const AnalyticsScreen(),
+          ),
+        );
+
+        // Act
+        await tester.pumpWidget(lightThemeApp);
+        await tester.pumpAndSettle();
+
+        // Assert - verify scaffold uses light theme
+        final context = tester.element(find.byType(Scaffold).first);
+        expect(Theme.of(context).brightness, Brightness.light);
+      });
+    });
+
     group('AppBar', () {
       testWidgets('displays correct title and actions', (tester) async {
         // Act

@@ -58,8 +58,8 @@ class ActivityHeatmapSection extends StatelessWidget {
                       title: 'Current Streak',
                       value: '${data.currentStreak} days',
                       icon: Icons.local_fire_department,
-                      color: data.currentStreak > 0 
-                          ? Colors.orange 
+                      color: data.currentStreak > 0
+                          ? Theme.of(context).colorScheme.tertiary
                           : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
@@ -69,7 +69,7 @@ class ActivityHeatmapSection extends StatelessWidget {
                       title: 'Longest Streak',
                       value: '${data.longestStreak} days',
                       icon: Icons.emoji_events,
-                      color: Colors.amber,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
                   ),
                 ],
@@ -249,7 +249,7 @@ class HeatmapCalendar extends StatelessWidget {
             Text(
               day.intensity.displayName,
               style: TextStyle(
-                color: _getColorForIntensity(day.intensity),
+                color: _getColorForIntensity(context, day.intensity),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -265,16 +265,19 @@ class HeatmapCalendar extends StatelessWidget {
     );
   }
 
-  Color _getColorForIntensity(HeatmapIntensity intensity) {
+  Color _getColorForIntensity(BuildContext context, HeatmapIntensity intensity) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     switch (intensity) {
       case HeatmapIntensity.none:
-        return Colors.grey[300]!;
+        return colorScheme.surfaceContainerHighest;
       case HeatmapIntensity.low:
-        return Colors.green[200]!;
+        return colorScheme.primaryContainer;
       case HeatmapIntensity.medium:
-        return Colors.green[400]!;
+        return colorScheme.primary.withValues(alpha: isDark ? 0.6 : 0.7);
       case HeatmapIntensity.high:
-        return Colors.green[700]!;
+        return colorScheme.primary;
     }
   }
 }
@@ -302,10 +305,10 @@ class HeatmapSquare extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: _getColorForIntensity(day.intensity),
+            color: _getColorForIntensity(context, day.intensity),
             borderRadius: BorderRadius.circular(2),
             border: Border.all(
-              color: Colors.grey[200]!,
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
               width: 0.5,
             ),
           ),
@@ -314,16 +317,19 @@ class HeatmapSquare extends StatelessWidget {
     );
   }
 
-  Color _getColorForIntensity(HeatmapIntensity intensity) {
+  Color _getColorForIntensity(BuildContext context, HeatmapIntensity intensity) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     switch (intensity) {
       case HeatmapIntensity.none:
-        return Colors.grey[200]!;
+        return colorScheme.surfaceContainerHighest;
       case HeatmapIntensity.low:
-        return Colors.green[200]!;
+        return colorScheme.primaryContainer;
       case HeatmapIntensity.medium:
-        return Colors.green[400]!;
+        return colorScheme.primary.withValues(alpha: isDark ? 0.6 : 0.7);
       case HeatmapIntensity.high:
-        return Colors.green[700]!;
+        return colorScheme.primary;
     }
   }
 }

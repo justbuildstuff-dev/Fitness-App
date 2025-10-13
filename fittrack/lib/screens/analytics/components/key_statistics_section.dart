@@ -36,7 +36,7 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: '${statistics['totalWorkouts'] ?? 0}',
                       subtitle: 'Total',
                       icon: Icons.fitness_center,
-                      color: Colors.blue,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -46,14 +46,14 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: '${statistics['totalSets'] ?? 0}',
                       subtitle: 'Completed',
                       icon: Icons.format_list_numbered,
-                      color: Colors.green,
+                      color: Theme.of(context).colorScheme.tertiary,
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Second row of statistics
               Row(
                 children: [
@@ -63,7 +63,7 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: _formatVolume(statistics['totalVolume']),
                       subtitle: 'Total kg',
                       icon: Icons.fitness_center,
-                      color: Colors.orange,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -73,14 +73,14 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: _formatDuration(statistics['averageDuration']),
                       subtitle: 'Per workout',
                       icon: Icons.timer,
-                      color: Colors.purple,
+                      color: Theme.of(context).colorScheme.primaryContainer,
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Third row of statistics
               Row(
                 children: [
@@ -90,7 +90,7 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: '${statistics['newPRs'] ?? 0}',
                       subtitle: 'This period',
                       icon: Icons.trending_up,
-                      color: Colors.red,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -100,14 +100,14 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: _truncateExerciseType(statistics['mostUsedExerciseType']),
                       subtitle: 'Exercise type',
                       icon: Icons.star,
-                      color: Colors.amber,
+                      color: Theme.of(context).colorScheme.tertiaryContainer,
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Fourth row of statistics
               Row(
                 children: [
@@ -117,7 +117,7 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: '${(statistics['completionPercentage'] ?? 0.0).toInt()}%',
                       subtitle: 'Sets completed',
                       icon: Icons.check_circle,
-                      color: Colors.teal,
+                      color: Theme.of(context).colorScheme.tertiary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -127,7 +127,7 @@ class KeyStatisticsSection extends StatelessWidget {
                       value: '${(statistics['workoutsPerWeek'] ?? 0.0).toStringAsFixed(1)}',
                       subtitle: 'Per week',
                       icon: Icons.calendar_today,
-                      color: Colors.indigo,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -303,22 +303,22 @@ class StatisticsOverview extends StatelessWidget {
               _OverviewItem(
                 label: 'Workouts',
                 value: totalWorkouts.toString(),
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
               ),
               _OverviewItem(
                 label: 'Sets',
                 value: totalSets.toString(),
-                color: Colors.green,
+                color: Theme.of(context).colorScheme.tertiary,
               ),
               _OverviewItem(
                 label: 'Completion',
                 value: '${completionPercentage.toInt()}%',
-                color: Colors.orange,
+                color: Theme.of(context).colorScheme.secondary,
               ),
               _OverviewItem(
                 label: 'Per Week',
                 value: workoutsPerWeek.toStringAsFixed(1),
-                color: Colors.purple,
+                color: Theme.of(context).colorScheme.primaryContainer,
               ),
             ],
           ),
