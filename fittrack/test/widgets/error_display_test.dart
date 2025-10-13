@@ -101,8 +101,13 @@ void main() {
         ),
       );
 
-      // Assert
-      expect(find.byType(Center), findsOneWidget);
+      // Assert - ErrorDisplay uses Center widget as root
+      expect(find.byType(ErrorDisplay), findsOneWidget);
+      // Find the Center widget that's a direct child of ErrorDisplay
+      expect(find.descendant(
+        of: find.byType(ErrorDisplay),
+        matching: find.byType(Center),
+      ), findsWidgets);
     });
 
     testWidgets('handles technical error parameter', (tester) async {
