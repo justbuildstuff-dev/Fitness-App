@@ -27,45 +27,65 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Compact Theme Selector
+              // Divider below Appearance heading
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Divider(
+                  thickness: 1,
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Compact Theme Selector in Container
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Theme',
-                      style: Theme.of(context).textTheme.titleSmall,
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                      width: 1,
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _ThemeIconButton(
-                          icon: Icons.brightness_auto,
-                          label: 'System',
-                          themeMode: ThemeMode.system,
-                          currentThemeMode: themeProvider.currentThemeMode,
-                          onPressed: () => themeProvider.setThemeMode(ThemeMode.system),
-                        ),
-                        const SizedBox(width: 8),
-                        _ThemeIconButton(
-                          icon: Icons.wb_sunny,
-                          label: 'Light',
-                          themeMode: ThemeMode.light,
-                          currentThemeMode: themeProvider.currentThemeMode,
-                          onPressed: () => themeProvider.setThemeMode(ThemeMode.light),
-                        ),
-                        const SizedBox(width: 8),
-                        _ThemeIconButton(
-                          icon: Icons.nights_stay,
-                          label: 'Dark',
-                          themeMode: ThemeMode.dark,
-                          currentThemeMode: themeProvider.currentThemeMode,
-                          onPressed: () => themeProvider.setThemeMode(ThemeMode.dark),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Theme',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _ThemeIconButton(
+                            icon: Icons.brightness_auto,
+                            label: 'System',
+                            themeMode: ThemeMode.system,
+                            currentThemeMode: themeProvider.currentThemeMode,
+                            onPressed: () => themeProvider.setThemeMode(ThemeMode.system),
+                          ),
+                          const SizedBox(width: 8),
+                          _ThemeIconButton(
+                            icon: Icons.wb_sunny,
+                            label: 'Light',
+                            themeMode: ThemeMode.light,
+                            currentThemeMode: themeProvider.currentThemeMode,
+                            onPressed: () => themeProvider.setThemeMode(ThemeMode.light),
+                          ),
+                          const SizedBox(width: 8),
+                          _ThemeIconButton(
+                            icon: Icons.nights_stay,
+                            label: 'Dark',
+                            themeMode: ThemeMode.dark,
+                            currentThemeMode: themeProvider.currentThemeMode,
+                            onPressed: () => themeProvider.setThemeMode(ThemeMode.dark),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

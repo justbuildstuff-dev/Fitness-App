@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/analytics.dart';
 import '../../providers/program_provider.dart';
+import '../../widgets/error_display.dart';
 import 'components/activity_heatmap_section.dart';
 import 'components/key_statistics_section.dart';
 import 'components/charts_section.dart';
@@ -80,34 +81,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           }
 
           if (provider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load analytics',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    provider.error!,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () => provider.loadAnalytics(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
-              ),
+            return ErrorDisplay(
+              message: 'Unable to load analytics data. Please check your connection and try again.',
+              technicalError: provider.error,
+              onRetry: () => provider.loadAnalytics(),
             );
           }
 

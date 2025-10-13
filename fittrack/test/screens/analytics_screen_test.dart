@@ -87,11 +87,11 @@ void main() {
         // Act
         await tester.pumpWidget(createTestApp());
 
-        // Assert
-        expect(find.text('Failed to load analytics'), findsOneWidget);
-        expect(find.text('Failed to load analytics data'), findsOneWidget);
+        // Assert - Now using ErrorDisplay widget
+        expect(find.text('Something went wrong'), findsOneWidget);
+        expect(find.text('Unable to load analytics data. Please check your connection and try again.'), findsOneWidget);
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
-        expect(find.text('Retry'), findsOneWidget);
+        expect(find.text('Try Again'), findsOneWidget);
       });
 
       testWidgets('retry button calls loadAnalytics', (tester) async {
@@ -100,7 +100,7 @@ void main() {
 
         // Act
         await tester.pumpWidget(createTestApp());
-        await tester.tap(find.text('Retry'));
+        await tester.tap(find.text('Try Again'));
         await tester.pump();
 
         // Assert

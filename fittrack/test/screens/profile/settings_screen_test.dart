@@ -185,7 +185,7 @@ void main() {
         // Change to dark mode
         when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
         await tester.tap(find.byIcon(Icons.nights_stay));
-        await tester.pump();
+        await tester.pumpAndSettle(); // Wait for any animations to complete
 
         // Assert - Dark button should now be selected
         final darkButton = find.byWidgetPredicate(
