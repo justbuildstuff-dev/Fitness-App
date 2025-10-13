@@ -33,6 +33,30 @@ jobs:
         flutter-version: 3.35.1
         cache: true
 
+    - name: Read beta release notes
+      id: release_notes
+      run: |
+        if [ -f .github/BETA_RELEASE_TEMPLATE.md ]; then
+          # Read the template file and set as output
+          NOTES=$(cat .github/BETA_RELEASE_TEMPLATE.md)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "✅ Using release notes from BETA_RELEASE_TEMPLATE.md"
+        else
+          # Fallback to auto-generated notes
+          NOTES="🚀 Beta Build for Issue #${{ github.event.issue.number }}
+
+          Feature: ${{ github.event.issue.title }}
+          Commit: ${{ github.sha }}
+
+          All automated tests passed ✓"
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "⚠️ BETA_RELEASE_TEMPLATE.md not found, using auto-generated notes"
+        fi
+
     - name: Install dependencies
       run: |
         cd fittrack
@@ -50,13 +74,7 @@ jobs:
         serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         groups: qa-testers
         file: fittrack/build/app/outputs/flutter-apk/app-release.apk
-        releaseNotes: |
-          🚀 Beta Build for Issue #${{ github.event.issue.number }}
-
-          Feature: ${{ github.event.issue.title }}
-          Commit: ${{ github.sha }}
-
-          All automated tests passed ✓
+        releaseNotes: ${{ steps.release_notes.outputs.notes }}
 
     - name: Comment beta build link on issue
       uses: actions/github-script@v6
