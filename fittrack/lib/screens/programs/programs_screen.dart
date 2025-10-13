@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
 import '../../models/program.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
+import '../../widgets/error_display.dart';
 import 'program_detail_screen.dart';
 import 'create_program_screen.dart';
 
@@ -14,6 +15,7 @@ class ProgramsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Programs'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 0,
       ),
       body: Consumer<ProgramProvider>(
@@ -25,38 +27,13 @@ class ProgramsScreen extends StatelessWidget {
           }
 
           if (programProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error loading programs',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    programProvider.error!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      programProvider.clearError();
-                      programProvider.loadPrograms();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            return ErrorDisplay(
+              message: 'Unable to load your programs. Please check your connection and try again.',
+              technicalError: programProvider.error,
+              onRetry: () {
+                programProvider.clearError();
+                programProvider.loadPrograms();
+              },
             );
           }
 
