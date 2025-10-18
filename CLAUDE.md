@@ -17,9 +17,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `fittrack/firestore.indexes.json` - Firestore composite indexes for efficient queries
 
 ### Documentation
-- `Docs/Workout_Tracker_Final_Spec.md` - Complete technical specification with data models, security rules, and implementation details
-- `Docs/original_README.md` - Collaboration guidelines for working with Claude Code
-- `Docs/*` - Includes all documentation for the project and should be reviewed when getting context for the current task. Documents exist for each component of the application and there is also and architectural overview. You should ask for the necessary document to be added for context when implementing changes. The Architectural Overview should be requested when adding new functionality or cross-component updates to make sure the updates align with the vision for the application.
+
+**Navigation:** See [Docs/README.md](Docs/README.md) for complete documentation navigation guide.
+
+**Documentation System:** See [Docs/Documentation_Lifecycle.md](Docs/Documentation_Lifecycle.md) for:
+- When and where each document type is created
+- Naming conventions (PascalCase for all documentation)
+- Directory structure and organization
+- Agent responsibilities for documentation
+
+**Key Documentation Locations:**
+- `Docs/Architecture/` - System architecture, data models, security rules, state management
+- `Docs/Components/` - Component-specific documentation (Authentication, Firestore, UI components)
+- `Docs/Features/` - Feature implementations and screen documentation
+- `Docs/Technical_Designs/` - Detailed technical designs for each feature
+- `Docs/Testing/` - Testing framework and strategies
+- `Docs/Releases/` - Release notes for each version
+- `Docs/Process/` - Process documentation and workflow guides
+- `Docs/Archive/` - Legacy documentation
+
+**Important Files:**
+- [Docs/Architecture/ArchitectureOverview.md](Docs/Architecture/ArchitectureOverview.md) - Review for cross-component changes
+- [Docs/Architecture/DataModels.md](Docs/Architecture/DataModels.md) - Firestore schema reference
+- [Docs/Testing/TestingFramework.md](Docs/Testing/TestingFramework.md) - Testing patterns and standards
+- [Docs/Features/CurrentScreens.md](Docs/Features/CurrentScreens.md) - Screen inventory and pipeline
 
 ## Data Model
 
@@ -57,32 +78,41 @@ Every document includes a `userId` field for security and efficient querying.
 - Reset `checked` to false, optionally reset `weight` to null for fresh tracking
 
 ### Development Workflow
-- This plan should be followed (in order) whenever a new feature, feature update, or bug fix is requested.
-- CurrentScreens.md should be reviewed at the start of each session to see what is still in the pipeline to be completed.
 
-1. **Review Documentation**: 
-  - Check the document titles in the @Docs folder.
-  - Request access to document titles that sound relevant.
-  - State why the document would help with development.
-2. **Plan & Outline**: 
-  - State intentions and list sub-tasks before coding.
+**For Agent-Driven Development:** Follow the Agent Chain workflow (see Agent-Driven Development Workflow section below)
+
+**For Direct Development (non-agent work):**
+
+1. **Review Documentation**:
+   - See [Docs/README.md](Docs/README.md) for navigation to relevant documents
+   - Review [Docs/Features/CurrentScreens.md](Docs/Features/CurrentScreens.md) for pipeline status
+   - Check [Docs/Architecture/ArchitectureOverview.md](Docs/Architecture/ArchitectureOverview.md) for cross-component changes
+   - Review relevant component documentation from `Docs/Components/` or `Docs/Architecture/`
+
+2. **Plan & Outline**:
+   - State intentions and list sub-tasks before coding
+   - Use TodoWrite tool to track complex multi-step tasks
+
 3. **Ask for Confirmation**:
-  - Propose plans before implementation.
+   - Propose plans before implementation
+
 4. **Test-Driven Development**:
-  - TestingFramework.md should be reviewed before writing tests.
-  - Review existing tests to help with understanding functionality flows.
-  - write new tests aligned defined by the expected outcomes of the new functionality.
-  - Update existing tests if necessary.
-5. **Iterative Progress**: 
-  - Work section by section through the specification.
+   - Review [Docs/Testing/TestingFramework.md](Docs/Testing/TestingFramework.md) before writing tests
+   - Review existing tests to understand functionality flows
+   - Write new tests aligned with expected outcomes
+   - Update existing tests if necessary
+
+5. **Iterative Progress**:
+   - Work section by section through the specification
+
 6. **Clear Communication**:
-  - Share reasoning and ask for clarification when needed.
+   - Share reasoning and ask for clarification when needed
+
 7. **Update Documentation**:
-  - Existing documentation files within the @Docs folder should be updated to align with any changes that were made.
-  - If the updates do not fit entirely within an already existing document:
-    - Create a new document in @Docs for the new functionality
-    - Follow the exact same formatting, tone, and level of detail as other, already existing documents.
-    - Documentation is only required when an integral piece of functionality has been modified or implemented. Documentation does not need to be created as a summary of everything that has been done in that session.
+   - Follow [Docs/Documentation_Lifecycle.md](Docs/Documentation_Lifecycle.md) for naming conventions and structure
+   - Update existing documentation in appropriate directories (`Docs/Architecture/`, `Docs/Components/`, `Docs/Features/`)
+   - Use PascalCase naming for all new documentation files
+   - Documentation is only required when integral functionality has been modified or implemented
 
 ## Firebase Configuration
 
@@ -155,29 +185,50 @@ Available agents:
 `@qa` - QA Agent (quality assurance)
 `@deployment` - Deployment Agent (production release)
 
-## Agent Instructions
-Each agent has detailed instructions in .claude/agents/[agent-name].md
+## Agent Instructions & Skills
+
+**Agent Files:** Each agent has detailed instructions in `.claude/agents/[agent-name].md`
+- `ba.md` - Business Analyst Agent
+- `sa.md` - Solutions Architect Agent
+- `developer.md` - Developer Agent
+- `testing.md` - Testing Agent
+- `qa.md` - QA Agent
+- `deployment.md` - Deployment Agent
+
+**Skills (Reusable Procedural Knowledge):** Located in `.claude/skills/`
+- `github_workflow/` - GitHub issues, PRs, labels, workflow management
+- `notion_documentation/` - PRD and Technical Design templates
+- `flutter_testing/` - Test patterns, coverage requirements, mocking strategies
+- `flutter_code_quality/` - Dart style guide, code quality standards
+- `agent_handoff/` - Agent-to-agent handoff protocols
+
+Agents automatically reference relevant skills for procedural knowledge. Skills reduce duplication and ensure consistency across all agents.
 
 ## Notion Configuration
-**Workspace:** FitTrack Development
-**Databases:**
 
-- **Product Requirements** - Feature PRDs and specifications
-- **User Stories** - User stories linked to PRDs
-- **Technical Designs** - Architecture and design documents
+**Workspace:** FitTrack Development
+
+**Databases:**
+- **Product Requirements** - Feature PRDs and specifications (created by BA Agent)
+- **User Stories** - User stories linked to PRDs (stored within PRD, not separate database)
+- **Technical Designs** - Architecture and design documents (summary created by SA Agent)
 - **Decisions & Notes** - Meeting notes and key decisions
 
 **Templates:**
+- Feature PRD Template - For new feature requirements (see `.claude/skills/notion_documentation/`)
+- Technical Design Template - For technical architecture (see `.claude/skills/notion_documentation/`)
 
-- Feature PRD Template - For new feature requirements
-- Technical Design Template - For technical architecture
+**Hybrid Documentation Approach:**
+- **Notion:** Metadata, tracking, summaries, links (better for searchability and properties)
+- **Git (Docs/):** Detailed technical content, version-controlled documentation
+- **Example:** SA creates summary in Notion + detailed design in `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
 
 **Workflow:**
-
-1. BA creates PRD in "Product Requirements"
-2. BA creates user stories in "User Stories" linked to PRD
-3. SA creates technical design in "Technical Designs" linked to PRD
-4. All documents link back to GitHub issues
+1. BA creates PRD in "Product Requirements" database
+2. BA creates user stories within the PRD (not as separate database entries)
+3. SA creates technical design summary in "Technical Designs" database
+4. SA creates detailed design in `Docs/Technical_Designs/` (version-controlled)
+5. All documents link bidirectionally (Notion ↔ GitHub)
 
 ## GitHub Configuration
 **Repository:** justbuildstuff-dev/Fitness-App
@@ -341,48 +392,53 @@ Final: Issue #47 CLOSED by Deployment Agent after production release
 10. `deployed` (Live in production, issue CLOSED)
 
 ## When Working with Agents
-**If you're the BA Agent:**
 
-- Start conversations with requirement questions
-- Create Notion PRDs using "Feature PRD Template"
-- Create GitHub issues using "Feature Request" template
-- Get user approval before handing off to SA
+**Each agent has complete instructions in `.claude/agents/[agent-name].md`**
 
-**If you're the SA Agent:**
+**Quick Reference:**
 
-- Read requirements from Notion PRD and GitHub issue
-- Create technical design in Notion using "Technical Design Template"
-- Break down into implementation tasks in GitHub
-- Get user approval before handing off to Developer
+**BA Agent** - Requirements gathering
+- Interview users to understand needs
+- Create PRD in Notion (see `.claude/skills/notion_documentation/`)
+- Create GitHub feature issue (see `.claude/skills/github_workflow/`)
+- Documentation: PRD (Notion), Feature Issue (GitHub)
+- Hand off to SA after user approval
 
-**If you're the Developer Agent:**
+**SA Agent** - Technical design
+- Analyze codebase and discover existing patterns
+- Create technical design summary (Notion) + detailed design (`Docs/Technical_Designs/`)
+- Break down into implementation tasks (GitHub issues)
+- Documentation: Technical Design (Notion + Git), Task Issues (GitHub), Architecture/Component docs as needed
+- Hand off to Developer after user approval
 
-- Read GitHub tasks and linked Notion designs
-- Implement in feature branches
+**Developer Agent** - Implementation
+- Implement one task at a time in feature branches
+- Write tests for all code (see `.claude/skills/flutter_testing/`)
+- Follow code quality standards (see `.claude/skills/flutter_code_quality/`)
 - Create PRs that trigger GitHub Actions
-- Update task status as you progress
+- Documentation: Implementation Notes (added to Technical Design), Code comments
+- Hand off to Testing after all PRs merged
 
-**If you're the Testing Agent:**
+**Testing Agent** - Automated testing
+- Verify PR tests passed (tests run on PRs, not main branch)
+- Check coverage meets requirements (80%+ overall)
+- Create beta build via `create-beta-build` label
+- Documentation: Test reports (GitHub comments)
+- Hand off to QA if tests pass, or back to Developer if bugs found
 
-- Check GitHub Actions results via GitHub MCP
-- Read test logs and coverage reports
-- Create Firebase beta builds
-- Create bug issues if tests fail
+**QA Agent** - Manual quality assurance
+- Test beta build on actual devices
+- Validate all acceptance criteria from PRD
+- Test edge cases and user experience
+- Documentation: QA reports (GitHub comments)
+- Hand off to Deployment if approved, or back to Developer if critical bugs found
 
-**If you're the QA Agent:**
-
-- Verify against Notion PRD acceptance criteria
-- Check GitHub Actions all passed
-- Review security scans
-- Approve for deployment or create bug issues
-
-**If you're the Deployment Agent:**
-
-- Verify all GitHub checks passed
-- Create release tags
-- Deploy to App Store/Play Store
-- Close all related issues
-- Update Notion documentation
+**Deployment Agent** - Production release
+- Prepare release artifacts (version bump, changelog, release notes)
+- Guide manual store submission (provide checklist)
+- Close feature issue after deployment confirmed
+- Documentation: Release Notes (`Docs/Releases/`), CHANGELOG, GitHub Release
+- Final agent - completes feature lifecycle
 
 ## Extended Thinking Mode
 For complex problems, use these keywords to trigger extended reasoning:
@@ -402,3 +458,63 @@ Use extended thinking for:
 
 
 **Remember:** This is an agent-driven workflow. Each agent should complete its work, verify quality, get user approval when required, then hand off to the next agent. The goal is automation with quality checkpoints.
+
+## Documentation System
+
+**See [Docs/Documentation_Lifecycle.md](Docs/Documentation_Lifecycle.md) for complete documentation system.**
+
+### Document Types
+
+1. **Product Requirements Document (PRD)** - Created by BA Agent in Notion
+2. **Technical Design Document** - Created by SA Agent (summary in Notion + detailed in `Docs/Technical_Designs/`)
+3. **Architectural/Framework Documents** - Created by SA Agent in `Docs/Architecture/` or `Docs/Components/`
+4. **Testing Framework** - Located in `Docs/Testing/`
+5. **Implementation Notes** - Added by Developer Agent to Technical Design documents
+6. **Release Documentation** - Created by Deployment Agent in `Docs/Releases/`
+7. **Process Documentation** - Located in `Docs/Process/`
+
+### Naming Conventions
+
+**All documentation uses PascalCase:**
+- Architecture: `ArchitectureOverview.md`, `DataModels.md`, `StateManagement.md`
+- Components: `Authentication.md`, `FirestoreService.md`, `UIComponents.md`
+- Features: `AnalyticsScreen.md`, `CurrentScreens.md`
+- Technical Designs: `[Feature_Name]_Technical_Design.md` (with underscores)
+- Release Notes: `release_notes_v[X.Y.Z].md` (lowercase v, semver format)
+
+### Directory Structure
+
+```
+Docs/
+├── README.md                    # Navigation guide
+├── Documentation_Lifecycle.md   # Documentation system master document
+├── Architecture/                # System architecture and patterns
+├── Components/                  # Component-specific documentation
+├── Features/                    # Feature implementations
+├── Technical_Designs/           # Detailed technical designs
+├── Testing/                     # Testing framework and strategies
+├── Releases/                    # Release notes for each version
+├── Process/                     # Process documentation and guides
+└── Archive/                     # Legacy documentation
+```
+
+### Agent Documentation Responsibilities
+
+- **BA:** PRD (Notion), GitHub Feature Issue
+- **SA:** Technical Design (Notion + Git), Task Issues, Architecture/Component docs
+- **Developer:** Implementation Notes, Code comments
+- **Testing:** Test reports (GitHub comments)
+- **QA:** QA reports (GitHub comments)
+- **Deployment:** Release Notes, CHANGELOG, GitHub Release
+
+### Skills System
+
+The `.claude/skills/` directory contains reusable procedural knowledge that agents automatically reference:
+
+- **GitHub Workflow** - Issue templates, PR standards, labels
+- **Notion Documentation** - PRD and Technical Design templates
+- **Flutter Testing** - Test patterns, coverage requirements
+- **Flutter Code Quality** - Dart style guide, best practices
+- **Agent Handoff** - Handoff protocols between agents
+
+Skills reduce duplication across agent files and ensure consistency.
