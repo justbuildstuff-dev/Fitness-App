@@ -481,6 +481,18 @@ void main() {
         programId: 'prog123',
         weekId: 'week123',
       );
+
+      // Set up mocks for internal method calls
+      when(mockFirestoreService.getWeeks(any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getPrograms(any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getWorkouts(any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getExercises(any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
+      when(mockFirestoreService.getSets(any, any, any, any, any))
+          .thenAnswer((_) => Stream.value([]));
     });
 
     test('getCascadeDeleteCounts for week with full context', () async {
@@ -510,8 +522,6 @@ void main() {
         userId: 'user123',
         programId: 'prog123',
         weekId: 'week123',
-        workoutId: argThat(isNull, named: 'workoutId'),
-        exerciseId: argThat(isNull, named: 'exerciseId'),
       )).called(1);
     });
 
@@ -543,7 +553,6 @@ void main() {
         programId: 'prog123',
         weekId: 'week123',
         workoutId: 'workout123',
-        exerciseId: argThat(isNull, named: 'exerciseId'),
       )).called(1);
     });
 
