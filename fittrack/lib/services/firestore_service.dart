@@ -5,6 +5,7 @@ import '../models/week.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../models/cascade_delete_counts.dart';
 import '../converters/program_converter.dart';
 import '../converters/week_converter.dart';
 import '../converters/workout_converter.dart';
@@ -1057,6 +1058,199 @@ class FirestoreService {
       await Future.wait(pendingCommits);
     } catch (e) {
       throw Exception('Failed to delete exercise cascade: $e');
+    }
+  }
+
+  // ========================================
+  // CASCADE DELETE COUNT OPERATIONS
+  // ========================================
+
+  /// Count workouts in a week
+  ///
+  /// Used to display cascade delete information in confirmation dialogs.
+  /// Returns the count of workouts that would be deleted when deleting a week.
+  Future<int> countWorkoutsInWeek(
+    String userId,
+    String programId,
+    String weekId,
+  ) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programs')
+        .doc(programId)
+        .collection('weeks')
+        .doc(weekId)
+        .collection('workouts')
+        .count()
+        .get();
+    return snapshot.count ?? 0;
+  }
+
+  /// Count exercises in a workout
+  ///
+  /// Used to display cascade delete information in confirmation dialogs.
+  /// Returns the count of exercises that would be deleted when deleting a workout.
+  Future<int> countExercisesInWorkout(
+    String userId,
+    String programId,
+    String weekId,
+    String workoutId,
+  ) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programs')
+        .doc(programId)
+        .collection('weeks')
+        .doc(weekId)
+        .collection('workouts')
+        .doc(workoutId)
+        .collection('exercises')
+        .count()
+        .get();
+    return snapshot.count ?? 0;
+  }
+
+  /// Count sets in an exercise
+  ///
+  /// Used to display cascade delete information in confirmation dialogs.
+  /// Returns the count of sets that would be deleted when deleting an exercise.
+  Future<int> countSetsInExercise(
+    String userId,
+    String programId,
+    String weekId,
+    String workoutId,
+    String exerciseId,
+  ) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programs')
+        .doc(programId)
+        .collection('weeks')
+        .doc(weekId)
+        .collection('workouts')
+        .doc(workoutId)
+        .collection('exercises')
+        .doc(exerciseId)
+        .collection('sets')
+        .count()
+        .get();
+    return snapshot.count ?? 0;
+  }
+
+  /// Get counts of all child entities that will be deleted in a cascade operation
+  ///
+  /// This method calculates the total number of workouts, exercises, and sets
+  /// that will be deleted based on the provided IDs:
+  /// - If only [weekId] is provided: counts all workouts, exercises, and sets in the week
+  /// - If [workoutId] is also provided: counts all exercises and sets in the workout
+  /// - If [exerciseId] is also provided: counts all sets in the exercise
+  ///
+  /// Returns [CascadeDeleteCounts] with counts for each entity type.
+  /// On error, returns zero counts (graceful degradation).
+  Future<CascadeDeleteCounts> getCascadeDeleteCounts({
+    required String userId,
+    required String programId,
+    String? weekId,
+    String? workoutId,
+    String? exerciseId,
+  }) async {
+    try {
+      // Deleting a week
+      if (weekId != null && workoutId == null && exerciseId == null) {
+        int totalExercises = 0;
+        int totalSets = 0;
+
+        // Get all workouts in week
+        final workoutsSnapshot = await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('programs')
+            .doc(programId)
+            .collection('weeks')
+            .doc(weekId)
+            .collection('workouts')
+            .get();
+
+        final workoutCount = workoutsSnapshot.docs.length;
+
+        // For each workout, count exercises and sets
+        for (final workoutDoc in workoutsSnapshot.docs) {
+          final exercisesSnapshot = await workoutDoc.reference
+              .collection('exercises')
+              .get();
+
+          totalExercises += exercisesSnapshot.docs.length;
+
+          for (final exerciseDoc in exercisesSnapshot.docs) {
+            final setsSnapshot = await exerciseDoc.reference
+                .collection('sets')
+                .count()
+                .get();
+            totalSets += (setsSnapshot.count ?? 0);
+          }
+        }
+
+        return CascadeDeleteCounts(
+          workouts: workoutCount,
+          exercises: totalExercises,
+          sets: totalSets,
+        );
+      }
+
+      // Deleting a workout
+      if (weekId != null && workoutId != null && exerciseId == null) {
+        int totalExercises = 0;
+        int totalSets = 0;
+
+        final exercisesSnapshot = await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('programs')
+            .doc(programId)
+            .collection('weeks')
+            .doc(weekId)
+            .collection('workouts')
+            .doc(workoutId)
+            .collection('exercises')
+            .get();
+
+        totalExercises = exercisesSnapshot.docs.length;
+
+        for (final exerciseDoc in exercisesSnapshot.docs) {
+          final setsSnapshot = await exerciseDoc.reference
+              .collection('sets')
+              .count()
+              .get();
+          totalSets += (setsSnapshot.count ?? 0);
+        }
+
+        return CascadeDeleteCounts(
+          exercises: totalExercises,
+          sets: totalSets,
+        );
+      }
+
+      // Deleting an exercise
+      if (weekId != null && workoutId != null && exerciseId != null) {
+        final setsCount = await countSetsInExercise(
+          userId,
+          programId,
+          weekId,
+          workoutId,
+          exerciseId,
+        );
+
+        return CascadeDeleteCounts(sets: setsCount);
+      }
+
+      // Invalid parameters
+      return const CascadeDeleteCounts();
+    } catch (e) {
+      debugPrint('Error getting cascade delete counts: $e');
+      return const CascadeDeleteCounts();
     }
   }
 
