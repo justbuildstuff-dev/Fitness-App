@@ -6,6 +6,8 @@ import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
+import 'package:fittrack/models/workout.dart';
+import 'package:fittrack/models/cascade_delete_counts.dart';
 
 import 'program_provider_edit_delete_test.mocks.dart';
 
@@ -434,6 +436,212 @@ void main() {
       expect(provider.error, equals(errorMessage));
     });
   });
+
+  group('Cascade Delete Count Operations', () {
+    late Workout testWorkout;
+
+    setUp(() {
+      testWorkout = Workout(
+        id: 'workout123',
+        name: 'Test Workout',
+        orderIndex: 0,
+        notes: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'user123',
+        programId: 'prog123',
+        weekId: 'week123',
+      );
+    });
+
+    test('getCascadeDeleteCounts for week with full context', () async {
+      /// Test Purpose: Verify cascade count retrieval for week deletion
+      /// Should call FirestoreService with correct parameters when all context is available
+
+      provider.setSelectedProgram(testProgram);
+
+      const expectedCounts = CascadeDeleteCounts(
+        workouts: 3,
+        exercises: 9,
+        sets: 27,
+      );
+
+      when(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      )).thenAnswer((_) async => expectedCounts);
+
+      final counts = await provider.getCascadeDeleteCounts(weekId: 'week123');
+
+      expect(counts, equals(expectedCounts));
+      verify(mockFirestoreService.getCascadeDeleteCounts(
+        userId: 'user123',
+        programId: 'prog123',
+        weekId: 'week123',
+        workoutId: null,
+        exerciseId: null,
+      )).called(1);
+    });
+
+    test('getCascadeDeleteCounts for workout with full context', () async {
+      /// Test Purpose: Verify cascade count retrieval for workout deletion
+      /// Should resolve weekId from _selectedWeek
+
+      provider.setSelectedProgram(testProgram);
+      provider.setSelectedWeek(testWeek);
+
+      const expectedCounts = CascadeDeleteCounts(
+        exercises: 5,
+        sets: 15,
+      );
+
+      when(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      )).thenAnswer((_) async => expectedCounts);
+
+      final counts = await provider.getCascadeDeleteCounts(workoutId: 'workout123');
+
+      expect(counts, equals(expectedCounts));
+      verify(mockFirestoreService.getCascadeDeleteCounts(
+        userId: 'user123',
+        programId: 'prog123',
+        weekId: 'week123',
+        workoutId: 'workout123',
+        exerciseId: null,
+      )).called(1);
+    });
+
+    test('getCascadeDeleteCounts for exercise with full context', () async {
+      /// Test Purpose: Verify cascade count retrieval for exercise deletion
+      /// Should resolve all IDs from selected entities
+
+      provider.setSelectedProgram(testProgram);
+      provider.setSelectedWeek(testWeek);
+      provider.setSelectedWorkout(testWorkout);
+
+      const expectedCounts = CascadeDeleteCounts(sets: 4);
+
+      when(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      )).thenAnswer((_) async => expectedCounts);
+
+      final counts = await provider.getCascadeDeleteCounts(exerciseId: 'exercise123');
+
+      expect(counts, equals(expectedCounts));
+      verify(mockFirestoreService.getCascadeDeleteCounts(
+        userId: 'user123',
+        programId: 'prog123',
+        weekId: 'week123',
+        workoutId: 'workout123',
+        exerciseId: 'exercise123',
+      )).called(1);
+    });
+
+    test('getCascadeDeleteCounts returns zero counts without userId', () async {
+      /// Test Purpose: Verify graceful handling when user not authenticated
+
+      final unauthenticatedProvider = ProgramProvider.withServices(
+        null,
+        mockFirestoreService,
+        mockAnalyticsService,
+      );
+
+      final counts = await unauthenticatedProvider.getCascadeDeleteCounts(weekId: 'week123');
+
+      expect(counts, equals(const CascadeDeleteCounts()));
+      verifyNever(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      ));
+    });
+
+    test('getCascadeDeleteCounts for week returns zero counts without selected program', () async {
+      /// Test Purpose: Verify context validation for week deletion
+      /// Should return zero counts when program not selected
+
+      // No program selected
+      final counts = await provider.getCascadeDeleteCounts(weekId: 'week123');
+
+      expect(counts, equals(const CascadeDeleteCounts()));
+      verifyNever(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      ));
+    });
+
+    test('getCascadeDeleteCounts for workout returns zero counts without selected week', () async {
+      /// Test Purpose: Verify context validation for workout deletion
+      /// Should return zero counts when week not selected
+
+      provider.setSelectedProgram(testProgram);
+      // No week selected
+
+      final counts = await provider.getCascadeDeleteCounts(workoutId: 'workout123');
+
+      expect(counts, equals(const CascadeDeleteCounts()));
+      verifyNever(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      ));
+    });
+
+    test('getCascadeDeleteCounts for exercise returns zero counts without selected workout', () async {
+      /// Test Purpose: Verify context validation for exercise deletion
+      /// Should return zero counts when workout not selected
+
+      provider.setSelectedProgram(testProgram);
+      provider.setSelectedWeek(testWeek);
+      // No workout selected
+
+      final counts = await provider.getCascadeDeleteCounts(exerciseId: 'exercise123');
+
+      expect(counts, equals(const CascadeDeleteCounts()));
+      verifyNever(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      ));
+    });
+
+    test('getCascadeDeleteCounts returns zero counts with no parameters', () async {
+      /// Test Purpose: Verify handling of invalid call with no IDs
+
+      provider.setSelectedProgram(testProgram);
+
+      final counts = await provider.getCascadeDeleteCounts();
+
+      expect(counts, equals(const CascadeDeleteCounts()));
+      verifyNever(mockFirestoreService.getCascadeDeleteCounts(
+        userId: anyNamed('userId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+      ));
+    });
+  });
 }
 
 /// Extension methods to support testing
@@ -441,6 +649,14 @@ void main() {
 extension ProgramProviderTestHelpers on ProgramProvider {
   void setSelectedProgram(Program program) {
     selectProgram(program);
+  }
+
+  void setSelectedWeek(Week week) {
+    selectWeek(week);
+  }
+
+  void setSelectedWorkout(Workout workout) {
+    selectWorkout(workout);
   }
 
   void setError(String errorMessage) {
