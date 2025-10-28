@@ -438,9 +438,38 @@ void main() {
   });
 
   group('Cascade Delete Count Operations', () {
+    late MockFirestoreService mockFirestoreService;
+    late MockAnalyticsService mockAnalyticsService;
+    late ProgramProvider provider;
+    late Program testProgram;
+    late Week testWeek;
     late Workout testWorkout;
 
     setUp(() {
+      mockFirestoreService = MockFirestoreService();
+      mockAnalyticsService = MockAnalyticsService();
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
+
+      testProgram = Program(
+        id: 'prog123',
+        name: 'Test Program',
+        description: 'Test Description',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'user123',
+      );
+
+      testWeek = Week(
+        id: 'week123',
+        name: 'Test Week',
+        order: 1,
+        notes: 'Test notes',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'user123',
+        programId: 'prog123',
+      );
+
       testWorkout = Workout(
         id: 'workout123',
         name: 'Test Workout',
@@ -481,8 +510,8 @@ void main() {
         userId: 'user123',
         programId: 'prog123',
         weekId: 'week123',
-        workoutId: null,
-        exerciseId: null,
+        workoutId: argThat(isNull, named: 'workoutId'),
+        exerciseId: argThat(isNull, named: 'exerciseId'),
       )).called(1);
     });
 
@@ -514,7 +543,7 @@ void main() {
         programId: 'prog123',
         weekId: 'week123',
         workoutId: 'workout123',
-        exerciseId: null,
+        exerciseId: argThat(isNull, named: 'exerciseId'),
       )).called(1);
     });
 
