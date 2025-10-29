@@ -30,10 +30,10 @@ void main() {
   group('Firestore Cascade Delete Count Integration Tests', () {
     late FirestoreService firestoreService;
     late String testUserId;
-    late String testProgramId;
-    late String testWeekId;
-    late String testWorkoutId;
-    late String testExerciseId;
+    String? testProgramId;
+    String? testWeekId;
+    String? testWorkoutId;
+    String? testExerciseId;
 
     setUpAll(() async {
       // Initialize Flutter binding for Firebase
@@ -229,7 +229,7 @@ void main() {
       // Call getCascadeDeleteCounts for week deletion
       final counts = await firestoreService.getCascadeDeleteCounts(
         userId: testUserId,
-        programId: testProgramId,
+        programId: testProgramId!,
         weekId: testWeekId,
       );
 
@@ -338,7 +338,7 @@ void main() {
       // Call getCascadeDeleteCounts for workout deletion
       final counts = await firestoreService.getCascadeDeleteCounts(
         userId: testUserId,
-        programId: testProgramId,
+        programId: testProgramId!,
         weekId: testWeekId,
         workoutId: testWorkoutId,
       );
@@ -421,7 +421,7 @@ void main() {
       // Call getCascadeDeleteCounts for exercise deletion
       final counts = await firestoreService.getCascadeDeleteCounts(
         userId: testUserId,
-        programId: testProgramId,
+        programId: testProgramId!,
         weekId: testWeekId,
         workoutId: testWorkoutId,
         exerciseId: testExerciseId,
@@ -464,7 +464,7 @@ void main() {
       // Call getCascadeDeleteCounts for empty week
       final counts = await firestoreService.getCascadeDeleteCounts(
         userId: testUserId,
-        programId: testProgramId,
+        programId: testProgramId!,
         weekId: testWeekId,
       );
 
@@ -530,7 +530,7 @@ void main() {
       // Call getCascadeDeleteCounts for empty exercise
       final counts = await firestoreService.getCascadeDeleteCounts(
         userId: testUserId,
-        programId: testProgramId,
+        programId: testProgramId!,
         weekId: testWeekId,
         workoutId: testWorkoutId,
         exerciseId: testExerciseId,
