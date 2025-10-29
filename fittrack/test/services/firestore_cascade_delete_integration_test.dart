@@ -72,8 +72,8 @@ void main() {
       );
       testUserId = userCredential.user!.uid;
 
-      // Initialize service
-      firestoreService = FirestoreService();
+      // Initialize service with test Firestore instance
+      firestoreService = FirestoreService.withFirestore(FirebaseFirestore.instance);
 
       print('✅ Test user created: $testUserId ($email)');
     });
