@@ -110,7 +110,7 @@ jobs:
         # Run widget tests with better error handling
         flutter test test/widgets/ test/screens/ \
           --timeout=60s \
-          --reporter=github || echo "Widget tests completed with some failures"
+          --reporter=github
           
     - name: Check widget test results
       run: |
@@ -252,9 +252,9 @@ jobs:
       run: |
         cd fittrack
         # Run core integration tests with Firebase emulator
-        flutter test test/services/enhanced_firestore_service_test.dart \
+        flutter test test/services/firestore_cascade_delete_integration_test.dart \
           --timeout=120s \
-          --reporter=github || echo "Integration tests completed with some failures"
+          --reporter=github
           
     - name: Enable KVM group permissions
       run: |
@@ -295,15 +295,15 @@ jobs:
           adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null || (echo "⚠️  Emulator not responding, waiting longer..." && sleep 15)
           
           echo "🚀 Running integration tests on Android with flutter drive..."
-          
+
           echo "Running analytics integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554' || echo "Analytics test completed with timeout/error"
-          
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
+
           echo "Running workout creation integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554' || echo "Workout creation test completed with timeout/error"
-          
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554'
+
           echo "Running complete workflow integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554' || echo "Complete workflow test completed with timeout/error"
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554'
           
     - name: Stop Firebase emulators
       if: always()
@@ -402,13 +402,12 @@ jobs:
         sleep 15
         
     - name: Run enhanced integration tests
-      continue-on-error: true
       run: |
         cd fittrack
         # Run simplified integration tests
-        flutter test test/screens/enhanced_create_program_screen_test.dart test/services/enhanced_firestore_service_test.dart \
+        flutter test test/screens/enhanced_create_program_screen_test.dart test/models/program_model_validation_test.dart \
           --timeout=120s \
-          --reporter=github || echo "Enhanced integration tests completed"
+          --reporter=github
           
     - name: Stop emulators
       if: always()
