@@ -12,6 +12,7 @@
 library;
 
 import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,6 +36,9 @@ void main() {
     late String testExerciseId;
 
     setUpAll(() async {
+      // Initialize Flutter binding for Firebase
+      TestWidgetsFlutterBinding.ensureInitialized();
+
       // Initialize Firebase for testing
       try {
         await Firebase.initializeApp(
