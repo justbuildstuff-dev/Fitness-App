@@ -563,7 +563,8 @@ void main() {
 
         expect(find.text('Advanced Strength Program'), findsOneWidget);
         expect(find.textContaining('weeks, workouts, exercises'), findsOneWidget);
-        expect(find.textContaining('cannot be undone'), findsOneWidget);
+        // Note: "cannot be undone" appears in both content and warning message
+        expect(find.textContaining('cannot be undone'), findsNWidgets(2));
       });
 
       testWidgets('handles exercise deletion context', (WidgetTester tester) async {
