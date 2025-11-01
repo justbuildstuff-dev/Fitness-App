@@ -32,7 +32,19 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Enable debuggable flag for debug builds
+            // This allows <debug-overrides> in network_security_config.xml to take effect,
+            // permitting cleartext HTTP traffic to Firebase emulators (10.0.2.2:9099)
+            // for integration testing. This is ONLY active in debug builds.
+            isDebuggable = true
+        }
         release {
+            // Production security: Enforce HTTPS-only
+            // The isDebuggable = false flag ensures <base-config cleartextTrafficPermitted="false">
+            // is active, blocking all cleartext HTTP traffic in production builds.
+            // Google Play Store also rejects APKs with debuggable = true.
+            isDebuggable = false
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
