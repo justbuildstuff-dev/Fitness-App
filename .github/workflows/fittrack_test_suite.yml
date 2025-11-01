@@ -173,15 +173,17 @@ jobs:
         arch: x86_64
         profile: Nexus 6
         
-    - name: Cache Gradle dependencies
+    - name: Cache Gradle dependencies and NDK
       uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
           ~/.android/build-cache
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          ~/.android/ndk
+        key: ${{ runner.os }}-gradle-ndk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
+          ${{ runner.os }}-gradle-ndk-
           ${{ runner.os }}-gradle-
         
     - name: Setup Flutter
@@ -295,7 +297,9 @@ jobs:
           echo "🚀 Running integration tests on Android with flutter drive..."
 
           echo "Running analytics integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
+          # First test needs longer timeout to include APK build time (Gradle + NDK download)
+          # Subsequent tests reuse the built APK and only need time for test execution
+          timeout 1800 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
 
           echo "Running workout creation integration test..."
           timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554'
