@@ -6,6 +6,7 @@ import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
 import '../models/analytics.dart';
+import '../models/cascade_delete_counts.dart';
 import '../services/firestore_service.dart';
 import '../services/analytics_service.dart';
 
@@ -804,19 +805,74 @@ class ProgramProvider extends ChangeNotifier {
       notifyListeners();
 
       await _firestoreService.deleteExercise(
-        _userId!, 
-        _selectedProgram!.id, 
-        _selectedWeek!.id, 
+        _userId!,
+        _selectedProgram!.id,
+        _selectedWeek!.id,
         _selectedWorkout!.id,
         exerciseId,
       );
-      
+
       // Exercises will be automatically updated via the stream
     } catch (e) {
       _error = 'Failed to delete exercise: $e';
       notifyListeners();
       rethrow;
     }
+  }
+
+  /// Get cascade delete counts for confirmation dialogs
+  ///
+  /// This method resolves the required context from selected entities and
+  /// returns counts of child entities that will be deleted:
+  /// - For week deletion: requires [weekId], returns workouts, exercises, sets
+  /// - For workout deletion: requires [workoutId], returns exercises, sets
+  /// - For exercise deletion: requires [exerciseId], returns sets
+  ///
+  /// Returns zero counts if required context (_selectedProgram, etc.) is missing.
+  Future<CascadeDeleteCounts> getCascadeDeleteCounts({
+    String? weekId,
+    String? workoutId,
+    String? exerciseId,
+  }) async {
+    if (_userId == null) return const CascadeDeleteCounts();
+
+    String? programId;
+    String? resolvedWeekId = weekId;
+    String? resolvedWorkoutId = workoutId;
+
+    // Determine programId and resolve IDs based on context
+    if (exerciseId != null) {
+      // Deleting exercise - need program, week, workout, exercise IDs
+      if (_selectedProgram == null || _selectedWeek == null || _selectedWorkout == null) {
+        return const CascadeDeleteCounts();
+      }
+      programId = _selectedProgram!.id;
+      resolvedWeekId = _selectedWeek!.id;
+      resolvedWorkoutId = _selectedWorkout!.id;
+    } else if (workoutId != null) {
+      // Deleting workout - need program, week, workout IDs
+      if (_selectedProgram == null || _selectedWeek == null) {
+        return const CascadeDeleteCounts();
+      }
+      programId = _selectedProgram!.id;
+      resolvedWeekId = _selectedWeek!.id;
+    } else if (weekId != null) {
+      // Deleting week - need program, week IDs
+      if (_selectedProgram == null) {
+        return const CascadeDeleteCounts();
+      }
+      programId = _selectedProgram!.id;
+    } else {
+      return const CascadeDeleteCounts();
+    }
+
+    return await _firestoreService.getCascadeDeleteCounts(
+      userId: _userId!,
+      programId: programId,
+      weekId: resolvedWeekId,
+      workoutId: resolvedWorkoutId,
+      exerciseId: exerciseId,
+    );
   }
 
   /// Select an exercise and load its sets
