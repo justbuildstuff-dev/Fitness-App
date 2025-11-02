@@ -58,6 +58,9 @@ class ProgramProvider extends ChangeNotifier {
   Map<String, dynamic>? _keyStatistics;
   bool _isLoadingAnalytics = false;
 
+  // Disposal tracking
+  bool _disposed = false;
+
   // Stream subscriptions for cleanup
   StreamSubscription<List<Program>>? _programsSubscription;
   StreamSubscription<List<Week>>? _weeksSubscription;
@@ -1016,7 +1019,7 @@ class ProgramProvider extends ChangeNotifier {
     try {
       _isLoadingAnalytics = true;
       _error = null;
-      if (mounted) {
+      if (!_disposed) {
         notifyListeners();
       }
 
@@ -1054,9 +1057,9 @@ class ProgramProvider extends ChangeNotifier {
       _error = 'Failed to load analytics: $e';
     } finally {
       _isLoadingAnalytics = false;
-      // Only notify listeners if the provider is still mounted
+      // Only notify listeners if the provider hasn't been disposed
       // Prevents "used after being disposed" errors in tests
-      if (mounted) {
+      if (!_disposed) {
         notifyListeners();
       }
     }
@@ -1119,8 +1122,10 @@ class ProgramProvider extends ChangeNotifier {
   }
 
   /// Clean up resources
+  /// Marks provider as disposed to prevent notifications after disposal
   @override
   void dispose() {
+    _disposed = true;
     _programsSubscription?.cancel();
     _weeksSubscription?.cancel();
     _workoutsSubscription?.cancel();
