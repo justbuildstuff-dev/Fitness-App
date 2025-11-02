@@ -40,8 +40,8 @@ void main() {
         await _signInWithTestAccount(tester);
       }
 
-      // Navigate to Analytics tab
-      await tester.tap(find.text('Analytics'));
+      // Navigate to Analytics tab (use icon to avoid ambiguity with AppBar title)
+      await tester.tap(find.byIcon(Icons.analytics));
       await tester.pumpAndSettle();
 
       // Wait for analytics to load
@@ -59,8 +59,8 @@ void main() {
         // Create some test data
         await _createTestWorkoutData(tester);
         
-        // Return to analytics
-        await tester.tap(find.text('Analytics'));
+        // Return to analytics tab (use icon to avoid ambiguity)
+        await tester.tap(find.byIcon(Icons.analytics));
         await tester.pumpAndSettle();
         await tester.pump(const Duration(seconds: 2));
       }
@@ -89,8 +89,8 @@ void main() {
       // Create a workout with progressive sets to trigger PR detection
       await _createWorkoutWithProgressiveSets(tester);
 
-      // Navigate to analytics
-      await tester.tap(find.text('Analytics'));
+      // Navigate to analytics tab (use icon to avoid ambiguity)
+      await tester.tap(find.byIcon(Icons.analytics));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 2));
 
@@ -119,8 +119,8 @@ void main() {
       // Create workouts on specific dates to test heatmap
       await _createWorkoutsForHeatmapTesting(tester);
 
-      // Navigate to analytics
-      await tester.tap(find.text('Analytics'));
+      // Navigate to analytics tab (use icon to avoid ambiguity)
+      await tester.tap(find.byIcon(Icons.analytics));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 2));
 
@@ -152,8 +152,8 @@ void main() {
 
       await _ensureSignedIn(tester);
 
-      // Navigate to analytics
-      await tester.tap(find.text('Analytics'));
+      // Navigate to analytics tab (use icon to avoid ambiguity)
+      await tester.tap(find.byIcon(Icons.analytics));
       await tester.pumpAndSettle();
 
       // Test date range selection
@@ -189,8 +189,8 @@ void main() {
 
       await _ensureSignedIn(tester);
 
-      // Navigate to analytics
-      await tester.tap(find.text('Analytics'));
+      // Navigate to analytics tab (use icon to avoid ambiguity)
+      await tester.tap(find.byIcon(Icons.analytics));
       await tester.pumpAndSettle();
 
       // Test refresh button
@@ -220,7 +220,8 @@ void main() {
       // For now, just verify error UI works if errors occur
       
       await _ensureSignedIn(tester);
-      await tester.tap(find.text('Analytics'));
+      // Navigate to analytics tab (use icon to avoid ambiguity)
+      await tester.tap(find.byIcon(Icons.analytics));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 5));
 
