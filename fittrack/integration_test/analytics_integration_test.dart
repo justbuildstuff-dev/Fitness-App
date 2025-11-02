@@ -338,9 +338,29 @@ Future<void> _createTestWorkoutData(WidgetTester tester) async {
     
     await tester.tap(find.text('Create Program'));
     await tester.pumpAndSettle();
-    
-    // Create a week
-    await tester.tap(find.text('Test Analytics Program'));
+
+    // Wait for program creation to complete and UI to update
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    // Verify program was created before attempting to tap
+    var programFinder = find.text('Test Analytics Program');
+    if (programFinder.evaluate().isEmpty) {
+      print('DEBUG: Program not found with exact match, trying partial match...');
+      programFinder = find.textContaining('Test Analytics');
+
+      if (programFinder.evaluate().isEmpty) {
+        print('DEBUG: Widget tree when program not found:');
+        print(find.byType(Text).evaluate().map((e) => e.widget.toString()).join('\n'));
+        throw TestFailure(
+          'Program "Test Analytics Program" not created or not visible. '
+          'Expected to find program in list after creation.'
+        );
+      }
+    }
+
+    // Create a week - tap on the program we just created
+    await tester.tap(programFinder);
     await tester.pumpAndSettle();
 
     if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
