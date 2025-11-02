@@ -1016,7 +1016,9 @@ class ProgramProvider extends ChangeNotifier {
     try {
       _isLoadingAnalytics = true;
       _error = null;
-      notifyListeners();
+      if (mounted) {
+        notifyListeners();
+      }
 
       final selectedDateRange = dateRange ?? DateRange.thisYear();
       final currentYear = DateTime.now().year;
@@ -1052,7 +1054,11 @@ class ProgramProvider extends ChangeNotifier {
       _error = 'Failed to load analytics: $e';
     } finally {
       _isLoadingAnalytics = false;
-      notifyListeners();
+      // Only notify listeners if the provider is still mounted
+      // Prevents "used after being disposed" errors in tests
+      if (mounted) {
+        notifyListeners();
+      }
     }
   }
 

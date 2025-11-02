@@ -49,7 +49,7 @@ void main() {
 
       // Verify Analytics screen is displayed
       expect(find.byType(AnalyticsScreen), findsOneWidget);
-      expect(find.text('Analytics'), findsOneWidget);
+      // Note: "Analytics" text appears in both AppBar and bottom nav, so check screen type instead
 
       // Test empty state (if no data exists)
       if (find.text('No Data Available').evaluate().isNotEmpty) {
@@ -70,6 +70,9 @@ void main() {
 
       // Test analytics interactions
       await _testAnalyticsInteractions(tester);
+
+      // Wait for any pending async operations to complete before test ends
+      await tester.pumpAndSettle(const Duration(seconds: 2));
     });
 
     testWidgets('analytics personal records detection', (tester) async {
@@ -323,8 +326,9 @@ Future<void> _createTestWorkoutData(WidgetTester tester) async {
   await tester.pumpAndSettle();
 
   // Create a test program if none exists
-  if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
-    await tester.tap(find.byIcon(Icons.add));
+  // Use FloatingActionButton to avoid ambiguity with multiple add icons
+  if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     
     // Fill in program details
@@ -337,8 +341,8 @@ Future<void> _createTestWorkoutData(WidgetTester tester) async {
     // Create a week
     await tester.tap(find.text('Test Analytics Program'));
     await tester.pumpAndSettle();
-    
-    if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
+
+    if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
       await _createTestWeekWithWorkouts(tester);
     }
   }
@@ -346,7 +350,7 @@ Future<void> _createTestWorkoutData(WidgetTester tester) async {
 
 Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   // Create week
-  await tester.tap(find.byIcon(Icons.add));
+  await tester.tap(find.byType(FloatingActionButton));
   await tester.pumpAndSettle();
   
   await tester.enterText(find.byType(TextFormField).first, 'Test Week 1');
@@ -358,8 +362,8 @@ Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   await tester.pumpAndSettle();
   
   // Create workout
-  if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
-    await tester.tap(find.byIcon(Icons.add));
+  if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     
     await tester.enterText(find.byType(TextFormField).first, 'Test Workout');
@@ -377,8 +381,8 @@ Future<void> _addExerciseWithSets(WidgetTester tester) async {
   await tester.pumpAndSettle();
   
   // Add exercise
-  if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
-    await tester.tap(find.byIcon(Icons.add));
+  if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     
     await tester.enterText(find.byType(TextFormField).first, 'Bench Press');
@@ -391,8 +395,8 @@ Future<void> _addExerciseWithSets(WidgetTester tester) async {
     
     // Add a few sets for analytics data
     for (int i = 0; i < 3; i++) {
-      if (find.byIcon(Icons.add).evaluate().isNotEmpty) {
-        await tester.tap(find.byIcon(Icons.add));
+      if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+        await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
         
         // Fill in set data
