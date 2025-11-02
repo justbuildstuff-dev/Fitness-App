@@ -14,6 +14,12 @@ void main() {
   group('Analytics Integration Tests', () {
     setUpAll(() async {
       await setupFirebaseEmulators();
+      // Create test user in Firebase Auth emulator
+      // This user is needed for sign-in authentication in tests
+      await FirebaseEmulatorSetup.createTestUser(
+        email: 'test@fittrack.com',
+        password: 'testpassword123',
+      );
     });
 
     tearDownAll(() async {

@@ -144,7 +144,8 @@ jobs:
         sudo rm -rf /opt/hostedtoolcache/CodeQL
 
         # Remove large misc packages (~4GB)
-        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        # Note: Keep NDK for caching - commented out to allow NDK caching to work
+        # sudo rm -rf /usr/local/lib/android/sdk/ndk
         sudo rm -rf /usr/local/share/boost
 
         # Clean Docker system (~4GB)
@@ -180,7 +181,7 @@ jobs:
           ~/.gradle/caches
           ~/.gradle/wrapper
           ~/.android/build-cache
-          ~/.android/ndk
+          /usr/local/lib/android/sdk/ndk
         key: ${{ runner.os }}-gradle-ndk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-ndk-
