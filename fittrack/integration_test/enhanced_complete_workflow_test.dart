@@ -47,17 +47,20 @@ void main() {
       // This properly handles Android emulator connectivity (10.0.2.2) and initialization order
       await setupFirebaseEmulators();
 
-      // Generate unique test credentials
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      testEmail = 'test$timestamp@fittrack.test';
+      // Set password (shared across all tests)
       testPassword = 'TestPassword123!';
     });
 
     setUp(() async {
       /// Test Purpose: Create fresh test user for each test
       /// This ensures test isolation and prevents data contamination
-      
-      // Create test user
+
+      // Generate UNIQUE email for EACH test to prevent email-already-in-use errors
+      // Use microsecondsSinceEpoch for higher precision than milliseconds
+      final timestamp = DateTime.now().microsecondsSinceEpoch;
+      testEmail = 'test$timestamp@fittrack.test';
+
+      // Create test user with unique email
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: testEmail,
         password: testPassword,

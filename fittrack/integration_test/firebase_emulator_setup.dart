@@ -311,6 +311,7 @@ class FirebaseEmulatorSetup {
         'order': 1,
         'notes': 'Test week for workout creation',
         'createdAt': timestamp,
+        'updatedAt': timestamp,
         'userId': userId,
         'programId': programRef.id,
       });
