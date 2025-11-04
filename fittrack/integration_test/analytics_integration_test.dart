@@ -40,12 +40,11 @@ void main() {
         await _signInWithTestAccount(tester);
       }
 
-      // Navigate to Analytics tab (use icon to avoid ambiguity with AppBar title)
-      await tester.tap(find.byIcon(Icons.analytics));
-      await tester.pumpAndSettle();
+      // Navigate to Analytics tab
+      await _navigateToAnalytics(tester);
 
       // Wait for analytics to load
-      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(seconds: 1));
 
       // Verify Analytics screen is displayed
       expect(find.byType(AnalyticsScreen), findsOneWidget);
@@ -59,45 +58,8 @@ void main() {
         // Create some test data
         await _createTestWorkoutData(tester);
 
-        // Navigate back to main screen where bottom navigation is visible
-        // After creating workout data, we're deep in the navigation stack
-        print('DEBUG: Navigating back to main screen after data creation');
-
-        // Try to find back button and navigate back multiple times until we reach bottom nav
-        int maxBackAttempts = 5;
-        for (int i = 0; i < maxBackAttempts; i++) {
-          var backButton = find.byTooltip('Back');
-          if (backButton.evaluate().isEmpty) {
-            // No back button - we might be at root level
-            break;
-          }
-          await tester.tap(backButton);
-          await tester.pumpAndSettle();
-
-          // Check if Analytics icon is now visible
-          if (find.byIcon(Icons.analytics).evaluate().isNotEmpty) {
-            print('DEBUG: Bottom navigation found after $i back navigation(s)');
-            break;
-          }
-        }
-
-        // Verify Analytics icon is now visible
-        var analyticsFinder = find.byIcon(Icons.analytics);
-        if (analyticsFinder.evaluate().isEmpty) {
-          print('DEBUG: Analytics icon still not found after navigation back');
-          print('DEBUG: Available icons:');
-          print(find.byType(Icon).evaluate().map((e) => e.widget.toString()).join('\n'));
-          throw TestFailure(
-            'Analytics icon not found in bottom navigation after navigating back from data creation. '
-            'Expected to find bottom navigation bar.'
-          );
-        }
-
-        // Return to analytics tab (use icon to avoid ambiguity)
-        print('DEBUG: Tapping Analytics icon to return to Analytics screen');
-        await tester.tap(analyticsFinder);
-        await tester.pumpAndSettle();
-        await tester.pump(const Duration(seconds: 2));
+        // Navigate back to Analytics tab
+        await _navigateToAnalytics(tester);
       }
 
       // Test analytics with data
@@ -124,10 +86,8 @@ void main() {
       // Create a workout with progressive sets to trigger PR detection
       await _createWorkoutWithProgressiveSets(tester);
 
-      // Navigate to analytics tab (use icon to avoid ambiguity)
-      await tester.tap(find.byIcon(Icons.analytics));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 2));
+      // Navigate to analytics tab
+      await _navigateToAnalytics(tester);
 
       // Verify personal records are detected and displayed
       if (find.text('Recent Personal Records').evaluate().isNotEmpty) {
@@ -154,10 +114,8 @@ void main() {
       // Create workouts on specific dates to test heatmap
       await _createWorkoutsForHeatmapTesting(tester);
 
-      // Navigate to analytics tab (use icon to avoid ambiguity)
-      await tester.tap(find.byIcon(Icons.analytics));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 2));
+      // Navigate to analytics tab
+      await _navigateToAnalytics(tester);
 
       // Verify heatmap displays correctly
       if (find.byType(ActivityHeatmapSection).evaluate().isNotEmpty) {
@@ -187,9 +145,8 @@ void main() {
 
       await _ensureSignedIn(tester);
 
-      // Navigate to analytics tab (use icon to avoid ambiguity)
-      await tester.tap(find.byIcon(Icons.analytics));
-      await tester.pumpAndSettle();
+      // Navigate to analytics tab
+      await _navigateToAnalytics(tester);
 
       // Test date range selection
       await tester.tap(find.byIcon(Icons.date_range));
@@ -224,9 +181,8 @@ void main() {
 
       await _ensureSignedIn(tester);
 
-      // Navigate to analytics tab (use icon to avoid ambiguity)
-      await tester.tap(find.byIcon(Icons.analytics));
-      await tester.pumpAndSettle();
+      // Navigate to analytics tab
+      await _navigateToAnalytics(tester);
 
       // Test refresh button
       await tester.tap(find.byIcon(Icons.refresh));
@@ -255,10 +211,10 @@ void main() {
       // For now, just verify error UI works if errors occur
       
       await _ensureSignedIn(tester);
-      // Navigate to analytics tab (use icon to avoid ambiguity)
-      await tester.tap(find.byIcon(Icons.analytics));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 5));
+
+      // Navigate to analytics tab
+      await _navigateToAnalytics(tester);
+      await tester.pump(const Duration(seconds: 3));
 
       // If error occurs, test retry functionality
       if (find.text('Retry').evaluate().isNotEmpty) {
@@ -298,10 +254,52 @@ Future<void> _ensureSignedIn(WidgetTester tester) async {
   if (find.text('Sign In').evaluate().isNotEmpty) {
     await _signInWithTestAccount(tester);
   }
-  
+
   // Wait for home screen to load
   await tester.pumpAndSettle();
   expect(find.text('Programs'), findsOneWidget);
+}
+
+Future<void> _navigateToAnalytics(WidgetTester tester) async {
+  // Navigate back to main screen where bottom navigation is visible
+  // This is needed after creating workout data when we're deep in navigation stack
+  print('DEBUG: Navigating to Analytics tab');
+
+  // Try to find back button and navigate back multiple times until we reach bottom nav
+  int maxBackAttempts = 5;
+  for (int i = 0; i < maxBackAttempts; i++) {
+    var backButton = find.byTooltip('Back');
+    if (backButton.evaluate().isEmpty) {
+      // No back button - we might be at root level
+      break;
+    }
+    await tester.tap(backButton);
+    await tester.pumpAndSettle();
+
+    // Check if Analytics icon is now visible
+    if (find.byIcon(Icons.analytics).evaluate().isNotEmpty) {
+      print('DEBUG: Bottom navigation found after $i back navigation(s)');
+      break;
+    }
+  }
+
+  // Verify Analytics icon is now visible
+  var analyticsFinder = find.byIcon(Icons.analytics);
+  if (analyticsFinder.evaluate().isEmpty) {
+    print('DEBUG: Analytics icon still not found after navigation back');
+    print('DEBUG: Available icons:');
+    print(find.byType(Icon).evaluate().map((e) => e.widget.toString()).join('\n'));
+    throw TestFailure(
+      'Analytics icon not found in bottom navigation after navigating back. '
+      'Expected to find bottom navigation bar.'
+    );
+  }
+
+  // Tap Analytics icon to navigate to Analytics screen
+  print('DEBUG: Tapping Analytics icon');
+  await tester.tap(analyticsFinder);
+  await tester.pumpAndSettle();
+  await tester.pump(const Duration(seconds: 2));
 }
 
 Future<void> _testEmptyState(WidgetTester tester) async {
