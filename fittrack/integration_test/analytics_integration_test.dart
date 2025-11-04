@@ -55,12 +55,47 @@ void main() {
       if (find.text('No Data Available').evaluate().isNotEmpty) {
         print('Testing empty state flow');
         await _testEmptyState(tester);
-        
+
         // Create some test data
         await _createTestWorkoutData(tester);
-        
+
+        // Navigate back to main screen where bottom navigation is visible
+        // After creating workout data, we're deep in the navigation stack
+        print('DEBUG: Navigating back to main screen after data creation');
+
+        // Try to find back button and navigate back multiple times until we reach bottom nav
+        int maxBackAttempts = 5;
+        for (int i = 0; i < maxBackAttempts; i++) {
+          var backButton = find.byTooltip('Back');
+          if (backButton.evaluate().isEmpty) {
+            // No back button - we might be at root level
+            break;
+          }
+          await tester.tap(backButton);
+          await tester.pumpAndSettle();
+
+          // Check if Analytics icon is now visible
+          if (find.byIcon(Icons.analytics).evaluate().isNotEmpty) {
+            print('DEBUG: Bottom navigation found after $i back navigation(s)');
+            break;
+          }
+        }
+
+        // Verify Analytics icon is now visible
+        var analyticsFinder = find.byIcon(Icons.analytics);
+        if (analyticsFinder.evaluate().isEmpty) {
+          print('DEBUG: Analytics icon still not found after navigation back');
+          print('DEBUG: Available icons:');
+          print(find.byType(Icon).evaluate().map((e) => e.widget.toString()).join('\n'));
+          throw TestFailure(
+            'Analytics icon not found in bottom navigation after navigating back from data creation. '
+            'Expected to find bottom navigation bar.'
+          );
+        }
+
         // Return to analytics tab (use icon to avoid ambiguity)
-        await tester.tap(find.byIcon(Icons.analytics));
+        print('DEBUG: Tapping Analytics icon to return to Analytics screen');
+        await tester.tap(analyticsFinder);
         await tester.pumpAndSettle();
         await tester.pump(const Duration(seconds: 2));
       }
