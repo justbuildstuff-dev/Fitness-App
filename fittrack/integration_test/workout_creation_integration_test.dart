@@ -473,7 +473,8 @@ void main() {
         // Simulate app restart by creating new app instance
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
-        final prefs = await SharedPreferences.getInstance();
+        // Reuse prefs variable from earlier in test scope
+        await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -555,7 +556,8 @@ void main() {
 
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
-        final prefs = await SharedPreferences.getInstance();
+        // Reuse prefs variable from earlier in test scope
+        await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 2));
