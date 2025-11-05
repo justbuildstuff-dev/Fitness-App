@@ -408,20 +408,20 @@ Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   await tester.pumpAndSettle();
   
   await tester.enterText(find.byType(TextFormField).first, 'Test Week 1');
-  await tester.tap(find.text('Create Week'));
+  await tester.tap(find.text('CREATE')); // Week screen uses CREATE button
   await tester.pumpAndSettle();
-  
+
   // Enter the week
   await tester.tap(find.text('Test Week 1'));
   await tester.pumpAndSettle();
-  
+
   // Create workout
   if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    
+
     await tester.enterText(find.byType(TextFormField).first, 'Test Workout');
-    await tester.tap(find.text('Create Workout'));
+    await tester.tap(find.text('CREATE')); // Workout screen uses CREATE button
     await tester.pumpAndSettle();
     
     // Add exercise and sets for analytics data
@@ -440,29 +440,29 @@ Future<void> _addExerciseWithSets(WidgetTester tester) async {
     await tester.pumpAndSettle();
     
     await tester.enterText(find.byType(TextFormField).first, 'Bench Press');
-    await tester.tap(find.text('Create Exercise'));
+    await tester.tap(find.text('CREATE')); // Exercise screen uses CREATE button
     await tester.pumpAndSettle();
-    
+
     // Add sets
     await tester.tap(find.text('Bench Press'));
     await tester.pumpAndSettle();
-    
+
     // Add a few sets for analytics data
     for (int i = 0; i < 3; i++) {
       if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
-        
+
         // Fill in set data
         final repsFinder = find.byType(TextFormField).first;
         await tester.enterText(repsFinder, '${10 - i}'); // Decreasing reps
-        
+
         if (find.byType(TextFormField).evaluate().length > 1) {
           final weightFinder = find.byType(TextFormField).last;
           await tester.enterText(weightFinder, '${100 + i * 5}'); // Increasing weight
         }
-        
-        await tester.tap(find.text('Create Set'));
+
+        await tester.tap(find.text('ADD')); // Set screen uses ADD button
         await tester.pumpAndSettle();
       }
     }
@@ -470,11 +470,66 @@ Future<void> _addExerciseWithSets(WidgetTester tester) async {
 }
 
 Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
-  // Similar to _createTestWorkoutData but with specific progression for PR testing
+  // Create initial workout with baseline sets
   await _createTestWorkoutData(tester);
-  
-  // Create additional workouts with progressive weights to trigger PRs
-  // Implementation would depend on navigating back and creating more workouts
+
+  // Navigate back to week view to create a second workout with improved weights
+  // This will trigger PR detection
+  await tester.pageBack();
+  await tester.pumpAndSettle();
+
+  // Create second workout with progressive overload
+  if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, 'Test Workout 2');
+    await tester.tap(find.text('CREATE'));
+    await tester.pumpAndSettle();
+
+    // Navigate into the second workout
+    await tester.tap(find.text('Test Workout 2'));
+    await tester.pumpAndSettle();
+
+    // Add same exercise (Bench Press) with heavier weights to trigger PR
+    if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).first, 'Bench Press');
+      await tester.tap(find.text('CREATE'));
+      await tester.pumpAndSettle();
+
+      // Navigate into exercise
+      await tester.tap(find.text('Bench Press').last);
+      await tester.pumpAndSettle();
+
+      // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
+      // These heavier weights should trigger PRs
+      for (int i = 0; i < 3; i++) {
+        if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+          await tester.tap(find.byType(FloatingActionButton));
+          await tester.pumpAndSettle();
+
+          // Fill in set data with improved weights
+          final repsFinder = find.byType(TextFormField).first;
+          await tester.enterText(repsFinder, '10'); // Same reps
+
+          if (find.byType(TextFormField).evaluate().length > 1) {
+            final weightFinder = find.byType(TextFormField).last;
+            await tester.enterText(weightFinder, '${115 + i * 5}'); // 115, 120, 125kg (higher than first workout)
+          }
+
+          await tester.tap(find.text('ADD')); // Set screen uses ADD button
+          await tester.pumpAndSettle();
+        }
+      }
+    }
+  }
+
+  // Give analytics time to process PRs
+  await tester.pump(const Duration(seconds: 2));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _createWorkoutsForHeatmapTesting(WidgetTester tester) async {
