@@ -187,7 +187,7 @@ void main() {
         print('✅ Added workout notes');
 
         // Step 9: Save the workout
-        final saveButton = find.text('SAVE');
+        final saveButton = find.text('CREATE');
         expect(saveButton, findsOneWidget,
           reason: 'Should have save button');
 
@@ -278,7 +278,7 @@ void main() {
         await tester.enterText(nameField, 'Quick Workout');
 
         // Save without filling optional fields
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify success and workout appears
@@ -341,7 +341,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Test validation error - try to save without entering name
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Should show validation error, not navigate away
@@ -356,7 +356,7 @@ void main() {
         final tooLongName = 'A' * 201; // Exceeds 200 character limit
         await tester.enterText(nameField, tooLongName);
 
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         expect(find.text('Workout name must be 200 characters or less'), findsOneWidget,
@@ -404,7 +404,7 @@ void main() {
           await tester.enterText(nameField, workoutNames[i]);
 
           // Save workout
-          await tester.tap(find.text('SAVE'));
+          await tester.tap(find.text('CREATE'));
           await tester.pumpAndSettle(const Duration(seconds: 1));
 
           // Verify success and return to weeks screen
@@ -460,7 +460,7 @@ void main() {
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, persistentWorkoutName);
 
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify workout was created
@@ -541,7 +541,7 @@ void main() {
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, secondUserWorkout);
 
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         expect(find.text(secondUserWorkout), findsOneWidget);
