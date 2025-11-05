@@ -473,13 +473,38 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
   // Create initial workout with baseline sets
   await _createTestWorkoutData(tester);
 
-  // Navigate back to week view to create a second workout with improved weights
-  // This will trigger PR detection
-  await tester.pageBack();
-  await tester.pumpAndSettle();
+  // Navigate back to week view (we're currently in Sets screen after _createTestWorkoutData)
+  // Navigation stack: Programs → Week → Workouts → Workout Details → Exercise → Sets
+  // Need to go back 2 levels to get to Workouts list
+
+  // Back from Sets to Exercise
+  var backButton = find.byTooltip('Back');
+  if (backButton.evaluate().isNotEmpty) {
+    await tester.tap(backButton);
+    await tester.pumpAndSettle();
+  }
+
+  // Back from Exercise to Workout Details (Workouts list view)
+  backButton = find.byTooltip('Back');
+  if (backButton.evaluate().isNotEmpty) {
+    await tester.tap(backButton);
+    await tester.pumpAndSettle();
+  }
+
+  // Verify we can see the FAB for creating a new workout
+  print('DEBUG: Looking for FAB to create second workout');
+  if (find.byType(FloatingActionButton).evaluate().isEmpty) {
+    print('DEBUG: No FAB found, trying to navigate back one more time');
+    backButton = find.byTooltip('Back');
+    if (backButton.evaluate().isNotEmpty) {
+      await tester.tap(backButton);
+      await tester.pumpAndSettle();
+    }
+  }
 
   // Create second workout with progressive overload
   if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
+    print('DEBUG: Creating Test Workout 2');
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
@@ -487,8 +512,20 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
     await tester.tap(find.text('CREATE'));
     await tester.pumpAndSettle();
 
+    print('DEBUG: Test Workout 2 created, verifying it exists');
+
+    // Verify the workout was created before trying to tap it
+    var workout2Finder = find.text('Test Workout 2');
+    if (workout2Finder.evaluate().isEmpty) {
+      print('DEBUG: Test Workout 2 not found after creation');
+      print('DEBUG: Available workouts:');
+      print(find.text('Test Workout').evaluate().map((e) => e.widget.toString()).join('\n'));
+      throw TestFailure('Test Workout 2 was not created successfully');
+    }
+
     // Navigate into the second workout
-    await tester.tap(find.text('Test Workout 2'));
+    print('DEBUG: Tapping Test Workout 2 to navigate in');
+    await tester.tap(workout2Finder);
     await tester.pumpAndSettle();
 
     // Add same exercise (Bench Press) with heavier weights to trigger PR
