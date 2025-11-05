@@ -620,6 +620,8 @@ void main() {
           'createdAt': DateTime.now(),
           'updatedAt': DateTime.now(),
           'userId': testData.userId,
+          'weekId': testData.weekId,
+          'programId': testData.programId,
         });
 
         print('✅ Added workout directly to Firestore');
