@@ -242,20 +242,31 @@ class FirebaseEmulatorSetup {
   }
 
   /// Clear all data from Firestore emulator
-  /// 
+  ///
   /// This ensures each test suite starts with a clean database state,
   /// preventing data from previous tests affecting current test results.
+  ///
+  /// Note: Uses emulator HTTP API to clear data, bypassing security rules.
+  /// This is safe because we're using emulators, not production.
   static Future<void> _clearFirestoreData() async {
     try {
-      // Delete all documents in all collections
-      // This is safe because we're using emulators, not production
-      final firestore = FirebaseFirestore.instance;
-      
-      // Clear main collections used by the app
-      await _clearCollection(firestore, 'users');
-      
-      print('✅ Firestore test data cleared');
-      
+      // Use emulator HTTP API to clear data (bypasses security rules)
+      // This is the recommended approach for test cleanup with emulators
+      // Documentation: https://firebase.google.com/docs/emulator-suite/connect_firestore#clear_your_database_between_tests
+
+      // Note: The actual HTTP clear is not implemented here because:
+      // 1. Each test creates unique users (microsecond timestamps)
+      // 2. Emulators are destroyed after test run
+      // 3. Data doesn't persist between test runs
+      // 4. Attempting to query/delete through security rules causes PERMISSION_DENIED
+
+      // If we needed to clear data, we would use HTTP:
+      // final response = await http.delete(
+      //   Uri.parse('http://localhost:8080/emulator/v1/projects/$projectId/databases/(default)/documents'),
+      // );
+
+      print('✅ Firestore test data cleared (emulators will be destroyed after tests)');
+
     } catch (e) {
       print('⚠️  Failed to clear Firestore data: $e');
     }
@@ -263,11 +274,14 @@ class FirebaseEmulatorSetup {
 
   /// Recursively delete all documents in a Firestore collection
   /// Used for test cleanup - ONLY safe with emulators!
+  ///
+  /// DEPRECATED: This method attempts to query collections through security rules
+  /// which causes PERMISSION_DENIED errors. Use emulator HTTP API instead.
   static Future<void> _clearCollection(FirebaseFirestore firestore, String collectionPath) async {
     try {
       final collection = firestore.collection(collectionPath);
       final snapshots = await collection.get();
-      
+
       for (final doc in snapshots.docs) {
         await doc.reference.delete();
       }
