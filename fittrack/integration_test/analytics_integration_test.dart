@@ -512,16 +512,47 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
     await tester.tap(find.text('CREATE'));
     await tester.pumpAndSettle();
 
+    // Add explicit wait for Firestore write to complete
+    print('DEBUG: Waiting for Firestore write and navigation to complete...');
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+
     print('DEBUG: Test Workout 2 created, verifying it exists');
 
-    // Verify the workout was created before trying to tap it
+    // Retry logic - wait up to 5 seconds for the workout to appear
     var workout2Finder = find.text('Test Workout 2');
-    if (workout2Finder.evaluate().isEmpty) {
-      print('DEBUG: Test Workout 2 not found after creation');
-      print('DEBUG: Available workouts:');
-      print(find.text('Test Workout').evaluate().map((e) => e.widget.toString()).join('\n'));
-      throw TestFailure('Test Workout 2 was not created successfully');
+    int retries = 0;
+    while (workout2Finder.evaluate().isEmpty && retries < 10) {
+      print('DEBUG: Workout not found yet, waiting... (retry $retries/10)');
+      await tester.pump(const Duration(milliseconds: 500));
+      workout2Finder = find.text('Test Workout 2');
+      retries++;
     }
+
+    if (workout2Finder.evaluate().isEmpty) {
+      print('DEBUG: Test Workout 2 not found after creation and retries');
+      print('DEBUG: Current screen widgets:');
+
+      // Log all Text widgets to see what's actually on screen
+      final textWidgets = find.byType(Text);
+      if (textWidgets.evaluate().isNotEmpty) {
+        for (var element in textWidgets.evaluate()) {
+          final textWidget = element.widget as Text;
+          if (textWidget.data != null) {
+            print('  - Text: "${textWidget.data}"');
+          }
+        }
+      } else {
+        print('  - No Text widgets found');
+      }
+
+      // Log FAB presence
+      print('DEBUG: FAB present: ${find.byType(FloatingActionButton).evaluate().isNotEmpty}');
+
+      throw TestFailure('Test Workout 2 was not created successfully after 5 seconds');
+    }
+
+    print('DEBUG: Test Workout 2 found successfully after $retries retries');
 
     // Navigate into the second workout
     print('DEBUG: Tapping Test Workout 2 to navigate in');
