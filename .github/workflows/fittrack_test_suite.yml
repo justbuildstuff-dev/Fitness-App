@@ -275,7 +275,8 @@ jobs:
         disk-size: 2048M
         avd-name: test
         disable-animations: true
-        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        emulator-boot-timeout: 900
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
         script: |
           echo "🔍 Starting Android Integration Test..."
           echo "📱 Flutter and emulator info:"
