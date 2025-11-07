@@ -520,12 +520,12 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
     print('DEBUG: Test Workout 2 created, verifying it exists');
 
     // Retry logic - wait up to 5 seconds for the workout to appear
-    var workout2Finder = find.text('Test Workout 2');
+    final workout2Finder = find.text('Test Workout 2');
     int retries = 0;
     while (workout2Finder.evaluate().isEmpty && retries < 10) {
       print('DEBUG: Workout not found yet, waiting... (retry $retries/10)');
       await tester.pump(const Duration(milliseconds: 500));
-      workout2Finder = find.text('Test Workout 2');
+      await tester.pumpAndSettle();
       retries++;
     }
 
