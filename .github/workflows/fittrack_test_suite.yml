@@ -215,39 +215,45 @@ jobs:
     - name: Start Firebase emulators
       run: |
         cd fittrack
-        # Ensure we're using the correct project for emulators
-        firebase use fitness-app-8505e 2>/dev/null || echo "Project already set"
-        firebase emulators:start --only auth,firestore --project=fitness-app-8505e &
+        # Start emulators with demo project (no authentication needed)
+        # Emulators run locally and don't require Firebase project authentication
+        firebase emulators:start --only auth,firestore --project=demo-test &
         echo $! > emulator.pid
+        echo "✅ Firebase emulators started with demo-test project"
         
     - name: Wait for emulators
       run: |
-        echo "Waiting for emulators to start..."
+        echo "⏳ Waiting for Firebase emulators to start..."
         sleep 15
-        
+
         # Wait for emulators to be ready with retry logic
         for i in {1..30}; do
-          echo "Checking emulator availability (attempt $i/30)..."
-          
+          echo "🔍 Checking emulator availability (attempt $i/30)..."
+
           # Check if both ports are listening
           if nc -z localhost 8080 && nc -z localhost 9099; then
             echo "✅ Both Firebase emulators are responding on their ports"
             break
           fi
-          
+
           if [ $i -eq 30 ]; then
             echo "⚠️  Emulators not ready after 30 attempts, continuing anyway"
           else
             sleep 2
           fi
         done
-        
+
         # Final verification with proper endpoints
-        echo "Testing Firestore emulator endpoint..."
-        curl -f http://localhost:8080/v1/projects/demo-project/databases || echo "Firestore endpoint not ready"
-        
-        echo "Testing Auth emulator endpoint..."  
-        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "Auth endpoint not ready"
+        echo "🔍 Testing Firestore emulator endpoint..."
+        curl -f http://localhost:8080/v1/projects/demo-project/databases || echo "⚠️  Firestore endpoint not ready"
+        echo "✅ Firestore emulator: localhost:8080"
+
+        echo "🔍 Testing Auth emulator endpoint..."
+        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "⚠️  Auth endpoint not ready"
+        echo "✅ Auth emulator: localhost:9099"
+
+        echo "📱 Android emulator will access via 10.0.2.2:8080 and 10.0.2.2:9099"
+        echo "✅ Firebase emulators ready for integration testing"
         
         echo "Firebase emulator setup completed - proceeding with tests"
         

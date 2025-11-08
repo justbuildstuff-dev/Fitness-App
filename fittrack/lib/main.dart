@@ -29,13 +29,20 @@ void main() async {
     // Run app with error state - AuthProvider will handle the error gracefully
   }
 
-  // Configure emulators ONLY for local development
-  // Note: This should be commented out for physical device testing
-  // Uncomment ONLY when running against local Firebase emulators
-  // if (kDebugMode) {
-  //   FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
-  //   FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
-  // }
+  // Configure emulators for local development and CI testing
+  // kDebugMode = true: Local dev + CI tests (uses emulators)
+  // kDebugMode = false: Beta + Production builds (uses production Firebase)
+  if (kDebugMode) {
+    try {
+      // Use 10.0.2.2 for Android emulator (localhost alias on Android)
+      FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator('10.0.2.2', 8080);
+      debugPrint('✅ Using Firebase emulators (Auth: 10.0.2.2:9099, Firestore: 10.0.2.2:8080)');
+    } catch (e) {
+      // Emulator config can only be set once - ignore if already configured
+      debugPrint('⚠️  Emulator configuration: $e');
+    }
+  }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)
   // Non-blocking: Run in background, don't wait for completion

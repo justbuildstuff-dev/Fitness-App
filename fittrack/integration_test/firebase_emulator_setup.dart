@@ -125,20 +125,29 @@ class FirebaseEmulatorSetup {
   }
 
   /// Verify that Firebase emulators are running and accessible
-  /// 
+  ///
   /// Integration tests require emulators to be running before they start.
   /// This check prevents tests from failing due to missing infrastructure.
   static Future<void> _verifyEmulatorsRunning() async {
+    print('🔍 Verifying Firebase emulators are running...');
     final errors = <String>[];
 
     // Check Auth emulator
+    print('   Checking Auth emulator ($_authEmulatorHost:$_authEmulatorPort)...');
     if (!await _isPortListening(_authEmulatorHost, _authEmulatorPort)) {
       errors.add('Auth emulator not running on $_authEmulatorHost:$_authEmulatorPort');
+      print('   ❌ Auth emulator not accessible');
+    } else {
+      print('   ✅ Auth emulator accessible');
     }
 
-    // Check Firestore emulator  
+    // Check Firestore emulator
+    print('   Checking Firestore emulator ($_firestoreEmulatorHost:$_firestoreEmulatorPort)...');
     if (!await _isPortListening(_firestoreEmulatorHost, _firestoreEmulatorPort)) {
       errors.add('Firestore emulator not running on $_firestoreEmulatorHost:$_firestoreEmulatorPort');
+      print('   ❌ Firestore emulator not accessible');
+    } else {
+      print('   ✅ Firestore emulator accessible');
     }
 
     if (errors.isNotEmpty) {
@@ -147,6 +156,8 @@ class FirebaseEmulatorSetup {
         'Start emulators with: firebase emulators:start --only auth,firestore'
       );
     }
+
+    print('✅ All Firebase emulators verified and accessible');
   }
 
   /// Check if a port is listening for connections
