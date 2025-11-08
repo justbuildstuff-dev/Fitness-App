@@ -17,7 +17,24 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // CRITICAL: Configure emulators BEFORE Firebase.initializeApp()
+  // Emulator configuration must happen before any Firebase connection is established
+  // kDebugMode = true: Local dev + CI tests (uses emulators)
+  // kDebugMode = false: Beta + Production builds (uses production Firebase)
+  if (kDebugMode) {
+    try {
+      // Use 10.0.2.2 for Android emulator (localhost alias on Android)
+      FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator('10.0.2.2', 8080);
+      debugPrint('✅ Firebase emulators configured (Auth: 10.0.2.2:9099, Firestore: 10.0.2.2:8080)');
+    } catch (e) {
+      // Emulator config can only be set once - ignore if already configured
+      debugPrint('⚠️  Emulator configuration: $e');
+    }
+  }
+
   // Initialize Firebase with timeout to prevent indefinite hangs
+  // Emulator configuration above ensures debug builds connect to emulators
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -27,24 +44,13 @@ void main() async {
         throw Exception('Firebase initialization timed out after 10 seconds. Check your internet connection and Firebase configuration.');
       },
     );
+
+    if (kDebugMode) {
+      debugPrint('✅ Firebase initialized with emulator configuration');
+    }
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
     // Run app with error state - AuthProvider will handle the error gracefully
-  }
-
-  // Configure emulators for local development and CI testing
-  // kDebugMode = true: Local dev + CI tests (uses emulators)
-  // kDebugMode = false: Beta + Production builds (uses production Firebase)
-  if (kDebugMode) {
-    try {
-      // Use 10.0.2.2 for Android emulator (localhost alias on Android)
-      FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator('10.0.2.2', 8080);
-      debugPrint('✅ Using Firebase emulators (Auth: 10.0.2.2:9099, Firestore: 10.0.2.2:8080)');
-    } catch (e) {
-      // Emulator config can only be set once - ignore if already configured
-      debugPrint('⚠️  Emulator configuration: $e');
-    }
   }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)
