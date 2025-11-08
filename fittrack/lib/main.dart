@@ -19,9 +19,10 @@ void main() async {
 
   // CRITICAL: Configure emulators BEFORE Firebase.initializeApp()
   // Emulator configuration must happen before any Firebase connection is established
-  // kDebugMode = true: Local dev + CI tests (uses emulators)
-  // kDebugMode = false: Beta + Production builds (uses production Firebase)
-  if (kDebugMode) {
+  // kDebugMode = true: Local dev (uses emulators)
+  // kProfileMode = true: Integration tests via flutter drive (uses emulators)
+  // kReleaseMode = true: Beta + Production builds (uses production Firebase)
+  if (kDebugMode || kProfileMode) {
     try {
       // Use 10.0.2.2 for Android emulator (localhost alias on Android)
       FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
@@ -34,7 +35,7 @@ void main() async {
   }
 
   // Initialize Firebase with timeout to prevent indefinite hangs
-  // Emulator configuration above ensures debug builds connect to emulators
+  // Emulator configuration above ensures debug/profile builds connect to emulators
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -45,7 +46,7 @@ void main() async {
       },
     );
 
-    if (kDebugMode) {
+    if (kDebugMode || kProfileMode) {
       debugPrint('✅ Firebase initialized with emulator configuration');
     }
   } catch (e) {
