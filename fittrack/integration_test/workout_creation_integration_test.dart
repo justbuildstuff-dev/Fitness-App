@@ -81,15 +81,19 @@ void main() {
       print('✅ Integration test cleanup completed\n');
     });
 
-    /// Reset emulator state between test groups for isolation
-    /// Prevents test data from one group affecting another
+    /// Verify authentication is active before each test
+    /// The test user remains signed in throughout all tests (same account)
+    /// Only sign out/in is needed for tests that specifically test different users
     setUp(() async {
-      // Sign in the test user for each test
-      await FirebaseAuth.instance.signOut();
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: 'workout-test@example.com',
-        password: 'testpassword123',
-      );
+      // Verify test user is still authenticated
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null || currentUser.email != 'workout-test@example.com') {
+        // Re-authenticate if user was signed out
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: 'workout-test@example.com',
+          password: 'testpassword123',
+        );
+      }
     });
 
     group('Complete Workout Creation Workflow', () {
@@ -514,7 +518,12 @@ void main() {
           secondUser.user!.uid);
 
         // Sign in as second user and create workout
+        // NOTE: Must sign out to switch users, then wait for auth state to propagate
         await FirebaseAuth.instance.signOut();
+
+        // Wait a moment for sign-out to complete and active listeners to be cancelled
+        await Future.delayed(const Duration(milliseconds: 100));
+
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'second-user@example.com',
           password: 'testpassword456',
@@ -548,7 +557,12 @@ void main() {
         print('✅ Second user workout created');
 
         // Switch back to first user
+        // NOTE: Must sign out to switch users, then wait for auth state to propagate
         await FirebaseAuth.instance.signOut();
+
+        // Wait a moment for sign-out to complete and active listeners to be cancelled
+        await Future.delayed(const Duration(milliseconds: 100));
+
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'workout-test@example.com',
           password: 'testpassword123',
@@ -556,10 +570,9 @@ void main() {
 
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
-        // Reuse prefs variable from earlier in test scope
-        await SharedPreferences.getInstance();
+        final prefs2 = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to first user's workouts
