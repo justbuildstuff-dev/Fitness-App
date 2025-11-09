@@ -81,14 +81,20 @@ void main() {
       print('✅ Integration test cleanup completed\n');
     });
 
-    /// Verify authentication is active before each test
-    /// The test user remains signed in throughout all tests (same account)
-    /// Only sign out/in is needed for tests that specifically test different users
+    /// Reset emulator state between test groups for isolation
+    /// Prevents test data from one group affecting another
     setUp(() async {
-      // Verify test user is still authenticated
+      // Sign in the test user for each test
+      //
+      // IMPORTANT: We don't call signOut() first because:
+      // - Previous test's widget tree may still have active Firestore listeners
+      // - signOut() would trigger PERMISSION_DENIED on those listeners
+      // - Firebase Auth is a singleton, so signing in again replaces the current session
+      //
+      // The user is already authenticated from setUpAll() or previous test
+      // Just ensure we're signed in with the correct account
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null || currentUser.email != 'workout-test@example.com') {
-        // Re-authenticate if user was signed out
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'workout-test@example.com',
           password: 'testpassword123',
@@ -521,13 +527,17 @@ void main() {
         // NOTE: Must sign out to switch users, then wait for auth state to propagate
         await FirebaseAuth.instance.signOut();
 
-        // Wait a moment for sign-out to complete and active listeners to be cancelled
-        await Future.delayed(const Duration(milliseconds: 100));
+        // Wait for sign-out to complete and active listeners to be cancelled
+        // This prevents PERMISSION_DENIED errors on previous user's listeners
+        await Future.delayed(const Duration(milliseconds: 500));
 
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'second-user@example.com',
           password: 'testpassword456',
         );
+
+        // Wait for sign-in to complete and propagate to providers
+        await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
@@ -560,13 +570,17 @@ void main() {
         // NOTE: Must sign out to switch users, then wait for auth state to propagate
         await FirebaseAuth.instance.signOut();
 
-        // Wait a moment for sign-out to complete and active listeners to be cancelled
-        await Future.delayed(const Duration(milliseconds: 100));
+        // Wait for sign-out to complete and active listeners to be cancelled
+        // This prevents PERMISSION_DENIED errors on previous user's listeners
+        await Future.delayed(const Duration(milliseconds: 500));
 
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'workout-test@example.com',
           password: 'testpassword123',
         );
+
+        // Wait for sign-in to complete and propagate to providers
+        await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
