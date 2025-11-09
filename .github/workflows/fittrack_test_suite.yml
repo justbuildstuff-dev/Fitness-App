@@ -215,11 +215,12 @@ jobs:
     - name: Start Firebase emulators
       run: |
         cd fittrack
-        # Start emulators with demo project (no authentication needed)
-        # Emulators run locally and don't require Firebase project authentication
-        firebase emulators:start --only auth,firestore --project=demo-test &
+        # Start emulators without project flag to load custom firestore.rules
+        # This ensures our security rules are applied during integration tests
+        # The emulator will use the project from .firebaserc (fitness-app-8505e)
+        firebase emulators:start --only auth,firestore &
         echo $! > emulator.pid
-        echo "✅ Firebase emulators started with demo-test project"
+        echo "✅ Firebase emulators started with custom security rules"
         
     - name: Wait for emulators
       run: |
