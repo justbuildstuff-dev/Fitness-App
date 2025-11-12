@@ -172,6 +172,7 @@ class HeatmapCalendar extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: weeks.map((week) => Column(
+                      mainAxisSize: MainAxisSize.min, // Prevent column from expanding beyond available height
                       children: week.map((day) => Container(
                         margin: const EdgeInsets.all(1),
                         child: HeatmapSquare(

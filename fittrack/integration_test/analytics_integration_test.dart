@@ -588,6 +588,9 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
             await tester.enterText(weightFinder, '${115 + i * 5}'); // 115, 120, 125kg (higher than first workout)
           }
 
+          // Ensure ADD button is visible before tapping (might be off-screen after text entry)
+          await tester.ensureVisible(find.text('ADD'));
+          await tester.pumpAndSettle();
           await tester.tap(find.text('ADD')); // Set screen uses ADD button
           await tester.pumpAndSettle();
         }

@@ -69,14 +69,19 @@ void main() {
         expect(find.text('Loading analytics...'), findsOneWidget);
       });
 
-      testWidgets('analytics auto-loaded on provider init', (tester) async {
+      testWidgets('analytics data loads from provider', (tester) async {
+        // Arrange - Set up mock to return analytics data
+        when(mockProvider.isLoadingAnalytics).thenReturn(false);
+        when(mockProvider.error).thenReturn(null);
+        when(mockProvider.heatmapData).thenReturn(mockHeatmapData);
+        when(mockProvider.currentAnalytics).thenReturn(mockAnalytics);
+
         // Act
         await tester.pumpWidget(createTestApp());
         await tester.pumpAndSettle();
 
-        // Assert - Auto-load happens in provider constructor, screen doesn't need to call it
-        // Just verify the method was stubbed and available
-        verify(mockProvider.loadAnalytics()).called(greaterThanOrEqualTo(1));
+        // Assert - Screen displays data from provider (auto-loaded by provider, not by screen)
+        expect(find.byType(ActivityHeatmapSection), findsOneWidget);
       });
     });
 
