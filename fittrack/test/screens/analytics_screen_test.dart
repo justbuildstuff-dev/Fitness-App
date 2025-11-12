@@ -19,6 +19,8 @@ void main() {
   group('AnalyticsScreen', () {
     late MockProgramProvider mockProvider;
     late MockAuthProvider mockAuthProvider;
+    late ActivityHeatmapData mockHeatmapData;
+    late WorkoutAnalytics mockAnalytics;
 
     setUpAll(() async {
       TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +29,27 @@ void main() {
     setUp(() {
       mockProvider = MockProgramProvider();
       mockAuthProvider = MockAuthProvider();
-      
+
+      // Create simple mock data objects
+      mockHeatmapData = ActivityHeatmapData(
+        year: DateTime.now().year,
+        totalWorkouts: 10,
+        currentStreak: 3,
+        longestStreak: 5,
+        days: [],
+      );
+
+      mockAnalytics = WorkoutAnalytics(
+        totalWorkouts: 10,
+        totalVolume: 1000,
+        totalSets: 50,
+        totalReps: 200,
+        averageWorkoutDuration: 60,
+        exerciseBreakdown: {},
+        volumeByExercise: {},
+        progressionData: [],
+      );
+
       // Default mock responses
       when(mockProvider.isLoadingAnalytics).thenReturn(false);
       when(mockProvider.error).thenReturn(null);
@@ -37,7 +59,7 @@ void main() {
       when(mockProvider.recentPRs).thenReturn([]);
       when(mockProvider.loadAnalytics()).thenAnswer((_) async {});
       when(mockProvider.refreshAnalytics()).thenAnswer((_) async {});
-      
+
       // Set up auth provider mocks to prevent Firebase calls
       when(mockAuthProvider.user).thenReturn(null);
       when(mockAuthProvider.isLoading).thenReturn(false);
