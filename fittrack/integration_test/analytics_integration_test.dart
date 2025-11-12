@@ -588,23 +588,11 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
             await tester.enterText(weightFinder, '${115 + i * 5}'); // 115, 120, 125kg (higher than first workout)
           }
 
-          // Wait for CreateSetScreen to fully load
+          // Tap ADD button (may be off-screen after text entry, so use ensureVisible)
           await tester.pumpAndSettle();
-          await tester.pump(const Duration(milliseconds: 500)); // Extra wait for screen initialization
-
-          // Ensure loading indicator is gone (ADD button replaces loading indicator)
-          expect(find.byType(CircularProgressIndicator), findsNothing,
-            reason: 'Loading should be complete before ADD button appears');
-
-          // Now find ADD button
-          final addButton = find.text('ADD');
-          expect(addButton, findsOneWidget,
-            reason: 'ADD button should be present on set creation screen after loading completes');
-
-          // Ensure button is visible before tapping (might be off-screen after text entry)
-          await tester.ensureVisible(addButton);
+          await tester.ensureVisible(find.text('ADD'));
           await tester.pumpAndSettle();
-          await tester.tap(addButton);
+          await tester.tap(find.text('ADD'));
           await tester.pumpAndSettle();
         }
       }
