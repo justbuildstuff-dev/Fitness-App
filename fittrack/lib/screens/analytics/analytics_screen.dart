@@ -20,10 +20,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    // Load analytics data when screen is first displayed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProgramProvider>().loadAnalytics();
-    });
+
+    // No need to manually load analytics - ProgramProvider auto-loads when userId is set
+    // Removed manual loadAnalytics() call to prevent race condition
   }
 
   @override
@@ -84,7 +83,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             return ErrorDisplay(
               message: 'Unable to load analytics data. Please check your connection and try again.',
               technicalError: provider.error,
-              onRetry: () => provider.loadAnalytics(),
+              onRetry: () {
+                // Get fresh provider reference in case it was recreated
+                final freshProvider = Provider.of<ProgramProvider>(context, listen: false);
+                freshProvider.clearError();
+                freshProvider.loadAnalytics();
+              },
             );
           }
 
