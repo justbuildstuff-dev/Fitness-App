@@ -588,11 +588,33 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
             await tester.enterText(weightFinder, '${115 + i * 5}'); // 115, 120, 125kg (higher than first workout)
           }
 
-          // Tap ADD button (may be off-screen after text entry, so use ensureVisible)
+          // Tap ADD button (wait for it to appear first)
           await tester.pumpAndSettle();
-          await tester.ensureVisible(find.text('ADD'));
+
+          // Wait for ADD button to appear (may still be showing CircularProgressIndicator)
+          final addButtonFinder = find.text('ADD');
+          int retries = 0;
+          while (addButtonFinder.evaluate().isEmpty && retries < 20) {
+            print('DEBUG: ADD button not found yet, waiting... (retry $retries/20)');
+            await tester.pump(const Duration(milliseconds: 100));
+            retries++;
+          }
+
+          if (addButtonFinder.evaluate().isEmpty) {
+            print('DEBUG: ADD button still not found. Looking for alternative button states...');
+            if (find.byType(CircularProgressIndicator).evaluate().isNotEmpty) {
+              throw TestFailure('ADD button still showing CircularProgressIndicator after 2 seconds');
+            } else if (find.text('SAVE').evaluate().isNotEmpty) {
+              throw TestFailure('Showing SAVE button instead of ADD - screen in edit mode unexpectedly');
+            } else {
+              throw TestFailure('ADD button not found and no alternative state detected');
+            }
+          }
+
+          print('DEBUG: ADD button found after $retries retries');
+          await tester.ensureVisible(addButtonFinder);
           await tester.pumpAndSettle();
-          await tester.tap(find.text('ADD'));
+          await tester.tap(addButtonFinder);
           await tester.pumpAndSettle();
         }
       }
