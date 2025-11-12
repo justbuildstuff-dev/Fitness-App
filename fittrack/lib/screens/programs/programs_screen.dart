@@ -31,8 +31,10 @@ class ProgramsScreen extends StatelessWidget {
               message: 'Unable to load your programs. Please check your connection and try again.',
               technicalError: programProvider.error,
               onRetry: () {
-                programProvider.clearError();
-                programProvider.loadPrograms();
+                // Get fresh provider reference in case it was recreated
+                final provider = Provider.of<ProgramProvider>(context, listen: false);
+                provider.clearError();
+                provider.loadPrograms();
               },
             );
           }

@@ -63,9 +63,15 @@ class FitTrackApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
         ChangeNotifierProxyProvider<app_auth.AuthProvider, ProgramProvider>(
-          create: (_) => ProgramProvider(null),
-          update: (_, authProvider, previousProgramProvider) =>
-              ProgramProvider(authProvider.user?.uid),
+          create: (_) {
+            debugPrint('[Provider] Creating initial ProgramProvider with null userId');
+            return ProgramProvider(null);
+          },
+          update: (_, authProvider, previousProgramProvider) {
+            final userId = authProvider.user?.uid;
+            debugPrint('[Provider] Updating ProgramProvider with userId: ${userId ?? 'null'}');
+            return ProgramProvider(userId);
+          },
         ),
       ],
       child: Consumer<ThemeProvider>(

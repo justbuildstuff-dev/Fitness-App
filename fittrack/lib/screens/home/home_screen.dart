@@ -25,12 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
       const AnalyticsScreen(),
       const ProfileScreen(),
     ];
-    
-    // Load programs when home screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-      programProvider.loadPrograms();
-    });
+
+    // No need to manually load programs - ProgramProvider auto-loads when userId is set
+    // Removed manual loadPrograms() call to prevent race condition
   }
 
   @override

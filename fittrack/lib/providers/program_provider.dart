@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/program.dart';
 import '../models/week.dart';
@@ -14,17 +15,47 @@ class ProgramProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
   final AnalyticsService _analyticsService;
   final String? _userId;
+  String? _previousUserId; // Track previous userId to detect changes
 
-  ProgramProvider(this._userId) 
+  ProgramProvider(this._userId)
     : _firestoreService = FirestoreService.instance,
-      _analyticsService = AnalyticsService.instance;
-      
+      _analyticsService = AnalyticsService.instance {
+    // Auto-load data when userId is set and has changed
+    _autoLoadDataIfNeeded();
+  }
+
   // Constructor for testing with dependency injection
   ProgramProvider.withServices(
-    this._userId, 
-    this._firestoreService, 
+    this._userId,
+    this._firestoreService,
     this._analyticsService
-  );
+  ) {
+    // Auto-load data for testing constructor too
+    _autoLoadDataIfNeeded();
+  }
+
+  /// Auto-load programs and analytics when userId becomes available
+  /// This prevents the race condition where screens call load methods
+  /// before the provider has been updated with the userId
+  void _autoLoadDataIfNeeded() {
+    // Only load if we have a userId and it's different from previous
+    if (_userId != null && _userId != _previousUserId) {
+      _previousUserId = _userId;
+
+      debugPrint('[ProgramProvider] Auto-loading data for userId: $_userId');
+
+      // Schedule load for next frame to avoid calling notifyListeners during build
+      Future.microtask(() {
+        debugPrint('[ProgramProvider] Executing auto-load for programs and analytics');
+        loadPrograms();
+        loadAnalytics();
+      });
+    } else if (_userId == null) {
+      debugPrint('[ProgramProvider] Skipping auto-load - userId is null');
+    } else {
+      debugPrint('[ProgramProvider] Skipping auto-load - userId unchanged ($_userId)');
+    }
+  }
 
   // Programs
   List<Program> _programs = [];
@@ -111,8 +142,15 @@ class ProgramProvider extends ChangeNotifier {
 
   /// Load all programs for the user
   void loadPrograms() {
-    if (_userId == null) return;
+    if (_userId == null) {
+      _error = 'User not authenticated. Please log in to view your programs.';
+      _isLoadingPrograms = false;
+      notifyListeners();
+      debugPrint('[ProgramProvider] loadPrograms called with null userId');
+      return;
+    }
 
+    debugPrint('[ProgramProvider] Loading programs for userId: $_userId');
     _isLoadingPrograms = true;
     _error = null;
     notifyListeners();
@@ -1014,8 +1052,17 @@ class ProgramProvider extends ChangeNotifier {
 
   /// Load analytics data for the user
   Future<void> loadAnalytics({DateRange? dateRange}) async {
-    if (_userId == null) return;
+    if (_userId == null) {
+      _error = 'User not authenticated. Please log in to view analytics.';
+      _isLoadingAnalytics = false;
+      if (!_disposed) {
+        notifyListeners();
+      }
+      debugPrint('[ProgramProvider] loadAnalytics called with null userId');
+      return;
+    }
 
+    debugPrint('[ProgramProvider] Loading analytics for userId: $_userId');
     try {
       _isLoadingAnalytics = true;
       _error = null;
@@ -1055,6 +1102,7 @@ class ProgramProvider extends ChangeNotifier {
 
     } catch (e) {
       _error = 'Failed to load analytics: $e';
+      debugPrint('[ProgramProvider] loadAnalytics error: $e');
     } finally {
       _isLoadingAnalytics = false;
       // Only notify listeners if the provider hasn't been disposed
