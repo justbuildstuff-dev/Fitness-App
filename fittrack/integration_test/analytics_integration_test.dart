@@ -577,12 +577,38 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       expect(find.text('Test Workout 2'), findsOneWidget,
         reason: 'Should be on WorkoutDetailScreen showing workout title');
 
-      // Navigate into exercise using specific finder (Card widget containing exercise)
+      // Wait for exercise to appear in list (Firestore write + screen reload)
+      print('DEBUG: Waiting for Bench Press exercise to appear...');
+      await tester.pump(const Duration(seconds: 2)); // Initial wait for Firestore
+      await tester.pumpAndSettle();
+
+      // Retry logic to find the exercise card
+      final exerciseCardFinder = find.widgetWithText(Card, 'Bench Press');
+      int retries = 0;
+      while (exerciseCardFinder.evaluate().isEmpty && retries < 10) {
+        print('DEBUG: Exercise card not found yet, waiting... (retry $retries/10)');
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+        retries++;
+      }
+
+      if (exerciseCardFinder.evaluate().isEmpty) {
+        print('DEBUG: Bench Press exercise not found after retries. Dumping screen widgets:');
+        final textWidgets = find.byType(Text);
+        for (var element in textWidgets.evaluate()) {
+          final textWidget = element.widget as Text;
+          if (textWidget.data != null) {
+            print('  - Text: "${textWidget.data}"');
+          }
+        }
+        throw TestFailure('Bench Press exercise Card not found after 7 seconds');
+      }
+
+      print('DEBUG: Bench Press exercise found after $retries retries');
+
+      // Navigate into exercise
       print('DEBUG: Tapping Bench Press exercise card...');
-      final exerciseCard = find.widgetWithText(Card, 'Bench Press');
-      expect(exerciseCard, findsOneWidget,
-        reason: 'Bench Press exercise should exist as a Card in the workout');
-      await tester.tap(exerciseCard);
+      await tester.tap(exerciseCardFinder);
       await tester.pumpAndSettle();
 
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
