@@ -566,20 +566,23 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
 
       await tester.enterText(find.byType(TextFormField).first, 'Bench Press');
       await tester.tap(find.text('CREATE'));
+
+      // Wait for Firestore write + automatic navigation back (CreateExerciseScreen.pop)
+      print('DEBUG: Waiting for exercise creation and automatic navigation...');
+      await tester.pumpAndSettle(const Duration(seconds: 3));
+
+      // Additional wait to ensure Firestore write completes before screen reloads
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
-      // Navigate back to WorkoutDetailScreen explicitly
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-
-      // Verify we're on WorkoutDetailScreen before navigating into exercise
+      // Verify we're on WorkoutDetailScreen after automatic navigation
       print('DEBUG: After creating exercise, verifying screen state...');
       expect(find.text('Test Workout 2'), findsOneWidget,
         reason: 'Should be on WorkoutDetailScreen showing workout title');
 
-      // Wait for exercise to appear in list (Firestore write + screen reload)
-      print('DEBUG: Waiting for Bench Press exercise to appear...');
-      await tester.pump(const Duration(seconds: 2)); // Initial wait for Firestore
+      // Wait for exercise to appear in list after Firestore reload
+      print('DEBUG: Waiting for Bench Press exercise to appear in list...');
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
       // Retry logic to find the exercise card
