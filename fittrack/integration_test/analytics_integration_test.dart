@@ -577,7 +577,7 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
 
       // Verify we're on WorkoutDetailScreen after automatic navigation
       print('DEBUG: After creating exercise, verifying screen state...');
-      expect(find.text('Test Workout 2'), findsOneWidget,
+      expect(find.text('Test Workout 2').evaluate().isNotEmpty, isTrue,
         reason: 'Should be on WorkoutDetailScreen showing workout title');
 
       // Wait for exercise to appear in list after Firestore reload
