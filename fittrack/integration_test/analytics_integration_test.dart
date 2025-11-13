@@ -589,7 +589,19 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
           }
 
           // Tap ADD button (wait for it to appear first)
-          await tester.pumpAndSettle();
+          await tester.pumpAndSettle(const Duration(seconds: 1)); // Longer initial wait for screen to settle
+
+          // Diagnostic: Verify screen state before looking for ADD button
+          print('DEBUG: Checking screen state after text entry...');
+          print('DEBUG: Scaffold count: ${find.byType(Scaffold).evaluate().length}');
+          print('DEBUG: AppBar count: ${find.byType(AppBar).evaluate().length}');
+          print('DEBUG: TextButton count: ${find.byType(TextButton).evaluate().length}');
+          print('DEBUG: CircularProgressIndicator count: ${find.byType(CircularProgressIndicator).evaluate().length}');
+
+          final appBar = find.byType(AppBar);
+          if (appBar.evaluate().isEmpty) {
+            throw TestFailure('AppBar not found - not on CreateSetScreen?');
+          }
 
           // Wait for ADD button to appear (may still be showing CircularProgressIndicator)
           final addButtonFinder = find.text('ADD');
