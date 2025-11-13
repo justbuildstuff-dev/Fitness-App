@@ -603,6 +603,33 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
             throw TestFailure('AppBar not found - not on CreateSetScreen?');
           }
 
+          // Comprehensive text dump: See what text actually exists on screen
+          print('DEBUG: ===== COMPREHENSIVE TEXT DUMP =====');
+          print('DEBUG: Dumping all Text widgets on screen:');
+          final allText = find.byType(Text);
+          for (var i = 0; i < allText.evaluate().length; i++) {
+            final textWidget = allText.evaluate().elementAt(i).widget as Text;
+            final data = textWidget.data;
+            print('DEBUG: Text widget $i: "$data"');
+          }
+
+          print('DEBUG: Dumping all TextButton children:');
+          final allButtons = find.byType(TextButton);
+          for (var i = 0; i < allButtons.evaluate().length; i++) {
+            final button = allButtons.evaluate().elementAt(i).widget as TextButton;
+            print('DEBUG: TextButton $i child type: ${button.child.runtimeType}');
+            if (button.child is Text) {
+              final childText = button.child as Text;
+              print('DEBUG: TextButton $i text: "${childText.data}"');
+            }
+          }
+
+          // Check AppBar title to infer _isEditing state
+          print('DEBUG: Checking AppBar title to verify screen mode:');
+          print('DEBUG: "Edit Set" title found: ${find.text('Edit Set').evaluate().isNotEmpty}');
+          print('DEBUG: "Add Set" title found: ${find.text('Add Set').evaluate().isNotEmpty}');
+          print('DEBUG: ===== END TEXT DUMP =====');
+
           // Wait for ADD button to appear (may still be showing CircularProgressIndicator)
           final addButtonFinder = find.text('ADD');
           int retries = 0;
