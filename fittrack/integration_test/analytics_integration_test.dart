@@ -568,8 +568,21 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       await tester.tap(find.text('CREATE'));
       await tester.pumpAndSettle();
 
-      // Navigate into exercise
-      await tester.tap(find.text('Bench Press').last);
+      // Navigate back to WorkoutDetailScreen explicitly
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // Verify we're on WorkoutDetailScreen before navigating into exercise
+      print('DEBUG: After creating exercise, verifying screen state...');
+      expect(find.text('Test Workout 2'), findsOneWidget,
+        reason: 'Should be on WorkoutDetailScreen showing workout title');
+
+      // Navigate into exercise using specific finder (Card widget containing exercise)
+      print('DEBUG: Tapping Bench Press exercise card...');
+      final exerciseCard = find.widgetWithText(Card, 'Bench Press');
+      expect(exerciseCard, findsOneWidget,
+        reason: 'Bench Press exercise should exist as a Card in the workout');
+      await tester.tap(exerciseCard);
       await tester.pumpAndSettle();
 
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
