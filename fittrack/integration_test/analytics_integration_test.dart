@@ -614,6 +614,23 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       await tester.tap(exerciseFinder);
       await tester.pumpAndSettle();
 
+      // Diagnostic: Verify we reached ExerciseDetailScreen
+      print('DEBUG: ===== AFTER TAPPING EXERCISE - SCREEN CHECK =====');
+      print('DEBUG: Checking what screen we landed on...');
+      print('DEBUG: FAB count: ${find.byType(FloatingActionButton).evaluate().length}');
+      print('DEBUG: AppBar count: ${find.byType(AppBar).evaluate().length}');
+
+      print('DEBUG: Dumping all Text widgets:');
+      final allText = find.byType(Text);
+      for (var i = 0; i < allText.evaluate().length; i++) {
+        final textWidget = allText.evaluate().elementAt(i).widget as Text;
+        final data = textWidget.data;
+        if (data != null && data.isNotEmpty) {
+          print('DEBUG: Text widget $i: "$data"');
+        }
+      }
+      print('DEBUG: ===== END SCREEN CHECK =====');
+
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
       // These heavier weights should trigger PRs
       for (int i = 0; i < 3; i++) {
