@@ -609,9 +609,10 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
 
       print('DEBUG: Bench Press exercise found after $retries retries');
 
-      // Navigate into exercise (same as first exercise creation)
-      print('DEBUG: Tapping Bench Press exercise text to navigate...');
-      await tester.tap(exerciseFinder);
+      // Navigate into exercise - use .last to get the one in the exercise list, not breadcrumb/appbar
+      print('DEBUG: Found ${exerciseFinder.evaluate().length} instances of "Bench Press" text');
+      print('DEBUG: Tapping LAST Bench Press exercise text to navigate (should be the list item)...');
+      await tester.tap(exerciseFinder.last);
       await tester.pumpAndSettle();
 
       // Diagnostic: Verify we reached ExerciseDetailScreen
