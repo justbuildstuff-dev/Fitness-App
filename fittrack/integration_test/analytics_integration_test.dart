@@ -585,17 +585,17 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
-      // Retry logic to find the exercise card
-      final exerciseCardFinder = find.widgetWithText(Card, 'Bench Press');
+      // Retry logic to find the exercise text (matches first exercise pattern)
+      final exerciseFinder = find.text('Bench Press');
       int retries = 0;
-      while (exerciseCardFinder.evaluate().isEmpty && retries < 10) {
-        print('DEBUG: Exercise card not found yet, waiting... (retry $retries/10)');
+      while (exerciseFinder.evaluate().isEmpty && retries < 10) {
+        print('DEBUG: Bench Press exercise not found yet, waiting... (retry $retries/10)');
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
         retries++;
       }
 
-      if (exerciseCardFinder.evaluate().isEmpty) {
+      if (exerciseFinder.evaluate().isEmpty) {
         print('DEBUG: Bench Press exercise not found after retries. Dumping screen widgets:');
         final textWidgets = find.byType(Text);
         for (var element in textWidgets.evaluate()) {
@@ -604,14 +604,14 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
             print('  - Text: "${textWidget.data}"');
           }
         }
-        throw TestFailure('Bench Press exercise Card not found after 7 seconds');
+        throw TestFailure('Bench Press exercise not found after 7 seconds');
       }
 
       print('DEBUG: Bench Press exercise found after $retries retries');
 
-      // Navigate into exercise
-      print('DEBUG: Tapping Bench Press exercise card...');
-      await tester.tap(exerciseCardFinder);
+      // Navigate into exercise (same as first exercise creation)
+      print('DEBUG: Tapping Bench Press exercise text to navigate...');
+      await tester.tap(exerciseFinder);
       await tester.pumpAndSettle();
 
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
