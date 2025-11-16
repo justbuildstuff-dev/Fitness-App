@@ -334,53 +334,53 @@ class _WeeksScreenState extends State<WeeksScreen> {
     }
   }
 
-  void _showDeleteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Week'),
-        content: Text(
-          'Are you sure you want to delete "${widget.week.name}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-              final success = await programProvider.deleteWeek(widget.program.id, widget.week.id);
-              
-              if (context.mounted) {
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Week deleted successfully'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                  Navigator.of(context).pop(); // Go back to program detail
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(programProvider.error ?? 'Failed to delete week'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('DELETE'),
-          ),
-        ],
-      ),
+  void _showDeleteDialog(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+
+    // Fetch cascade counts before showing dialog
+    final cascadeCounts = await programProvider.getCascadeDeleteCounts(
+      weekId: widget.week.id,
     );
+
+    if (!context.mounted) return;
+
+    // Show enhanced dialog with cascade counts
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Week',
+      content: 'Are you sure you want to delete this week?',
+      itemName: widget.week.name,
+      deleteButtonText: 'Delete Week',
+      cascadeCounts: cascadeCounts,
+    );
+
+    if (confirmed == true) {
+      try {
+        await programProvider.deleteWeekById(widget.week.id);
+
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Week "${widget.week.name}" deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(); // Go back to program detail
+        }
+      } catch (e) {
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete week: $e'),
+              backgroundColor: errorColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 }
 
@@ -539,13 +539,21 @@ class _WorkoutCard extends StatelessWidget {
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final errorColor = Theme.of(context).colorScheme.error;
-    
+
+    // Fetch cascade counts before showing dialog
+    final cascadeCounts = await programProvider.getCascadeDeleteCounts(
+      workoutId: workout.id,
+    );
+
+    if (!context.mounted) return;
+
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Workout',
-      content: 'This will permanently delete "${workout.name}" and all its exercises '
-               'and sets. This action cannot be undone.',
+      content: 'Are you sure you want to delete this workout?',
+      itemName: workout.name,
       deleteButtonText: 'Delete Workout',
+      cascadeCounts: cascadeCounts,
     );
 
     if (confirmed == true) {
