@@ -359,13 +359,21 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   void _deleteExercise(BuildContext context, Exercise exercise) async {
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    
+
+    // Fetch cascade counts before showing dialog
+    final cascadeCounts = await programProvider.getCascadeDeleteCounts(
+      exerciseId: exercise.id,
+    );
+
+    if (!context.mounted) return;
+
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Exercise',
-      content: 'This will permanently delete "${exercise.name}" and all its sets. '
-               'This action cannot be undone.',
+      content: 'Are you sure you want to delete this exercise?',
+      itemName: exercise.name,
       deleteButtonText: 'Delete Exercise',
+      cascadeCounts: cascadeCounts,
     );
 
     if (confirmed == true) {
@@ -491,49 +499,42 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final errorColor = Theme.of(context).colorScheme.error;
-    
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Workout'),
-        content: Text(
-          'Are you sure you want to delete "${widget.workout.name}"? This will also delete all exercises and sets in this workout.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+
+    // Fetch cascade counts before showing dialog
+    final cascadeCounts = await provider.getCascadeDeleteCounts(
+      workoutId: widget.workout.id,
     );
 
-    if (confirmed == true && mounted) {
-      
-      final success = await provider.deleteWorkout(
-        widget.program.id,
-        widget.week.id,
-        widget.workout.id,
-      );
+    if (!context.mounted) return;
 
-      if (mounted) {
-        if (success) {
+    // Show enhanced dialog with cascade counts
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Workout',
+      content: 'Are you sure you want to delete this workout?',
+      itemName: widget.workout.name,
+      deleteButtonText: 'Delete Workout',
+      cascadeCounts: cascadeCounts,
+    );
+
+    if (confirmed == true) {
+      try {
+        await provider.deleteWorkoutById(widget.workout.id);
+
+        if (context.mounted) {
           scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Workout deleted'),
+            SnackBar(
+              content: Text('Workout "${widget.workout.name}" deleted successfully'),
               behavior: SnackBarBehavior.floating,
             ),
           );
           navigator.pop(); // Go back to weeks screen
-        } else {
+        }
+      } catch (e) {
+        if (context.mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
-              content: Text(provider.error ?? 'Failed to delete workout'),
+              content: Text('Failed to delete workout: $e'),
               backgroundColor: errorColor,
               behavior: SnackBarBehavior.floating,
             ),

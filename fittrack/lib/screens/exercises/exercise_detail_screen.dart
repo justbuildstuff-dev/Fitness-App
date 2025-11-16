@@ -6,6 +6,7 @@ import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
+import '../../widgets/delete_confirmation_dialog.dart';
 import '../sets/create_set_screen.dart';
 
 class ExerciseDetailScreen extends StatefulWidget {
@@ -533,44 +534,48 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     final provider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Exercise'),
-        content: Text(
-          'Are you sure you want to delete "${widget.exercise.name}"? This will also delete all sets in this exercise.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final errorColor = Theme.of(context).colorScheme.error;
+
+    // Fetch cascade counts before showing dialog
+    final cascadeCounts = await provider.getCascadeDeleteCounts(
+      exerciseId: widget.exercise.id,
     );
 
-    if (confirmed == true && mounted) {
-      await provider.deleteExercise(
-        widget.program.id,
-        widget.week.id,
-        widget.workout.id,
-        widget.exercise.id,
-      );
+    if (!context.mounted) return;
 
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Exercise deleted'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        navigator.pop(); // Go back to workout screen
+    // Show enhanced dialog with cascade counts
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Exercise',
+      content: 'Are you sure you want to delete this exercise?',
+      itemName: widget.exercise.name,
+      deleteButtonText: 'Delete Exercise',
+      cascadeCounts: cascadeCounts,
+    );
+
+    if (confirmed == true) {
+      try {
+        await provider.deleteExerciseById(widget.exercise.id);
+
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Exercise "${widget.exercise.name}" deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          navigator.pop(); // Go back to workout screen
+        }
+      } catch (e) {
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete exercise: $e'),
+              backgroundColor: errorColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
