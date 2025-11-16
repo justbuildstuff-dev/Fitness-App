@@ -9,6 +9,7 @@ import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
+import 'package:fittrack/models/cascade_delete_counts.dart';
 
 import 'weeks_screen_workout_test.mocks.dart';
 
@@ -533,7 +534,7 @@ void main() {
         /// Test Purpose: Verify keyboard and screen reader navigation works
         /// Users with disabilities need proper focus order and management
         /// Failure indicates broken accessibility navigation
-        
+
         final mockWorkouts = createMockWorkouts();
         when(mockProvider.workouts).thenReturn(mockWorkouts);
 
@@ -541,6 +542,342 @@ void main() {
 
         // Test focus traversal through workout cards and action buttons
         // This would require specific focus testing depending on implementation
+      });
+    });
+
+    group('Week Delete Functionality', () {
+      testWidgets('week delete shows enhanced dialog with cascade counts', (WidgetTester tester) async {
+        /// Test Purpose: Verify week deletion displays cascade counts before confirming
+        /// Users need to see how many workouts, exercises, and sets will be deleted
+        /// Failure indicates users might accidentally delete more data than expected
+
+        const cascadeCounts = CascadeDeleteCounts(
+          workouts: 3,
+          exercises: 12,
+          sets: 48,
+        );
+
+        // Mock cascade count fetch
+        when(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id))
+            .thenAnswer((_) async => cascadeCounts);
+
+        await tester.pumpWidget(createTestWidget());
+
+        // Find and tap the more menu button (three dots)
+        final moreButton = find.byIcon(Icons.more_vert);
+        expect(moreButton, findsOneWidget, reason: 'Should have menu button');
+        await tester.tap(moreButton);
+        await tester.pumpAndSettle();
+
+        // Tap delete option in menu
+        final deleteOption = find.text('Delete');
+        expect(deleteOption, findsOneWidget, reason: 'Should have delete option in menu');
+        await tester.tap(deleteOption);
+        await tester.pumpAndSettle();
+
+        // Verify cascade counts were fetched
+        verify(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id)).called(1);
+
+        // Verify enhanced dialog is shown with correct elements
+        expect(find.text('Delete Week'), findsOneWidget,
+            reason: 'Should display delete week title');
+        expect(find.text('Are you sure you want to delete this week?'), findsOneWidget,
+            reason: 'Should display confirmation message');
+        expect(find.text('Test Week 1'), findsOneWidget,
+            reason: 'Should display week name highlight');
+
+        // Verify cascade counts are displayed
+        expect(find.text('3 workouts'), findsOneWidget,
+            reason: 'Should display workout count');
+        expect(find.text('12 exercises'), findsOneWidget,
+            reason: 'Should display exercise count');
+        expect(find.text('48 sets'), findsOneWidget,
+            reason: 'Should display set count');
+
+        // Verify action buttons
+        expect(find.text('Cancel'), findsOneWidget,
+            reason: 'Should have cancel button');
+        expect(find.text('Delete Week'), findsAtLeastNWidgets(1),
+            reason: 'Should have delete confirmation button');
+      });
+
+      testWidgets('week delete executes deletion and shows success message on confirm', (WidgetTester tester) async {
+        /// Test Purpose: Verify successful week deletion flow
+        /// Users should see confirmation and navigate back after deletion
+        /// Failure indicates broken delete workflow
+
+        const cascadeCounts = CascadeDeleteCounts(workouts: 2, exercises: 8, sets: 24);
+
+        when(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id))
+            .thenAnswer((_) async => cascadeCounts);
+        when(mockProvider.deleteWeekById(testWeek.id))
+            .thenAnswer((_) async => Future.value());
+
+        await tester.pumpWidget(createTestWidget());
+
+        // Open menu and tap delete
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+
+        // Confirm deletion
+        final deleteButton = find.text('Delete Week').last;
+        await tester.tap(deleteButton);
+        await tester.pumpAndSettle();
+
+        // Verify deleteWeekById was called
+        verify(mockProvider.deleteWeekById(testWeek.id)).called(1);
+
+        // Verify success message is shown
+        expect(find.text('Week "Test Week 1" deleted successfully'), findsOneWidget,
+            reason: 'Should display success message with week name');
+
+        // Note: Navigation verification would require NavigatorObserver mock
+      });
+
+      testWidgets('week delete shows error message on failure', (WidgetTester tester) async {
+        /// Test Purpose: Verify error handling during week deletion
+        /// Users should see clear error messages when deletion fails
+        /// Failure indicates poor error feedback
+
+        const cascadeCounts = CascadeDeleteCounts(workouts: 1, exercises: 4, sets: 12);
+        const errorMessage = 'Permission denied';
+
+        when(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id))
+            .thenAnswer((_) async => cascadeCounts);
+        when(mockProvider.deleteWeekById(testWeek.id))
+            .thenThrow(Exception(errorMessage));
+
+        await tester.pumpWidget(createTestWidget());
+
+        // Open menu and tap delete
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+
+        // Confirm deletion
+        final deleteButton = find.text('Delete Week').last;
+        await tester.tap(deleteButton);
+        await tester.pumpAndSettle();
+
+        // Verify error message is shown
+        expect(find.textContaining('Failed to delete week:'), findsOneWidget,
+            reason: 'Should display error message');
+        expect(find.textContaining(errorMessage), findsOneWidget,
+            reason: 'Should display specific error details');
+      });
+
+      testWidgets('week delete cancels properly when user dismisses dialog', (WidgetTester tester) async {
+        /// Test Purpose: Verify cancel functionality preserves data
+        /// Users should be able to cancel without losing data
+        /// Failure indicates accidental data loss risk
+
+        const cascadeCounts = CascadeDeleteCounts(workouts: 2, exercises: 6, sets: 18);
+
+        when(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id))
+            .thenAnswer((_) async => cascadeCounts);
+
+        await tester.pumpWidget(createTestWidget());
+
+        // Open menu and tap delete
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+
+        // Tap cancel button
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        // Verify delete was NOT called
+        verifyNever(mockProvider.deleteWeekById(any));
+
+        // Verify dialog is dismissed
+        expect(find.text('Delete Week'), findsNothing,
+            reason: 'Dialog should be dismissed');
+      });
+    });
+
+    group('Workout Delete Functionality', () {
+      testWidgets('workout delete shows enhanced dialog with cascade counts', (WidgetTester tester) async {
+        /// Test Purpose: Verify workout deletion displays cascade counts
+        /// Users need to see how many exercises and sets will be deleted
+        /// Failure indicates users might accidentally delete more data than expected
+
+        final mockWorkouts = createMockWorkouts();
+        const cascadeCounts = CascadeDeleteCounts(
+          workouts: 0,
+          exercises: 5,
+          sets: 20,
+        );
+
+        when(mockProvider.workouts).thenReturn(mockWorkouts);
+        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-1'))
+            .thenAnswer((_) async => cascadeCounts);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Find and tap delete button on first workout card
+        final deleteButtons = find.byIcon(Icons.delete);
+        expect(deleteButtons, findsAtLeastNWidgets(1),
+            reason: 'Should have delete buttons on workout cards');
+        await tester.tap(deleteButtons.first);
+        await tester.pumpAndSettle();
+
+        // Verify cascade counts were fetched
+        verify(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-1')).called(1);
+
+        // Verify enhanced dialog is shown
+        expect(find.text('Delete Workout'), findsOneWidget,
+            reason: 'Should display delete workout title');
+        expect(find.text('Are you sure you want to delete this workout?'), findsOneWidget,
+            reason: 'Should display confirmation message');
+        expect(find.text('Push Day'), findsAtLeastNWidgets(1),
+            reason: 'Should display workout name highlight');
+
+        // Verify cascade counts are displayed
+        expect(find.text('5 exercises'), findsOneWidget,
+            reason: 'Should display exercise count');
+        expect(find.text('20 sets'), findsOneWidget,
+            reason: 'Should display set count');
+
+        // Verify action buttons
+        expect(find.text('Cancel'), findsOneWidget,
+            reason: 'Should have cancel button');
+        expect(find.text('Delete Workout'), findsAtLeastNWidgets(1),
+            reason: 'Should have delete confirmation button');
+      });
+
+      testWidgets('workout delete executes deletion and shows success message on confirm', (WidgetTester tester) async {
+        /// Test Purpose: Verify successful workout deletion flow
+        /// Users should see confirmation after deletion
+        /// Failure indicates broken delete workflow
+
+        final mockWorkouts = createMockWorkouts();
+        const cascadeCounts = CascadeDeleteCounts(exercises: 3, sets: 12);
+
+        when(mockProvider.workouts).thenReturn(mockWorkouts);
+        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-2'))
+            .thenAnswer((_) async => cascadeCounts);
+        when(mockProvider.deleteWorkoutById('workout-2'))
+            .thenAnswer((_) async => Future.value());
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Tap delete button on second workout
+        final deleteButtons = find.byIcon(Icons.delete);
+        await tester.tap(deleteButtons.at(1));
+        await tester.pumpAndSettle();
+
+        // Confirm deletion
+        final confirmButton = find.text('Delete Workout').last;
+        await tester.tap(confirmButton);
+        await tester.pumpAndSettle();
+
+        // Verify deleteWorkoutById was called
+        verify(mockProvider.deleteWorkoutById('workout-2')).called(1);
+
+        // Verify success message is shown
+        expect(find.text('Workout "Pull Day" deleted successfully'), findsOneWidget,
+            reason: 'Should display success message with workout name');
+      });
+
+      testWidgets('workout delete shows error message on failure', (WidgetTester tester) async {
+        /// Test Purpose: Verify error handling during workout deletion
+        /// Users should see clear error messages when deletion fails
+        /// Failure indicates poor error feedback
+
+        final mockWorkouts = createMockWorkouts();
+        const cascadeCounts = CascadeDeleteCounts(exercises: 4, sets: 16);
+        const errorMessage = 'Network timeout';
+
+        when(mockProvider.workouts).thenReturn(mockWorkouts);
+        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-3'))
+            .thenAnswer((_) async => cascadeCounts);
+        when(mockProvider.deleteWorkoutById('workout-3'))
+            .thenThrow(Exception(errorMessage));
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Tap delete button on third workout
+        final deleteButtons = find.byIcon(Icons.delete);
+        await tester.tap(deleteButtons.at(2));
+        await tester.pumpAndSettle();
+
+        // Confirm deletion
+        final confirmButton = find.text('Delete Workout').last;
+        await tester.tap(confirmButton);
+        await tester.pumpAndSettle();
+
+        // Verify error message is shown
+        expect(find.textContaining('Failed to delete workout:'), findsOneWidget,
+            reason: 'Should display error message');
+        expect(find.textContaining(errorMessage), findsOneWidget,
+            reason: 'Should display specific error details');
+      });
+
+      testWidgets('workout delete cancels properly when user dismisses dialog', (WidgetTester tester) async {
+        /// Test Purpose: Verify cancel functionality preserves workout
+        /// Users should be able to cancel without losing data
+        /// Failure indicates accidental data loss risk
+
+        final mockWorkouts = createMockWorkouts();
+        const cascadeCounts = CascadeDeleteCounts(exercises: 2, sets: 8);
+
+        when(mockProvider.workouts).thenReturn(mockWorkouts);
+        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-1'))
+            .thenAnswer((_) async => cascadeCounts);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Tap delete button
+        final deleteButtons = find.byIcon(Icons.delete);
+        await tester.tap(deleteButtons.first);
+        await tester.pumpAndSettle();
+
+        // Tap cancel button
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        // Verify delete was NOT called
+        verifyNever(mockProvider.deleteWorkoutById(any));
+
+        // Verify dialog is dismissed
+        expect(find.text('Delete Workout'), findsNothing,
+            reason: 'Dialog should be dismissed');
+      });
+
+      testWidgets('workout delete handles zero cascade counts correctly', (WidgetTester tester) async {
+        /// Test Purpose: Verify dialog displays correctly when workout has no exercises/sets
+        /// Empty workouts should still show confirmation dialog
+        /// Failure indicates edge case not handled
+
+        final mockWorkouts = createMockWorkouts();
+        const cascadeCounts = CascadeDeleteCounts(exercises: 0, sets: 0);
+
+        when(mockProvider.workouts).thenReturn(mockWorkouts);
+        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-1'))
+            .thenAnswer((_) async => cascadeCounts);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+
+        // Tap delete button
+        final deleteButtons = find.byIcon(Icons.delete);
+        await tester.tap(deleteButtons.first);
+        await tester.pumpAndSettle();
+
+        // Verify dialog is shown (even with zero counts)
+        expect(find.text('Delete Workout'), findsOneWidget,
+            reason: 'Should show dialog even for empty workout');
+        expect(find.text('Push Day'), findsAtLeastNWidgets(1),
+            reason: 'Should show workout name');
       });
     });
   });

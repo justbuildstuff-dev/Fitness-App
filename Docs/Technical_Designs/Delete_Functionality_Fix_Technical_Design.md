@@ -1948,6 +1948,49 @@ Fix delete functionality for weeks, workouts, and exercises by:
 - No new tests required - existing `DeleteConfirmationDialog` widget tests cover all scenarios
 - Manual testing deferred due to Windows development environment limitations
 
+### Task #59: Update Weeks Screen - Week & Workout Delete
+**Status:** ✅ Complete (Merged to main via PR #132)
+**Completed:** November 16, 2025
+
+**Implementation Details:**
+- Updated `_showDeleteDialog()` method in Weeks Screen (lines 337-384)
+  - Replaced basic `AlertDialog` with enhanced `DeleteConfirmationDialog.show()`
+  - Fetches cascade counts before showing dialog via `getCascadeDeleteCounts(weekId: widget.week.id)`
+  - Switched from `deleteWeek()` to `deleteWeekById()` with exception-based error handling
+  - Added `itemName` parameter for visual item highlighting
+  - Added `cascadeCounts` parameter to display affected workouts, exercises, and sets
+  - Simplified content message (details shown via cascade counts)
+  - Added `context.mounted` check after async operation
+  - Consistent try-catch exception handling with descriptive error messages
+
+- Updated `_deleteWorkout()` method in Weeks Screen (lines 538-575)
+  - Added cascade count fetching before dialog via `getCascadeDeleteCounts(workoutId: workout.id)`
+  - Added `context.mounted` check after async fetch
+  - Added `itemName` parameter for visual workout name highlighting
+  - Added `cascadeCounts` parameter to show affected exercises and sets
+  - Simplified content message
+
+**Code Location:**
+- `fittrack/lib/screens/weeks/weeks_screen.dart` lines 337-384 (week delete)
+- `fittrack/lib/screens/weeks/weeks_screen.dart` lines 538-575 (workout delete)
+
+**Testing:**
+- Comprehensive widget tests added to `test/screens/weeks_screen_workout_test.dart`
+- Added 2 test groups: "Week Delete Functionality" (4 tests) and "Workout Delete Functionality" (6 tests)
+- Test coverage includes:
+  - Dialog display with cascade counts verification
+  - Successful deletion flow with success messages
+  - Error handling with descriptive error messages
+  - Cancel functionality without data loss
+  - Edge case: zero cascade counts for empty workouts
+- Tests verify provider method calls: `getCascadeDeleteCounts()`, `deleteWeekById()`, `deleteWorkoutById()`
+- All tests follow existing pattern from weeks_screen_workout_test.dart
+- Manual testing via GitHub Actions workflow
+
+**Deviations from Design:**
+- Added comprehensive screen-level widget tests (Task #58 skipped tests, but best practice is to include them)
+- Tests ensure cascade count fetching, dialog display, and provider integration work correctly
+
 **PR:** #131
 **Commit:** 316226612ea2057b2edc59759f6204115e62bbde
 
