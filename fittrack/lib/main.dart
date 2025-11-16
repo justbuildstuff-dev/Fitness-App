@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,14 +31,6 @@ void main() async {
     debugPrint('Firebase initialization error: $e');
     // Run app with error state - AuthProvider will handle the error gracefully
   }
-
-  // Configure emulators ONLY for local development
-  // Note: This should be commented out for physical device testing
-  // Uncomment ONLY when running against local Firebase emulators
-  // if (kDebugMode) {
-  //   FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
-  //   FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
-  // }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)
   // Non-blocking: Run in background, don't wait for completion
@@ -68,9 +63,15 @@ class FitTrackApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
         ChangeNotifierProxyProvider<app_auth.AuthProvider, ProgramProvider>(
-          create: (_) => ProgramProvider(null),
-          update: (_, authProvider, previousProgramProvider) =>
-              ProgramProvider(authProvider.user?.uid),
+          create: (_) {
+            debugPrint('[Provider] Creating initial ProgramProvider with null userId');
+            return ProgramProvider(null);
+          },
+          update: (_, authProvider, previousProgramProvider) {
+            final userId = authProvider.user?.uid;
+            debugPrint('[Provider] Updating ProgramProvider with userId: ${userId ?? 'null'}');
+            return ProgramProvider(userId);
+          },
         ),
       ],
       child: Consumer<ThemeProvider>(

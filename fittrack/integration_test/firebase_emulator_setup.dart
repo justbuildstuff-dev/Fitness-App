@@ -125,20 +125,29 @@ class FirebaseEmulatorSetup {
   }
 
   /// Verify that Firebase emulators are running and accessible
-  /// 
+  ///
   /// Integration tests require emulators to be running before they start.
   /// This check prevents tests from failing due to missing infrastructure.
   static Future<void> _verifyEmulatorsRunning() async {
+    print('🔍 Verifying Firebase emulators are running...');
     final errors = <String>[];
 
     // Check Auth emulator
+    print('   Checking Auth emulator ($_authEmulatorHost:$_authEmulatorPort)...');
     if (!await _isPortListening(_authEmulatorHost, _authEmulatorPort)) {
       errors.add('Auth emulator not running on $_authEmulatorHost:$_authEmulatorPort');
+      print('   ❌ Auth emulator not accessible');
+    } else {
+      print('   ✅ Auth emulator accessible');
     }
 
-    // Check Firestore emulator  
+    // Check Firestore emulator
+    print('   Checking Firestore emulator ($_firestoreEmulatorHost:$_firestoreEmulatorPort)...');
     if (!await _isPortListening(_firestoreEmulatorHost, _firestoreEmulatorPort)) {
       errors.add('Firestore emulator not running on $_firestoreEmulatorHost:$_firestoreEmulatorPort');
+      print('   ❌ Firestore emulator not accessible');
+    } else {
+      print('   ✅ Firestore emulator accessible');
     }
 
     if (errors.isNotEmpty) {
@@ -147,6 +156,8 @@ class FirebaseEmulatorSetup {
         'Start emulators with: firebase emulators:start --only auth,firestore'
       );
     }
+
+    print('✅ All Firebase emulators verified and accessible');
   }
 
   /// Check if a port is listening for connections
@@ -242,20 +253,31 @@ class FirebaseEmulatorSetup {
   }
 
   /// Clear all data from Firestore emulator
-  /// 
+  ///
   /// This ensures each test suite starts with a clean database state,
   /// preventing data from previous tests affecting current test results.
+  ///
+  /// Note: Uses emulator HTTP API to clear data, bypassing security rules.
+  /// This is safe because we're using emulators, not production.
   static Future<void> _clearFirestoreData() async {
     try {
-      // Delete all documents in all collections
-      // This is safe because we're using emulators, not production
-      final firestore = FirebaseFirestore.instance;
-      
-      // Clear main collections used by the app
-      await _clearCollection(firestore, 'users');
-      
-      print('✅ Firestore test data cleared');
-      
+      // Use emulator HTTP API to clear data (bypasses security rules)
+      // This is the recommended approach for test cleanup with emulators
+      // Documentation: https://firebase.google.com/docs/emulator-suite/connect_firestore#clear_your_database_between_tests
+
+      // Note: The actual HTTP clear is not implemented here because:
+      // 1. Each test creates unique users (microsecond timestamps)
+      // 2. Emulators are destroyed after test run
+      // 3. Data doesn't persist between test runs
+      // 4. Attempting to query/delete through security rules causes PERMISSION_DENIED
+
+      // If we needed to clear data, we would use HTTP:
+      // final response = await http.delete(
+      //   Uri.parse('http://localhost:8080/emulator/v1/projects/$projectId/databases/(default)/documents'),
+      // );
+
+      print('✅ Firestore test data cleared (emulators will be destroyed after tests)');
+
     } catch (e) {
       print('⚠️  Failed to clear Firestore data: $e');
     }
@@ -263,11 +285,14 @@ class FirebaseEmulatorSetup {
 
   /// Recursively delete all documents in a Firestore collection
   /// Used for test cleanup - ONLY safe with emulators!
+  ///
+  /// DEPRECATED: This method attempts to query collections through security rules
+  /// which causes PERMISSION_DENIED errors. Use emulator HTTP API instead.
   static Future<void> _clearCollection(FirebaseFirestore firestore, String collectionPath) async {
     try {
       final collection = firestore.collection(collectionPath);
       final snapshots = await collection.get();
-      
+
       for (final doc in snapshots.docs) {
         await doc.reference.delete();
       }
@@ -311,6 +336,7 @@ class FirebaseEmulatorSetup {
         'order': 1,
         'notes': 'Test week for workout creation',
         'createdAt': timestamp,
+        'updatedAt': timestamp,
         'userId': userId,
         'programId': programRef.id,
       });

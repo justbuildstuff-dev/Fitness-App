@@ -29,6 +29,8 @@ import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/workout.dart';
 
+import 'firebase_emulator_setup.dart';
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   
@@ -40,21 +42,25 @@ void main() {
     setUpAll(() async {
       /// Test Purpose: Initialize Firebase emulators and test environment
       /// This sets up isolated testing environment with real Firebase functionality
-      
-      // Configure Firebase emulators
-      await _configureFirebaseEmulators();
-      
-      // Generate unique test credentials
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      testEmail = 'test$timestamp@fittrack.test';
+
+      // Configure Firebase emulators using proven helper from firebase_emulator_setup.dart
+      // This properly handles Android emulator connectivity (10.0.2.2) and initialization order
+      await setupFirebaseEmulators();
+
+      // Set password (shared across all tests)
       testPassword = 'TestPassword123!';
     });
 
     setUp(() async {
       /// Test Purpose: Create fresh test user for each test
       /// This ensures test isolation and prevents data contamination
-      
-      // Create test user
+
+      // Generate UNIQUE email for EACH test to prevent email-already-in-use errors
+      // Use microsecondsSinceEpoch for higher precision than milliseconds
+      final timestamp = DateTime.now().microsecondsSinceEpoch;
+      testEmail = 'test$timestamp@fittrack.test';
+
+      // Create test user with unique email
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: testEmail,
         password: testPassword,
@@ -591,20 +597,6 @@ void main() {
 }
 
 /// Test utility functions for integration testing
-
-Future<void> _configureFirebaseEmulators() async {
-  /// Configure Firebase to use local emulators for testing
-  await Firebase.initializeApp();
-  
-  // Connect to Authentication Emulator
-  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  
-  // Connect to Firestore Emulator
-  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  
-  // Enable offline persistence for testing
-  await FirestoreService.enableOfflinePersistence();
-}
 
 Future<void> _authenticateTestUser(WidgetTester tester, String email, String password) async {
   /// Authenticate test user through the UI

@@ -144,7 +144,8 @@ jobs:
         sudo rm -rf /opt/hostedtoolcache/CodeQL
 
         # Remove large misc packages (~4GB)
-        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        # Note: Keep NDK for caching - commented out to allow NDK caching to work
+        # sudo rm -rf /usr/local/lib/android/sdk/ndk
         sudo rm -rf /usr/local/share/boost
 
         # Clean Docker system (~4GB)
@@ -173,15 +174,17 @@ jobs:
         arch: x86_64
         profile: Nexus 6
         
-    - name: Cache Gradle dependencies
+    - name: Cache Gradle dependencies and NDK
       uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
           ~/.android/build-cache
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          /usr/local/lib/android/sdk/ndk
+        key: ${{ runner.os }}-gradle-ndk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
+          ${{ runner.os }}-gradle-ndk-
           ${{ runner.os }}-gradle-
         
     - name: Setup Flutter
@@ -212,39 +215,46 @@ jobs:
     - name: Start Firebase emulators
       run: |
         cd fittrack
-        # Ensure we're using the correct project for emulators
-        firebase use fitness-app-8505e 2>/dev/null || echo "Project already set"
-        firebase emulators:start --only auth,firestore --project=fitness-app-8505e &
+        # Start emulators without project flag to load custom firestore.rules
+        # This ensures our security rules are applied during integration tests
+        # The emulator will use the project from .firebaserc (fitness-app-8505e)
+        firebase emulators:start --only auth,firestore &
         echo $! > emulator.pid
+        echo "✅ Firebase emulators started with custom security rules"
         
     - name: Wait for emulators
       run: |
-        echo "Waiting for emulators to start..."
+        echo "⏳ Waiting for Firebase emulators to start..."
         sleep 15
-        
+
         # Wait for emulators to be ready with retry logic
         for i in {1..30}; do
-          echo "Checking emulator availability (attempt $i/30)..."
-          
+          echo "🔍 Checking emulator availability (attempt $i/30)..."
+
           # Check if both ports are listening
           if nc -z localhost 8080 && nc -z localhost 9099; then
             echo "✅ Both Firebase emulators are responding on their ports"
             break
           fi
-          
+
           if [ $i -eq 30 ]; then
             echo "⚠️  Emulators not ready after 30 attempts, continuing anyway"
           else
             sleep 2
           fi
         done
-        
+
         # Final verification with proper endpoints
-        echo "Testing Firestore emulator endpoint..."
-        curl -f http://localhost:8080/v1/projects/demo-project/databases || echo "Firestore endpoint not ready"
-        
-        echo "Testing Auth emulator endpoint..."  
-        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "Auth endpoint not ready"
+        echo "🔍 Testing Firestore emulator endpoint..."
+        curl -f http://localhost:8080/v1/projects/demo-project/databases || echo "⚠️  Firestore endpoint not ready"
+        echo "✅ Firestore emulator: localhost:8080"
+
+        echo "🔍 Testing Auth emulator endpoint..."
+        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "⚠️  Auth endpoint not ready"
+        echo "✅ Auth emulator: localhost:9099"
+
+        echo "📱 Android emulator will access via 10.0.2.2:8080 and 10.0.2.2:9099"
+        echo "✅ Firebase emulators ready for integration testing"
         
         echo "Firebase emulator setup completed - proceeding with tests"
         
@@ -272,7 +282,8 @@ jobs:
         disk-size: 2048M
         avd-name: test
         disable-animations: true
-        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        emulator-boot-timeout: 900
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
         script: |
           echo "🔍 Starting Android Integration Test..."
           echo "📱 Flutter and emulator info:"
@@ -295,7 +306,9 @@ jobs:
           echo "🚀 Running integration tests on Android with flutter drive..."
 
           echo "Running analytics integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
+          # First test needs longer timeout to include APK build time (Gradle + NDK download)
+          # Subsequent tests reuse the built APK and only need time for test execution
+          timeout 1800 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
 
           echo "Running workout creation integration test..."
           timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554'

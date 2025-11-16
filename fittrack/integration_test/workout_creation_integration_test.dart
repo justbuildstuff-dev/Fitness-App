@@ -85,11 +85,21 @@ void main() {
     /// Prevents test data from one group affecting another
     setUp(() async {
       // Sign in the test user for each test
-      await FirebaseAuth.instance.signOut();
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: 'workout-test@example.com',
-        password: 'testpassword123',
-      );
+      //
+      // IMPORTANT: We don't call signOut() first because:
+      // - Previous test's widget tree may still have active Firestore listeners
+      // - signOut() would trigger PERMISSION_DENIED on those listeners
+      // - Firebase Auth is a singleton, so signing in again replaces the current session
+      //
+      // The user is already authenticated from setUpAll() or previous test
+      // Just ensure we're signed in with the correct account
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null || currentUser.email != 'workout-test@example.com') {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: 'workout-test@example.com',
+          password: 'testpassword123',
+        );
+      }
     });
 
     group('Complete Workout Creation Workflow', () {
@@ -187,7 +197,7 @@ void main() {
         print('✅ Added workout notes');
 
         // Step 9: Save the workout
-        final saveButton = find.text('SAVE');
+        final saveButton = find.text('CREATE');
         expect(saveButton, findsOneWidget,
           reason: 'Should have save button');
 
@@ -278,7 +288,7 @@ void main() {
         await tester.enterText(nameField, 'Quick Workout');
 
         // Save without filling optional fields
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify success and workout appears
@@ -341,7 +351,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Test validation error - try to save without entering name
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         // Should show validation error, not navigate away
@@ -356,7 +366,7 @@ void main() {
         final tooLongName = 'A' * 201; // Exceeds 200 character limit
         await tester.enterText(nameField, tooLongName);
 
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle();
 
         expect(find.text('Workout name must be 200 characters or less'), findsOneWidget,
@@ -404,7 +414,7 @@ void main() {
           await tester.enterText(nameField, workoutNames[i]);
 
           // Save workout
-          await tester.tap(find.text('SAVE'));
+          await tester.tap(find.text('CREATE'));
           await tester.pumpAndSettle(const Duration(seconds: 1));
 
           // Verify success and return to weeks screen
@@ -460,7 +470,7 @@ void main() {
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, persistentWorkoutName);
 
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify workout was created
@@ -473,7 +483,8 @@ void main() {
         // Simulate app restart by creating new app instance
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
-        final prefs = await SharedPreferences.getInstance();
+        // Reuse prefs variable from earlier in test scope
+        await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
         await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -513,11 +524,20 @@ void main() {
           secondUser.user!.uid);
 
         // Sign in as second user and create workout
+        // NOTE: Must sign out to switch users, then wait for auth state to propagate
         await FirebaseAuth.instance.signOut();
+
+        // Wait for sign-out to complete and active listeners to be cancelled
+        // This prevents PERMISSION_DENIED errors on previous user's listeners
+        await Future.delayed(const Duration(milliseconds: 500));
+
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'second-user@example.com',
           password: 'testpassword456',
         );
+
+        // Wait for sign-in to complete and propagate to providers
+        await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
@@ -540,24 +560,33 @@ void main() {
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, secondUserWorkout);
 
-        await tester.tap(find.text('SAVE'));
+        await tester.tap(find.text('CREATE'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         expect(find.text(secondUserWorkout), findsOneWidget);
         print('✅ Second user workout created');
 
         // Switch back to first user
+        // NOTE: Must sign out to switch users, then wait for auth state to propagate
         await FirebaseAuth.instance.signOut();
+
+        // Wait for sign-out to complete and active listeners to be cancelled
+        // This prevents PERMISSION_DENIED errors on previous user's listeners
+        await Future.delayed(const Duration(milliseconds: 500));
+
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: 'workout-test@example.com',
           password: 'testpassword123',
         );
 
+        // Wait for sign-in to complete and propagate to providers
+        await Future.delayed(const Duration(milliseconds: 500));
+
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({});
-        final prefs = await SharedPreferences.getInstance();
+        final prefs2 = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to first user's workouts
@@ -618,6 +647,8 @@ void main() {
           'createdAt': DateTime.now(),
           'updatedAt': DateTime.now(),
           'userId': testData.userId,
+          'weekId': testData.weekId,
+          'programId': testData.programId,
         });
 
         print('✅ Added workout directly to Firestore');

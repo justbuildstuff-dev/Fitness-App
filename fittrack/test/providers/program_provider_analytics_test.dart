@@ -25,6 +25,43 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
+
+      // Set up default stubs for auto-load calls (called in constructor)
+      when(mockFirestoreService.getPrograms(any)).thenAnswer((_) => Stream.value([]));
+      when(mockAnalyticsService.computeWorkoutAnalytics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => WorkoutAnalytics(
+        userId: 'test_user',
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+        endDate: DateTime.now(),
+        totalWorkouts: 0,
+        totalSets: 0,
+        totalVolume: 0.0,
+        totalDuration: 0,
+        exerciseTypeBreakdown: {},
+        completedWorkoutIds: [],
+      ));
+      when(mockAnalyticsService.generateHeatmapData(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+      )).thenAnswer((_) async => ActivityHeatmapData(
+        userId: 'test_user',
+        year: DateTime.now().year,
+        dailyWorkoutCounts: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        totalWorkouts: 0,
+      ));
+      when(mockAnalyticsService.getPersonalRecords(
+        userId: anyNamed('userId'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async => []);
+      when(mockAnalyticsService.computeKeyStatistics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => {});
+
       provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
     });
 
@@ -79,6 +116,9 @@ void main() {
           'workoutsPerWeek': 3.2,
         };
 
+        // Clear auto-load interactions before setting up test-specific stubs
+        clearInteractions(mockAnalyticsService);
+
         when(mockAnalyticsService.computeWorkoutAnalytics(
           userId: anyNamed('userId'),
           dateRange: anyNamed('dateRange'),
@@ -110,6 +150,8 @@ void main() {
 
       test('handles analytics loading errors gracefully', () async {
         // Arrange
+        clearInteractions(mockAnalyticsService);
+
         when(mockAnalyticsService.computeWorkoutAnalytics(
           userId: anyNamed('userId'),
           dateRange: anyNamed('dateRange'),
@@ -125,7 +167,9 @@ void main() {
       });
 
       test('sets loading state correctly during analytics loading', () async {
-        // Arrange - Mock with delayed responses to simulate async loading
+        // Arrange - Clear auto-load interactions and mock with delayed responses
+        clearInteractions(mockAnalyticsService);
+
         when(mockAnalyticsService.computeWorkoutAnalytics(
           userId: anyNamed('userId'),
           dateRange: anyNamed('dateRange'),
@@ -194,7 +238,9 @@ void main() {
       test('loads analytics with custom date range', () async {
         // Arrange
         final customRange = DateRange.thisMonth();
-        
+
+        clearInteractions(mockAnalyticsService);
+
         when(mockAnalyticsService.computeWorkoutAnalytics(
           userId: anyNamed('userId'),
           dateRange: anyNamed('dateRange'),
@@ -395,6 +441,12 @@ void main() {
 
     group('refreshAnalytics', () {
       test('clears cache and reloads analytics', () async {
+        // Arrange - Clear auto-load interactions
+        clearInteractions(mockAnalyticsService);
+
+        // Mock clearCache method
+        when(mockAnalyticsService.clearCache()).thenAnswer((_) async {});
+
         // Act
         await provider.refreshAnalytics();
 
@@ -418,13 +470,16 @@ void main() {
         expect(provider.userId, equals('test_user'));
       });
 
-      test('analytics getters return correct values', () {
+      test('analytics getters return correct values', () async {
         // This would test the getter methods for analytics data
+        // Wait for auto-load microtask to complete
+        await Future.delayed(Duration.zero);
+
         // Implementation would depend on how the data is stored internally
-        expect(provider.currentAnalytics, isNull); // Initially null
-        expect(provider.heatmapData, isNull);
-        expect(provider.recentPRs, isNull);
-        expect(provider.keyStatistics, isNull);
+        expect(provider.currentAnalytics, isNotNull); // Auto-loaded with default empty data
+        expect(provider.heatmapData, isNotNull); // Auto-loaded with default empty data
+        expect(provider.recentPRs, isNotNull); // Auto-loaded with empty list
+        expect(provider.keyStatistics, isNotNull); // Auto-loaded with empty map
         expect(provider.isLoadingAnalytics, isFalse);
       });
     });

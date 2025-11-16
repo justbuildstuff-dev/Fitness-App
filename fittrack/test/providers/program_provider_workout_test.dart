@@ -6,6 +6,7 @@ import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/workout.dart';
+import 'package:fittrack/models/analytics.dart';
 
 import 'program_provider_workout_test.mocks.dart';
 
@@ -38,7 +39,42 @@ void main() {
       // Using mocks ensures tests don't depend on external services
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
-      programProvider = ProgramProvider.withServices(testUserId, mockFirestoreService, mockAnalyticsService);
+
+      // Set up stubs for auto-load calls (called in constructor)
+      when(mockFirestoreService.getPrograms(any)).thenAnswer((_) => Stream.value([]));
+      when(mockAnalyticsService.computeWorkoutAnalytics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => WorkoutAnalytics(
+        userId: testUserId,
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+        endDate: DateTime.now(),
+        totalWorkouts: 0,
+        totalSets: 0,
+        totalVolume: 0.0,
+        totalDuration: 0,
+        exerciseTypeBreakdown: {},
+        completedWorkoutIds: [],
+      ));
+      when(mockAnalyticsService.generateHeatmapData(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+      )).thenAnswer((_) async => ActivityHeatmapData(
+        userId: testUserId,
+        year: DateTime.now().year,
+        dailyWorkoutCounts: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        totalWorkouts: 0,
+      ));
+      when(mockAnalyticsService.getPersonalRecords(
+        userId: anyNamed('userId'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async => []);
+      when(mockAnalyticsService.computeKeyStatistics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => {});
 
       // Set up common mock stubs for methods called by provider internally
       when(mockFirestoreService.createWorkout(any))
@@ -47,6 +83,8 @@ void main() {
           .thenAnswer((_) => Stream.value([]));
       when(mockFirestoreService.getSets(any, any, any, any, any))
           .thenAnswer((_) => Stream.value([]));
+
+      programProvider = ProgramProvider.withServices(testUserId, mockFirestoreService, mockAnalyticsService);
     });
 
     group('Create Workout', () {

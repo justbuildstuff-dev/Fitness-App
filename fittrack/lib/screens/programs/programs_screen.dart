@@ -31,8 +31,10 @@ class ProgramsScreen extends StatelessWidget {
               message: 'Unable to load your programs. Please check your connection and try again.',
               technicalError: programProvider.error,
               onRetry: () {
-                programProvider.clearError();
-                programProvider.loadPrograms();
+                // Get fresh provider reference in case it was recreated
+                final provider = Provider.of<ProgramProvider>(context, listen: false);
+                provider.clearError();
+                provider.loadPrograms();
               },
             );
           }
@@ -180,24 +182,30 @@ class _ProgramCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  'Created ${_formatDate(program.createdAt)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                Flexible(
+                  child: Text(
+                    'Created ${_formatDate(program.createdAt)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (program.updatedAt != program.createdAt) ...[
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
                   Icon(
                     Icons.edit,
                     size: 14,
                     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    'Updated ${_formatDate(program.updatedAt)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  Flexible(
+                    child: Text(
+                      'Updated ${_formatDate(program.updatedAt)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow all cleartext traffic for debug builds only -->
-    <!-- This enables Firebase emulator connectivity during testing -->
-    <debug-overrides cleartextTrafficPermitted="true" />
-    
-    <!-- Production builds - HTTPS only for security -->
+    <!--
+        Firebase Emulator Cleartext Allowlist
+
+        Allows HTTP traffic ONLY to Firebase emulator addresses for integration testing.
+        These addresses are only accessible during local development and CI testing:
+        - 10.0.2.2: Android emulator's special IP that maps to host machine's localhost
+        - localhost/127.0.0.1: Standard localhost addresses
+
+        Security: These IPs are unreachable in production builds running on real devices,
+        so allowing cleartext here does NOT expose production traffic to HTTP.
+        All other domains remain HTTPS-only via base-config below.
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+
+    <!-- Production security - HTTPS only for all other domains -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system"/>
