@@ -1930,6 +1930,30 @@ Fix delete functionality for weeks, workouts, and exercises by:
 **Deviations from Design:**
 - None - implementation matches technical design specification exactly
 
+### Task #58: Update Program Detail Screen - Week Delete
+**Status:** ✅ Complete (Merged to main via PR #131)
+**Completed:** November 16, 2025
+
+**Implementation Details:**
+- Updated `_deleteWeek()` method in Program Detail Screen (lines 470-515)
+- Fetches cascade counts before showing confirmation dialog
+- Passes `cascadeCounts` and `itemName` to enhanced `DeleteConfirmationDialog`
+- Simplified content message (detailed counts now shown in dialog)
+- Added `context.mounted` check after async cascade count fetch
+
+**Code Location:**
+- `fittrack/lib/screens/programs/program_detail_screen.dart` lines 470-515
+
+**Testing:**
+- No new tests required - existing `DeleteConfirmationDialog` widget tests cover all scenarios
+- Manual testing deferred due to Windows development environment limitations
+
+**PR:** #131
+**Commit:** 316226612ea2057b2edc59759f6204115e62bbde
+
+**Deviations from Design:**
+- None - implementation matches technical design specification exactly
+
 ---
 
 *End of Technical Design Document*
