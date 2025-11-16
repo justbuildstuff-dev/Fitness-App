@@ -26,6 +26,8 @@ void main() {
       await cleanupFirebaseEmulators();
     });
     testWidgets('complete analytics flow with real data', (tester) async {
+      print('DEBUG: ===== Starting Test 1 - complete analytics flow with real data =====');
+
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -73,6 +75,8 @@ void main() {
     });
 
     testWidgets('analytics personal records detection', (tester) async {
+      print('DEBUG: ===== Starting Test 2 - analytics personal records detection =====');
+
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -102,6 +106,8 @@ void main() {
     });
 
     testWidgets('analytics heatmap accuracy', (tester) async {
+      print('DEBUG: ===== Starting Test 3 - analytics heatmap accuracy =====');
+
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -136,6 +142,8 @@ void main() {
     });
 
     testWidgets('analytics date range filtering', (tester) async {
+      print('DEBUG: ===== Starting Test 4 - analytics date range filtering =====');
+
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -172,6 +180,8 @@ void main() {
     });
 
     testWidgets('analytics refresh functionality', (tester) async {
+      print('DEBUG: ===== Starting Test 5 - analytics refresh functionality =====');
+
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -199,6 +209,8 @@ void main() {
     });
 
     testWidgets('analytics error handling', (tester) async {
+      print('DEBUG: ===== Starting Test 6 - analytics error handling =====');
+
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -609,28 +621,51 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
 
       print('DEBUG: Bench Press exercise found after $retries retries');
 
-      // Navigate into exercise - use .last to get the one in the exercise list, not breadcrumb/appbar
+      // Navigate into exercise - use descendant pattern to find exercise within scrollable list
       print('DEBUG: Found ${exerciseFinder.evaluate().length} instances of "Bench Press" text');
-      print('DEBUG: Tapping LAST Bench Press exercise text to navigate (should be the list item)...');
-      await tester.tap(exerciseFinder.last);
+
+      // Find "Bench Press" within a Card widget (exercises are displayed in Cards)
+      final exerciseCardFinder = find.ancestor(
+        of: find.text('Bench Press'),
+        matching: find.byType(Card),
+      );
+
+      print('DEBUG: Found ${exerciseCardFinder.evaluate().length} Card widgets containing "Bench Press"');
+
+      if (exerciseCardFinder.evaluate().isEmpty) {
+        print('DEBUG: No Card found containing "Bench Press". Looking for alternative patterns...');
+        // Fall back to using .last if Card pattern doesn't work
+        await tester.tap(exerciseFinder.last);
+      } else {
+        print('DEBUG: Tapping first Card containing Bench Press exercise...');
+        await tester.tap(exerciseCardFinder.first);
+      }
+
       await tester.pumpAndSettle();
 
-      // Diagnostic: Verify we reached ExerciseDetailScreen
-      print('DEBUG: ===== AFTER TAPPING EXERCISE - SCREEN CHECK =====');
-      print('DEBUG: Checking what screen we landed on...');
-      print('DEBUG: FAB count: ${find.byType(FloatingActionButton).evaluate().length}');
-      print('DEBUG: AppBar count: ${find.byType(AppBar).evaluate().length}');
+      // Verify we reached ExerciseDetailScreen
+      print('DEBUG: ===== AFTER TAPPING EXERCISE - VERIFICATION =====');
 
-      print('DEBUG: Dumping all Text widgets:');
-      final allText = find.byType(Text);
-      for (var i = 0; i < allText.evaluate().length; i++) {
-        final textWidget = allText.evaluate().elementAt(i).widget as Text;
-        final data = textWidget.data;
-        if (data != null && data.isNotEmpty) {
-          print('DEBUG: Text widget $i: "$data"');
+      // Check for ExerciseDetailScreen indicators
+      final fabCount = find.byType(FloatingActionButton).evaluate().length;
+      print('DEBUG: FAB count: $fabCount');
+
+      if (fabCount == 0) {
+        print('DEBUG: ERROR - No FAB found! Not on ExerciseDetailScreen');
+        print('DEBUG: Dumping all Text widgets:');
+        final allText = find.byType(Text);
+        for (var i = 0; i < allText.evaluate().length; i++) {
+          final textWidget = allText.evaluate().elementAt(i).widget as Text;
+          final data = textWidget.data;
+          if (data != null && data.isNotEmpty) {
+            print('DEBUG: Text widget $i: "$data"');
+          }
         }
+        throw TestFailure('Failed to navigate to ExerciseDetailScreen - no FAB found');
       }
-      print('DEBUG: ===== END SCREEN CHECK =====');
+
+      print('DEBUG: Successfully navigated to ExerciseDetailScreen');
+      print('DEBUG: ===== END SCREEN VERIFICATION =====');
 
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
       // These heavier weights should trigger PRs
@@ -638,6 +673,31 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
         if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
           await tester.tap(find.byType(FloatingActionButton));
           await tester.pumpAndSettle();
+
+          // Verify we're on CreateSetScreen
+          print('DEBUG: ===== AFTER TAPPING FAB - VERIFICATION =====');
+          print('DEBUG: Checking for CreateSetScreen indicators...');
+
+          // Look for "Add Set" or "Edit Set" title
+          final addSetTitle = find.text('Add Set');
+          final editSetTitle = find.text('Edit Set');
+
+          if (addSetTitle.evaluate().isEmpty && editSetTitle.evaluate().isEmpty) {
+            print('DEBUG: ERROR - Neither "Add Set" nor "Edit Set" title found!');
+            print('DEBUG: Dumping all Text widgets:');
+            final allText = find.byType(Text);
+            for (var i = 0; i < allText.evaluate().length; i++) {
+              final textWidget = allText.evaluate().elementAt(i).widget as Text;
+              final data = textWidget.data;
+              if (data != null && data.isNotEmpty) {
+                print('DEBUG: Text widget $i: "$data"');
+              }
+            }
+            throw TestFailure('Failed to navigate to CreateSetScreen - no "Add Set" or "Edit Set" title found');
+          }
+
+          print('DEBUG: Successfully navigated to CreateSetScreen');
+          print('DEBUG: ===== END FAB TAP VERIFICATION =====');
 
           // Fill in set data with improved weights
           final repsFinder = find.byType(TextFormField).first;
