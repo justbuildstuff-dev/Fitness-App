@@ -471,19 +471,27 @@ class _WeekCard extends StatelessWidget {
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final errorColor = Theme.of(context).colorScheme.error;
-    
+
+    // Fetch cascade counts before showing dialog
+    final cascadeCounts = await programProvider.getCascadeDeleteCounts(
+      weekId: week.id,
+    );
+
+    if (!context.mounted) return;
+
     final confirmed = await DeleteConfirmationDialog.show(
       context: context,
       title: 'Delete Week',
-      content: 'This will permanently delete "${week.name}" and all its workouts, '
-               'exercises, and sets. This action cannot be undone.',
+      content: 'Are you sure you want to delete this week?',
+      itemName: week.name,
       deleteButtonText: 'Delete Week',
+      cascadeCounts: cascadeCounts,
     );
 
     if (confirmed == true) {
       try {
         await programProvider.deleteWeekById(week.id);
-        
+
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
