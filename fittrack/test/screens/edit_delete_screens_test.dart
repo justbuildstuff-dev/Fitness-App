@@ -162,10 +162,13 @@ void main() {
 
         // Tap save button
         await tester.tap(find.text('SAVE'));
-        await tester.pumpAndSettle();
+        await tester.pump(); // Trigger the frame that shows the SnackBar
 
-        // Verify success message
+        // Verify success message appears
         expect(find.text('Program updated successfully!'), findsOneWidget);
+
+        // Let animations complete
+        await tester.pumpAndSettle();
       });
 
       testWidgets('handles update errors gracefully', (tester) async {

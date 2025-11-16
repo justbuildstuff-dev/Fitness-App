@@ -32,22 +32,24 @@ void main() {
 
       // Create simple mock data objects
       mockHeatmapData = ActivityHeatmapData(
+        userId: 'test-user',
         year: DateTime.now().year,
+        dailyWorkoutCounts: {}, // Changed from 'days' to 'dailyWorkoutCounts'
         totalWorkouts: 10,
         currentStreak: 3,
         longestStreak: 5,
-        days: [],
       );
 
       mockAnalytics = WorkoutAnalytics(
+        userId: 'test-user',
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+        endDate: DateTime.now(),
         totalWorkouts: 10,
-        totalVolume: 1000,
         totalSets: 50,
-        totalReps: 200,
-        averageWorkoutDuration: 60,
-        exerciseBreakdown: {},
-        volumeByExercise: {},
-        progressionData: [],
+        totalVolume: 1000,
+        totalDuration: 3600, // Changed from averageWorkoutDuration to totalDuration (in seconds)
+        exerciseTypeBreakdown: {}, // Changed from exerciseBreakdown to exerciseTypeBreakdown
+        completedWorkoutIds: [], // Added required field
       );
 
       // Default mock responses
