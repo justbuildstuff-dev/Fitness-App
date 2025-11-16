@@ -212,6 +212,66 @@ Enables Firestore offline persistence. Must be called before any other Firestore
 - **Constraints**: All numeric fields ≥ 0
 - **Ordering**: `setNumber` field for consistent ordering
 
+## Delete Operations
+
+### getCascadeDeleteCounts({userId, programId, weekId?, workoutId?, exerciseId?})
+- **Returns**: `Future<CascadeDeleteCounts>`
+- **Purpose**: Calculate total entities affected by a delete operation
+- **Usage**: Called before showing delete confirmation dialog
+
+#### Parameters
+- **userId** (required): User performing the delete
+- **programId** (required): Program context for the delete
+- **weekId** (optional): Week to delete or parent of workout/exercise
+- **workoutId** (optional): Workout to delete or parent of exercise
+- **exerciseId** (optional): Exercise to delete
+
+#### Behavior by Scenario
+
+**Week Deletion** (`weekId` provided, `workoutId` and `exerciseId` null):
+- Counts all workouts in the week
+- Counts all exercises across all workouts
+- Counts all sets across all exercises
+- Returns `CascadeDeleteCounts(workouts: X, exercises: Y, sets: Z)`
+
+**Workout Deletion** (`weekId` and `workoutId` provided, `exerciseId` null):
+- Counts all exercises in the workout
+- Counts all sets across all exercises
+- Returns `CascadeDeleteCounts(exercises: X, sets: Y)`
+
+**Exercise Deletion** (`weekId`, `workoutId`, and `exerciseId` all provided):
+- Counts all sets in the exercise
+- Returns `CascadeDeleteCounts(sets: X)`
+
+**Error Handling**:
+- Invalid parameters → Returns `CascadeDeleteCounts()` (zero counts)
+- Firestore errors → Returns `CascadeDeleteCounts()` (zero counts)
+- Empty collections → Returns appropriate zero counts
+
+#### Performance Characteristics
+- Uses Firestore `.count()` queries for set counts (efficient)
+- Uses `.get().docs.length` for workout/exercise counts
+- Nested queries for week deletion (multiple round trips)
+- Typical response time: 500ms - 2s for week deletion
+
+#### Example Usage
+```dart
+final counts = await FirestoreService.instance.getCascadeDeleteCounts(
+  userId: currentUser.uid,
+  programId: program.id,
+  weekId: week.id,
+);
+
+if (counts.hasItems) {
+  final confirmed = await DeleteConfirmationDialog.show(
+    context: context,
+    title: 'Delete Week',
+    itemName: week.name,
+    cascadeCounts: counts,
+  );
+}
+```
+
 ## Batch Operations
 
 ### batchUpdateSets(List<ExerciseSet> sets)
