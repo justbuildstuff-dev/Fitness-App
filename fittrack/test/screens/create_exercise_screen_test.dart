@@ -63,6 +63,7 @@ void main() {
         name: anyNamed('name'),
         exerciseType: anyNamed('exerciseType'),
         notes: anyNamed('notes'),
+        setCount: anyNamed('setCount'),
       )).thenAnswer((_) async => 'new-exercise-id');
     });
 
@@ -145,9 +146,9 @@ void main() {
     testWidgets('validates exercise name is required', (tester) async {
       /// Test Purpose: Verify that form validation prevents empty exercise names
       /// Users must provide a name before creating exercise
-      
+
       await tester.pumpWidget(createTestWidget());
-      
+
       // Try to save without entering name
       await tester.tap(find.text('CREATE'));
       await tester.pump();
@@ -160,6 +161,7 @@ void main() {
         name: anyNamed('name'),
         exerciseType: anyNamed('exerciseType'),
         notes: anyNamed('notes'),
+        setCount: anyNamed('setCount'),
       )); // Should not be called due to validation failure
     });
 
@@ -207,6 +209,7 @@ void main() {
         name: 'Bench Press',
         exerciseType: ExerciseType.strength, // Default selection
         notes: null,
+        setCount: 1, // Default set count
       )).called(1);
     });
 
@@ -247,6 +250,7 @@ void main() {
         name: 'Deadlift',
         exerciseType: ExerciseType.bodyweight,
         notes: 'Focus on proper form and full range of motion',
+        setCount: 1, // Default set count
       )).called(1);
     });
 

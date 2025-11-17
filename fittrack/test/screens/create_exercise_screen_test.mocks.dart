@@ -450,6 +450,7 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
     required String? name,
     required _i6.ExerciseType? exerciseType,
     String? notes,
+    int? setCount,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -462,6 +463,7 @@ class MockProgramProvider extends _i1.Mock implements _i2.ProgramProvider {
             #name: name,
             #exerciseType: exerciseType,
             #notes: notes,
+            #setCount: setCount,
           },
         ),
         returnValue: _i8.Future<String?>.value(),
