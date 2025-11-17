@@ -734,6 +734,7 @@ class ProgramProvider extends ChangeNotifier {
     required String name,
     required ExerciseType exerciseType,
     String? notes,
+    int setCount = 1, // Default to 1 set if not specified
   }) async {
     if (_userId == null) return null;
 
@@ -742,8 +743,8 @@ class ProgramProvider extends ChangeNotifier {
       notifyListeners();
 
       // Calculate next order index
-      final nextOrderIndex = _exercises.isEmpty 
-          ? 0 
+      final nextOrderIndex = _exercises.isEmpty
+          ? 0
           : _exercises.map((e) => e.orderIndex).reduce((a, b) => a > b ? a : b) + 1;
 
       final exercise = Exercise(
@@ -760,7 +761,11 @@ class ProgramProvider extends ChangeNotifier {
         programId: programId,
       );
 
-      final exerciseId = await _firestoreService.createExercise(exercise);
+      // Create exercise and sets in a batched write
+      final exerciseId = await _firestoreService.createExerciseWithSets(
+        exercise,
+        setCount,
+      );
       return exerciseId;
     } catch (e) {
       _error = 'Failed to create exercise: $e';

@@ -29,6 +29,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
   final _nameController = TextEditingController();
   final _notesController = TextEditingController();
   ExerciseType _selectedType = ExerciseType.strength;
+  int _setCount = 1; // Default 1 set, range 1-10
   bool _isLoading = false;
 
   bool get _isEditing => widget.exercise != null;
@@ -155,6 +156,12 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
 
             const SizedBox(height: 16),
 
+            // Set Count Stepper (only shown when creating, not editing)
+            if (!_isEditing) ...[
+              _buildSetCountStepper(),
+              const SizedBox(height: 16),
+            ],
+
             // Notes (Optional)
             TextFormField(
               controller: _notesController,
@@ -202,10 +209,14 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '• Choose the exercise type that matches your activity\n'
-                    '• Exercise type determines which fields you can track\n'
-                    '• After creating, you can add sets to this exercise\n'
-                    '• Use notes for form cues or specific instructions',
+                    _isEditing
+                        ? '• Choose the exercise type that matches your activity\n'
+                          '• Exercise type determines which fields you can track\n'
+                          '• Use notes for form cues or specific instructions'
+                        : '• Choose the exercise type that matches your activity\n'
+                          '• Exercise type determines which fields you can track\n'
+                          '• Select how many sets to create (you can add more later)\n'
+                          '• Use notes for form cues or specific instructions',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
@@ -293,6 +304,84 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
     );
   }
 
+  Widget _buildSetCountStepper() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Number of Sets',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Decrease button
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  iconSize: 32,
+                  onPressed: _setCount > 1
+                      ? () => setState(() => _setCount--)
+                      : null,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+
+                const SizedBox(width: 24),
+
+                // Set count display
+                Container(
+                  width: 60,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    '$_setCount',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 24),
+
+                // Increase button
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  iconSize: 32,
+                  onPressed: _setCount < 10
+                      ? () => setState(() => _setCount++)
+                      : null,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose how many sets to create (1-10)',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _saveExercise() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -326,16 +415,17 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
           Navigator.of(context).pop(true); // Return true to indicate success
         }
       } else {
-        // Create new exercise
+        // Create new exercise with specified number of sets
         final exerciseId = await programProvider.createExercise(
           programId: widget.program.id,
           weekId: widget.week.id,
           workoutId: widget.workout.id,
           name: _nameController.text.trim(),
           exerciseType: _selectedType,
-          notes: _notesController.text.trim().isEmpty 
-              ? null 
+          notes: _notesController.text.trim().isEmpty
+              ? null
               : _notesController.text.trim(),
+          setCount: _setCount,
         );
 
         if (mounted) {
