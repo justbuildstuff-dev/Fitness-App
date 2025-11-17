@@ -5,7 +5,9 @@ import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_set.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
+import '../../widgets/exercise_card.dart';
 import '../exercises/create_exercise_screen.dart';
 
 /// Consolidated workout screen that displays all exercises and their sets inline
@@ -183,45 +185,252 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
   }
 
   Widget _buildExercisesList(List<Exercise> exercises) {
-    return ListView.builder(
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: exercises.length,
+      onReorder: (oldIndex, newIndex) => _reorderExercises(context, oldIndex, newIndex),
       itemBuilder: (context, index) {
         final exercise = exercises[index];
-        return _ExerciseCardPlaceholder(
+        final sets = provider.getSetsForExercise(exercise.id);
+
+        return ExerciseCard(
           key: ValueKey(exercise.id),
-          program: widget.program,
-          week: widget.week,
-          workout: widget.workout,
           exercise: exercise,
-          onEdit: () => _editExercise(context, exercise),
+          sets: sets,
+          onAddSet: () => _addSet(context, exercise),
+          onEditName: () => _editExerciseName(context, exercise),
           onDelete: () => _deleteExercise(context, exercise),
+          onUpdateSet: (updatedSet) => _updateSet(context, updatedSet),
+          onDeleteSet: (exerciseId, setId) => _deleteSet(context, exerciseId, setId),
         );
       },
     );
   }
 
-  void _editExercise(BuildContext context, Exercise exercise) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CreateExerciseScreen(
-          program: widget.program,
-          week: widget.week,
-          workout: widget.workout,
-          exercise: exercise,
-        ),
+  Future<void> _addSet(BuildContext context, Exercise exercise) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await provider.createSet(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
+        exerciseId: exercise.id,
+      );
+
+      // Reload all sets to get the new one
+      await provider.loadAllSetsForWorkout(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
+      );
+
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Set added successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to add set: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateSet(BuildContext context, ExerciseSet updatedSet) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    try {
+      await provider.updateSet(updatedSet);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update set: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteSet(BuildContext context, String exerciseId, String setId) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Set'),
+        content: const Text('Are you sure you want to delete this set?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
 
-    if (result == true && mounted) {
-      // Exercise was updated successfully - reload exercises
-      final provider = Provider.of<ProgramProvider>(context, listen: false);
-      provider.loadExercises(
-        widget.program.id,
-        widget.week.id,
-        widget.workout.id,
-      );
+    if (confirmed == true) {
+      try {
+        await provider.deleteSet(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+          exerciseId,
+          setId,
+        );
+
+        // Reload all sets
+        await provider.loadAllSetsForWorkout(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          workoutId: widget.workout.id,
+        );
+
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Set deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete set: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _editExerciseName(BuildContext context, Exercise exercise) async {
+    final nameController = TextEditingController(text: exercise.name);
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Exercise Name'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Exercise Name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(nameController.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && result != exercise.name) {
+      try {
+        final updatedExercise = exercise.copyWith(
+          name: result,
+          updatedAt: DateTime.now(),
+        );
+
+        await provider.updateExercise(updatedExercise);
+
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Exercise name updated'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to update exercise name: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+
+    nameController.dispose();
+  }
+
+  Future<void> _reorderExercises(BuildContext context, int oldIndex, int newIndex) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    // Adjust newIndex if moving down the list
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    try {
+      // Get the current exercises list
+      final exercises = List<Exercise>.from(provider.exercises);
+
+      // Reorder in local list
+      final exercise = exercises.removeAt(oldIndex);
+      exercises.insert(newIndex, exercise);
+
+      // Update orderIndex for all affected exercises
+      for (int i = 0; i < exercises.length; i++) {
+        if (exercises[i].orderIndex != i) {
+          final updatedExercise = exercises[i].copyWith(
+            orderIndex: i,
+            updatedAt: DateTime.now(),
+          );
+          await provider.updateExercise(updatedExercise);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reorder exercises: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -354,133 +563,6 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
           );
         }
       }
-    }
-  }
-}
-
-/// Placeholder for ExerciseCard widget (will be implemented in Task #115)
-/// This allows the ConsolidatedWorkoutScreen to be created and tested while
-/// the full ExerciseCard implementation is developed separately
-class _ExerciseCardPlaceholder extends StatelessWidget {
-  final Program program;
-  final Week week;
-  final Workout workout;
-  final Exercise exercise;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const _ExerciseCardPlaceholder({
-    super.key,
-    required this.program,
-    required this.week,
-    required this.workout,
-    required this.exercise,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Exercise Header
-          ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: Icon(
-              _getExerciseTypeIcon(exercise.exerciseType),
-              color: _getExerciseTypeColor(exercise.exerciseType),
-            ),
-            title: Text(
-              exercise.name,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Text(
-              exercise.exerciseType.displayName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: _getExerciseTypeColor(exercise.exerciseType),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  onPressed: onEdit,
-                  tooltip: 'Edit exercise',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                  onPressed: onDelete,
-                  tooltip: 'Delete exercise',
-                ),
-              ],
-            ),
-          ),
-
-          // Sets section (placeholder)
-          Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Divider(),
-                const SizedBox(height: 8),
-                Text(
-                  'Sets will be displayed here',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '(SetRow widgets will be implemented in Task #114)',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getExerciseTypeColor(ExerciseType type) {
-    switch (type) {
-      case ExerciseType.strength:
-        return Colors.blue;
-      case ExerciseType.cardio:
-        return Colors.red;
-      case ExerciseType.timeBased:
-        return Colors.orange;
-      case ExerciseType.bodyweight:
-        return Colors.green;
-      case ExerciseType.custom:
-        return Colors.purple;
-    }
-  }
-
-  IconData _getExerciseTypeIcon(ExerciseType type) {
-    switch (type) {
-      case ExerciseType.strength:
-        return Icons.fitness_center;
-      case ExerciseType.cardio:
-        return Icons.directions_run;
-      case ExerciseType.timeBased:
-        return Icons.timer;
-      case ExerciseType.bodyweight:
-        return Icons.accessibility_new;
-      case ExerciseType.custom:
-        return Icons.tune;
     }
   }
 }
