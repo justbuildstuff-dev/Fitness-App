@@ -5,7 +5,7 @@
 **Priority:** HIGH
 **Type:** Bug Fix
 **Created:** 2025-01-26
-**Status:** Design Phase
+**Status:** Implementation Complete (UI Flows)
 
 ---
 
@@ -1991,11 +1991,91 @@ Fix delete functionality for weeks, workouts, and exercises by:
 - Added comprehensive screen-level widget tests (Task #58 skipped tests, but best practice is to include them)
 - Tests ensure cascade count fetching, dialog display, and provider integration work correctly
 
-**PR:** #131
+**PR:** #132
 **Commit:** 316226612ea2057b2edc59759f6204115e62bbde
 
 **Deviations from Design:**
 - None - implementation matches technical design specification exactly
+
+### Task #60: Update Workout & Exercise Detail Screens - Delete Flows
+**Status:** ✅ Complete (Merged to main via PR #133)
+**Completed:** November 17, 2025
+
+**Implementation Details:**
+- Updated `_showDeleteConfirmation()` method in Workout Detail Screen (lines 489-537)
+  - Fetches cascade counts before showing dialog via `getCascadeDeleteCounts(workoutId: widget.workout.id)`
+  - Uses enhanced `DeleteConfirmationDialog.show()` with `cascadeCounts` and `itemName` parameters
+  - Switched from boolean-return `deleteWorkout()` to exception-throwing `deleteWorkoutById()`
+  - Added `context.mounted` check after async cascade count fetch
+  - Simplified content message (details shown via cascade counts)
+  - Consistent try-catch exception handling with descriptive error messages
+  - Navigates back to week screen after successful deletion
+
+- Updated `_deleteExercise()` method in Workout Detail Screen (lines 359-398)
+  - Added cascade count fetching before dialog via `getCascadeDeleteCounts(exerciseId: exercise.id)`
+  - Added `context.mounted` check after async fetch
+  - Added `itemName` parameter for visual exercise name highlighting
+  - Added `cascadeCounts` parameter to show affected sets
+  - Simplified content message
+  - Uses exception-based error handling
+
+- Updated `_showDeleteConfirmation()` method in Exercise Detail Screen (lines 533-581)
+  - Added import: `import '../../widgets/delete_confirmation_dialog.dart';`
+  - Fetches cascade counts before showing dialog via `getCascadeDeleteCounts(exerciseId: widget.exercise.id)`
+  - Uses enhanced `DeleteConfirmationDialog.show()` with `cascadeCounts` and `itemName` parameters
+  - Uses exception-throwing `deleteExerciseById()` for consistency
+  - Added `context.mounted` check after async operation
+  - Simplified content message
+  - Displays success message with exercise name
+  - Navigates back to workout screen after successful deletion
+  - Consistent error handling with descriptive messages
+
+**Code Locations:**
+- `fittrack/lib/screens/workouts/workout_detail_screen.dart` lines 489-537 (workout delete)
+- `fittrack/lib/screens/workouts/workout_detail_screen.dart` lines 359-398 (exercise inline delete)
+- `fittrack/lib/screens/exercises/exercise_detail_screen.dart` lines 533-581 (exercise delete)
+
+**Testing:**
+- Manual testing deferred due to Windows development environment limitations
+- Testing will be performed via GitHub Actions workflow (Task #61)
+
+**Deviations from Design:**
+- None - implementation matches technical design specification exactly
+- All three delete flows enhanced with cascade counts as specified
+
+**PR:** #133
+**Commit:** TBD (merged to main)
+
+---
+
+## Summary of Completed Implementation
+
+### UI Delete Flows (All Complete ✅)
+1. ✅ **Program Detail Screen** - Week delete (Task #58)
+2. ✅ **Weeks Screen** - Week menu delete (Task #59)
+3. ✅ **Weeks Screen** - Workout inline delete (Task #59)
+4. ✅ **Workout Detail Screen** - Workout menu delete (Task #60)
+5. ✅ **Workout Detail Screen** - Exercise inline delete (Task #60)
+6. ✅ **Exercise Detail Screen** - Exercise menu delete (Task #60)
+
+### Core Functionality (All Complete ✅)
+1. ✅ `CascadeDeleteCounts` model (Task #54)
+2. ✅ `getCascadeDeleteCounts()` in FirestoreService (Task #55)
+3. ✅ `getCascadeDeleteCounts()` in ProgramProvider (Task #56)
+4. ✅ Enhanced `DeleteConfirmationDialog` widget (Task #57)
+
+### Documentation (Complete ✅)
+1. ✅ Updated `Docs/Components/FirestoreService.md`
+2. ✅ Updated `Docs/Architecture/StateManagement.md`
+3. ✅ Created `Docs/Releases/release_notes_v1.2.0.md`
+4. ✅ Implementation notes in this technical design
+
+### Remaining Tasks (Testing Phase)
+- ⏳ Task #61: Integration Tests for Delete Functionality (4 hours)
+- ⏳ Task #62: Manual Testing & Bug Fixes (4 hours)
+
+**Total Implementation Time:** ~22 hours (of 28 estimated)
+**Remaining Testing Time:** ~8 hours
 
 ---
 

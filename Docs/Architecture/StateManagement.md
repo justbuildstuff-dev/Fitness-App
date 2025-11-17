@@ -270,17 +270,17 @@ Future<Map<String, dynamic>?> duplicateWeek({
   required String weekId,
 }) async {
   if (_userId == null) return null;
-  
+
   try {
     _error = null;
     notifyListeners();
-    
+
     final result = await _firestoreService.duplicateWeek(
       userId: _userId!,
       programId: programId,
       weekId: weekId,
     );
-    
+
     return result;
   } catch (e) {
     _error = 'Failed to duplicate week: $e';
@@ -289,6 +289,69 @@ Future<Map<String, dynamic>?> duplicateWeek({
   }
 }
 ```
+
+**Cascade Delete Count Integration**:
+```dart
+/// Get cascade delete counts for confirmation dialogs
+///
+/// Resolves context (programId, weekId, workoutId) based on provider state
+/// and calls FirestoreService to calculate affected entity counts.
+///
+/// Returns CascadeDeleteCounts with zero values if context is missing
+/// or if the count operation fails.
+Future<CascadeDeleteCounts> getCascadeDeleteCounts({
+  String? weekId,
+  String? workoutId,
+  String? exerciseId,
+}) async {
+  if (_userId == null) return const CascadeDeleteCounts();
+
+  String? programId;
+  String? resolvedWeekId = weekId;
+  String? resolvedWorkoutId = workoutId;
+
+  // Determine programId and resolve IDs based on context
+  if (exerciseId != null) {
+    // Deleting exercise - need program, week, workout, exercise IDs
+    if (_selectedProgram == null || _selectedWeek == null || _selectedWorkout == null) {
+      return const CascadeDeleteCounts();
+    }
+    programId = _selectedProgram!.id;
+    resolvedWeekId = _selectedWeek!.id;
+    resolvedWorkoutId = _selectedWorkout!.id;
+  } else if (workoutId != null) {
+    // Deleting workout - need program, week, workout IDs
+    if (_selectedProgram == null || _selectedWeek == null) {
+      return const CascadeDeleteCounts();
+    }
+    programId = _selectedProgram!.id;
+    resolvedWeekId = _selectedWeek!.id;
+  } else if (weekId != null) {
+    // Deleting week - need program, week IDs
+    if (_selectedProgram == null) {
+      return const CascadeDeleteCounts();
+    }
+    programId = _selectedProgram!.id;
+  } else {
+    return const CascadeDeleteCounts();
+  }
+
+  return await _firestoreService.getCascadeDeleteCounts(
+    userId: _userId!,
+    programId: programId!,
+    weekId: resolvedWeekId,
+    workoutId: resolvedWorkoutId,
+    exerciseId: exerciseId,
+  );
+}
+```
+
+**Implementation Notes:**
+- Added in Task #56 as part of Delete Functionality Fix (Issue #49)
+- Provides convenient provider-level access to cascade counts for UI screens
+- Automatically resolves context from provider state (_selectedProgram, _selectedWeek, _selectedWorkout)
+- Returns zero counts gracefully if required context is missing
+- Used by all delete confirmation dialogs to show affected entity counts
 
 ## Provider Setup and Configuration
 

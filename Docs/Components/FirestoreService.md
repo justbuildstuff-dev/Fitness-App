@@ -218,6 +218,7 @@ Enables Firestore offline persistence. Must be called before any other Firestore
 - **Returns**: `Future<CascadeDeleteCounts>`
 - **Purpose**: Calculate total entities affected by a delete operation
 - **Usage**: Called before showing delete confirmation dialog
+- **Implementation Status**: ✅ Complete (Added in Task #55)
 
 #### Parameters
 - **userId** (required): User performing the delete
@@ -271,6 +272,12 @@ if (counts.hasItems) {
   );
 }
 ```
+
+#### Implementation Notes
+- Added as part of Delete Functionality Fix (Issue #49)
+- Supports all three delete scenarios: Week, Workout, Exercise
+- Integrated with UI delete flows in multiple screens
+- See [Delete_Functionality_Fix_Technical_Design.md](../Technical_Designs/Delete_Functionality_Fix_Technical_Design.md) for full details
 
 ## Batch Operations
 
