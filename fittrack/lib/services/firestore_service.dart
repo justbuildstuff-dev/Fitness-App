@@ -921,6 +921,71 @@ class FirestoreService {
     return docRef.id;
   }
 
+  /// Create an exercise with a specified number of sets in a batched write
+  Future<String> createExerciseWithSets(Exercise exercise, int setCount) async {
+    final batch = _firestore.batch();
+
+    // Create exercise document reference
+    final exerciseRef = _firestore
+        .collection('users')
+        .doc(exercise.userId)
+        .collection('programs')
+        .doc(exercise.programId)
+        .collection('weeks')
+        .doc(exercise.weekId)
+        .collection('workouts')
+        .doc(exercise.workoutId)
+        .collection('exercises')
+        .doc();
+
+    // Add exercise to batch with the generated ID
+    final exerciseWithId = Exercise(
+      id: exerciseRef.id,
+      name: exercise.name,
+      exerciseType: exercise.exerciseType,
+      orderIndex: exercise.orderIndex,
+      notes: exercise.notes,
+      createdAt: exercise.createdAt,
+      updatedAt: exercise.updatedAt,
+      userId: exercise.userId,
+      workoutId: exercise.workoutId,
+      weekId: exercise.weekId,
+      programId: exercise.programId,
+    );
+    batch.set(exerciseRef, ExerciseConverter.toFirestore(exerciseWithId));
+
+    // Create N sets with default values
+    for (int i = 0; i < setCount; i++) {
+      final setRef = exerciseRef.collection('sets').doc();
+
+      final set = ExerciseSet(
+        id: setRef.id,
+        setNumber: i + 1,
+        checked: false,
+        // Default values based on exercise type
+        weight: null,
+        reps: null,
+        duration: null,
+        distance: null,
+        notes: null,
+        restTime: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: exercise.userId,
+        exerciseId: exerciseRef.id,
+        workoutId: exercise.workoutId,
+        weekId: exercise.weekId,
+        programId: exercise.programId,
+      );
+
+      batch.set(setRef, ExerciseSetConverter.toFirestore(set));
+    }
+
+    // Commit the batched write
+    await batch.commit();
+    return exerciseRef.id;
+  }
+
   /// Update an exercise
   Future<void> updateExercise(Exercise exercise) async {
     await _firestore
