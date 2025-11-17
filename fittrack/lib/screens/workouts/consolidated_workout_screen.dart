@@ -30,13 +30,22 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
   @override
   void initState() {
     super.initState();
-    // Load exercises when screen opens
+    // Load exercises and all sets when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+
+      // First load exercises
       programProvider.loadExercises(
         widget.program.id,
         widget.week.id,
         widget.workout.id,
+      );
+
+      // Then load all sets for all exercises
+      programProvider.loadAllSetsForWorkout(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
       );
     });
   }
@@ -76,10 +85,12 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
       body: Consumer<ProgramProvider>(
         builder: (context, provider, child) {
           final exercises = provider.exercises;
-          final isLoading = provider.isLoadingExercises;
+          final isLoadingExercises = provider.isLoadingExercises;
+          final isLoadingSets = provider.isLoadingAllWorkoutSets;
           final error = provider.error;
 
-          if (isLoading && exercises.isEmpty) {
+          // Show loading indicator while exercises or sets are loading
+          if ((isLoadingExercises || isLoadingSets) && exercises.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 

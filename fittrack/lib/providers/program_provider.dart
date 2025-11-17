@@ -82,6 +82,11 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> _sets = [];
   bool _isLoadingSets = false;
 
+  // All sets for all exercises in a workout (for ConsolidatedWorkoutScreen)
+  // Map of exerciseId to List of ExerciseSet
+  Map<String, List<ExerciseSet>> _allWorkoutSets = {};
+  bool _isLoadingAllWorkoutSets = false;
+
   // Analytics
   WorkoutAnalytics? _currentAnalytics;
   ActivityHeatmapData? _heatmapData;
@@ -120,6 +125,15 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> get sets => _sets;
   bool get isLoadingSets => _isLoadingSets;
 
+  // All workout sets getters
+  Map<String, List<ExerciseSet>> get allWorkoutSets => _allWorkoutSets;
+  bool get isLoadingAllWorkoutSets => _isLoadingAllWorkoutSets;
+
+  /// Get sets for a specific exercise from the all workout sets cache
+  List<ExerciseSet> getSetsForExercise(String exerciseId) {
+    return _allWorkoutSets[exerciseId] ?? [];
+  }
+
   // Analytics getters
   WorkoutAnalytics? get currentAnalytics => _currentAnalytics;
   ActivityHeatmapData? get heatmapData => _heatmapData;
@@ -131,7 +145,7 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> getCurrentSets() => _sets;
 
   /// General loading state (true if any operation is loading)
-  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets || _isLoadingAnalytics;
+  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets || _isLoadingAllWorkoutSets || _isLoadingAnalytics;
   
   /// Get the userId
   String? get userId => _userId;
@@ -950,6 +964,55 @@ class ProgramProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  /// Load all sets for all exercises in a workout
+  /// This is an optimized method for the ConsolidatedWorkoutScreen that loads
+  /// all sets for all exercises in a single operation to minimize queries
+  Future<void> loadAllSetsForWorkout({
+    required String programId,
+    required String weekId,
+    required String workoutId,
+  }) async {
+    if (_userId == null) return;
+
+    _isLoadingAllWorkoutSets = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // First ensure exercises are loaded
+      if (_exercises.isEmpty) {
+        // Load exercises first using the existing method
+        await _firestoreService.getExercises(_userId!, programId, weekId, workoutId).first;
+      }
+
+      // Load sets for all exercises in parallel
+      final setsFutures = _exercises.map((exercise) {
+        return _firestoreService
+            .getSets(_userId!, programId, weekId, workoutId, exercise.id)
+            .first;
+      }).toList();
+
+      // Wait for all sets to load
+      final allSetLists = await Future.wait(setsFutures);
+
+      // Build map of exerciseId -> List<ExerciseSet>
+      final setsMap = <String, List<ExerciseSet>>{};
+      for (var i = 0; i < _exercises.length; i++) {
+        setsMap[_exercises[i].id] = allSetLists[i];
+      }
+
+      _allWorkoutSets = setsMap;
+      _isLoadingAllWorkoutSets = false;
+      _error = null;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to load workout sets: $e';
+      _isLoadingAllWorkoutSets = false;
+      _allWorkoutSets = {};
+      notifyListeners();
+    }
   }
 
   /// Create a new set
