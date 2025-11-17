@@ -255,6 +255,7 @@ Due to Notion API limitations with complex formatting, use a two-part approach:
 - [ ] Each task references similar existing code
 - [ ] Design reviewed for technical risks
 - [ ] No assumptions - everything based on codebase analysis
+- [ ] **Feature/bug parent branch created**
 - [ ] **User approved the design approach**
 
 **Get User Approval:**
@@ -278,14 +279,44 @@ Estimated Effort: [X days/points]
 Please review the design. Approve to hand off to Developer Agent?
 ```
 
-**After approval, invoke Developer Agent:**
+**Create Feature/Bug Parent Branch:**
+
+After user approval, create the parent branch that all task branches will merge into:
+
+```bash
+# For features
+git checkout main
+git pull origin main
+git checkout -b feature/issue-XX-feature-name
+git push -u origin feature/issue-XX-feature-name
+
+# For bugs
+git checkout main
+git pull origin main
+git checkout -b bug/issue-XX-bug-description
+git push -u origin bug/issue-XX-bug-description
+```
+
+**Update parent feature/bug issue with branch name:**
+```markdown
+## Feature Branch
+`feature/issue-XX-feature-name` (created, ready for task branches)
+
+All task branches should be created from this feature branch.
+```
+
+**After approval and branch creation, invoke Developer Agent:**
 ```
 /developer "Design approved for [Feature Name].
 
 Parent Issue: #XX
+Feature Branch: feature/issue-XX-feature-name (created)
 Implementation Tasks: #XX, #XX, #XX, #XX, #XX
 
 Technical Design: [Notion URL]
+
+IMPORTANT: Create task branches from the feature branch, not main.
+Target all PRs to the feature branch.
 
 Start with Task #XX - it's the foundation.
 

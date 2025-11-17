@@ -179,7 +179,33 @@ Ready to hand off to Developer Agent for implementation?
 Type 'yes' to proceed or tell me what needs adjustment.
 ```
 
-### After User Approves, Invoke Developer Agent
+### Create Feature/Bug Parent Branch
+
+After user approval, create the parent branch that all task branches will merge into:
+
+```bash
+# For features
+git checkout main
+git pull origin main
+git checkout -b feature/issue-XX-feature-name
+git push -u origin feature/issue-XX-feature-name
+
+# For bugs
+git checkout main
+git pull origin main
+git checkout -b bug/issue-XX-bug-description
+git push -u origin bug/issue-XX-bug-description
+```
+
+**Update parent feature/bug issue with branch name:**
+```markdown
+## Feature Branch
+`feature/issue-XX-feature-name` (created, ready for task branches)
+
+All task branches should be created from this feature branch.
+```
+
+### After User Approves and Branch Created, Invoke Developer Agent
 
 **Command:** `/developer`
 
@@ -187,12 +213,15 @@ Type 'yes' to proceed or tell me what needs adjustment.
 ```
 Design approved for [Feature Name].
 
-Start with GitHub Issue: #10
-All tasks: #10, #11, #12, #13, #14, #15, #16, #17
-Parent feature: #XX
+Parent Issue: #XX
+Feature Branch: feature/issue-XX-feature-name (created)
+Implementation Tasks: #10, #11, #12, #13, #14, #15, #16, #17
 
-Technical design: [Notion URL]
-Detailed design: Docs/Technical_Designs/[Feature]_Technical_Design.md
+Technical Design: [Notion URL]
+Detailed Design: Docs/Technical_Designs/[Feature]_Technical_Design.md
+
+IMPORTANT: Create task branches from the feature branch, not main.
+Target all PRs to the feature branch.
 
 Key architectural notes:
 - [Important pattern to follow]
@@ -207,11 +236,34 @@ Please implement tasks sequentially starting with #10.
 ### Before Handoff Verification
 
 - [ ] All task issues closed
-- [ ] All PRs merged to main branch
-- [ ] All tests passing on main branch
+- [ ] All task PRs merged to feature/bug branch
+- [ ] Feature/bug→main PR created (NOT merged yet)
+- [ ] All tests passing on feature/bug branch
 - [ ] No linter warnings
 - [ ] Code follows project patterns
 - [ ] Documentation updated (if needed)
+
+### Create Feature→Main PR
+
+**After all tasks merged to feature branch:**
+
+```bash
+# Make sure feature branch is up to date
+git checkout feature/issue-XX-feature-name
+git pull origin feature/issue-XX-feature-name
+
+# Push if needed
+git push origin feature/issue-XX-feature-name
+```
+
+Then create PR via GitHub:
+- **Base:** `main`
+- **Head:** `feature/issue-XX-feature-name`
+- **Title:** `[Feature] Feature Name (#XX)`
+- **Description:** Summary of all tasks, complete feature overview
+- **Link:** "Closes #XX"
+
+**DO NOT merge this PR yet** - Testing Agent will verify tests pass first.
 
 ### Update GitHub
 
@@ -220,24 +272,25 @@ Please implement tasks sequentially starting with #10.
 ✅ Implementation complete
 
 All tasks finished:
-- #10: Add shared_preferences ✓
-- #11: Create ThemeProvider ✓
-- #12: Integrate in main.dart ✓
-- #13: Create Settings screen ✓
-- #14: Wire navigation ✓
-- #15: Override Analytics theme ✓
-- #16: ThemeProvider tests ✓
-- #17: Widget/integration tests ✓
+- #10: Add shared_preferences ✓ (PR #XX1)
+- #11: Create ThemeProvider ✓ (PR #XX2)
+- #12: Integrate in main.dart ✓ (PR #XX3)
+- #13: Create Settings screen ✓ (PR #XX4)
+- #14: Wire navigation ✓ (PR #XX5)
+- #15: Override Analytics theme ✓ (PR #XX6)
+- #16: ThemeProvider tests ✓ (PR #XX7)
+- #17: Widget/integration tests ✓ (PR #XX8)
 
-PRs merged:
-- #XXX, #XXX, #XXX, #XXX, #XXX, #XXX, #XXX, #XXX
+All task PRs merged to feature branch: feature/issue-XX-feature-name
 
-All tests passing on main branch.
+Final PR to main: #XXX (created, awaiting test verification)
+
+All tests passing on feature branch.
 Ready for automated testing.
 ```
 
 **Update labels:**
-- Remove: `design-approved`
+- Remove: `in-development`
 - Add: `ready-for-testing`
 - Keep issue OPEN
 
@@ -250,10 +303,12 @@ Ready for automated testing.
 Implementation complete for [Feature Name].
 
 Parent Issue: #XX
-All tasks complete: #10-#17
-All PRs merged to main branch
+Feature Branch: feature/issue-XX-feature-name
+All tasks complete: #10-#17 (all merged to feature branch)
 
-Please run full test suite, check coverage, and create beta build if tests pass.
+Final PR to main: #XXX (created, DO NOT merge yet)
+
+Please verify all tests pass on the feature→main PR and approve merge if tests pass.
 ```
 
 ## Testing Agent → QA Agent Handoff

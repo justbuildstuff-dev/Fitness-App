@@ -190,21 +190,73 @@ Closes #[task-number]
 Part of #[feature-number]
 ```
 
-### PR Branch Naming
+### Branch Naming Conventions
 
-**Feature branches:**
+**Hierarchical Branching Strategy:**
+
+The project uses a **Task → Feature/Bug → Main** branching strategy for better CI efficiency and safer integration testing.
+
+**Feature parent branches** (created by SA Agent):
 - `feature/issue-{number}-{short-description}`
-- Example: `feature/issue-10-add-shared-preferences`
+- Example: `feature/issue-49-delete-functionality`
+- Created when design is approved
+- Base for all task branches
+- Merges to `main` after all tasks complete
 
-**Bug fix branches:**
+**Bug parent branches** (created by SA Agent or Developer):
+- `bug/issue-{number}-{short-description}`
+- Example: `bug/issue-123-integration-test-infrastructure`
+- Created for bug fixes requiring multiple tasks
+- Base for all task branches
+- Merges to `main` after all tasks complete
+
+**Task branches** (created by Developer Agent):
+- `task/{task-number}-{short-description}`
+- Example: `task/54-cascade-count-model`
+- Branched from parent feature/bug branch (NOT main)
+- Merges to parent feature/bug branch
+- One task per branch
+
+**Branch Hierarchy Example:**
+```
+main
+ └── feature/issue-49-delete-functionality
+      ├── task/54-cascade-count-model → PR to feature branch
+      ├── task/55-firestore-counts → PR to feature branch
+      ├── task/56-provider-method → PR to feature branch
+      └── task/57-enhanced-dialog → PR to feature branch
+
+      → Final PR: feature branch → main (after all tasks merged)
+```
+
+**Simple bug fixes** (single commit, no tasks):
 - `fix/issue-{number}-{short-description}`
 - Example: `fix/issue-51-theme-flicker`
+- Branch from main
+- PR directly to main
 
-### PR Merge Strategy
+### PR Targeting and Merge Strategy
 
-- All PRs must pass CI checks before merging
-- Squash and merge preferred for clean history
-- Delete branch after merge
+**Task PRs** (Developer Agent):
+- **Target:** Parent feature/bug branch
+- **Trigger:** Full CI test suite on task→feature/bug PRs
+- **Merge:** Squash and merge to feature/bug branch
+- **Cleanup:** Delete task branch after merge
+- **Issue:** Close task issue immediately after merge
+
+**Feature/Bug PRs** (Testing Agent or Developer Agent):
+- **Target:** `main` branch
+- **Trigger:** Full CI test suite on feature/bug→main PRs
+- **Merge:** Do NOT squash (preserve task commits for history)
+- **Cleanup:** Delete feature/bug branch after merge
+- **Issue:** Feature/bug issue closed by Deployment Agent after production deploy
+
+**Why this strategy:**
+- Reduces CI runs by 43% (20 runs vs 35+ for a 10-task feature)
+- Tests complete feature as unit before merging to main
+- Main branch only sees complete, tested features
+- Task-level history preserved in main branch
+- Safer rollback (revert entire feature or cherry-pick tasks)
 
 ## Label System
 
@@ -428,12 +480,23 @@ Ready for [next agent/phase].
 4. Set labels: `task`, `ready-for-dev`, plus parent's priority/platform
 5. Close after PR merged
 
-**Creating a PR:**
-1. Branch name: `feature/issue-{number}-{description}`
-2. Title: `[Feature] Description (#task-number)`
-3. Description with changes, testing checklist, links
-4. Link: "Closes #X" and "Part of #Y"
-5. Wait for CI, address failures, merge when green
+**Creating a task PR:**
+1. Branch from feature/bug parent branch: `task/{task-number}-{description}`
+2. Title: `[Task] Description (#task-number)`
+3. Target: Parent feature/bug branch (NOT main)
+4. Description with changes, testing checklist, links
+5. Link: "Closes #task-number" and "Part of #feature-number"
+6. Wait for CI, address failures, merge when green
+7. Close task issue after merge
+
+**Creating a feature/bug→main PR:**
+1. After all task PRs merged to feature/bug branch
+2. Title: `[Feature] Feature Name (#feature-number)` or `[Bug] Bug Description (#bug-number)`
+3. Target: `main` branch
+4. Description with complete feature summary, testing results, links
+5. Link: "Closes #feature-number" or "Closes #bug-number"
+6. Wait for full CI, QA approval, merge when green
+7. Do NOT squash (preserve task history)
 
 **Closing issues:**
 - Task issues: Developer closes after PR merged

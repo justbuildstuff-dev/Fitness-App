@@ -7,7 +7,10 @@ on:
       - 'fittrack/**'
       - '.github/workflows/fittrack_test_suite.yml'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - 'feature/**'  # Run on PRs to feature branches (task→feature)
+      - 'bug/**'      # Run on PRs to bug branches (task→bug)
     paths:
       - 'fittrack/**'
       - '.github/workflows/fittrack_test_suite.yml'

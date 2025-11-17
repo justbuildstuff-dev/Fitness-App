@@ -286,9 +286,56 @@ Agents automatically reference relevant skills for procedural knowledge. Skills 
 ## GitHub Actions:
 
 - Workflow: fittrack_test_suite.yml
-- Runs on: PRs and pushes to main/develop
+- Runs on: PRs to main, feature/**, bug/** branches
 - Jobs: unit tests, widget tests, integration tests, performance tests, security checks
 - Status check: all-tests-passed - Single check agents query for pass/fail
+
+## Git Branching Strategy
+
+**Hierarchical Branching: Task → Feature/Bug → Main**
+
+The project uses a structured branching strategy for better CI efficiency and safer integration testing:
+
+**Feature Parent Branches** (created by SA Agent):
+- `feature/issue-{number}-{short-description}`
+- Example: `feature/issue-49-delete-functionality`
+- Created when design is approved
+- Base for all task branches
+- Merges to `main` after all tasks complete
+
+**Bug Parent Branches** (created by SA Agent or Developer):
+- `bug/issue-{number}-{short-description}`
+- Example: `bug/issue-123-integration-test-infrastructure`
+- Created for bug fixes requiring multiple tasks
+- Merges to `main` after all tasks complete
+
+**Task Branches** (created by Developer Agent):
+- `task/{task-number}-{short-description}`
+- Example: `task/54-cascade-count-model`
+- Branched from parent feature/bug branch (NOT main)
+- Merges to parent feature/bug branch via PR
+- One task per branch
+
+**Workflow:**
+```
+main
+ └── feature/issue-49-delete-functionality
+      ├── task/54-cascade-count-model → PR to feature branch
+      ├── task/55-firestore-counts → PR to feature branch
+      └── task/56-provider-method → PR to feature branch
+
+      → Final PR: feature branch → main (after all tasks merged)
+```
+
+**Benefits:**
+- Reduces CI runs by 43% (tests complete feature before main)
+- Main branch only sees complete, tested features
+- Task-level history preserved
+- Safer rollback (revert feature or cherry-pick tasks)
+
+**Merge Strategy:**
+- Task PRs: Squash and merge to feature/bug branch
+- Feature/Bug PRs: Do NOT squash (preserve task commits)
 
 ## Agent Communication Protocol
 **BA Agent hands off to SA:**
@@ -308,19 +355,26 @@ Please create technical design and implementation tasks."
 ```bash
 @developer "Design approved for [Feature Name].
 
-Start with GitHub Issue: #XX
-All tasks: #XX, #XX, #XX
+Parent Issue: #XX
+Feature Branch: feature/issue-XX-feature-name (created)
+Implementation Tasks: #XX, #XX, #XX
 
-Technical design: [Notion URL]"
+Technical Design: [Notion URL]
+
+IMPORTANT: Create task branches from the feature branch, not main.
+Target all PRs to the feature branch."
 ```
 **Developer Agent hands off to Testing:**
 ```bash
-@testing "All implementation complete for [Feature Name].
+@testing "Implementation complete for [Feature Name].
 
 Parent Issue: #XX
-PRs merged: #XXX, #XXX, #XXX
+Feature Branch: feature/issue-XX-feature-name
+All tasks complete: #XX-#XX (all merged to feature branch)
 
-Please run full test suite and create beta build."
+Final PR to main: #XXX (created, DO NOT merge yet)
+
+Please verify all tests pass on the feature→main PR and approve merge if tests pass."
 ```
 **Testing Agent hands off to QA:**
 ```bash

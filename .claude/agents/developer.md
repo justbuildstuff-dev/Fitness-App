@@ -103,9 +103,22 @@ Only create a branch for the task you're currently implementing.
 
 **For each task, follow this pattern:**
 
-1. **Create feature branch**
-   - Branch naming: `feature/issue-{number}-{short-description}`
-   - Example: `feature/issue-10-add-shared-preferences`
+1. **Create task branch from parent feature/bug branch**
+
+   **CRITICAL:** Task branches are created from the feature/bug parent branch, NOT from main.
+
+   ```bash
+   # First, checkout the parent feature/bug branch
+   git checkout feature/issue-XX-feature-name
+   git pull origin feature/issue-XX-feature-name
+
+   # Then create task branch FROM the feature branch
+   git checkout -b task/YY-task-description
+   ```
+
+   - Branch naming: `task/{task-number}-{short-description}`
+   - Example: `task/54-cascade-count-model`
+   - Base: Parent feature/bug branch (specified in SA handoff message)
 
 2. **Implement following the design**
    - Read implementation steps from task issue
@@ -153,9 +166,19 @@ Closes #10
 
 6. **Push and create PR**
 
-**See `.claude/skills/github_workflow/` for PR template and standards.**
+   ```bash
+   git push -u origin task/YY-task-description
+   ```
 
-**Critical:** All tests run on PRs, not on main branch (optimization).
+   **CRITICAL:** Target the parent feature/bug branch, NOT main.
+
+   **See `.claude/skills/github_workflow/` for PR template and standards.**
+
+   - **Base branch:** Parent feature/bug branch (e.g., `feature/issue-XX-feature-name`)
+   - **PR title:** `[Task] Task Description (#task-number)`
+   - **PR body:** Include "Closes #task-number" and "Part of #feature-number"
+
+   **Note:** All tests run on PRs targeting feature/bug branches, providing full CI feedback.
 
 7. **Wait for CI checks**
    - GitHub Actions runs automatically on PR
@@ -182,8 +205,9 @@ Closes #10
 **One task, one branch, one PR at a time.**
 
 **When all tasks done:**
-- All implementation tasks closed
-- All PRs merged to main
+- All task issues closed
+- All task PRs merged to parent feature/bug branch
+- **Create final PR from feature/bug branch to main**
 - Parent feature issue has label `ready-for-testing`
 - Hand off to Testing Agent
 
@@ -191,10 +215,33 @@ Closes #10
 
 **See `.claude/skills/agent_handoff/` for complete Developer → Testing handoff protocol.**
 
-**Before handing off, verify:**
+**After all tasks merged to feature/bug branch:**
+
+1. **Create final feature→main PR:**
+
+   ```bash
+   # Make sure feature branch is up to date
+   git checkout feature/issue-XX-feature-name
+   git pull origin feature/issue-XX-feature-name
+
+   # Push if needed
+   git push origin feature/issue-XX-feature-name
+   ```
+
+   Then create PR via GitHub:
+   - **Base:** `main`
+   - **Head:** `feature/issue-XX-feature-name`
+   - **Title:** `[Feature] Feature Name (#feature-number)`
+   - **Description:** Summary of all tasks, complete feature overview
+   - **Link:** "Closes #feature-number"
+
+   **DO NOT merge this PR yet** - Testing Agent will verify tests pass first.
+
+2. **Before handing off, verify:**
 - [ ] All task issues closed
-- [ ] All PRs merged to main
-- [ ] All tests passing on main branch
+- [ ] All task PRs merged to feature/bug branch
+- [ ] Feature/bug→main PR created (but NOT merged yet)
+- [ ] All tests passing on feature/bug branch
 - [ ] No linter warnings
 - [ ] Code follows project patterns
 - [ ] Documentation updated if needed
@@ -204,18 +251,20 @@ Closes #10
 ✅ Implementation complete
 
 All tasks finished:
-- #10: [Task name] ✓
-- #11: [Task name] ✓
+- #10: [Task name] ✓ (PR #XX)
+- #11: [Task name] ✓ (PR #XX)
 [... list all tasks ...]
 
-PRs merged: #[list PR numbers]
+All task PRs merged to feature branch: feature/issue-XX-feature-name
 
-All tests passing on main branch.
+Final PR to main: #XXX (created, awaiting test verification)
+
+All tests passing on feature branch.
 Ready for automated testing.
 ```
 
 **Update labels:**
-- Remove: `design-approved`
+- Remove: `in-development`
 - Add: `ready-for-testing`
 - Keep issue OPEN
 
@@ -224,10 +273,12 @@ Ready for automated testing.
 /testing "Implementation complete for [Feature Name].
 
 Parent Issue: #XX
-All tasks complete: #10-#17
-All PRs merged to main branch
+Feature Branch: feature/issue-XX-feature-name
+All tasks complete: #10-#17 (all merged to feature branch)
 
-Please run full test suite, check coverage, and create beta build if tests pass."
+Final PR to main: #XXX (created, DO NOT merge yet)
+
+Please verify all tests pass on the feature→main PR, check coverage, and approve merge if tests pass."
 ```
 
 ## Critical: Main Branch Protection
