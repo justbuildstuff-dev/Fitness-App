@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
+import '../../models/navigation_section.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import '../weeks/weeks_screen.dart';
 import '../weeks/create_week_screen.dart';
 
@@ -244,6 +246,9 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateWeek(context),
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.programs,
       ),
     );
   }

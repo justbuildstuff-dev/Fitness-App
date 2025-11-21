@@ -5,7 +5,9 @@ import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
+import '../../models/navigation_section.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import '../exercises/create_exercise_screen.dart';
 import '../exercises/exercise_detail_screen.dart';
 
@@ -140,6 +142,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         onPressed: () => _addExercise(context),
         tooltip: 'Add Exercise',
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.programs,
       ),
     );
   }
