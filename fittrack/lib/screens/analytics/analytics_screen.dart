@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/analytics.dart';
+import '../../models/navigation_section.dart';
 import '../../providers/program_provider.dart';
 import '../../widgets/error_display.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import 'components/activity_heatmap_section.dart';
 import 'components/key_statistics_section.dart';
 import 'components/charts_section.dart';
@@ -158,6 +160,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
           );
         },
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.analytics,
       ),
     );
   }
