@@ -5,6 +5,27 @@ All notable changes to FitTrack will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Global Bottom Navigation Bar** - Persistent navigation across all screens (#52)
+  - One-tap access to Programs, Analytics, and Profile from anywhere in the app
+  - Bottom navigation appears on all full-page screens (Programs, Program Details, Weeks, Workouts, Analytics, Profile)
+  - Smart section highlighting based on current screen location
+  - Navigation stack clearing for clean section switching
+  - Modal screens (Create*) correctly excluded from bottom nav
+
+### Changed
+- HomeScreen now accepts `initialIndex` parameter for programmatic tab selection
+- Navigation behavior: Tapping bottom nav clears entire navigation stack
+- Back button after bottom nav navigation exits app instead of returning to previous screens
+
+### Technical
+- Created `NavigationSection` enum for type-safe section management
+- Created `GlobalBottomNavBar` reusable widget component
+- Added 25+ tests for navigation functionality (unit + widget tests)
+- Follows standard mobile app navigation patterns (Instagram, Twitter, etc.)
+
 ## [1.1.0] - 2025-10-18
 
 ### Added
