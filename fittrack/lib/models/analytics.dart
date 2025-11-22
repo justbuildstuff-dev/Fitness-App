@@ -277,18 +277,20 @@ enum PRType {
 class ActivityHeatmapData {
   final String userId;
   final int year;
-  final Map<DateTime, int> dailyWorkoutCounts; // Date -> workout count
+  final Map<DateTime, int> dailySetCounts; // Date -> set count (changed from workouts)
   final int currentStreak;
   final int longestStreak;
-  final int totalWorkouts;
+  final int totalSets; // Changed from totalWorkouts
+  final String? programId; // NEW: Optional program filter
 
   ActivityHeatmapData({
     required this.userId,
     required this.year,
-    required this.dailyWorkoutCounts,
+    required this.dailySetCounts,
     required this.currentStreak,
     required this.longestStreak,
-    required this.totalWorkouts,
+    required this.totalSets,
+    this.programId,
   });
 
   /// Factory constructor to compute heatmap from workout data
@@ -322,10 +324,11 @@ class ActivityHeatmapData {
     return ActivityHeatmapData(
       userId: userId,
       year: year,
-      dailyWorkoutCounts: dailyCounts,
+      dailySetCounts: dailyCounts,
       currentStreak: streaks.current,
       longestStreak: streaks.longest,
-      totalWorkouts: yearWorkouts.length,
+      totalSets: yearWorkouts.length,
+      programId: null,
     );
   }
 
@@ -335,14 +338,14 @@ class ActivityHeatmapData {
     final startDate = DateTime(year, 1, 1);
     final endDate = DateTime(year, 12, 31);
 
-    for (var date = startDate; date.isBefore(endDate.add(const Duration(days: 1))); 
+    for (var date = startDate; date.isBefore(endDate.add(const Duration(days: 1)));
          date = date.add(const Duration(days: 1))) {
-      final workoutCount = getWorkoutCountForDate(date);
+      final setCount = getSetCountForDate(date);
       final intensity = getIntensityForDate(date);
-      
+
       days.add(HeatmapDay(
         date: date,
-        workoutCount: workoutCount,
+        workoutCount: setCount,
         intensity: intensity,
       ));
     }
@@ -350,19 +353,16 @@ class ActivityHeatmapData {
     return days;
   }
 
-  /// Get workout count for a specific date
-  int getWorkoutCountForDate(DateTime date) {
+  /// Get set count for a specific date
+  int getSetCountForDate(DateTime date) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
-    return dailyWorkoutCounts[normalizedDate] ?? 0;
+    return dailySetCounts[normalizedDate] ?? 0;
   }
 
-  /// Get intensity for a specific date
+  /// Get intensity for a specific date based on set count
   HeatmapIntensity getIntensityForDate(DateTime date) {
-    final count = getWorkoutCountForDate(date);
-    if (count == 0) return HeatmapIntensity.none;
-    if (count == 1) return HeatmapIntensity.low;
-    if (count <= 3) return HeatmapIntensity.medium;
-    return HeatmapIntensity.high;
+    final count = getSetCountForDate(date);
+    return HeatmapIntensity.fromSetCount(count);
   }
 
   /// Calculate current and longest streaks
@@ -420,22 +420,34 @@ class HeatmapDay {
 
 /// Intensity levels for heatmap visualization
 enum HeatmapIntensity {
-  none,   // 0 workouts - light gray
-  low,    // 1 workout - light green  
-  medium, // 2-3 workouts - medium green
-  high;   // 4+ workouts - dark green
+  none,     // 0 sets - background color
+  low,      // 1-5 sets - lightest shade
+  medium,   // 6-15 sets - light-medium shade
+  high,     // 16-25 sets - medium-dark shade
+  veryHigh; // 26+ sets - darkest shade
 
   String get displayName {
     switch (this) {
       case HeatmapIntensity.none:
-        return 'No workouts';
+        return 'No activity';
       case HeatmapIntensity.low:
         return 'Light activity';
       case HeatmapIntensity.medium:
         return 'Moderate activity';
       case HeatmapIntensity.high:
         return 'High activity';
+      case HeatmapIntensity.veryHigh:
+        return 'Very high activity';
     }
+  }
+
+  /// Get intensity level from set count
+  static HeatmapIntensity fromSetCount(int setCount) {
+    if (setCount == 0) return HeatmapIntensity.none;
+    if (setCount <= 5) return HeatmapIntensity.low;
+    if (setCount <= 15) return HeatmapIntensity.medium;
+    if (setCount <= 25) return HeatmapIntensity.high;
+    return HeatmapIntensity.veryHigh;
   }
 }
 
@@ -489,4 +501,156 @@ class DateRange {
 
   /// Duration of the range in days
   int get durationInDays => end.difference(start).inDays + 1;
+}
+
+/// Timeframe options for heatmap visualization
+enum HeatmapTimeframe {
+  thisWeek,
+  thisMonth,
+  last30Days,
+  thisYear;
+
+  String get displayName {
+    switch (this) {
+      case HeatmapTimeframe.thisWeek:
+        return 'This Week';
+      case HeatmapTimeframe.thisMonth:
+        return 'This Month';
+      case HeatmapTimeframe.last30Days:
+        return 'Last 30 Days';
+      case HeatmapTimeframe.thisYear:
+        return 'This Year';
+    }
+  }
+}
+
+/// Configuration for heatmap layout based on selected timeframe
+class HeatmapLayoutConfig {
+  final HeatmapTimeframe timeframe;
+  final int rows;
+  final int columns;
+  final DateTime startDate;
+  final DateTime endDate;
+  final List<String> rowLabels;
+  final List<String> columnLabels;
+  final bool showMonthLabels;
+  final bool enableVerticalScroll;
+  final int? maxVisibleRows;
+
+  const HeatmapLayoutConfig({
+    required this.timeframe,
+    required this.rows,
+    required this.columns,
+    required this.startDate,
+    required this.endDate,
+    required this.rowLabels,
+    required this.columnLabels,
+    this.showMonthLabels = false,
+    this.enableVerticalScroll = false,
+    this.maxVisibleRows,
+  });
+
+  /// Factory constructor to generate layout config for a specific timeframe
+  factory HeatmapLayoutConfig.forTimeframe(HeatmapTimeframe timeframe) {
+    final now = DateTime.now();
+
+    switch (timeframe) {
+      case HeatmapTimeframe.thisWeek:
+        return _buildWeekLayout(now);
+      case HeatmapTimeframe.thisMonth:
+        return _buildMonthLayout(now);
+      case HeatmapTimeframe.last30Days:
+        return _buildLast30DaysLayout(now);
+      case HeatmapTimeframe.thisYear:
+        return _buildYearLayout(now);
+    }
+  }
+
+  /// Build layout for This Week view (1 row × 7 columns, Mon-Sun)
+  static HeatmapLayoutConfig _buildWeekLayout(DateTime now) {
+    // Calculate Monday of current week (weekday: Mon=1, Sun=7)
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+
+    return HeatmapLayoutConfig(
+      timeframe: HeatmapTimeframe.thisWeek,
+      rows: 1,
+      columns: 7,
+      startDate: DateTime(weekStart.year, weekStart.month, weekStart.day),
+      endDate: DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59),
+      rowLabels: const [''],
+      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      showMonthLabels: false,
+      enableVerticalScroll: false,
+    );
+  }
+
+  /// Build layout for This Month view (weeks as rows, days as columns)
+  static HeatmapLayoutConfig _buildMonthLayout(DateTime now) {
+    final monthStart = DateTime(now.year, now.month, 1);
+    final monthEnd = DateTime(now.year, now.month + 1, 0);
+
+    // Calculate how many weeks we need
+    // Start from the Monday of the week containing the 1st
+    final startWeekday = monthStart.weekday;
+    final daysInMonth = monthEnd.day;
+    final weeksNeeded = ((daysInMonth + startWeekday - 1) / 7).ceil();
+
+    return HeatmapLayoutConfig(
+      timeframe: HeatmapTimeframe.thisMonth,
+      rows: weeksNeeded,
+      columns: 7,
+      startDate: monthStart,
+      endDate: DateTime(monthEnd.year, monthEnd.month, monthEnd.day, 23, 59, 59),
+      rowLabels: List.generate(weeksNeeded, (i) => 'Week ${i + 1}'),
+      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      showMonthLabels: false,
+      enableVerticalScroll: false,
+    );
+  }
+
+  /// Build layout for Last 30 Days view (rolling 30-day window)
+  static HeatmapLayoutConfig _buildLast30DaysLayout(DateTime now) {
+    final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
+
+    // Calculate weeks needed for 30 days
+    final weeksNeeded = (30 / 7).ceil();
+
+    return HeatmapLayoutConfig(
+      timeframe: HeatmapTimeframe.last30Days,
+      rows: weeksNeeded,
+      columns: 7,
+      startDate: startDate,
+      endDate: endDate,
+      rowLabels: List.generate(weeksNeeded, (i) => 'Week ${i + 1}'),
+      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      showMonthLabels: false,
+      enableVerticalScroll: false,
+    );
+  }
+
+  /// Build layout for This Year view (full year with vertical scrolling)
+  static HeatmapLayoutConfig _buildYearLayout(DateTime now) {
+    final yearStart = DateTime(now.year, 1, 1);
+    final yearEnd = DateTime(now.year, 12, 31, 23, 59, 59);
+
+    // Calculate total weeks in year
+    final isLeapYear = now.year % 4 == 0 && (now.year % 100 != 0 || now.year % 400 == 0);
+    final totalDays = isLeapYear ? 366 : 365;
+    final totalWeeks = (totalDays / 7).ceil();
+
+    return HeatmapLayoutConfig(
+      timeframe: HeatmapTimeframe.thisYear,
+      rows: totalWeeks,
+      columns: 7,
+      startDate: yearStart,
+      endDate: yearEnd,
+      rowLabels: List.generate(totalWeeks, (i) => ''), // No row labels for year view
+      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      showMonthLabels: true,
+      enableVerticalScroll: true,
+      maxVisibleRows: 10,
+    );
+  }
 }
