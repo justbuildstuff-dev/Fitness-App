@@ -449,6 +449,17 @@ class FirestoreService {
     }
   }
 
+  /// Helper function to safely handle Timestamp fields that may be null
+  ///
+  /// Returns null if the timestamp is null, otherwise returns the timestamp.
+  /// This prevents errors when copying documents with null Timestamp fields.
+  Timestamp? _safeTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value;
+    // If it's a FieldValue.serverTimestamp(), we can't access it here
+    return null;
+  }
+
   /// Duplicate a week using client-side batched writes
   Future<Map<String, dynamic>> duplicateWeek({
     required String userId,
@@ -535,6 +546,8 @@ class FirestoreService {
         'name': smartCopyName,
         'order': srcWeekData['order'],
         'notes': srcWeekData['notes'],
+        // Always set fresh timestamps for duplicated week
+        // Don't copy completedAt - duplicated week should start fresh
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'userId': userId,
@@ -566,6 +579,7 @@ class FirestoreService {
           'dayOfWeek': workoutData['dayOfWeek'],
           'orderIndex': workoutData['orderIndex'],
           'notes': workoutData['notes'],
+          // Fresh timestamps for duplicated workout
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           'userId': userId,
@@ -597,6 +611,7 @@ class FirestoreService {
             'exerciseType': exerciseData['exerciseType'] ?? 'custom',
             'orderIndex': exerciseData['orderIndex'],
             'notes': exerciseData['notes'],
+            // Fresh timestamps for duplicated exercise
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
             'userId': userId,
@@ -646,9 +661,12 @@ class FirestoreService {
 
             // Convert to Firestore format and add to batch
             final newSetPayload = ExerciseSetConverter.toFirestore(duplicatedSet);
-            // Use server timestamp instead of client timestamp for consistency
+            // Always use server timestamps for duplicated sets (fresh timestamps)
+            // Don't copy completedAt - duplicated sets should start unchecked
             newSetPayload['createdAt'] = FieldValue.serverTimestamp();
             newSetPayload['updatedAt'] = FieldValue.serverTimestamp();
+            // Ensure completedAt is not copied from source (sets should start fresh)
+            newSetPayload.remove('completedAt');
             
             await addToBatch(newSetRef, newSetPayload);
 
