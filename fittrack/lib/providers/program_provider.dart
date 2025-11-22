@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences.dart';
 import '../models/program.dart';
 import '../models/week.dart';
 import '../models/workout.dart';
@@ -20,6 +21,8 @@ class ProgramProvider extends ChangeNotifier {
   ProgramProvider(this._userId)
     : _firestoreService = FirestoreService.instance,
       _analyticsService = AnalyticsService.instance {
+    // Load heatmap preferences from SharedPreferences
+    _loadHeatmapPreferences();
     // Auto-load data when userId is set and has changed
     _autoLoadDataIfNeeded();
   }
@@ -89,6 +92,12 @@ class ProgramProvider extends ChangeNotifier {
   Map<String, dynamic>? _keyStatistics;
   bool _isLoadingAnalytics = false;
 
+  // Heatmap state persistence
+  HeatmapTimeframe _selectedHeatmapTimeframe = HeatmapTimeframe.thisYear;
+  String? _selectedHeatmapProgramId; // null means "All Programs"
+  static const String _heatmapTimeframeKey = 'heatmap_timeframe';
+  static const String _heatmapProgramFilterKey = 'heatmap_program_filter';
+
   // Disposal tracking
   bool _disposed = false;
 
@@ -126,6 +135,10 @@ class ProgramProvider extends ChangeNotifier {
   List<PersonalRecord>? get recentPRs => _recentPRs;
   Map<String, dynamic>? get keyStatistics => _keyStatistics;
   bool get isLoadingAnalytics => _isLoadingAnalytics;
+
+  // Heatmap state getters
+  HeatmapTimeframe get selectedHeatmapTimeframe => _selectedHeatmapTimeframe;
+  String? get selectedHeatmapProgramId => _selectedHeatmapProgramId;
 
   /// Get current sets (convenience method)
   List<ExerciseSet> getCurrentSets() => _sets;
@@ -1144,6 +1157,65 @@ class ProgramProvider extends ChangeNotifier {
   Future<void> refreshAnalytics() async {
     _analyticsService.clearCache();
     await loadAnalytics();
+  }
+
+  // ========================================
+  // HEATMAP STATE PERSISTENCE
+  // ========================================
+
+  /// Load heatmap preferences from SharedPreferences
+  Future<void> _loadHeatmapPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Load timeframe (default to thisYear if not found or invalid)
+      final timeframeIndex = prefs.getInt(_heatmapTimeframeKey);
+      if (timeframeIndex != null &&
+          timeframeIndex >= 0 &&
+          timeframeIndex < HeatmapTimeframe.values.length) {
+        _selectedHeatmapTimeframe = HeatmapTimeframe.values[timeframeIndex];
+      }
+
+      // Load program filter (null means "All Programs")
+      _selectedHeatmapProgramId = prefs.getString(_heatmapProgramFilterKey);
+
+      debugPrint('[ProgramProvider] Loaded heatmap preferences: timeframe=$_selectedHeatmapTimeframe, programId=$_selectedHeatmapProgramId');
+    } catch (e) {
+      debugPrint('[ProgramProvider] Failed to load heatmap preferences: $e');
+      // Keep defaults on error
+    }
+  }
+
+  /// Set the selected heatmap timeframe and persist to SharedPreferences
+  Future<void> setHeatmapTimeframe(HeatmapTimeframe timeframe) async {
+    _selectedHeatmapTimeframe = timeframe;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_heatmapTimeframeKey, timeframe.index);
+      debugPrint('[ProgramProvider] Saved heatmap timeframe: $timeframe');
+    } catch (e) {
+      debugPrint('[ProgramProvider] Failed to save heatmap timeframe: $e');
+    }
+  }
+
+  /// Set the selected heatmap program filter and persist to SharedPreferences
+  Future<void> setHeatmapProgramFilter(String? programId) async {
+    _selectedHeatmapProgramId = programId;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (programId == null) {
+        await prefs.remove(_heatmapProgramFilterKey);
+      } else {
+        await prefs.setString(_heatmapProgramFilterKey, programId);
+      }
+      debugPrint('[ProgramProvider] Saved heatmap program filter: $programId');
+    } catch (e) {
+      debugPrint('[ProgramProvider] Failed to save heatmap program filter: $e');
+    }
   }
 
   // ========================================
