@@ -1083,18 +1083,20 @@ class ProgramProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      final selectedDateRange = dateRange ?? DateRange.thisYear();
-      final currentYear = DateTime.now().year;
+      // Use the date range from selected timeframe if not provided
+      final selectedDateRange = dateRange ?? _getDateRangeForTimeframe(_selectedHeatmapTimeframe);
 
       // Load analytics data concurrently
       final futures = [
         _analyticsService.computeWorkoutAnalytics(
           userId: _userId!,
           dateRange: selectedDateRange,
+          programId: _selectedHeatmapProgramId,
         ),
-        _analyticsService.generateHeatmapData(
+        _analyticsService.generateSetBasedHeatmapData(
           userId: _userId!,
-          year: currentYear,
+          dateRange: selectedDateRange,
+          programId: _selectedHeatmapProgramId,
         ),
         _analyticsService.getPersonalRecords(
           userId: _userId!,
@@ -1195,6 +1197,9 @@ class ProgramProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_heatmapTimeframeKey, timeframe.index);
       debugPrint('[ProgramProvider] Saved heatmap timeframe: $timeframe');
+
+      // Reload analytics with new timeframe
+      await loadAnalytics();
     } catch (e) {
       debugPrint('[ProgramProvider] Failed to save heatmap timeframe: $e');
     }
@@ -1213,8 +1218,46 @@ class ProgramProvider extends ChangeNotifier {
         await prefs.setString(_heatmapProgramFilterKey, programId);
       }
       debugPrint('[ProgramProvider] Saved heatmap program filter: $programId');
+
+      // Reload analytics with new program filter
+      await loadAnalytics();
     } catch (e) {
       debugPrint('[ProgramProvider] Failed to save heatmap program filter: $e');
+    }
+  }
+
+  /// Get DateRange for the selected timeframe
+  DateRange _getDateRangeForTimeframe(HeatmapTimeframe timeframe) {
+    final now = DateTime.now();
+
+    switch (timeframe) {
+      case HeatmapTimeframe.thisWeek:
+        // Monday of current week to Sunday
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 6));
+        return DateRange(
+          start: DateTime(weekStart.year, weekStart.month, weekStart.day),
+          end: DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59),
+        );
+
+      case HeatmapTimeframe.thisMonth:
+        // First day of current month to last day
+        final monthStart = DateTime(now.year, now.month, 1);
+        final monthEnd = DateTime(now.year, now.month + 1, 0);
+        return DateRange(
+          start: monthStart,
+          end: DateTime(monthEnd.year, monthEnd.month, monthEnd.day, 23, 59, 59),
+        );
+
+      case HeatmapTimeframe.last30Days:
+        // Rolling 30-day window
+        final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
+        return DateRange(start: startDate, end: endDate);
+
+      case HeatmapTimeframe.thisYear:
+        // Full current year
+        return DateRange.thisYear();
     }
   }
 
