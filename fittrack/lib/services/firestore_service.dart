@@ -11,6 +11,7 @@ import '../converters/week_converter.dart';
 import '../converters/workout_converter.dart';
 import '../converters/exercise_converter.dart';
 import '../converters/exercise_set_converter.dart';
+import '../utils/smart_copy_naming.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -502,7 +503,26 @@ class FirestoreService {
         throw Exception('You do not own this week');
       }
 
-      // 2) Create new Week document
+      // 2) Query all existing week names for smart copy naming
+      final existingWeeksSnap = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .get();
+
+      final existingWeekNames = existingWeeksSnap.docs
+          .map((doc) => doc.data()['name'] as String?)
+          .where((name) => name != null)
+          .cast<String>()
+          .toList();
+
+      // Generate smart copy name
+      final sourceName = srcWeekData['name'] as String? ?? 'Week';
+      final smartCopyName = SmartCopyNaming.generateCopyName(sourceName, existingWeekNames);
+
+      // 3) Create new Week document
       final newWeekRef = _firestore
           .collection('users')
           .doc(userId)
@@ -512,7 +532,7 @@ class FirestoreService {
           .doc();
 
       final newWeekData = {
-        'name': srcWeekData['name'] != null ? '${srcWeekData['name']} (Copy)' : 'Week (Copy)',
+        'name': smartCopyName,
         'order': srcWeekData['order'],
         'notes': srcWeekData['notes'],
         'createdAt': FieldValue.serverTimestamp(),
@@ -530,7 +550,7 @@ class FirestoreService {
         'workouts': <Map<String, dynamic>>[],
       };
 
-      // 3) Duplicate workouts -> exercises -> sets
+      // 4) Duplicate workouts -> exercises -> sets
       final srcWorkoutsSnap = await srcWeekRef
           .collection('workouts')
           .orderBy('orderIndex')
