@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/analytics.dart';
 import '../../providers/program_provider.dart';
 import '../../widgets/error_display.dart';
 import 'components/activity_heatmap_section.dart';
@@ -38,29 +37,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               context.read<ProgramProvider>().refreshAnalytics();
             },
             tooltip: 'Refresh Analytics',
-          ),
-          PopupMenuButton<DateRange>(
-            icon: const Icon(Icons.date_range),
-            onSelected: _onDateRangeChanged,
-            tooltip: 'Select Date Range',
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: DateRange.thisWeek(),
-                child: const Text('This Week'),
-              ),
-              PopupMenuItem(
-                value: DateRange.thisMonth(),
-                child: const Text('This Month'),
-              ),
-              PopupMenuItem(
-                value: DateRange.last30Days(),
-                child: const Text('Last 30 Days'),
-              ),
-              PopupMenuItem(
-                value: DateRange.thisYear(),
-                child: const Text('This Year'),
-              ),
-            ],
           ),
         ],
       ),
@@ -101,7 +77,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Icon(
                     Icons.analytics_outlined,
                     size: 64,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -136,21 +112,32 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Activity Heatmap Section
+                  // Activity Heatmap Section with dynamic timeframe and program filtering
                   if (provider.heatmapData != null)
-                    ActivityHeatmapSection(data: provider.heatmapData!),
-                  
-                  // Key Statistics Section  
+                    ActivityHeatmapSection(
+                      data: provider.heatmapData!,
+                      selectedTimeframe: provider.selectedHeatmapTimeframe,
+                      selectedProgramId: provider.selectedHeatmapProgramId,
+                      availablePrograms: provider.programs,
+                      onTimeframeChanged: (timeframe) {
+                        provider.setHeatmapTimeframe(timeframe);
+                      },
+                      onProgramFilterChanged: (programId) {
+                        provider.setHeatmapProgramFilter(programId);
+                      },
+                    ),
+
+                  // Key Statistics Section
                   if (provider.keyStatistics != null)
                     KeyStatisticsSection(statistics: provider.keyStatistics!),
-                  
+
                   // Charts Section
                   if (provider.currentAnalytics != null || provider.recentPRs != null)
                     ChartsSection(
                       analytics: provider.currentAnalytics,
                       personalRecords: provider.recentPRs ?? [],
                     ),
-                  
+
                   // Bottom padding
                   const SizedBox(height: 24),
                 ],
@@ -160,14 +147,5 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         },
       ),
     );
-  }
-
-  void _onDateRangeChanged(DateRange newRange) {
-    setState(() {
-      // Update analytics with new date range
-    });
-    
-    // Reload analytics with new date range
-    context.read<ProgramProvider>().loadAnalytics(dateRange: newRange);
   }
 }
