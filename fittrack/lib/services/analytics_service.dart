@@ -97,6 +97,34 @@ class AnalyticsService {
   }
 
   /// Generate heatmap data based on completed sets (checked: true)
+  ///
+  /// This method provides set-based activity tracking for the heatmap calendar.
+  /// Only sets marked as completed (`checked: true`) are counted.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID to retrieve analytics for
+  /// - [dateRange]: The time period to analyze (e.g., this week, this month, etc.)
+  /// - [programId]: Optional program filter. If null, includes sets from all programs
+  ///
+  /// **Returns:**
+  /// [ActivityHeatmapData] containing:
+  /// - Daily set counts grouped by date
+  /// - Current streak (consecutive days with at least 1 set)
+  /// - Longest streak within the date range
+  /// - Total completed sets
+  ///
+  /// **Caching:**
+  /// Results are cached for 5 minutes to improve performance. The cache key
+  /// includes userId, dateRange, and programId to ensure correct data isolation.
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final heatmapData = await analyticsService.generateSetBasedHeatmapData(
+  ///   userId: 'user123',
+  ///   dateRange: DateRange.thisWeek(),
+  ///   programId: 'program456', // or null for all programs
+  /// );
+  /// ```
   Future<ActivityHeatmapData> generateSetBasedHeatmapData({
     required String userId,
     required DateRange dateRange,
@@ -112,10 +140,10 @@ class AnalyticsService {
     // Get all sets for the date range (with optional program filter)
     final allSets = await _getAllUserSets(userId, dateRange, programId: programId);
 
-    // Filter only checked sets
+    // Filter only checked sets (completed sets)
     final checkedSets = allSets.where((set) => set.checked).toList();
 
-    // Group sets by date
+    // Group sets by date (normalize to midnight for consistent day-level grouping)
     final Map<DateTime, int> dailySetCounts = {};
     for (final set in checkedSets) {
       final date = DateTime(
@@ -126,7 +154,7 @@ class AnalyticsService {
       dailySetCounts[date] = (dailySetCounts[date] ?? 0) + 1;
     }
 
-    // Calculate streaks based on days with at least 1 set
+    // Calculate streaks based on consecutive days with at least 1 set
     final streaks = _calculateStreaks(dailySetCounts, dateRange);
 
     final heatmapData = ActivityHeatmapData(
@@ -139,7 +167,7 @@ class AnalyticsService {
       programId: programId,
     );
 
-    // Cache the result
+    // Cache the result for 5 minutes
     _cache[cacheKey] = _CachedAnalytics(
       data: heatmapData,
       computedAt: DateTime.now(),

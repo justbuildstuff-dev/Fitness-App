@@ -1206,6 +1206,26 @@ class ProgramProvider extends ChangeNotifier {
   }
 
   /// Set the selected heatmap program filter and persist to SharedPreferences
+  ///
+  /// Filters the heatmap to show activity from a specific program or all programs.
+  ///
+  /// **Parameters:**
+  /// - [programId]: The program ID to filter by, or null for "All Programs"
+  ///
+  /// **Behavior:**
+  /// - Updates the UI immediately via notifyListeners()
+  /// - Persists the selection to SharedPreferences for the next app launch
+  /// - If null, removes the saved preference (defaults to all programs)
+  /// - Reloads analytics data with the new filter applied
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // Filter by specific program
+  /// await provider.setHeatmapProgramFilter('program_123');
+  ///
+  /// // Show all programs
+  /// await provider.setHeatmapProgramFilter(null);
+  /// ```
   Future<void> setHeatmapProgramFilter(String? programId) async {
     _selectedHeatmapProgramId = programId;
     notifyListeners();

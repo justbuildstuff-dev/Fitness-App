@@ -150,30 +150,47 @@ enum PRType {
 class ActivityHeatmapData {
   final String userId;
   final int year;
-  final Map<DateTime, int> dailyWorkoutCounts; // Date -> workout count
+  final Map<DateTime, int> dailySetCounts; // Date -> set count (UPDATED: was dailyWorkoutCounts)
   final int currentStreak;
   final int longestStreak;
-  final int totalWorkouts;
-  
+  final int totalSets;                     // UPDATED: was totalWorkouts
+  final String? programId;                 // NEW: For program filtering
+
   // Methods
   List<HeatmapDay> getHeatmapDays();
-  int getWorkoutCountForDate(DateTime date);
+  int getSetCountForDate(DateTime date);   // UPDATED: was getWorkoutCountForDate
   HeatmapIntensity getIntensityForDate(DateTime date);
 }
 
 class HeatmapDay {
   final DateTime date;
-  final int workoutCount;
+  final int workoutCount;  // Note: Used for set count internally
   final HeatmapIntensity intensity;
 }
 
 enum HeatmapIntensity {
-  none,     // 0 workouts - light gray
-  low,      // 1 workout - light green
-  medium,   // 2-3 workouts - medium green
-  high,     // 4+ workouts - dark green
+  none,     // 0 sets - gray
+  low,      // 1-5 sets - light color           (UPDATED thresholds)
+  medium,   // 6-15 sets - medium color         (UPDATED thresholds)
+  high,     // 16-25 sets - dark color          (UPDATED thresholds)
+  veryHigh; // 26+ sets - darkest color         (NEW level)
+
+  static HeatmapIntensity fromSetCount(int setCount) {
+    if (setCount == 0) return HeatmapIntensity.none;
+    if (setCount <= 5) return HeatmapIntensity.low;
+    if (setCount <= 15) return HeatmapIntensity.medium;
+    if (setCount <= 25) return HeatmapIntensity.high;
+    return HeatmapIntensity.veryHigh;
+  }
 }
 ```
+
+**Implementation Note (Issue #48 - Completed 2025-11-23):**
+The heatmap now tracks **completed sets** (where `checked: true`) instead of workouts, providing more granular activity measurement. This change was implemented with:
+- 4 dynamic timeframes (This Week, This Month, Last 30 Days, This Year)
+- Program filtering capabilities
+- SharedPreferences persistence for user preferences
+- Adaptive layouts based on selected timeframe
 
 ### Data Storage Strategy
 
@@ -208,10 +225,11 @@ class AnalyticsService {
     required DateRange dateRange,
   });
   
-  // Heatmap data generation
-  Future<ActivityHeatmapData> generateHeatmapData({
+  // Heatmap data generation (UPDATED: now uses set-based tracking)
+  Future<ActivityHeatmapData> generateSetBasedHeatmapData({
     required String userId,
-    required int year,
+    required DateRange dateRange,    // UPDATED: was year
+    String? programId,               // NEW: Program filter support
   });
   
   // Personal records tracking

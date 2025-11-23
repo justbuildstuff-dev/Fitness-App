@@ -442,6 +442,17 @@ enum HeatmapIntensity {
   }
 
   /// Get intensity level from set count
+  ///
+  /// Intensity levels are determined by set count thresholds:
+  /// - none: 0 sets
+  /// - low: 1-5 sets
+  /// - medium: 6-15 sets
+  /// - high: 16-25 sets
+  /// - veryHigh: 26+ sets
+  ///
+  /// These thresholds are designed to provide visual distinction in the
+  /// GitHub-style heatmap calendar, where different colors represent
+  /// different activity levels.
   static HeatmapIntensity fromSetCount(int setCount) {
     if (setCount == 0) return HeatmapIntensity.none;
     if (setCount <= 5) return HeatmapIntensity.low;
@@ -451,7 +462,16 @@ enum HeatmapIntensity {
   }
 }
 
-/// Date range utility class
+/// Date range utility class for heatmap timeframe calculations
+///
+/// Provides factory methods for common timeframe selections:
+/// - thisWeek: Monday to Sunday of the current week
+/// - thisMonth: First to last day of the current month
+/// - thisYear: January 1 to December 31 of the current year
+/// - last30Days: Rolling 30-day window from today
+///
+/// All date ranges are normalized to start at 00:00:00 and end at 23:59:59
+/// to ensure consistent day-level grouping in analytics.
 class DateRange {
   final DateTime start;
   final DateTime end;
@@ -461,6 +481,10 @@ class DateRange {
     required this.end,
   });
 
+  /// Creates a date range for the current week (Monday to Sunday)
+  ///
+  /// The week always starts on Monday (ISO 8601 standard) and includes
+  /// 7 consecutive days ending on Sunday.
   factory DateRange.thisWeek() {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
@@ -471,6 +495,10 @@ class DateRange {
     );
   }
 
+  /// Creates a date range for the current month
+  ///
+  /// Includes all days from the 1st to the last day of the current month.
+  /// Automatically handles months with different lengths (28-31 days).
   factory DateRange.thisMonth() {
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
@@ -479,6 +507,9 @@ class DateRange {
     return DateRange(start: monthStart, end: monthEnd);
   }
 
+  /// Creates a date range for the current calendar year
+  ///
+  /// Includes all days from January 1 to December 31 of the current year.
   factory DateRange.thisYear() {
     final now = DateTime.now();
     final yearStart = DateTime(now.year, 1, 1);
@@ -486,6 +517,10 @@ class DateRange {
     return DateRange(start: yearStart, end: yearEnd);
   }
 
+  /// Creates a rolling 30-day date range ending today
+  ///
+  /// The range includes the last 30 days (including today), which provides
+  /// a consistent time window regardless of month boundaries.
   factory DateRange.last30Days() {
     final now = DateTime.now();
     final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
