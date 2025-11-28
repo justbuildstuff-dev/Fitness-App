@@ -409,7 +409,7 @@ jobs:
         flutter test test/models/enhanced_program_test.dart test/models/enhanced_exercise_test.dart \
           --coverage \
           --timeout=60s \
-          --reporter=github || echo "Enhanced unit tests completed with some failures"
+          --reporter=github
           
     - name: Start Firebase emulators for enhanced integration
       run: |
