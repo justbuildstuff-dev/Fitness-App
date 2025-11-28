@@ -369,7 +369,7 @@ jobs:
 
   # Enhanced tests with comprehensive coverage
   enhanced-tests:
-    name: Enhanced Test Suite
+    name: Enhanced Integration Tests (Firebase Emulators)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -421,7 +421,9 @@ jobs:
     - name: Run enhanced integration tests
       run: |
         cd fittrack
-        # Run simplified integration tests
+        # IMPORTANT: These tests MUST connect to Firebase emulators
+        # IMPORTANT: These tests MUST create real data in Firestore
+        # IMPORTANT: These tests MUST validate actual Firebase operations
         flutter test test/screens/enhanced_create_program_screen_test.dart \
           --timeout=120s \
           --reporter=github
