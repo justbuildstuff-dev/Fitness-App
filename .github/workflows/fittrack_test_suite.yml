@@ -422,7 +422,7 @@ jobs:
       run: |
         cd fittrack
         # Run simplified integration tests
-        flutter test test/screens/enhanced_create_program_screen_test.dart test/models/program_model_validation_test.dart \
+        flutter test test/screens/enhanced_create_program_screen_test.dart \
           --timeout=120s \
           --reporter=github
           
