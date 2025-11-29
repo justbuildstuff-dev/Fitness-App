@@ -416,7 +416,20 @@ jobs:
         cd fittrack
         firebase emulators:start --only auth,firestore &
         echo $! > emulator.pid
-        sleep 15
+
+    - name: Wait for Firebase emulators to be ready
+      run: |
+        echo "Waiting for Firestore emulator on localhost:8080..."
+        timeout 60 bash -c 'until curl -s http://localhost:8080 > /dev/null; do sleep 2; done' || {
+          echo "ERROR: Firestore emulator failed to start"
+          exit 1
+        }
+        echo "Waiting for Auth emulator on localhost:9099..."
+        timeout 60 bash -c 'until curl -s http://localhost:9099 > /dev/null; do sleep 2; done' || {
+          echo "ERROR: Auth emulator failed to start"
+          exit 1
+        }
+        echo "✅ Firebase emulators are ready"
         
     - name: Run enhanced integration tests
       run: |
@@ -424,7 +437,7 @@ jobs:
         # IMPORTANT: These tests MUST connect to Firebase emulators
         # IMPORTANT: These tests MUST create real data in Firestore
         # IMPORTANT: These tests MUST validate actual Firebase operations
-        flutter test test/screens/enhanced_create_program_screen_test.dart \
+        flutter test test/screens/enhanced_create_program_screen_test.dart test/services/firestore_cascade_delete_integration_test.dart \
           --timeout=120s \
           --reporter=github
           
