@@ -6,20 +6,34 @@ import '../analytics/analytics_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  /// The initial tab index to display when the screen is first shown.
+  ///
+  /// Defaults to 0 (Programs screen). Used by GlobalBottomNavBar to navigate
+  /// to specific sections.
+  ///
+  /// Valid values: 0 (Programs), 1 (Analytics), 2 (Profile)
+  final int initialIndex;
+
+  const HomeScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-  
+  late int _currentIndex;
+
   late final List<Widget> _screens;
-  
+
   @override
   void initState() {
     super.initState();
+    // Use initialIndex from widget, defaulting to 0 if not provided
+    _currentIndex = widget.initialIndex;
+
     _screens = [
       const ProgramsScreen(),
       const AnalyticsScreen(),

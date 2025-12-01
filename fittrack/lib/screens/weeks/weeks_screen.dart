@@ -4,7 +4,9 @@ import '../../providers/program_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
+import '../../models/navigation_section.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import '../workouts/create_workout_screen.dart';
 import '../workouts/workout_detail_screen.dart';
 
@@ -259,6 +261,9 @@ class _WeeksScreenState extends State<WeeksScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateWorkout(context),
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.programs,
       ),
     );
   }
