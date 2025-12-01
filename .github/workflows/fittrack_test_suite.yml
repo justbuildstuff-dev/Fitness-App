@@ -437,7 +437,7 @@ jobs:
         # IMPORTANT: These tests MUST connect to Firebase emulators
         # IMPORTANT: These tests MUST create real data in Firestore
         # IMPORTANT: These tests MUST validate actual Firebase operations
-        flutter test test/screens/enhanced_create_program_screen_test.dart test/services/firestore_cascade_delete_integration_test.dart \
+        flutter test test/screens/enhanced_create_program_screen_test.dart test/services/firestore_service_integration_test.dart \
           --timeout=120s \
           --reporter=github
           
