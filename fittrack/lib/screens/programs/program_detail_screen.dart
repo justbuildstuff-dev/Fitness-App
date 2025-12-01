@@ -430,24 +430,106 @@ class _WeekCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               )
             : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: () => _editWeek(context),
-              tooltip: 'Edit week',
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) => _handleMenuAction(context, value),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'duplicate',
+              child: ListTile(
+                leading: Icon(Icons.content_copy),
+                title: Text('Duplicate'),
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-              onPressed: () => _deleteWeek(context),
-              tooltip: 'Delete week',
+            const PopupMenuItem(
+              value: 'edit',
+              child: ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Edit'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('Delete'),
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ],
         ),
         onTap: onTap,
       ),
     );
+  }
+
+  void _handleMenuAction(BuildContext context, String action) {
+    switch (action) {
+      case 'duplicate':
+        _duplicateWeek(context);
+        break;
+      case 'edit':
+        _editWeek(context);
+        break;
+      case 'delete':
+        _deleteWeek(context);
+        break;
+    }
+  }
+
+  void _duplicateWeek(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final result = await programProvider.duplicateWeek(
+        programId: programProvider.selectedProgram!.id,
+        weekId: week.id,
+      );
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Dismiss loading dialog
+
+        if (result != null && result['success'] == true) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Week duplicated successfully!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text(programProvider.error ?? 'Failed to duplicate week'),
+              backgroundColor: errorColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Dismiss loading dialog
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Error duplicating week: $e'),
+            backgroundColor: errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _editWeek(BuildContext context) async {

@@ -11,6 +11,7 @@ import '../converters/week_converter.dart';
 import '../converters/workout_converter.dart';
 import '../converters/exercise_converter.dart';
 import '../converters/exercise_set_converter.dart';
+import '../utils/smart_copy_naming.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -448,6 +449,17 @@ class FirestoreService {
     }
   }
 
+  /// Helper function to safely handle Timestamp fields that may be null
+  ///
+  /// Returns null if the timestamp is null, otherwise returns the timestamp.
+  /// This prevents errors when copying documents with null Timestamp fields.
+  Timestamp? _safeTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value;
+    // If it's a FieldValue.serverTimestamp(), we can't access it here
+    return null;
+  }
+
   /// Duplicate a week using client-side batched writes
   Future<Map<String, dynamic>> duplicateWeek({
     required String userId,
@@ -502,7 +514,26 @@ class FirestoreService {
         throw Exception('You do not own this week');
       }
 
-      // 2) Create new Week document
+      // 2) Query all existing week names for smart copy naming
+      final existingWeeksSnap = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .get();
+
+      final existingWeekNames = existingWeeksSnap.docs
+          .map((doc) => doc.data()['name'] as String?)
+          .where((name) => name != null)
+          .cast<String>()
+          .toList();
+
+      // Generate smart copy name
+      final sourceName = srcWeekData['name'] as String? ?? 'Week';
+      final smartCopyName = SmartCopyNaming.generateCopyName(sourceName, existingWeekNames);
+
+      // 3) Create new Week document
       final newWeekRef = _firestore
           .collection('users')
           .doc(userId)
@@ -512,9 +543,11 @@ class FirestoreService {
           .doc();
 
       final newWeekData = {
-        'name': srcWeekData['name'] != null ? '${srcWeekData['name']} (Copy)' : 'Week (Copy)',
+        'name': smartCopyName,
         'order': srcWeekData['order'],
         'notes': srcWeekData['notes'],
+        // Always set fresh timestamps for duplicated week
+        // Don't copy completedAt - duplicated week should start fresh
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'userId': userId,
@@ -530,7 +563,7 @@ class FirestoreService {
         'workouts': <Map<String, dynamic>>[],
       };
 
-      // 3) Duplicate workouts -> exercises -> sets
+      // 4) Duplicate workouts -> exercises -> sets
       final srcWorkoutsSnap = await srcWeekRef
           .collection('workouts')
           .orderBy('orderIndex')
@@ -546,6 +579,7 @@ class FirestoreService {
           'dayOfWeek': workoutData['dayOfWeek'],
           'orderIndex': workoutData['orderIndex'],
           'notes': workoutData['notes'],
+          // Fresh timestamps for duplicated workout
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           'userId': userId,
@@ -577,6 +611,7 @@ class FirestoreService {
             'exerciseType': exerciseData['exerciseType'] ?? 'custom',
             'orderIndex': exerciseData['orderIndex'],
             'notes': exerciseData['notes'],
+            // Fresh timestamps for duplicated exercise
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
             'userId': userId,
@@ -626,9 +661,12 @@ class FirestoreService {
 
             // Convert to Firestore format and add to batch
             final newSetPayload = ExerciseSetConverter.toFirestore(duplicatedSet);
-            // Use server timestamp instead of client timestamp for consistency
+            // Always use server timestamps for duplicated sets (fresh timestamps)
+            // Don't copy completedAt - duplicated sets should start unchecked
             newSetPayload['createdAt'] = FieldValue.serverTimestamp();
             newSetPayload['updatedAt'] = FieldValue.serverTimestamp();
+            // Ensure completedAt is not copied from source (sets should start fresh)
+            newSetPayload.remove('completedAt');
             
             await addToBatch(newSetRef, newSetPayload);
 
