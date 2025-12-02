@@ -167,20 +167,20 @@ void main() {
           userId: 'user123',
           year: 2024,
           dailySetCounts: {
-            DateTime(2024, 1, 1): 3,
-            DateTime(2024, 1, 2): 6,
+            DateTime(2024, 1, 1): 1,
+            DateTime(2024, 1, 2): 2,
           },
           currentStreak: 5,
           longestStreak: 10,
-          totalSets: 9,
+          totalSets: 3,
         );
 
         final heatmapDays = heatmapData.getHeatmapDays();
         expect(heatmapDays.length, equals(366)); // 2024 is a leap year
-        
-        final jan1 = heatmapDays.firstWhere((day) => 
+
+        final jan1 = heatmapDays.firstWhere((day) =>
             day.date.year == 2024 && day.date.month == 1 && day.date.day == 1);
-        expect(jan1.workoutCount, equals(1));
+        expect(jan1.workoutCount, equals(1)); // workoutCount field now stores set count
         expect(jan1.intensity, equals(HeatmapIntensity.low));
       });
     });

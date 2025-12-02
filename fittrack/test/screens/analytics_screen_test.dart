@@ -34,8 +34,8 @@ void main() {
       mockHeatmapData = ActivityHeatmapData(
         userId: 'test-user',
         year: DateTime.now().year,
-        dailyWorkoutCounts: {}, // Changed from 'days' to 'dailyWorkoutCounts'
-        totalWorkouts: 10,
+        dailySetCounts: {}, // Changed from 'days' to 'dailySetCounts'
+        totalSets: 30,
         currentStreak: 3,
         longestStreak: 5,
       );
@@ -274,10 +274,10 @@ void main() {
         final mockHeatmapData = ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailyWorkoutCounts: {DateTime(2024, 1, 1): 1},
+          dailySetCounts: {DateTime(2024, 1, 1): 1},
           currentStreak: 5,
           longestStreak: 10,
-          totalWorkouts: 10,
+          totalSets: 10,
         );
 
         final mockStats = {
@@ -306,10 +306,10 @@ void main() {
         when(mockProvider.heatmapData).thenReturn(ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailyWorkoutCounts: {},
+          dailySetCounts: {},
           currentStreak: 0,
           longestStreak: 0,
-          totalWorkouts: 0,
+          totalSets: 0,
         ));
 
         // Act
@@ -334,13 +334,13 @@ void main() {
       final heatmapData = ActivityHeatmapData(
         userId: 'test_user',
         year: 2024,
-        dailyWorkoutCounts: {
+        dailySetCounts: {
           DateTime(2024, 1, 1): 1,
           DateTime(2024, 1, 2): 2,
         },
         currentStreak: 5,
         longestStreak: 15,
-        totalWorkouts: 50,
+        totalSets: 50,
       );
 
       // Act
@@ -364,10 +364,10 @@ void main() {
       final heatmapData = ActivityHeatmapData(
         userId: 'test_user',
         year: 2024,
-        dailyWorkoutCounts: {DateTime(2024, 1, 1): 1},
+        dailySetCounts: {DateTime(2024, 1, 1): 1},
         currentStreak: 0,
         longestStreak: 0,
-        totalWorkouts: 1,
+        totalSets: 1,
       );
 
       // Act
