@@ -33,6 +33,8 @@ class ProgramProvider extends ChangeNotifier {
     this._firestoreService,
     this._analyticsService
   ) {
+    // Load heatmap preferences from SharedPreferences
+    _loadHeatmapPreferences();
     // Auto-load data for testing constructor too
     _autoLoadDataIfNeeded();
   }
