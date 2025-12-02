@@ -48,10 +48,10 @@ void main() {
       )).thenAnswer((_) async => ActivityHeatmapData(
         userId: 'test_user',
         year: DateTime.now().year,
-        dailyWorkoutCounts: {},
+        dailySetCounts: {},
         currentStreak: 0,
         longestStreak: 0,
-        totalWorkouts: 0,
+        totalSets: 0,
       ));
       when(mockAnalyticsService.getPersonalRecords(
         userId: anyNamed('userId'),
@@ -83,10 +83,10 @@ void main() {
         final mockHeatmapData = ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailyWorkoutCounts: {DateTime(2024, 1, 1): 1},
+          dailySetCounts: {DateTime(2024, 1, 1): 3},
           currentStreak: 5,
           longestStreak: 10,
-          totalWorkouts: 10,
+          totalSets: 30,
         );
 
         final mockPRs = [
@@ -196,10 +196,10 @@ void main() {
           return ActivityHeatmapData(
             userId: 'test_user',
             year: DateTime.now().year,
-            dailyWorkoutCounts: {},
+            dailySetCounts: {},
             currentStreak: 0,
             longestStreak: 0,
-            totalWorkouts: 0,
+            totalSets: 0,
           );
         });
 
@@ -262,10 +262,10 @@ void main() {
         )).thenAnswer((_) async => ActivityHeatmapData(
           userId: 'test_user',
           year: DateTime.now().year,
-          dailyWorkoutCounts: {},
+          dailySetCounts: {},
           currentStreak: 0,
           longestStreak: 0,
-          totalWorkouts: 0,
+          totalSets: 0,
         ));
 
         when(mockAnalyticsService.getPersonalRecords(

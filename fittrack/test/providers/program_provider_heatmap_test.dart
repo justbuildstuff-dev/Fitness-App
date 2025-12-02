@@ -517,7 +517,7 @@ void main() {
 
         // Should end on last day of month
         final lastDay = DateTime(now.year, now.month + 1, 0).day;
-        expect(dateRange.endDate.day, equals(lastDay));
+        expect(dateRange.end.day, equals(lastDay));
       });
 
       test('_getDateRangeForTimeframe calculates correct range for last30Days', () async {
@@ -542,9 +542,9 @@ void main() {
 
         // Should end today
         final now = DateTime.now();
-        expect(dateRange.endDate.day, equals(now.day));
-        expect(dateRange.endDate.month, equals(now.month));
-        expect(dateRange.endDate.year, equals(now.year));
+        expect(dateRange.end.day, equals(now.day));
+        expect(dateRange.end.month, equals(now.month));
+        expect(dateRange.end.year, equals(now.year));
       });
 
       test('_getDateRangeForTimeframe calculates correct range for thisYear', () async {
@@ -571,9 +571,9 @@ void main() {
         expect(dateRange.start.day, equals(1));
 
         // Should end December 31st
-        expect(dateRange.endDate.year, equals(now.year));
-        expect(dateRange.endDate.month, equals(12));
-        expect(dateRange.endDate.day, equals(31));
+        expect(dateRange.end.year, equals(now.year));
+        expect(dateRange.end.month, equals(12));
+        expect(dateRange.end.day, equals(31));
       });
     });
   });

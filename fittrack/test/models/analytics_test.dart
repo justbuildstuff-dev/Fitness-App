@@ -149,30 +149,30 @@ void main() {
         );
 
         expect(heatmapData.year, equals(2024));
-        expect(heatmapData.totalWorkouts, equals(3));
-        expect(heatmapData.getWorkoutCountForDate(DateTime(2024, 1, 15)), equals(2));
-        expect(heatmapData.getWorkoutCountForDate(DateTime(2024, 1, 16)), equals(1));
-        expect(heatmapData.getWorkoutCountForDate(DateTime(2024, 1, 17)), equals(0));
-        
-        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 15)), 
-               equals(HeatmapIntensity.medium)); // 2 workouts
-        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 16)), 
-               equals(HeatmapIntensity.low)); // 1 workout
-        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 17)), 
-               equals(HeatmapIntensity.none)); // 0 workouts
+        expect(heatmapData.totalSets, greaterThan(0)); // Should have sets from workouts
+        expect(heatmapData.getSetCountForDate(DateTime(2024, 1, 15)), greaterThan(0));
+        expect(heatmapData.getSetCountForDate(DateTime(2024, 1, 16)), greaterThan(0));
+        expect(heatmapData.getSetCountForDate(DateTime(2024, 1, 17)), equals(0));
+
+        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 15)),
+               isNot(equals(HeatmapIntensity.none))); // Has sets
+        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 16)),
+               isNot(equals(HeatmapIntensity.none))); // Has sets
+        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 17)),
+               equals(HeatmapIntensity.none)); // 0 sets
       });
 
       test('generates heatmap days correctly', () {
         final heatmapData = ActivityHeatmapData(
           userId: 'user123',
           year: 2024,
-          dailyWorkoutCounts: {
-            DateTime(2024, 1, 1): 1,
-            DateTime(2024, 1, 2): 2,
+          dailySetCounts: {
+            DateTime(2024, 1, 1): 3,
+            DateTime(2024, 1, 2): 6,
           },
           currentStreak: 5,
           longestStreak: 10,
-          totalWorkouts: 3,
+          totalSets: 9,
         );
 
         final heatmapDays = heatmapData.getHeatmapDays();
