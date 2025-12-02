@@ -100,20 +100,27 @@ class SmartCopyNaming {
       // Sort numbers to check for gaps
       copyNumbers.sort();
 
-      // Check for gaps in sequence [1, 2, 3, ...]
+      // Check for gaps in sequence [1, 2, 3, ...], but only fill reasonable gaps
+      // Don't fill gaps if the lowest existing copy number is more than 10
+      // (avoids filling gap at 1 when copies are [98, 99, 100])
       int? firstGap;
-      for (int i = 1; i <= copyNumbers.last; i++) {
-        if (!copyNumbers.contains(i)) {
-          firstGap = i;
-          break;
+      final lowestCopy = copyNumbers.first;
+
+      if (lowestCopy <= 10) {
+        // Only check for gaps if we're in a reasonable range
+        for (int i = 1; i <= copyNumbers.last; i++) {
+          if (!copyNumbers.contains(i)) {
+            firstGap = i;
+            break;
+          }
         }
       }
 
       if (firstGap != null) {
-        // Fill the lowest gap
+        // Fill the lowest gap (only happens if lowest copy <= 10)
         nextNumber = firstGap;
       } else {
-        // No gaps, use max + 1
+        // No gaps (or gaps too large to fill), use max + 1
         nextNumber = copyNumbers.last + 1;
       }
     }

@@ -42,9 +42,10 @@ void main() {
         exerciseTypeBreakdown: {},
         completedWorkoutIds: [],
       ));
-      when(mockAnalyticsService.generateHeatmapData(
+      when(mockAnalyticsService.generateSetBasedHeatmapData(
         userId: anyNamed('userId'),
-        year: anyNamed('year'),
+        dateRange: anyNamed('dateRange'),
+        programId: anyNamed('programId'),
       )).thenAnswer((_) async => ActivityHeatmapData(
         userId: 'test_user',
         year: DateTime.now().year,
@@ -124,9 +125,10 @@ void main() {
           dateRange: anyNamed('dateRange'),
         )).thenAnswer((_) async => mockAnalytics);
 
-        when(mockAnalyticsService.generateHeatmapData(
+        when(mockAnalyticsService.generateSetBasedHeatmapData(
           userId: anyNamed('userId'),
-          year: anyNamed('year'),
+          dateRange: anyNamed('dateRange'),
+          programId: anyNamed('programId'),
         )).thenAnswer((_) async => mockHeatmapData);
 
         when(mockAnalyticsService.getPersonalRecords(
@@ -188,9 +190,10 @@ void main() {
           );
         });
 
-        when(mockAnalyticsService.generateHeatmapData(
+        when(mockAnalyticsService.generateSetBasedHeatmapData(
           userId: anyNamed('userId'),
-          year: anyNamed('year'),
+          dateRange: anyNamed('dateRange'),
+          programId: anyNamed('programId'),
         )).thenAnswer((_) async {
           await Future.delayed(const Duration(milliseconds: 50));
           return ActivityHeatmapData(
@@ -256,9 +259,10 @@ void main() {
           completedWorkoutIds: ['w1', 'w2'],
         ));
 
-        when(mockAnalyticsService.generateHeatmapData(
+        when(mockAnalyticsService.generateSetBasedHeatmapData(
           userId: anyNamed('userId'),
-          year: anyNamed('year'),
+          dateRange: anyNamed('dateRange'),
+          programId: anyNamed('programId'),
         )).thenAnswer((_) async => ActivityHeatmapData(
           userId: 'test_user',
           year: DateTime.now().year,

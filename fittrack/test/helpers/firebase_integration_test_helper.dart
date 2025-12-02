@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 /// Firebase Integration Test Helper for Service-Level Tests
 ///
@@ -40,6 +41,9 @@ class FirebaseIntegrationTestHelper {
   /// ```
   static Future<void> initializeFirebaseEmulators() async {
     if (_initialized) return;
+
+    // Ensure Flutter binding is initialized for Firebase
+    TestWidgetsFlutterBinding.ensureInitialized();
 
     try {
       // Initialize Firebase app

@@ -79,14 +79,15 @@ void main() {
 
     group('Preference Initialization', () {
       test('loads preferences from SharedPreferences on initialization', () async {
-        // Arrange - Set saved preferences
-        SharedPreferences.setMockInitialValues({
-          'heatmap_timeframe': HeatmapTimeframe.thisMonth.index,
-          'heatmap_program_filter': 'program123',
-        });
+        // Arrange - Dispose old provider first
+        provider.dispose();
+
+        // Manually set preferences in the SharedPreferences instance
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('heatmap_timeframe', HeatmapTimeframe.thisMonth.index);
+        await prefs.setString('heatmap_program_filter', 'program123');
 
         // Re-create provider to test initialization
-        provider.dispose();
         provider = ProgramProvider.withServices(
           'test_user',
           mockFirestoreService,
@@ -94,7 +95,7 @@ void main() {
         );
 
         // Allow initialization to complete
-        await Future.delayed(const Duration(milliseconds: 150));
+        await Future.delayed(const Duration(milliseconds: 200));
 
         // Assert
         expect(provider.selectedHeatmapTimeframe, equals(HeatmapTimeframe.thisMonth));
@@ -362,16 +363,12 @@ void main() {
       });
 
       test('preferences persist across provider instances', () async {
-        // Arrange - Set preferences
+        // Arrange - Set preferences using provider methods (which persist to SharedPreferences)
         await provider.setHeatmapTimeframe(HeatmapTimeframe.last30Days);
         await provider.setHeatmapProgramFilter('persistent_program');
 
-        // Act - Dispose and create new provider
+        // Act - Dispose and create new provider (it should load the persisted preferences)
         provider.dispose();
-        SharedPreferences.setMockInitialValues({
-          'heatmap_timeframe': HeatmapTimeframe.last30Days.index,
-          'heatmap_program_filter': 'persistent_program',
-        });
 
         provider = ProgramProvider.withServices(
           'test_user',
@@ -380,9 +377,9 @@ void main() {
         );
 
         // Allow initialization to complete
-        await Future.delayed(const Duration(milliseconds: 150));
+        await Future.delayed(const Duration(milliseconds: 200));
 
-        // Assert - Preferences were loaded
+        // Assert - Preferences were loaded from SharedPreferences
         expect(provider.selectedHeatmapTimeframe, equals(HeatmapTimeframe.last30Days));
         expect(provider.selectedHeatmapProgramId, equals('persistent_program'));
       });

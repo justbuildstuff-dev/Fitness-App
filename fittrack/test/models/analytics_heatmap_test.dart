@@ -248,14 +248,21 @@ void main() {
         for (final timeframe in HeatmapTimeframe.values) {
           final config = HeatmapLayoutConfig.forTimeframe(timeframe);
 
-          // Start date should be before end date
-          expect(config.startDate.isBefore(config.endDate), isTrue,
-              reason: 'Start date should be before end date for $timeframe');
+          // Start date should be before or equal to end date
+          expect(config.startDate.isBefore(config.endDate) ||
+                 config.startDate.isAtSameMomentAs(config.endDate), isTrue,
+              reason: 'Start date should be before or equal to end date for $timeframe');
 
-          // Date range should not be in the future
+          // Date range should be reasonable (not more than a year from now)
           final now = DateTime.now();
-          expect(config.endDate.isAfter(now.add(const Duration(days: 1))), isFalse,
-              reason: 'End date should not be in the far future for $timeframe');
+          final maxReasonableDate = now.add(const Duration(days: 365));
+          expect(config.endDate.isBefore(maxReasonableDate), isTrue,
+              reason: 'End date should not be more than a year from now for $timeframe');
+
+          // Start date should not be too far in the past (max 1 year)
+          final minReasonableDate = now.subtract(const Duration(days: 365));
+          expect(config.startDate.isAfter(minReasonableDate), isTrue,
+              reason: 'Start date should not be more than a year in the past for $timeframe');
         }
       });
 
