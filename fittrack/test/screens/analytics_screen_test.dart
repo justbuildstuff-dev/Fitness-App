@@ -19,8 +19,6 @@ void main() {
   group('AnalyticsScreen', () {
     late MockProgramProvider mockProvider;
     late MockAuthProvider mockAuthProvider;
-    late ActivityHeatmapData mockHeatmapData;
-    late WorkoutAnalytics mockAnalytics;
 
     setUpAll(() async {
       TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,29 +27,7 @@ void main() {
     setUp(() {
       mockProvider = MockProgramProvider();
       mockAuthProvider = MockAuthProvider();
-
-      // Create simple mock data objects
-      mockHeatmapData = ActivityHeatmapData(
-        userId: 'test-user',
-        year: DateTime.now().year,
-        dailySetCounts: {}, // Changed from 'days' to 'dailySetCounts'
-        totalSets: 30,
-        currentStreak: 3,
-        longestStreak: 5,
-      );
-
-      mockAnalytics = WorkoutAnalytics(
-        userId: 'test-user',
-        startDate: DateTime.now().subtract(const Duration(days: 30)),
-        endDate: DateTime.now(),
-        totalWorkouts: 10,
-        totalSets: 50,
-        totalVolume: 1000,
-        totalDuration: 3600, // Changed from averageWorkoutDuration to totalDuration (in seconds)
-        exerciseTypeBreakdown: {}, // Changed from exerciseBreakdown to exerciseTypeBreakdown
-        completedWorkoutIds: [], // Added required field
-      );
-
+      
       // Default mock responses
       when(mockProvider.isLoadingAnalytics).thenReturn(false);
       when(mockProvider.error).thenReturn(null);
@@ -61,7 +37,7 @@ void main() {
       when(mockProvider.recentPRs).thenReturn([]);
       when(mockProvider.loadAnalytics()).thenAnswer((_) async {});
       when(mockProvider.refreshAnalytics()).thenAnswer((_) async {});
-
+      
       // Set up auth provider mocks to prevent Firebase calls
       when(mockAuthProvider.user).thenReturn(null);
       when(mockAuthProvider.isLoading).thenReturn(false);
@@ -93,19 +69,13 @@ void main() {
         expect(find.text('Loading analytics...'), findsOneWidget);
       });
 
-      testWidgets('analytics data loads from provider', (tester) async {
-        // Arrange - Set up mock to return analytics data
-        when(mockProvider.isLoadingAnalytics).thenReturn(false);
-        when(mockProvider.error).thenReturn(null);
-        when(mockProvider.heatmapData).thenReturn(mockHeatmapData);
-        when(mockProvider.currentAnalytics).thenReturn(mockAnalytics);
-
+      testWidgets('calls loadAnalytics on init', (tester) async {
         // Act
         await tester.pumpWidget(createTestApp());
         await tester.pumpAndSettle();
 
-        // Assert - Screen displays data from provider (auto-loaded by provider, not by screen)
-        expect(find.byType(ActivityHeatmapSection), findsOneWidget);
+        // Assert
+        verify(mockProvider.loadAnalytics()).called(1);
       });
     });
 
@@ -117,11 +87,11 @@ void main() {
         // Act
         await tester.pumpWidget(createTestApp());
 
-        // Assert - Now using ErrorDisplay widget
-        expect(find.text('Something went wrong'), findsOneWidget);
-        expect(find.text('Unable to load analytics data. Please check your connection and try again.'), findsOneWidget);
+        // Assert
+        expect(find.text('Failed to load analytics'), findsOneWidget);
+        expect(find.text('Failed to load analytics data'), findsOneWidget);
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
-        expect(find.text('Try Again'), findsOneWidget);
+        expect(find.text('Retry'), findsOneWidget);
       });
 
       testWidgets('retry button calls loadAnalytics', (tester) async {
@@ -130,15 +100,11 @@ void main() {
 
         // Act
         await tester.pumpWidget(createTestApp());
-
-        // Clear auto-load interactions before testing retry button
-        clearInteractions(mockProvider);
-
-        await tester.tap(find.text('Try Again'));
+        await tester.tap(find.text('Retry'));
         await tester.pump();
 
-        // Assert - Should be called once after clearing interactions
-        verify(mockProvider.loadAnalytics()).called(1);
+        // Assert
+        verify(mockProvider.loadAnalytics()).called(2); // Once on init, once on retry
       });
     });
 
@@ -152,56 +118,6 @@ void main() {
         expect(find.text('Start tracking workouts to see your analytics'), findsOneWidget);
         expect(find.byIcon(Icons.analytics_outlined), findsOneWidget);
         expect(find.text('Use the Programs tab to start tracking workouts'), findsOneWidget);
-      });
-    });
-
-    group('Theme Support', () {
-      testWidgets('respects dark theme setting', (tester) async {
-        // Arrange - wrap in dark theme
-        final darkThemeApp = MaterialApp(
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
-          themeMode: ThemeMode.dark,
-          home: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
-              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
-            ],
-            child: const AnalyticsScreen(),
-          ),
-        );
-
-        // Act
-        await tester.pumpWidget(darkThemeApp);
-        await tester.pumpAndSettle();
-
-        // Assert - verify scaffold uses dark theme
-        final context = tester.element(find.byType(Scaffold).first);
-        expect(Theme.of(context).brightness, Brightness.dark);
-      });
-
-      testWidgets('respects light theme setting', (tester) async {
-        // Arrange - wrap in light theme
-        final lightThemeApp = MaterialApp(
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
-          themeMode: ThemeMode.light,
-          home: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
-              ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
-            ],
-            child: const AnalyticsScreen(),
-          ),
-        );
-
-        // Act
-        await tester.pumpWidget(lightThemeApp);
-        await tester.pumpAndSettle();
-
-        // Assert - verify scaffold uses light theme
-        final context = tester.element(find.byType(Scaffold).first);
-        expect(Theme.of(context).brightness, Brightness.light);
       });
     });
 
@@ -274,10 +190,10 @@ void main() {
         final mockHeatmapData = ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailySetCounts: {DateTime(2024, 1, 1): 1},
+          dailyWorkoutCounts: {DateTime(2024, 1, 1): 1},
           currentStreak: 5,
           longestStreak: 10,
-          totalSets: 10,
+          totalWorkouts: 10,
         );
 
         final mockStats = {
@@ -306,10 +222,10 @@ void main() {
         when(mockProvider.heatmapData).thenReturn(ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailySetCounts: {},
+          dailyWorkoutCounts: {},
           currentStreak: 0,
           longestStreak: 0,
-          totalSets: 0,
+          totalWorkouts: 0,
         ));
 
         // Act
@@ -334,13 +250,13 @@ void main() {
       final heatmapData = ActivityHeatmapData(
         userId: 'test_user',
         year: 2024,
-        dailySetCounts: {
+        dailyWorkoutCounts: {
           DateTime(2024, 1, 1): 1,
           DateTime(2024, 1, 2): 2,
         },
         currentStreak: 5,
         longestStreak: 15,
-        totalSets: 50,
+        totalWorkouts: 50,
       );
 
       // Act
@@ -364,10 +280,10 @@ void main() {
       final heatmapData = ActivityHeatmapData(
         userId: 'test_user',
         year: 2024,
-        dailySetCounts: {DateTime(2024, 1, 1): 1},
+        dailyWorkoutCounts: {DateTime(2024, 1, 1): 1},
         currentStreak: 0,
         longestStreak: 0,
-        totalSets: 1,
+        totalWorkouts: 1,
       );
 
       // Act

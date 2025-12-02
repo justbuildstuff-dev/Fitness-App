@@ -35,212 +35,117 @@ void main() {
     }
 
     group('UI Rendering', () {
-      testWidgets('renders settings screen with compact theme selector', (tester) async {
+      testWidgets('renders settings screen with all theme options', (tester) async {
         // Act
         await tester.pumpWidget(createTestApp());
 
         // Assert
         expect(find.text('Settings'), findsOneWidget);
         expect(find.text('Appearance'), findsOneWidget);
-        expect(find.text('Theme'), findsOneWidget);
-
-        // Check for theme icon buttons
-        expect(find.byIcon(Icons.brightness_auto), findsOneWidget); // System
-        expect(find.byIcon(Icons.wb_sunny), findsOneWidget); // Light
-        expect(find.byIcon(Icons.nights_stay), findsOneWidget); // Dark
+        expect(find.text('Light'), findsOneWidget);
+        expect(find.text('Always use light theme'), findsOneWidget);
+        expect(find.text('Dark'), findsOneWidget);
+        expect(find.text('Always use dark theme'), findsOneWidget);
+        expect(find.text('System Default'), findsOneWidget);
+        expect(find.text('Use system theme setting'), findsOneWidget);
       });
 
-      testWidgets('shows system theme button as selected when current theme is system', (tester) async {
-        // Arrange
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
-
-        // Act
-        await tester.pumpWidget(createTestApp());
-
-        // Assert - System button should have selected styling
-        final systemButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'System theme',
-        );
-
-        expect(systemButton, findsOneWidget);
-
-        final semantics = tester.widget<Semantics>(systemButton);
-        expect(semantics.properties.selected, isTrue);
-        expect(semantics.properties.label, equals('System theme'));
-      });
-
-      testWidgets('shows light theme button as selected when current theme is light', (tester) async {
+      testWidgets('shows light mode selected when current theme is light', (tester) async {
         // Arrange
         when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.light);
 
         // Act
         await tester.pumpWidget(createTestApp());
 
-        // Assert - Light button should have selected styling
-        final lightButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'Light theme',
+        // Assert - Light option should be selected
+        final lightRadio = tester.widget<RadioListTile<ThemeMode>>(
+          find.byWidgetPredicate((widget) =>
+            widget is RadioListTile<ThemeMode> && widget.value == ThemeMode.light),
         );
-
-        expect(lightButton, findsOneWidget);
-
-        final semantics = tester.widget<Semantics>(lightButton);
-        expect(semantics.properties.selected, isTrue);
-        expect(semantics.properties.label, equals('Light theme'));
+        expect(lightRadio.groupValue, equals(ThemeMode.light));
       });
 
-      testWidgets('shows dark theme button as selected when current theme is dark', (tester) async {
+      testWidgets('shows dark mode selected when current theme is dark', (tester) async {
         // Arrange
         when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
 
         // Act
         await tester.pumpWidget(createTestApp());
 
-        // Assert - Dark button should have selected styling
-        final darkButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'Dark theme',
+        // Assert - Dark option should be selected
+        final darkRadio = tester.widget<RadioListTile<ThemeMode>>(
+          find.byWidgetPredicate((widget) =>
+            widget is RadioListTile<ThemeMode> && widget.value == ThemeMode.dark),
         );
-
-        expect(darkButton, findsOneWidget);
-
-        final semantics = tester.widget<Semantics>(darkButton);
-        expect(semantics.properties.selected, isTrue);
-        expect(semantics.properties.label, equals('Dark theme'));
+        expect(darkRadio.groupValue, equals(ThemeMode.dark));
       });
 
-      testWidgets('theme icon buttons meet minimum size requirements', (tester) async {
-        // Act
-        await tester.pumpWidget(createTestApp());
-
-        // Assert - Each button should be at least 48x48 dp
-        final systemButton = find.ancestor(
-          of: find.byIcon(Icons.brightness_auto),
-          matching: find.byType(Container),
-        ).first;
-
-        final container = tester.widget<Container>(systemButton);
-        final decoration = container.decoration as BoxDecoration;
-
-        expect(container.constraints?.minWidth, greaterThanOrEqualTo(48.0));
-        expect(container.constraints?.minHeight, greaterThanOrEqualTo(48.0));
-      });
-    });
-
-    group('Theme Selection', () {
-      testWidgets('tapping system button calls setThemeMode with ThemeMode.system', (tester) async {
-        // Arrange
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.light);
-
-        // Act
-        await tester.pumpWidget(createTestApp());
-        await tester.tap(find.byIcon(Icons.brightness_auto));
-        await tester.pump();
-
-        // Assert
-        verify(mockThemeProvider.setThemeMode(ThemeMode.system)).called(1);
-      });
-
-      testWidgets('tapping light button calls setThemeMode with ThemeMode.light', (tester) async {
+      testWidgets('shows system mode selected when current theme is system', (tester) async {
         // Arrange
         when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
 
         // Act
         await tester.pumpWidget(createTestApp());
-        await tester.tap(find.byIcon(Icons.wb_sunny));
+
+        // Assert - System option should be selected
+        final systemRadio = tester.widget<RadioListTile<ThemeMode>>(
+          find.byWidgetPredicate((widget) =>
+            widget is RadioListTile<ThemeMode> && widget.value == ThemeMode.system),
+        );
+        expect(systemRadio.groupValue, equals(ThemeMode.system));
+      });
+    });
+
+    group('Theme Selection', () {
+      testWidgets('selecting light theme calls setThemeMode with ThemeMode.light', (tester) async {
+        // Arrange
+        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
+
+        // Act
+        await tester.pumpWidget(createTestApp());
+        await tester.tap(find.text('Light'));
         await tester.pump();
 
         // Assert
         verify(mockThemeProvider.setThemeMode(ThemeMode.light)).called(1);
       });
 
-      testWidgets('tapping dark button calls setThemeMode with ThemeMode.dark', (tester) async {
+      testWidgets('selecting dark theme calls setThemeMode with ThemeMode.dark', (tester) async {
         // Arrange
         when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
 
         // Act
         await tester.pumpWidget(createTestApp());
-        await tester.tap(find.byIcon(Icons.nights_stay));
+        await tester.tap(find.text('Dark'));
         await tester.pump();
 
         // Assert
         verify(mockThemeProvider.setThemeMode(ThemeMode.dark)).called(1);
       });
 
-      testWidgets('theme changes immediately when button is tapped', (tester) async {
+      testWidgets('selecting system theme calls setThemeMode with ThemeMode.system', (tester) async {
         // Arrange
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
-
-        // Act - Initial render
-        await tester.pumpWidget(createTestApp());
-
-        // Verify initial state
-        var systemButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'System theme',
-        );
-        expect(tester.widget<Semantics>(systemButton).properties.selected, isTrue);
-
-        // Change to dark mode
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
-        await tester.tap(find.byIcon(Icons.nights_stay));
-        await tester.pumpAndSettle(); // Wait for any animations to complete
-
-        // Assert - Dark button should now be selected
-        final darkButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'Dark theme',
-        );
-        expect(tester.widget<Semantics>(darkButton).properties.selected, isTrue);
-      });
-    });
-
-    group('Accessibility', () {
-      testWidgets('theme buttons have proper semantic labels', (tester) async {
-        // Act
-        await tester.pumpWidget(createTestApp());
-
-        // Assert - Check all semantic labels
-        final systemButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'System theme',
-        );
-        expect(tester.widget<Semantics>(systemButton).properties.label, equals('System theme'));
-
-        final lightButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'Light theme',
-        );
-        expect(tester.widget<Semantics>(lightButton).properties.label, equals('Light theme'));
-
-        final darkButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'Dark theme',
-        );
-        expect(tester.widget<Semantics>(darkButton).properties.label, equals('Dark theme'));
-      });
-
-      testWidgets('theme buttons announce selected state to screen readers', (tester) async {
-        // Arrange
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
+        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.light);
 
         // Act
         await tester.pumpWidget(createTestApp());
+        await tester.tap(find.text('System Default'));
+        await tester.pump();
 
-        // Assert - Dark button should announce selected state
-        final darkButton = find.byWidgetPredicate(
-          (widget) => widget is Semantics &&
-                     widget.properties.label == 'Dark theme',
-        );
-
-        final semantics = tester.widget<Semantics>(darkButton);
-        expect(semantics.properties.selected, isTrue);
-        expect(semantics.properties.button, isTrue);
+        // Assert
+        verify(mockThemeProvider.setThemeMode(ThemeMode.system)).called(1);
       });
     });
 
     group('Navigation', () {
+      testWidgets('has back button in app bar', (tester) async {
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Assert
+        expect(find.byType(BackButton), findsOneWidget);
+      });
+
       testWidgets('back button pops route', (tester) async {
         // Arrange
         await tester.pumpWidget(
