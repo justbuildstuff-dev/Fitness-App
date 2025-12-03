@@ -7,6 +7,7 @@ import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
 import 'package:fittrack/screens/analytics/components/charts_section.dart';
+import 'package:fittrack/screens/analytics/components/dynamic_heatmap_calendar.dart';
 import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/models/analytics.dart';
@@ -61,6 +62,13 @@ void main() {
       when(mockProvider.recentPRs).thenReturn([]);
       when(mockProvider.loadAnalytics()).thenAnswer((_) async {});
       when(mockProvider.refreshAnalytics()).thenAnswer((_) async {});
+
+      // Heatmap-related mocks
+      when(mockProvider.selectedHeatmapTimeframe).thenReturn(HeatmapTimeframe.thisYear);
+      when(mockProvider.selectedHeatmapProgramId).thenReturn(null);
+      when(mockProvider.programs).thenReturn([]);
+      when(mockProvider.setHeatmapTimeframe(any)).thenAnswer((_) async {});
+      when(mockProvider.setHeatmapProgramFilter(any)).thenAnswer((_) async {});
 
       // Set up auth provider mocks to prevent Firebase calls
       when(mockAuthProvider.user).thenReturn(null);
