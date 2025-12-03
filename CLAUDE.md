@@ -122,9 +122,25 @@ Deploy the provided security rules and indexes:
 
 ## Testing Requirements
 
-- Unit tests for duplication logic and validation
-- Integration tests with Firebase Emulator (Auth + Firestore)
-- E2E tests for core flows (create program, duplicate week, offline sync)
+**Test Types:**
+- **Unit tests** - For all models, providers, and business logic (90%+ coverage)
+- **Widget tests** - For screens and complex UI components
+- **Integration tests** - For service layer with REAL Firebase operations (REQUIRED for service changes)
+- **E2E tests** - For critical user flows (create program, duplicate week, offline sync)
+
+**CRITICAL: Integration Test Requirement**
+
+**When modifying `lib/services/*.dart`:**
+1. ✅ **REQUIRED:** Create corresponding `test/services/*_integration_test.dart`
+2. ✅ Use template: `fittrack/test/services/INTEGRATION_TEST_TEMPLATE.dart`
+3. ✅ Use helper: `FirebaseIntegrationTestHelper` from `test/helpers/`
+4. ✅ Tests MUST connect to Firebase emulators (localhost:8080, localhost:9099)
+5. ✅ Tests MUST create real data in Firestore
+6. ✅ Tests MUST validate actual Firebase operations (NOT mocks)
+
+**Why:** Service-level integration tests prevent false passes by validating real Firebase behavior. CI will enforce this requirement.
+
+**Reference:** See `Docs/Testing/TestClassification.md` for complete test classification guide
 
 ## Commands
 - When asked to deploy the application for testing, a check should be done to see if the emulators are already running before redeploying. If the emulators are already running and accessible then a hot redeploy of the application should be performed. 

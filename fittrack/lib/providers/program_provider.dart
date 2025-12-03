@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/program.dart';
 import '../models/week.dart';
 import '../models/workout.dart';
@@ -20,6 +21,8 @@ class ProgramProvider extends ChangeNotifier {
   ProgramProvider(this._userId)
     : _firestoreService = FirestoreService.instance,
       _analyticsService = AnalyticsService.instance {
+    // Load heatmap preferences from SharedPreferences
+    _loadHeatmapPreferences();
     // Auto-load data when userId is set and has changed
     _autoLoadDataIfNeeded();
   }
@@ -30,6 +33,8 @@ class ProgramProvider extends ChangeNotifier {
     this._firestoreService,
     this._analyticsService
   ) {
+    // Load heatmap preferences from SharedPreferences
+    _loadHeatmapPreferences();
     // Auto-load data for testing constructor too
     _autoLoadDataIfNeeded();
   }
@@ -89,6 +94,12 @@ class ProgramProvider extends ChangeNotifier {
   Map<String, dynamic>? _keyStatistics;
   bool _isLoadingAnalytics = false;
 
+  // Heatmap state persistence
+  HeatmapTimeframe _selectedHeatmapTimeframe = HeatmapTimeframe.thisYear;
+  String? _selectedHeatmapProgramId; // null means "All Programs"
+  static const String _heatmapTimeframeKey = 'heatmap_timeframe';
+  static const String _heatmapProgramFilterKey = 'heatmap_program_filter';
+
   // Disposal tracking
   bool _disposed = false;
 
@@ -126,6 +137,10 @@ class ProgramProvider extends ChangeNotifier {
   List<PersonalRecord>? get recentPRs => _recentPRs;
   Map<String, dynamic>? get keyStatistics => _keyStatistics;
   bool get isLoadingAnalytics => _isLoadingAnalytics;
+
+  // Heatmap state getters
+  HeatmapTimeframe get selectedHeatmapTimeframe => _selectedHeatmapTimeframe;
+  String? get selectedHeatmapProgramId => _selectedHeatmapProgramId;
 
   /// Get current sets (convenience method)
   List<ExerciseSet> getCurrentSets() => _sets;
@@ -1070,18 +1085,20 @@ class ProgramProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      final selectedDateRange = dateRange ?? DateRange.thisYear();
-      final currentYear = DateTime.now().year;
+      // Use the date range from selected timeframe if not provided
+      final selectedDateRange = dateRange ?? _getDateRangeForTimeframe(_selectedHeatmapTimeframe);
 
       // Load analytics data concurrently
       final futures = [
         _analyticsService.computeWorkoutAnalytics(
           userId: _userId!,
           dateRange: selectedDateRange,
+          programId: _selectedHeatmapProgramId,
         ),
-        _analyticsService.generateHeatmapData(
+        _analyticsService.generateSetBasedHeatmapData(
           userId: _userId!,
-          year: currentYear,
+          dateRange: selectedDateRange,
+          programId: _selectedHeatmapProgramId,
         ),
         _analyticsService.getPersonalRecords(
           userId: _userId!,
@@ -1144,6 +1161,126 @@ class ProgramProvider extends ChangeNotifier {
   Future<void> refreshAnalytics() async {
     _analyticsService.clearCache();
     await loadAnalytics();
+  }
+
+  // ========================================
+  // HEATMAP STATE PERSISTENCE
+  // ========================================
+
+  /// Load heatmap preferences from SharedPreferences
+  Future<void> _loadHeatmapPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Load timeframe (default to thisYear if not found or invalid)
+      final timeframeIndex = prefs.getInt(_heatmapTimeframeKey);
+      if (timeframeIndex != null &&
+          timeframeIndex >= 0 &&
+          timeframeIndex < HeatmapTimeframe.values.length) {
+        _selectedHeatmapTimeframe = HeatmapTimeframe.values[timeframeIndex];
+      }
+
+      // Load program filter (null means "All Programs")
+      _selectedHeatmapProgramId = prefs.getString(_heatmapProgramFilterKey);
+
+      debugPrint('[ProgramProvider] Loaded heatmap preferences: timeframe=$_selectedHeatmapTimeframe, programId=$_selectedHeatmapProgramId');
+    } catch (e) {
+      debugPrint('[ProgramProvider] Failed to load heatmap preferences: $e');
+      // Keep defaults on error
+    }
+  }
+
+  /// Set the selected heatmap timeframe and persist to SharedPreferences
+  Future<void> setHeatmapTimeframe(HeatmapTimeframe timeframe) async {
+    _selectedHeatmapTimeframe = timeframe;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_heatmapTimeframeKey, timeframe.index);
+      debugPrint('[ProgramProvider] Saved heatmap timeframe: $timeframe');
+
+      // Reload analytics with new timeframe
+      await loadAnalytics();
+    } catch (e) {
+      debugPrint('[ProgramProvider] Failed to save heatmap timeframe: $e');
+    }
+  }
+
+  /// Set the selected heatmap program filter and persist to SharedPreferences
+  ///
+  /// Filters the heatmap to show activity from a specific program or all programs.
+  ///
+  /// **Parameters:**
+  /// - [programId]: The program ID to filter by, or null for "All Programs"
+  ///
+  /// **Behavior:**
+  /// - Updates the UI immediately via notifyListeners()
+  /// - Persists the selection to SharedPreferences for the next app launch
+  /// - If null, removes the saved preference (defaults to all programs)
+  /// - Reloads analytics data with the new filter applied
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // Filter by specific program
+  /// await provider.setHeatmapProgramFilter('program_123');
+  ///
+  /// // Show all programs
+  /// await provider.setHeatmapProgramFilter(null);
+  /// ```
+  Future<void> setHeatmapProgramFilter(String? programId) async {
+    _selectedHeatmapProgramId = programId;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (programId == null) {
+        await prefs.remove(_heatmapProgramFilterKey);
+      } else {
+        await prefs.setString(_heatmapProgramFilterKey, programId);
+      }
+      debugPrint('[ProgramProvider] Saved heatmap program filter: $programId');
+
+      // Reload analytics with new program filter
+      await loadAnalytics();
+    } catch (e) {
+      debugPrint('[ProgramProvider] Failed to save heatmap program filter: $e');
+    }
+  }
+
+  /// Get DateRange for the selected timeframe
+  DateRange _getDateRangeForTimeframe(HeatmapTimeframe timeframe) {
+    final now = DateTime.now();
+
+    switch (timeframe) {
+      case HeatmapTimeframe.thisWeek:
+        // Monday of current week to Sunday
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 6));
+        return DateRange(
+          start: DateTime(weekStart.year, weekStart.month, weekStart.day),
+          end: DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59),
+        );
+
+      case HeatmapTimeframe.thisMonth:
+        // First day of current month to last day
+        final monthStart = DateTime(now.year, now.month, 1);
+        final monthEnd = DateTime(now.year, now.month + 1, 0);
+        return DateRange(
+          start: monthStart,
+          end: DateTime(monthEnd.year, monthEnd.month, monthEnd.day, 23, 59, 59),
+        );
+
+      case HeatmapTimeframe.last30Days:
+        // Rolling 30-day window
+        final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
+        return DateRange(start: startDate, end: endDate);
+
+      case HeatmapTimeframe.thisYear:
+        // Full current year
+        return DateRange.thisYear();
+    }
   }
 
   // ========================================

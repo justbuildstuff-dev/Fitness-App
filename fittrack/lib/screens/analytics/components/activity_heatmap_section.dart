@@ -1,18 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../models/analytics.dart';
+import '../../../models/program.dart';
+import 'dynamic_heatmap_calendar.dart';
 
-/// Activity heatmap section showing GitHub-style workout consistency visualization
-class ActivityHeatmapSection extends StatelessWidget {
+/// Activity heatmap section with dynamic timeframe selection and program filtering
+class ActivityHeatmapSection extends StatefulWidget {
   final ActivityHeatmapData data;
+  final HeatmapTimeframe selectedTimeframe;
+  final String? selectedProgramId;
+  final List<Program> availablePrograms;
+  final Function(HeatmapTimeframe) onTimeframeChanged;
+  final Function(String?) onProgramFilterChanged;
 
   const ActivityHeatmapSection({
     super.key,
     required this.data,
+    required this.selectedTimeframe,
+    required this.selectedProgramId,
+    required this.availablePrograms,
+    required this.onTimeframeChanged,
+    required this.onProgramFilterChanged,
   });
 
   @override
+  State<ActivityHeatmapSection> createState() => _ActivityHeatmapSectionState();
+}
+
+class _ActivityHeatmapSectionState extends State<ActivityHeatmapSection> {
+  @override
   Widget build(BuildContext context) {
+    // Get layout config based on selected timeframe
+    final layoutConfig = HeatmapLayoutConfig.forTimeframe(widget.selectedTimeframe);
+
     return Container(
       margin: const EdgeInsets.all(16),
       child: Card(
@@ -22,316 +41,131 @@ class ActivityHeatmapSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${data.year} Activity',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${data.totalWorkouts} workouts',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+              _buildHeader(context),
               const SizedBox(height: 16),
-              
-              // Heatmap Calendar
-              SizedBox(
-                height: 200,
-                child: HeatmapCalendar(data: data),
-              ),
-              
+
+              // Timeframe selector
+              _buildTimeframeSelector(context),
               const SizedBox(height: 16),
-              
+
+              // Program filter dropdown
+              _buildProgramFilter(context),
+              const SizedBox(height: 16),
+
+              // Heatmap calendar with dynamic layout
+              _buildDynamicHeatmap(context, layoutConfig),
+
+              const SizedBox(height: 16),
+
               // Streak information
-              Row(
-                children: [
-                  Expanded(
-                    child: _StreakCard(
-                      title: 'Current Streak',
-                      value: '${data.currentStreak} days',
-                      icon: Icons.local_fire_department,
-                      color: data.currentStreak > 0
-                          ? Theme.of(context).colorScheme.tertiary
-                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StreakCard(
-                      title: 'Longest Streak',
-                      value: '${data.longestStreak} days',
-                      icon: Icons.emoji_events,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                ],
-              ),
+              _buildStreakCards(context),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-/// Heatmap calendar widget displaying workout intensity
-class HeatmapCalendar extends StatelessWidget {
-  final ActivityHeatmapData data;
-
-  const HeatmapCalendar({
-    super.key,
-    required this.data,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final heatmapDays = data.getHeatmapDays();
-    final now = DateTime.now();
-    final currentYear = now.year;
-    
-    // Group days by week
-    final weeks = <List<HeatmapDay>>[];
-    List<HeatmapDay> currentWeek = [];
-    
-    for (final day in heatmapDays) {
-      currentWeek.add(day);
-      
-      // If it's Sunday or the last day, complete the week
-      if (day.date.weekday == DateTime.sunday || day == heatmapDays.last) {
-        // Fill the week to 7 days if needed
-        while (currentWeek.length < 7) {
-          final emptyDate = currentWeek.first.date.subtract(
-            Duration(days: 7 - currentWeek.length),
-          );
-          currentWeek.insert(0, HeatmapDay(
-            date: emptyDate,
-            workoutCount: 0,
-            intensity: HeatmapIntensity.none,
-          ));
-        }
-        weeks.add(List.from(currentWeek));
-        currentWeek.clear();
-      }
-    }
-
-    return Column(
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Month labels
-        SizedBox(
-          height: 20,
-          child: Row(
-            children: [
-              const SizedBox(width: 20), // Space for day labels
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(12, (index) {
-                    return Text(
-                      DateFormat('MMM').format(DateTime(currentYear, index + 1)),
-                      style: Theme.of(context).textTheme.labelSmall,
-                    );
-                  }),
-                ),
-              ),
-            ],
+        Text(
+          'Activity Tracker',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
           ),
         ),
-        
-        const SizedBox(height: 4),
-        
-        // Heatmap grid
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Day labels (M, T, W, T, F, S, S)
-              SizedBox(
-                width: 20,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                      .map((day) => Text(
-                            day,
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ))
-                      .toList(),
-                ),
-              ),
-              
-              // Heatmap squares
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: weeks.map((week) => Column(
-                      mainAxisSize: MainAxisSize.min, // Prevent column from expanding beyond available height
-                      children: week.map((day) => Container(
-                        margin: const EdgeInsets.all(1),
-                        child: HeatmapSquare(
-                          day: day,
-                          onTap: () => _showDayDetails(context, day),
-                        ),
-                      )).toList(),
-                    )).toList(),
-                  ),
-                ),
-              ),
-            ],
+        Text(
+          '${widget.data.totalSets} sets completed',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w600,
           ),
-        ),
-        
-        const SizedBox(height: 8),
-        
-        // Legend
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              'Less',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-            const SizedBox(width: 4),
-            ...HeatmapIntensity.values.map((intensity) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 1),
-              child: HeatmapSquare(
-                day: HeatmapDay(
-                  date: DateTime.now(),
-                  workoutCount: _getCountForIntensity(intensity),
-                  intensity: intensity,
-                ),
-                size: 12,
-              ),
-            )),
-            const SizedBox(width: 4),
-            Text(
-              'More',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-          ],
         ),
       ],
     );
   }
 
-  int _getCountForIntensity(HeatmapIntensity intensity) {
-    switch (intensity) {
-      case HeatmapIntensity.none:
-        return 0;
-      case HeatmapIntensity.low:
-        return 1;
-      case HeatmapIntensity.medium:
-        return 2;
-      case HeatmapIntensity.high:
-        return 4;
-    }
-  }
-
-  void _showDayDetails(BuildContext context, HeatmapDay day) {
-    if (day.workoutCount == 0) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(DateFormat('EEEE, MMM d, y').format(day.date)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${day.workoutCount} workout${day.workoutCount == 1 ? '' : 's'} completed'),
-            const SizedBox(height: 8),
-            Text(
-              day.intensity.displayName,
-              style: TextStyle(
-                color: _getColorForIntensity(context, day.intensity),
-                fontWeight: FontWeight.w600,
-              ),
+  Widget _buildTimeframeSelector(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: HeatmapTimeframe.values.map((timeframe) {
+          final isSelected = timeframe == widget.selectedTimeframe;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(timeframe.displayName),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  widget.onTimeframeChanged(timeframe);
+                }
+              },
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
+          );
+        }).toList(),
       ),
     );
   }
 
-  Color _getColorForIntensity(BuildContext context, HeatmapIntensity intensity) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    switch (intensity) {
-      case HeatmapIntensity.none:
-        return colorScheme.surfaceContainerHighest;
-      case HeatmapIntensity.low:
-        return colorScheme.primaryContainer;
-      case HeatmapIntensity.medium:
-        return colorScheme.primary.withValues(alpha: isDark ? 0.6 : 0.7);
-      case HeatmapIntensity.high:
-        return colorScheme.primary;
-    }
-  }
-}
-
-/// Individual heatmap square
-class HeatmapSquare extends StatelessWidget {
-  final HeatmapDay day;
-  final VoidCallback? onTap;
-  final double size;
-
-  const HeatmapSquare({
-    super.key,
-    required this.day,
-    this.onTap,
-    this.size = 16,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Tooltip(
-        message: '${day.workoutCount} workout${day.workoutCount == 1 ? '' : 's'} on ${DateFormat('MMM d').format(day.date)}',
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: _getColorForIntensity(context, day.intensity),
-            borderRadius: BorderRadius.circular(2),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-              width: 0.5,
-            ),
-          ),
+  Widget _buildProgramFilter(BuildContext context) {
+    return DropdownButtonFormField<String?>(
+      value: widget.selectedProgramId,
+      decoration: const InputDecoration(
+        labelText: 'Filter by Program',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      items: [
+        const DropdownMenuItem<String?>(
+          value: null,
+          child: Text('All Programs'),
         ),
+        ...widget.availablePrograms.map((program) => DropdownMenuItem<String?>(
+          value: program.id,
+          child: Text(program.name),
+        )),
+      ],
+      onChanged: widget.onProgramFilterChanged,
+    );
+  }
+
+  Widget _buildDynamicHeatmap(BuildContext context, HeatmapLayoutConfig config) {
+    return SizedBox(
+      height: config.enableVerticalScroll ? 300 : null,
+      child: DynamicHeatmapCalendar(
+        data: widget.data,
+        config: config,
       ),
     );
   }
 
-  Color _getColorForIntensity(BuildContext context, HeatmapIntensity intensity) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    switch (intensity) {
-      case HeatmapIntensity.none:
-        return colorScheme.surfaceContainerHighest;
-      case HeatmapIntensity.low:
-        return colorScheme.primaryContainer;
-      case HeatmapIntensity.medium:
-        return colorScheme.primary.withValues(alpha: isDark ? 0.6 : 0.7);
-      case HeatmapIntensity.high:
-        return colorScheme.primary;
-    }
+  Widget _buildStreakCards(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StreakCard(
+            title: 'Current Streak',
+            value: '${widget.data.currentStreak} days',
+            icon: Icons.local_fire_department,
+            color: widget.data.currentStreak > 0
+                ? Theme.of(context).colorScheme.tertiary
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StreakCard(
+            title: 'Longest Streak',
+            value: '${widget.data.longestStreak} days',
+            icon: Icons.emoji_events,
+            color: Theme.of(context).colorScheme.secondary,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -354,10 +188,10 @@ class _StreakCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
         ),
       ),
       child: Column(

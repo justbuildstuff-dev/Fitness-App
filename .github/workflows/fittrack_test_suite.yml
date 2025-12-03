@@ -369,7 +369,7 @@ jobs:
 
   # Enhanced tests with comprehensive coverage
   enhanced-tests:
-    name: Enhanced Test Suite
+    name: Enhanced Integration Tests (Firebase Emulators)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -409,20 +409,35 @@ jobs:
         flutter test test/models/enhanced_program_test.dart test/models/enhanced_exercise_test.dart \
           --coverage \
           --timeout=60s \
-          --reporter=github || echo "Enhanced unit tests completed with some failures"
+          --reporter=github
           
     - name: Start Firebase emulators for enhanced integration
       run: |
         cd fittrack
         firebase emulators:start --only auth,firestore &
         echo $! > emulator.pid
-        sleep 15
+
+    - name: Wait for Firebase emulators to be ready
+      run: |
+        echo "Waiting for Firestore emulator on localhost:8080..."
+        timeout 60 bash -c 'until curl -s http://localhost:8080 > /dev/null; do sleep 2; done' || {
+          echo "ERROR: Firestore emulator failed to start"
+          exit 1
+        }
+        echo "Waiting for Auth emulator on localhost:9099..."
+        timeout 60 bash -c 'until curl -s http://localhost:9099 > /dev/null; do sleep 2; done' || {
+          echo "ERROR: Auth emulator failed to start"
+          exit 1
+        }
+        echo "✅ Firebase emulators are ready"
         
     - name: Run enhanced integration tests
       run: |
         cd fittrack
-        # Run simplified integration tests
-        flutter test test/screens/enhanced_create_program_screen_test.dart test/models/program_model_validation_test.dart \
+        # IMPORTANT: These tests MUST connect to Firebase emulators
+        # IMPORTANT: These tests MUST create real data in Firestore
+        # IMPORTANT: These tests MUST validate actual Firebase operations
+        flutter test test/screens/enhanced_create_program_screen_test.dart \
           --timeout=120s \
           --reporter=github
           
@@ -480,10 +495,95 @@ jobs:
             body: summary
           });
 
+  integration-coverage-check:
+    name: Integration Test Coverage Gate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for service modifications without integration tests
+      run: |
+        echo "🔍 Checking for service file modifications..."
+
+        # Get the base branch for comparison
+        git fetch origin ${{ github.base_ref }}
+        BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})
+
+        # Find all modified service files
+        MODIFIED_SERVICES=$(git diff --name-only $BASE_SHA HEAD | grep '^fittrack/lib/services/.*\.dart$' || true)
+
+        if [ -z "$MODIFIED_SERVICES" ]; then
+          echo "✅ No service files modified - integration test check passed"
+          exit 0
+        fi
+
+        echo "📝 Modified service files:"
+        echo "$MODIFIED_SERVICES"
+        echo ""
+
+        # Track missing integration tests
+        MISSING_TESTS=""
+
+        # For each modified service file, check if corresponding integration test exists or was modified
+        for SERVICE_FILE in $MODIFIED_SERVICES; do
+          # Extract service name (e.g., firestore_service.dart → firestore_service)
+          SERVICE_NAME=$(basename "$SERVICE_FILE" .dart)
+
+          # Expected integration test file
+          INTEGRATION_TEST="fittrack/test/services/${SERVICE_NAME}_integration_test.dart"
+
+          # Check if integration test file exists
+          if [ ! -f "$INTEGRATION_TEST" ]; then
+            echo "❌ Missing: $INTEGRATION_TEST (required for $SERVICE_FILE)"
+            MISSING_TESTS="$MISSING_TESTS\n- $INTEGRATION_TEST"
+          else
+            # Check if integration test was modified in this PR
+            TEST_MODIFIED=$(git diff --name-only $BASE_SHA HEAD | grep "^${INTEGRATION_TEST}$" || true)
+            if [ -z "$TEST_MODIFIED" ]; then
+              echo "⚠️  Warning: $INTEGRATION_TEST exists but was not modified"
+              echo "   Consider updating tests if service behavior changed"
+            else
+              echo "✅ Found: $INTEGRATION_TEST (modified in PR)"
+            fi
+          fi
+        done
+
+        # Fail if any integration tests are missing
+        if [ -n "$MISSING_TESTS" ]; then
+          echo ""
+          echo "❌ INTEGRATION TEST COVERAGE CHECK FAILED"
+          echo ""
+          echo "The following service files were modified but lack integration tests:"
+          echo -e "$MISSING_TESTS"
+          echo ""
+          echo "📖 Integration Test Requirement:"
+          echo "   - All service modifications MUST have corresponding integration tests"
+          echo "   - Template: fittrack/test/services/INTEGRATION_TEST_TEMPLATE.dart"
+          echo "   - Helper: test/helpers/firebase_integration_test_helper.dart"
+          echo "   - Guide: Docs/Testing/TestClassification.md"
+          echo ""
+          echo "🔧 To fix:"
+          echo "   1. Copy INTEGRATION_TEST_TEMPLATE.dart"
+          echo "   2. Rename to ${SERVICE_NAME}_integration_test.dart"
+          echo "   3. Implement tests using FirebaseIntegrationTestHelper"
+          echo "   4. Test MUST connect to Firebase emulators"
+          echo "   5. Test MUST validate actual Firebase operations"
+          echo ""
+          exit 1
+        fi
+
+        echo ""
+        echo "✅ Integration test coverage check passed"
+
   all-tests-passed:
     name: All Tests Status
     runs-on: ubuntu-latest
-    needs: [unit-tests, widget-tests, integration-tests, performance-tests, enhanced-tests, security-checks]
+    needs: [unit-tests, widget-tests, integration-tests, performance-tests, enhanced-tests, security-checks, integration-coverage-check]
     if: github.event_name == 'pull_request' && always()
 
     steps:

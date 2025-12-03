@@ -53,7 +53,9 @@ Before ANY handoff, verify:
 
 - [ ] All deliverables complete
 - [ ] Quality checks passed
-- [ ] Artifacts updated (GitHub issues, Notion docs)
+- [ ] **Notion PRD status updated** (if applicable for this handoff)
+- [ ] GitHub issue labels updated
+- [ ] GitHub issue comment added with handoff summary
 - [ ] User approval obtained (if required)
 - [ ] Next agent has all needed information
 
@@ -242,6 +244,7 @@ Please implement tasks sequentially starting with #10.
 - [ ] No linter warnings
 - [ ] Code follows project patterns
 - [ ] Documentation updated (if needed)
+- [ ] Notion PRD status updated
 
 ### Create Feature→Main PR
 
@@ -264,6 +267,19 @@ Then create PR via GitHub:
 - **Link:** "Closes #XX"
 
 **DO NOT merge this PR yet** - Testing Agent will verify tests pass first.
+
+### Update Notion
+
+**IMPORTANT: Update Notion PRD status at this handoff**
+
+**Change PRD status:** "Design Complete" → "Ready for Testing"
+
+**How to update:**
+1. Find the PRD page in Notion (use GitHub issue's "Notion PRD" link)
+2. Change the "Status" property from "Design Complete" to "Ready for Testing"
+3. This ensures Notion reflects that implementation is complete and awaiting test verification
+
+**Note:** The status should match the GitHub label (`ready-for-testing`)
 
 ### Update GitHub
 
@@ -320,6 +336,20 @@ Please verify all tests pass on the feature→main PR and approve merge if tests
 - [ ] Coverage meets requirements (80%+ overall)
 - [ ] Security checks passed
 - [ ] Beta build created in Firebase App Distribution
+- [ ] Notion PRD status updated
+
+### Update Notion
+
+**IMPORTANT: Update Notion PRD status at this handoff**
+
+**Change PRD status:** "Ready for Testing" → "QA"
+
+**How to update:**
+1. Find the PRD page in Notion (use GitHub issue's "Notion PRD" link)
+2. Change the "Status" property from "Ready for Testing" to "QA"
+3. This ensures Notion reflects that tests passed and feature is ready for QA review
+
+**Note:** The status should match the GitHub label (`ready-for-qa`)
 
 ### Update GitHub
 
@@ -676,3 +706,68 @@ Requirements done. Check Notion. Ready for design.
 **Always Close Immediately:**
 - Task issues (Developer closes after merge)
 - Bug issues (Developer closes after fix verified)
+
+## Notion Status Sync Workflow
+
+**CRITICAL:** Notion PRD status must stay in sync with GitHub labels throughout the workflow.
+
+### Complete Status Mapping
+
+| Agent Handoff | Notion PRD Status Change | GitHub Label | Who Updates |
+|---------------|-------------------------|--------------|-------------|
+| BA → SA | "Requirements Gathering" → **"Ready for Design"** | → `ready-for-design` | BA Agent |
+| SA → Developer | "Ready for Design" → **"Design Complete"** | → `design-approved` | SA Agent |
+| Developer → Testing | "Design Complete" → **"Ready for Testing"** | → `ready-for-testing` | **Developer Agent** |
+| Testing → QA | "Ready for Testing" → **"QA"** | → `ready-for-qa` | **Testing Agent** |
+| QA → Deployment | "QA" → **"Ready for Deployment"** | → `qa-approved` | QA Agent |
+| Deployment Complete | "Ready for Deployment" → **"Deployed"** | → `deployed` (CLOSE issue) | Deployment Agent |
+
+### Why This Matters
+
+**Problem:** Notion getting out of sync makes it unreliable for tracking actual project status.
+
+**Solution:** Each agent updates Notion at their handoff point, ensuring:
+- ✅ Notion always reflects current workflow stage
+- ✅ Notion status matches GitHub labels
+- ✅ Stakeholders can trust Notion for status
+- ✅ No manual catch-up work needed
+
+### How to Update Notion PRD Status
+
+**Using Notion MCP tool:**
+```
+1. Get page ID from GitHub issue's "Notion PRD" link
+2. Use mcp__notion__API-patch-page tool
+3. Update "Status" property to new value
+4. Verify update succeeded
+```
+
+**Example:**
+```
+mcp__notion__API-patch-page(
+  page_id="298879be-5789-8113-bef1-d319e34a0abf",
+  properties={"Status": {"select": {"name": "Ready for Testing"}}}
+)
+```
+
+### Agents with Notion Update Responsibility
+
+**✅ MUST update Notion:**
+- BA Agent (at handoff to SA)
+- SA Agent (at handoff to Developer)
+- **Developer Agent (at handoff to Testing)** ← NEW requirement
+- **Testing Agent (at handoff to QA)** ← NEW requirement
+- QA Agent (at handoff to Deployment)
+- Deployment Agent (after deployment)
+
+**❌ Do NOT update if:**
+- You are not at a handoff point
+- You are working within your phase (implementation, testing, etc.)
+- The status has already been updated by previous agent
+
+### Verification
+
+Before marking handoff complete:
+- [ ] Notion PRD status updated
+- [ ] New status matches GitHub label
+- [ ] Change reflected in Notion (verify via page view)
