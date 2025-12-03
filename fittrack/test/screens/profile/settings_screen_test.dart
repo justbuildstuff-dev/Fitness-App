@@ -172,6 +172,13 @@ void main() {
         // Arrange
         when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
 
+        // Set up setThemeMode to update mock state and trigger rebuild
+        when(mockThemeProvider.setThemeMode(ThemeMode.dark)).thenAnswer((_) async {
+          when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
+          // Mock doesn't actually extend ChangeNotifier, but the real provider does
+          // The widget will rebuild after setThemeMode completes
+        });
+
         // Act - Initial render
         await tester.pumpWidget(createTestApp());
 
@@ -182,10 +189,9 @@ void main() {
         );
         expect(tester.widget<Semantics>(systemButton).properties.selected, isTrue);
 
-        // Change to dark mode
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
+        // Tap dark mode button - this calls setThemeMode which updates the mock
         await tester.tap(find.byIcon(Icons.nights_stay));
-        await tester.pumpAndSettle(); // Wait for any animations to complete
+        await tester.pumpAndSettle(); // Wait for state update and any animations
 
         // Assert - Dark button should now be selected
         final darkButton = find.byWidgetPredicate(
