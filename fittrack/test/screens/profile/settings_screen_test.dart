@@ -196,7 +196,9 @@ void main() {
 
         // Tap dark mode button - this calls setThemeMode which triggers notifyListeners
         await tester.tap(find.byIcon(Icons.nights_stay));
-        await tester.pumpAndSettle(); // Wait for rebuild and any animations
+        await tester.pump(); // Trigger state update
+        await tester.pump(); // Allow Consumer to rebuild
+        await tester.pumpAndSettle(); // Wait for any animations
 
         // Assert - Dark button should now be selected
         final darkButton = find.byWidgetPredicate(
