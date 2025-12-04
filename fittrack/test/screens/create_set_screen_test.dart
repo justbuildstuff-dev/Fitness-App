@@ -401,17 +401,18 @@ void main() {
       /// Users should see visual feedback while set is being created
       
       // Make createSet return a delayed future to see loading state
+      // Use argument matchers to accept any values instead of hardcoded ones
       when(mockProvider.createSet(
-        programId: 'program-1',
-        weekId: 'week-1', 
-        workoutId: 'workout-1',
-        exerciseId: 'exercise-1',
-        reps: 10,
-        weight: 50,
-        duration: null,
-        distance: null,
-        restTime: 60,
-        notes: null,
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+        reps: anyNamed('reps'),
+        weight: anyNamed('weight'),
+        duration: anyNamed('duration'),
+        distance: anyNamed('distance'),
+        restTime: anyNamed('restTime'),
+        notes: anyNamed('notes'),
       )).thenAnswer((_) async {
         await Future.delayed(const Duration(milliseconds: 200));
         return 'new-set-id';
@@ -445,17 +446,18 @@ void main() {
       /// Users should see appropriate error messages
       
       // Mock creation failure
+      // Use argument matchers to accept any values
       when(mockProvider.createSet(
-        programId: 'program-1',
-        weekId: 'week-1', 
-        workoutId: 'workout-1',
-        exerciseId: 'exercise-1',
-        reps: 10,
-        weight: 50,
-        duration: null,
-        distance: null,
-        restTime: 60,
-        notes: null,
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+        reps: anyNamed('reps'),
+        weight: anyNamed('weight'),
+        duration: anyNamed('duration'),
+        distance: anyNamed('distance'),
+        restTime: anyNamed('restTime'),
+        notes: anyNamed('notes'),
       )).thenAnswer((_) async => null);
       
       when(mockProvider.error).thenReturn('Failed to create set');
