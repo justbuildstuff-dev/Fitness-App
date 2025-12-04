@@ -65,7 +65,14 @@ void main() {
       when(mockProvider.error).thenReturn(null);
       when(mockProvider.isLoadingWorkouts).thenReturn(false);
       when(mockProvider.workouts).thenReturn([]);
-      
+
+      // Set up mock stubs for WorkoutDetailScreen navigation
+      // When tests tap workout cards, navigation pushes WorkoutDetailScreen
+      // which needs these provider methods to avoid MissingStubError
+      when(mockProvider.exercises).thenReturn([]);
+      when(mockProvider.isLoadingExercises).thenReturn(false);
+      when(mockProvider.loadExercises(any, any, any)).thenAnswer((_) {});
+
       // Set up auth provider mocks to prevent Firebase calls
       when(mockAuthProvider.user).thenReturn(null);
       when(mockAuthProvider.isLoading).thenReturn(false);
