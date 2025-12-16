@@ -176,6 +176,13 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
         final realThemeProvider = ThemeProvider(prefs);
 
+        // Set up setThemeMode to update mock state and trigger rebuild
+        when(mockThemeProvider.setThemeMode(ThemeMode.dark)).thenAnswer((_) async {
+          when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.dark);
+          // Mock doesn't actually extend ChangeNotifier, but the real provider does
+          // The widget will rebuild after setThemeMode completes
+        });
+
         // Act - Initial render
         await tester.pumpWidget(
           MaterialApp(
