@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/screens/profile/settings_screen.dart';
 import 'package:fittrack/providers/theme_provider.dart';
 
@@ -169,8 +170,11 @@ void main() {
       });
 
       testWidgets('theme changes immediately when button is tapped', (tester) async {
-        // Arrange
-        when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
+        // Arrange - Use real ThemeProvider with mock SharedPreferences
+        // This ensures proper ChangeNotifier behavior and widget rebuilds
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final realThemeProvider = ThemeProvider(prefs);
 
         // Set up setThemeMode to update mock state and trigger rebuild
         when(mockThemeProvider.setThemeMode(ThemeMode.dark)).thenAnswer((_) async {
@@ -180,18 +184,28 @@ void main() {
         });
 
         // Act - Initial render
-        await tester.pumpWidget(createTestApp());
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ChangeNotifierProvider<ThemeProvider>.value(
+              value: realThemeProvider,
+              child: const SettingsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle(); // Wait for initial load
 
-        // Verify initial state
+        // Verify initial state (System theme selected by default)
         var systemButton = find.byWidgetPredicate(
           (widget) => widget is Semantics &&
                      widget.properties.label == 'System theme',
         );
         expect(tester.widget<Semantics>(systemButton).properties.selected, isTrue);
 
-        // Tap dark mode button - this calls setThemeMode which updates the mock
+        // Tap dark mode button - this calls setThemeMode which triggers notifyListeners
         await tester.tap(find.byIcon(Icons.nights_stay));
-        await tester.pumpAndSettle(); // Wait for state update and any animations
+        await tester.pump(); // Trigger state update
+        await tester.pump(); // Allow Consumer to rebuild
+        await tester.pumpAndSettle(); // Wait for any animations
 
         // Assert - Dark button should now be selected
         final darkButton = find.byWidgetPredicate(
