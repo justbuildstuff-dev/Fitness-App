@@ -74,14 +74,18 @@ void main() {
 
     /// Helper method to create the widget under test with necessary providers and routing
     /// This ensures consistent test setup and simulates the real app environment
+    ///
+    /// IMPORTANT: MultiProvider wraps MaterialApp to ensure providers are available
+    /// in ALL navigation contexts, including pushed routes (e.g., WorkoutDetailScreen).
+    /// This prevents ProviderNotFoundException when navigation occurs.
     Widget createTestWidget() {
-      return MaterialApp(
-        home: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
-            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
-          ],
-          child: WeeksScreen(
+      return MultiProvider(
+        providers: [
+          ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+          ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+        ],
+        child: MaterialApp(
+          home: WeeksScreen(
             program: testProgram,
             week: testWeek,
           ),
