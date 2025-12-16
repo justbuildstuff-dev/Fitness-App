@@ -83,6 +83,35 @@ void main() {
       );
     }
 
+    /// Helper method to create widget with navigation stack (back button available)
+    /// Used for tests that need to verify back button behavior
+    Widget createTestWidgetWithNavigation() {
+      return MultiProvider(
+        providers: [
+          ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+          ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+        ],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              // Push the screen onto navigation stack so back button appears
+              Future.microtask(() {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CreateWorkoutScreen(
+                      program: testProgram,
+                      week: testWeek,
+                    ),
+                  ),
+                );
+              });
+              return const Scaffold(body: SizedBox()); // Placeholder home screen
+            },
+          ),
+        ),
+      );
+    }
+
     group('Initial Rendering', () {
       testWidgets('renders all required form fields', (WidgetTester tester) async {
         /// Test Purpose: Verify that all form fields are present and properly labeled
@@ -488,7 +517,9 @@ void main() {
         );
 
         await tester.tap(createButton);
-        await tester.pumpAndSettle();
+        // Use pump() to catch SnackBar before navigation completes
+        // The screen shows SnackBar then immediately calls Navigator.pop()
+        await tester.pump();
 
         // Verify success message appears in SnackBar
         expect(find.text('Workout created successfully!'), findsOneWidget,
@@ -552,7 +583,8 @@ void main() {
         /// Users should be able to back out without losing their place in the app
         /// Failure indicates users getting stuck in the creation flow
 
-        await tester.pumpWidget(createTestWidget());
+        await tester.pumpWidget(createTestWidgetWithNavigation());
+        await tester.pumpAndSettle(); // Wait for navigation to complete
 
         // Enter some data but don't save
         await tester.enterText(find.byType(TextFormField).first, 'Unsaved Workout');
