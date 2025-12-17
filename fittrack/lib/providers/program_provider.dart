@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/program.dart';
 import '../models/week.dart';
 import '../models/workout.dart';
@@ -33,6 +33,8 @@ class ProgramProvider extends ChangeNotifier {
     this._firestoreService,
     this._analyticsService
   ) {
+    // Load heatmap preferences from SharedPreferences
+    _loadHeatmapPreferences();
     // Auto-load data for testing constructor too
     _autoLoadDataIfNeeded();
   }
