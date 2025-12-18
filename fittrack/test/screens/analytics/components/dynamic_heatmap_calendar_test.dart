@@ -488,7 +488,7 @@ void main() {
 
       testWidgets('handles different year data correctly', (tester) async {
         // Test with data from different years
-        final past Year = DateTime.now().year - 1;
+        final pastYear = DateTime.now().year - 1;
         final pastYearData = ActivityHeatmapData(
           userId: 'test_user',
           year: pastYear,

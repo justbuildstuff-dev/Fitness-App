@@ -252,9 +252,12 @@ void main() {
           expect(config.startDate.isBefore(config.endDate), isTrue,
               reason: 'Start date should be before end date for $timeframe');
 
-          // Date range should not be in the future
+          // Date range should not be in the far future
+          // Note: "This Week" can have an end date up to 6 days in the future
+          // (e.g., if today is Monday, week ends on Sunday)
           final now = DateTime.now();
-          expect(config.endDate.isAfter(now.add(const Duration(days: 1))), isFalse,
+          final maxFutureDays = timeframe == HeatmapTimeframe.thisWeek ? 7 : 1;
+          expect(config.endDate.isAfter(now.add(Duration(days: maxFutureDays))), isFalse,
               reason: 'End date should not be in the far future for $timeframe');
         }
       });
