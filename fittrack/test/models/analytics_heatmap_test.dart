@@ -253,10 +253,18 @@ void main() {
               reason: 'Start date should be before end date for $timeframe');
 
           // Date range should not be in the far future
-          // Note: "This Week" can have an end date up to 6 days in the future
-          // (e.g., if today is Monday, week ends on Sunday)
+          // Different timeframes have different maximum future dates:
+          // - This Week: up to 6 days (Mon→Sun)
+          // - This Month: up to 30 days (early in month)
+          // - This Year: up to 365 days (early in year)
+          // - Last 30 Days: ends today, so 1 day buffer
           final now = DateTime.now();
-          final maxFutureDays = timeframe == HeatmapTimeframe.thisWeek ? 7 : 1;
+          final maxFutureDays = switch (timeframe) {
+            HeatmapTimeframe.thisWeek => 7,
+            HeatmapTimeframe.thisMonth => 31,
+            HeatmapTimeframe.thisYear => 366, // Account for leap years
+            HeatmapTimeframe.last30Days => 1,
+          };
           expect(config.endDate.isAfter(now.add(Duration(days: maxFutureDays))), isFalse,
               reason: 'End date should not be in the far future for $timeframe');
         }
