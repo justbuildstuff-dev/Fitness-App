@@ -1009,5 +1009,12 @@ void _mockSetBasedHeatmapData(
       ]));
 
   when(mockService.getSets(any, any, any, any, any))
-      .thenAnswer((_) => Stream.value(sets));
+      .thenAnswer((invocation) {
+        // Filter sets by programId if specified
+        final queriedProgramId = invocation.positionalArguments[1]; // Second argument is programId (after userId)
+        final filteredSets = sets.where((set) =>
+          queriedProgramId == null || set.programId == queriedProgramId
+        ).toList();
+        return Stream.value(filteredSets);
+      });
 }

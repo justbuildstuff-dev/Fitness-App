@@ -62,10 +62,10 @@ void main() {
       )).thenAnswer((_) async => ActivityHeatmapData(
         userId: testUserId,
         year: DateTime.now().year,
-        dailyWorkoutCounts: {},
+        dailySetCounts: {},
         currentStreak: 0,
         longestStreak: 0,
-        totalWorkouts: 0,
+        totalSets: 0,
       ));
       when(mockAnalyticsService.getPersonalRecords(
         userId: anyNamed('userId'),

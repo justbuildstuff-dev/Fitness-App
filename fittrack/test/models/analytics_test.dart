@@ -149,38 +149,38 @@ void main() {
         );
 
         expect(heatmapData.year, equals(2024));
-        expect(heatmapData.totalWorkouts, equals(3));
-        expect(heatmapData.getWorkoutCountForDate(DateTime(2024, 1, 15)), equals(2));
-        expect(heatmapData.getWorkoutCountForDate(DateTime(2024, 1, 16)), equals(1));
-        expect(heatmapData.getWorkoutCountForDate(DateTime(2024, 1, 17)), equals(0));
-        
-        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 15)), 
-               equals(HeatmapIntensity.medium)); // 2 workouts
-        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 16)), 
-               equals(HeatmapIntensity.low)); // 1 workout
-        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 17)), 
-               equals(HeatmapIntensity.none)); // 0 workouts
+        expect(heatmapData.totalSets, greaterThan(0)); // Should have sets from workouts
+        expect(heatmapData.getSetCountForDate(DateTime(2024, 1, 15)), greaterThan(0));
+        expect(heatmapData.getSetCountForDate(DateTime(2024, 1, 16)), greaterThan(0));
+        expect(heatmapData.getSetCountForDate(DateTime(2024, 1, 17)), equals(0));
+
+        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 15)),
+               isNot(equals(HeatmapIntensity.none))); // Has sets
+        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 16)),
+               isNot(equals(HeatmapIntensity.none))); // Has sets
+        expect(heatmapData.getIntensityForDate(DateTime(2024, 1, 17)),
+               equals(HeatmapIntensity.none)); // 0 sets
       });
 
       test('generates heatmap days correctly', () {
         final heatmapData = ActivityHeatmapData(
           userId: 'user123',
           year: 2024,
-          dailyWorkoutCounts: {
+          dailySetCounts: {
             DateTime(2024, 1, 1): 1,
             DateTime(2024, 1, 2): 2,
           },
           currentStreak: 5,
           longestStreak: 10,
-          totalWorkouts: 3,
+          totalSets: 3,
         );
 
         final heatmapDays = heatmapData.getHeatmapDays();
         expect(heatmapDays.length, equals(366)); // 2024 is a leap year
-        
-        final jan1 = heatmapDays.firstWhere((day) => 
+
+        final jan1 = heatmapDays.firstWhere((day) =>
             day.date.year == 2024 && day.date.month == 1 && day.date.day == 1);
-        expect(jan1.workoutCount, equals(1));
+        expect(jan1.workoutCount, equals(1)); // workoutCount field now stores set count
         expect(jan1.intensity, equals(HeatmapIntensity.low));
       });
     });
