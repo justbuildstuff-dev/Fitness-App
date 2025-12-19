@@ -18,14 +18,29 @@ class DynamicHeatmapCalendar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Month labels (only for year view)
-        if (config.showMonthLabels) _buildMonthLabels(context),
-
-        // Heatmap grid
+        // Heatmap grid with optional month labels on left
         if (config.enableVerticalScroll)
-          Expanded(child: _buildScrollableGrid(context))
+          Expanded(
+            child: config.showMonthLabels
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildMonthLabels(context),
+                      Expanded(child: _buildScrollableGrid(context)),
+                    ],
+                  )
+                : _buildScrollableGrid(context),
+          )
         else
-          _buildStaticGrid(context),
+          config.showMonthLabels
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildMonthLabels(context),
+                    Expanded(child: _buildStaticGrid(context)),
+                  ],
+                )
+              : _buildStaticGrid(context),
 
         const SizedBox(height: 8),
 
@@ -36,38 +51,32 @@ class DynamicHeatmapCalendar extends StatelessWidget {
   }
 
   Widget _buildMonthLabels(BuildContext context) {
-    // GitHub-style month labels across the top
+    // Month labels down the left side
     return SizedBox(
-      height: 20,
-      child: Row(
-        children: [
-          const SizedBox(width: 30), // Space for day labels
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(12, (index) {
-                    return Text(
-                      DateFormat('MMM').format(DateTime(config.startDate.year, index + 1)),
-                      style: Theme.of(context).textTheme.labelSmall,
-                    );
-                  }),
-                );
-              },
+      width: 30,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(12, (index) {
+          return SizedBox(
+            height: 18,
+            child: Center(
+              child: Text(
+                DateFormat('MMM').format(DateTime(config.startDate.year, index + 1)),
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
             ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
 
   Widget _buildScrollableGrid(BuildContext context) {
-    // For year view with vertical scrolling
+    // For year view with horizontal scrolling
     final weeks = _generateWeeksData();
     final currentWeekIndex = _getCurrentWeekIndex(weeks);
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Day labels
@@ -76,7 +85,8 @@ class DynamicHeatmapCalendar extends StatelessWidget {
         // Scrollable heatmap
         Expanded(
           child: SingleChildScrollView(
-            child: Column(
+            scrollDirection: Axis.horizontal,
+            child: Row(
               children: weeks.asMap().entries.map((entry) {
                 final index = entry.key;
                 final week = entry.value;
@@ -92,7 +102,7 @@ class DynamicHeatmapCalendar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         )
                       : null,
-                  child: _buildWeekRow(context, week),
+                  child: _buildWeekColumn(context, week),
                 );
               }).toList(),
             ),
@@ -106,7 +116,7 @@ class DynamicHeatmapCalendar extends StatelessWidget {
     // For week, month, and 30-day views (no scrolling)
     final weeks = _generateWeeksData();
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Day labels
@@ -114,8 +124,8 @@ class DynamicHeatmapCalendar extends StatelessWidget {
 
         // Static heatmap grid
         Expanded(
-          child: Column(
-            children: weeks.map((week) => _buildWeekRow(context, week)).toList(),
+          child: Row(
+            children: weeks.map((week) => _buildWeekColumn(context, week)).toList(),
           ),
         ),
       ],
@@ -124,12 +134,12 @@ class DynamicHeatmapCalendar extends StatelessWidget {
 
   Widget _buildDayLabels(BuildContext context) {
     return SizedBox(
-      width: 30,
-      child: Column(
+      height: 30,
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
             .map((day) => SizedBox(
-                  height: 18, // Match cell height
+                  width: 18, // Match cell width
                   child: Center(
                     child: Text(
                       day,
@@ -142,8 +152,8 @@ class DynamicHeatmapCalendar extends StatelessWidget {
     );
   }
 
-  Widget _buildWeekRow(BuildContext context, List<HeatmapDay?> week) {
-    return Row(
+  Widget _buildWeekColumn(BuildContext context, List<HeatmapDay?> week) {
+    return Column(
       children: week.map((day) {
         if (day == null) {
           // Empty cell for partial weeks
