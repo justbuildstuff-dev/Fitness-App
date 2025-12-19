@@ -533,7 +533,7 @@ void main() {
         final dropdown = tester.widget<DropdownButtonFormField<String?>>(
           find.byType(DropdownButtonFormField<String?>),
         );
-        expect(dropdown.initialValue, isNull);
+        expect(dropdown.value, isNull);
       });
 
       testWidgets('handles rapid timeframe changes', (tester) async {

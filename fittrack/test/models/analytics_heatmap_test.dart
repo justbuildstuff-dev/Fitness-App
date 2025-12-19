@@ -248,21 +248,25 @@ void main() {
         for (final timeframe in HeatmapTimeframe.values) {
           final config = HeatmapLayoutConfig.forTimeframe(timeframe);
 
-          // Start date should be before or equal to end date
-          expect(config.startDate.isBefore(config.endDate) ||
-                 config.startDate.isAtSameMomentAs(config.endDate), isTrue,
-              reason: 'Start date should be before or equal to end date for $timeframe');
+          // Start date should be before end date
+          expect(config.startDate.isBefore(config.endDate), isTrue,
+              reason: 'Start date should be before end date for $timeframe');
 
-          // Date range should be reasonable (not more than a year from now)
+          // Date range should not be in the far future
+          // Different timeframes have different maximum future dates:
+          // - This Week: up to 6 days (Mon→Sun)
+          // - This Month: up to 30 days (early in month)
+          // - This Year: up to 365 days (early in year)
+          // - Last 30 Days: ends today, so 1 day buffer
           final now = DateTime.now();
-          final maxReasonableDate = now.add(const Duration(days: 365));
-          expect(config.endDate.isBefore(maxReasonableDate), isTrue,
-              reason: 'End date should not be more than a year from now for $timeframe');
-
-          // Start date should not be too far in the past (max 1 year)
-          final minReasonableDate = now.subtract(const Duration(days: 365));
-          expect(config.startDate.isAfter(minReasonableDate), isTrue,
-              reason: 'Start date should not be more than a year in the past for $timeframe');
+          final maxFutureDays = switch (timeframe) {
+            HeatmapTimeframe.thisWeek => 7,
+            HeatmapTimeframe.thisMonth => 31,
+            HeatmapTimeframe.thisYear => 366, // Account for leap years
+            HeatmapTimeframe.last30Days => 1,
+          };
+          expect(config.endDate.isAfter(now.add(Duration(days: maxFutureDays))), isFalse,
+              reason: 'End date should not be in the far future for $timeframe');
         }
       });
 
