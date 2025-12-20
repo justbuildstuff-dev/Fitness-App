@@ -804,6 +804,341 @@ void main() {
         expect(analytics.totalVolume, equals(0.0)); // No weight or reps
       });
     });
+
+    group('getMonthHeatmapData', () {
+      test('returns correct month data for December 2024', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        // Create test sets for December 2024
+        final testSets = [
+          _createTestSet(
+            id: 's1',
+            createdAt: DateTime(2024, 12, 1),
+            checked: true,
+          ),
+          _createTestSet(
+            id: 's2',
+            createdAt: DateTime(2024, 12, 1),
+            checked: true,
+          ),
+          _createTestSet(
+            id: 's3',
+            createdAt: DateTime(2024, 12, 5),
+            checked: true,
+          ),
+          _createTestSet(
+            id: 's4',
+            createdAt: DateTime(2024, 12, 15),
+            checked: true,
+          ),
+          _createTestSet(
+            id: 's5',
+            createdAt: DateTime(2024, 12, 15),
+            checked: true,
+          ),
+          _createTestSet(
+            id: 's6',
+            createdAt: DateTime(2024, 12, 15),
+            checked: true,
+          ),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.year, equals(2024));
+        expect(monthData.month, equals(12));
+        expect(monthData.totalSets, equals(6));
+        expect(monthData.getSetCountForDay(1), equals(2));
+        expect(monthData.getSetCountForDay(5), equals(1));
+        expect(monthData.getSetCountForDay(15), equals(3));
+        expect(monthData.getSetCountForDay(10), equals(0)); // No data
+      });
+
+      test('filters out unchecked sets', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2024, 12, 1), checked: true),
+          _createTestSet(id: 's2', createdAt: DateTime(2024, 12, 1), checked: false), // Not checked
+          _createTestSet(id: 's3', createdAt: DateTime(2024, 12, 5), checked: true),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.totalSets, equals(2)); // Only 2 checked
+        expect(monthData.getSetCountForDay(1), equals(1)); // Only 1 checked on day 1
+      });
+
+      test('returns empty data for month with no sets', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        _setupMockFirestore(mockService, sets: []); // No sets
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.year, equals(2024));
+        expect(monthData.month, equals(12));
+        expect(monthData.totalSets, equals(0));
+        expect(monthData.dailySetCounts, isEmpty);
+      });
+
+      test('only includes sets from specified month', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2024, 11, 30), checked: true), // Nov
+          _createTestSet(id: 's2', createdAt: DateTime(2024, 12, 1), checked: true),  // Dec
+          _createTestSet(id: 's3', createdAt: DateTime(2024, 12, 31), checked: true), // Dec
+          _createTestSet(id: 's4', createdAt: DateTime(2025, 1, 1), checked: true),   // Jan
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.totalSets, equals(2)); // Only Dec 1 and Dec 31
+        expect(monthData.getSetCountForDay(1), equals(1));
+        expect(monthData.getSetCountForDay(31), equals(1));
+      });
+
+      test('aggregates sets from all programs', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(
+            id: 's1',
+            createdAt: DateTime(2024, 12, 1),
+            checked: true,
+            programId: 'p1',
+          ),
+          _createTestSet(
+            id: 's2',
+            createdAt: DateTime(2024, 12, 1),
+            checked: true,
+            programId: 'p2',
+          ),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.totalSets, equals(2)); // Aggregates from both programs
+        expect(monthData.getSetCountForDay(1), equals(2));
+      });
+
+      test('caches results for 5 minutes', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2024, 12, 1), checked: true),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        // First call
+        final data1 = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        // Second call should use cache
+        final data2 = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(data1.fetchedAt, equals(data2.fetchedAt)); // Same cached data
+        expect(data2.isCacheValid, isTrue);
+      });
+
+      test('handles February with 28 days', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2023, 2, 28), checked: true), // Last day
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2023,
+          month: 2,
+        );
+
+        expect(monthData.getSetCountForDay(28), equals(1));
+        expect(monthData.getSetCountForDay(29), equals(0)); // No Feb 29 in 2023
+      });
+
+      test('handles months with 30 days', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2024, 4, 30), checked: true), // Last day
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 4,
+        );
+
+        expect(monthData.getSetCountForDay(30), equals(1));
+        expect(monthData.getSetCountForDay(31), equals(0)); // No April 31
+      });
+    });
+
+    group('prefetchAdjacentMonths', () {
+      test('fetches previous and next month in parallel', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2024, 11, 15), checked: true), // Nov
+          _createTestSet(id: 's2', createdAt: DateTime(2024, 12, 15), checked: true), // Dec
+          _createTestSet(id: 's3', createdAt: DateTime(2025, 1, 15), checked: true),  // Jan
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        // Pre-fetch for December 2024
+        await analyticsService.prefetchAdjacentMonths(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        // Both months should be cached now
+        // Verify by fetching them (should be instant from cache)
+        final novData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 11,
+        );
+
+        final janData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2025,
+          month: 1,
+        );
+
+        expect(novData.totalSets, equals(1));
+        expect(janData.totalSets, equals(1));
+        expect(novData.isCacheValid, isTrue);
+        expect(janData.isCacheValid, isTrue);
+      });
+
+      test('handles year boundary (December to January)', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2024, 11, 15), checked: true),
+          _createTestSet(id: 's2', createdAt: DateTime(2025, 1, 15), checked: true),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        // Pre-fetch for December 2024
+        await analyticsService.prefetchAdjacentMonths(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        // Should fetch Nov 2024 and Jan 2025
+        final novData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 11,
+        );
+
+        final janData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2025,
+          month: 1,
+        );
+
+        expect(novData.year, equals(2024));
+        expect(novData.month, equals(11));
+        expect(janData.year, equals(2025));
+        expect(janData.month, equals(1));
+      });
+
+      test('handles year boundary (January to December)', () async {
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          _createTestSet(id: 's1', createdAt: DateTime(2023, 12, 15), checked: true),
+          _createTestSet(id: 's2', createdAt: DateTime(2024, 2, 15), checked: true),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        // Pre-fetch for January 2024
+        await analyticsService.prefetchAdjacentMonths(
+          userId: 'test_user',
+          year: 2024,
+          month: 1,
+        );
+
+        // Should fetch Dec 2023 and Feb 2024
+        final decData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2023,
+          month: 12,
+        );
+
+        final febData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 2,
+        );
+
+        expect(decData.year, equals(2023));
+        expect(decData.month, equals(12));
+        expect(febData.year, equals(2024));
+        expect(febData.month, equals(2));
+      });
+    });
   });
 }
 
@@ -1017,4 +1352,100 @@ void _mockSetBasedHeatmapData(
         ).toList();
         return Stream.value(filteredSets);
       });
+}
+
+// Helper to create a test set with custom parameters
+ExerciseSet _createTestSet({
+  required String id,
+  required DateTime createdAt,
+  bool checked = false,
+  String programId = 'p1',
+  int? reps,
+  double? weight,
+}) {
+  return ExerciseSet(
+    id: id,
+    setNumber: 1,
+    reps: reps ?? 10,
+    weight: weight,
+    checked: checked,
+    createdAt: createdAt,
+    updatedAt: createdAt,
+    userId: 'test_user',
+    exerciseId: 'ex1',
+    workoutId: 'w1',
+    weekId: 'wk1',
+    programId: programId,
+  );
+}
+
+// Helper to setup mock Firestore with test data
+void _setupMockFirestore(
+  MockFirestoreService mockService, {
+  List<ExerciseSet>? sets,
+  String? programId,
+}) {
+  final testSets = sets ?? [];
+
+  when(mockService.getPrograms(any)).thenAnswer((_) => Stream.value([
+        Program(
+          id: programId ?? 'p1',
+          name: 'Test Program',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          userId: 'test_user',
+        ),
+        if (programId == null)
+          Program(
+            id: 'p2',
+            name: 'Test Program 2',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            userId: 'test_user',
+          ),
+      ]));
+
+  when(mockService.getWeeks(any, any)).thenAnswer((_) => Stream.value([
+        Week(
+          id: 'wk1',
+          name: 'Week 1',
+          order: 1,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          userId: 'test_user',
+          programId: programId ?? 'p1',
+        ),
+      ]));
+
+  when(mockService.getWorkouts(any, any, any)).thenAnswer((_) => Stream.value([
+        Workout(
+          id: 'w1',
+          name: 'Workout 1',
+          orderIndex: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          userId: 'test_user',
+          weekId: 'wk1',
+          programId: programId ?? 'p1',
+        ),
+      ]));
+
+  when(mockService.getExercises(any, any, any, any)).thenAnswer((_) => Stream.value([
+        Exercise(
+          id: 'ex1',
+          name: 'Exercise 1',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          userId: 'test_user',
+          workoutId: 'w1',
+          weekId: 'wk1',
+          programId: programId ?? 'p1',
+        ),
+      ]));
+
+  when(mockService.getSets(any, any, any, any, any)).thenAnswer((invocation) {
+    return Stream.value(testSets);
+  });
 }
