@@ -462,6 +462,131 @@ enum HeatmapIntensity {
   }
 }
 
+/// Heatmap data for a single month
+///
+/// Represents activity data for one calendar month with daily set counts.
+/// This model is used by the monthly calendar view to display workout activity
+/// intensity across the days of the month.
+///
+/// The [dailySetCounts] map uses day of month (1-31) as keys and total
+/// checked sets as values. Days with no activity are not included in the map.
+///
+/// Example:
+/// ```dart
+/// final monthData = MonthHeatmapData(
+///   year: 2024,
+///   month: 12,
+///   dailySetCounts: {
+///     1: 8,   // December 1st: 8 sets
+///     2: 12,  // December 2nd: 12 sets
+///     5: 6,   // December 5th: 6 sets
+///   },
+///   totalSets: 26,
+///   fetchedAt: DateTime.now(),
+/// );
+///
+/// // Get set count for a specific day
+/// final day5Count = monthData.getSetCountForDay(5); // Returns 6
+/// final day3Count = monthData.getSetCountForDay(3); // Returns 0 (no data)
+///
+/// // Get heatmap intensity for visualization
+/// final day5Intensity = monthData.getIntensityForDay(5); // Returns HeatmapIntensity.medium
+/// ```
+class MonthHeatmapData {
+  /// Year (e.g., 2024)
+  final int year;
+
+  /// Month (1-12)
+  final int month;
+
+  /// Map of day of month (1-31) to total checked sets for that day
+  ///
+  /// Only days with activity are included. Days with no sets are absent from the map.
+  /// Values represent the total count of sets where `checked: true`.
+  final Map<int, int> dailySetCounts;
+
+  /// Total sets completed in the month (sum of all dailySetCounts values)
+  final int totalSets;
+
+  /// Timestamp when this data was fetched from Firestore
+  ///
+  /// Used for cache validation. Data is considered stale after 5 minutes.
+  final DateTime fetchedAt;
+
+  const MonthHeatmapData({
+    required this.year,
+    required this.month,
+    required this.dailySetCounts,
+    required this.totalSets,
+    required this.fetchedAt,
+  });
+
+  /// Get set count for a specific day of the month
+  ///
+  /// Returns 0 if no data exists for the day.
+  ///
+  /// Parameters:
+  /// - [day]: Day of month (1-31)
+  ///
+  /// Returns:
+  /// Total checked sets for the day, or 0 if no data.
+  ///
+  /// Example:
+  /// ```dart
+  /// final count = monthData.getSetCountForDay(15);
+  /// if (count > 0) {
+  ///   print('December 15: $count sets');
+  /// }
+  /// ```
+  int getSetCountForDay(int day) {
+    return dailySetCounts[day] ?? 0;
+  }
+
+  /// Get heatmap intensity for a specific day
+  ///
+  /// Intensity levels are based on set count thresholds:
+  /// - none: 0 sets
+  /// - low: 1-5 sets
+  /// - medium: 6-15 sets
+  /// - high: 16-25 sets
+  /// - veryHigh: 26+ sets
+  ///
+  /// Parameters:
+  /// - [day]: Day of month (1-31)
+  ///
+  /// Returns:
+  /// HeatmapIntensity enum value for the day's activity level.
+  ///
+  /// Example:
+  /// ```dart
+  /// final intensity = monthData.getIntensityForDay(10);
+  /// final color = _getColorForIntensity(intensity);
+  /// ```
+  HeatmapIntensity getIntensityForDay(int day) {
+    final count = getSetCountForDay(day);
+    return HeatmapIntensity.fromSetCount(count);
+  }
+
+  /// Check if cache is still valid (within 5 minutes)
+  ///
+  /// Returns true if less than 5 minutes have passed since [fetchedAt],
+  /// false otherwise. Used to determine if cached data can be reused or
+  /// if a fresh Firestore query is needed.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (cachedData.isCacheValid) {
+  ///   return cachedData;
+  /// } else {
+  ///   return await fetchFreshData();
+  /// }
+  /// ```
+  bool get isCacheValid {
+    final now = DateTime.now();
+    return now.difference(fetchedAt).inMinutes < 5;
+  }
+}
+
 /// Date range utility class for heatmap timeframe calculations
 ///
 /// Provides factory methods for common timeframe selections:

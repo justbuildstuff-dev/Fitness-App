@@ -252,5 +252,209 @@ void main() {
         expect(pr.displayValue, equals('12 reps'));
       });
     });
+
+    group('MonthHeatmapData', () {
+      test('getSetCountForDay returns correct count for existing day', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {
+            1: 8,
+            2: 12,
+            5: 6,
+            15: 20,
+          },
+          totalSets: 46,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getSetCountForDay(1), equals(8));
+        expect(monthData.getSetCountForDay(2), equals(12));
+        expect(monthData.getSetCountForDay(5), equals(6));
+        expect(monthData.getSetCountForDay(15), equals(20));
+      });
+
+      test('getSetCountForDay returns 0 for day with no data', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {
+            1: 8,
+            2: 12,
+          },
+          totalSets: 20,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getSetCountForDay(3), equals(0));
+        expect(monthData.getSetCountForDay(10), equals(0));
+        expect(monthData.getSetCountForDay(25), equals(0));
+      });
+
+      test('getIntensityForDay returns correct intensity levels', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {
+            1: 0,   // none
+            2: 3,   // low (1-5)
+            3: 8,   // medium (6-15)
+            4: 20,  // high (16-25)
+            5: 30,  // veryHigh (26+)
+          },
+          totalSets: 61,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getIntensityForDay(1), equals(HeatmapIntensity.none));
+        expect(monthData.getIntensityForDay(2), equals(HeatmapIntensity.low));
+        expect(monthData.getIntensityForDay(3), equals(HeatmapIntensity.medium));
+        expect(monthData.getIntensityForDay(4), equals(HeatmapIntensity.high));
+        expect(monthData.getIntensityForDay(5), equals(HeatmapIntensity.veryHigh));
+      });
+
+      test('getIntensityForDay returns none for days with no data', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {
+            1: 10,
+          },
+          totalSets: 10,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getIntensityForDay(2), equals(HeatmapIntensity.none));
+        expect(monthData.getIntensityForDay(15), equals(HeatmapIntensity.none));
+      });
+
+      test('isCacheValid returns true for recent data', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {},
+          totalSets: 0,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.isCacheValid, isTrue);
+      });
+
+      test('isCacheValid returns true for data fetched 4 minutes ago', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {},
+          totalSets: 0,
+          fetchedAt: DateTime.now().subtract(const Duration(minutes: 4)),
+        );
+
+        expect(monthData.isCacheValid, isTrue);
+      });
+
+      test('isCacheValid returns false for data older than 5 minutes', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {},
+          totalSets: 0,
+          fetchedAt: DateTime.now().subtract(const Duration(minutes: 6)),
+        );
+
+        expect(monthData.isCacheValid, isFalse);
+      });
+
+      test('handles empty dailySetCounts map', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {},
+          totalSets: 0,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getSetCountForDay(1), equals(0));
+        expect(monthData.getSetCountForDay(15), equals(0));
+        expect(monthData.getSetCountForDay(31), equals(0));
+        expect(monthData.getIntensityForDay(10), equals(HeatmapIntensity.none));
+      });
+
+      test('handles full month of data', () {
+        final Map<int, int> dailySetCounts = {};
+        for (int day = 1; day <= 31; day++) {
+          dailySetCounts[day] = day * 2; // Increasing set counts
+        }
+
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: dailySetCounts,
+          totalSets: dailySetCounts.values.reduce((a, b) => a + b),
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getSetCountForDay(1), equals(2));
+        expect(monthData.getSetCountForDay(15), equals(30));
+        expect(monthData.getSetCountForDay(31), equals(62));
+        expect(monthData.getIntensityForDay(1), equals(HeatmapIntensity.low));
+        expect(monthData.getIntensityForDay(15), equals(HeatmapIntensity.veryHigh));
+      });
+
+      test('handles months with varying days (28, 30, 31)', () {
+        // February (28 days in non-leap year)
+        final febData = MonthHeatmapData(
+          year: 2023,
+          month: 2,
+          dailySetCounts: {
+            28: 10,
+          },
+          totalSets: 10,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(febData.getSetCountForDay(28), equals(10));
+        expect(febData.getSetCountForDay(29), equals(0)); // No Feb 29 in 2023
+
+        // April (30 days)
+        final aprData = MonthHeatmapData(
+          year: 2024,
+          month: 4,
+          dailySetCounts: {
+            30: 15,
+          },
+          totalSets: 15,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(aprData.getSetCountForDay(30), equals(15));
+        expect(aprData.getSetCountForDay(31), equals(0)); // No April 31
+      });
+
+      test('intensity boundary cases', () {
+        final monthData = MonthHeatmapData(
+          year: 2024,
+          month: 12,
+          dailySetCounts: {
+            1: 1,   // low boundary (1-5)
+            2: 5,   // low boundary (1-5)
+            3: 6,   // medium boundary (6-15)
+            4: 15,  // medium boundary (6-15)
+            5: 16,  // high boundary (16-25)
+            6: 25,  // high boundary (16-25)
+            7: 26,  // veryHigh boundary (26+)
+          },
+          totalSets: 94,
+          fetchedAt: DateTime.now(),
+        );
+
+        expect(monthData.getIntensityForDay(1), equals(HeatmapIntensity.low));
+        expect(monthData.getIntensityForDay(2), equals(HeatmapIntensity.low));
+        expect(monthData.getIntensityForDay(3), equals(HeatmapIntensity.medium));
+        expect(monthData.getIntensityForDay(4), equals(HeatmapIntensity.medium));
+        expect(monthData.getIntensityForDay(5), equals(HeatmapIntensity.high));
+        expect(monthData.getIntensityForDay(6), equals(HeatmapIntensity.high));
+        expect(monthData.getIntensityForDay(7), equals(HeatmapIntensity.veryHigh));
+      });
+    });
   });
 }
