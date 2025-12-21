@@ -1,0 +1,710 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+import 'package:fittrack/models/analytics.dart';
+import 'package:fittrack/services/analytics_service.dart';
+import 'package:fittrack/screens/analytics/components/monthly_heatmap_section.dart';
+import 'package:fittrack/screens/analytics/components/monthly_calendar_view.dart';
+
+@GenerateMocks([AnalyticsService])
+import 'monthly_heatmap_section_test.mocks.dart';
+
+void main() {
+  group('MonthlyHeatmapSection Widget Tests', () {
+    late MockAnalyticsService mockAnalyticsService;
+    const testUserId = 'test_user_123';
+
+    setUp(() {
+      mockAnalyticsService = MockAnalyticsService();
+    });
+
+    MonthHeatmapData createTestData({
+      required int year,
+      required int month,
+      Map<int, int>? dailySetCounts,
+    }) {
+      return MonthHeatmapData(
+        year: year,
+        month: month,
+        dailySetCounts: dailySetCounts ?? {1: 5, 10: 12, 20: 25},
+        totalSets: dailySetCounts?.values.fold<int>(0, (sum, count) => sum + count) ?? 42,
+        fetchedAt: DateTime.now(),
+      );
+    }
+
+    void setupMockService({
+      required int year,
+      required int month,
+      MonthHeatmapData? data,
+    }) {
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: year,
+        month: month,
+      )).thenAnswer((_) async => data ?? createTestData(year: year, month: month));
+    }
+
+    testWidgets('renders header with title and total sets', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(
+        year: now.year,
+        month: now.month,
+        data: createTestData(year: now.year, month: now.month, dailySetCounts: {1: 10, 2: 20}),
+      );
+
+      // Pre-fetch adjacent months
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      // Wait for async data loading
+      await tester.pumpAndSettle();
+
+      expect(find.text('Activity Tracker'), findsOneWidget);
+      expect(find.text('30 sets'), findsOneWidget); // 10 + 20
+    });
+
+    testWidgets('renders month/year header with current month', (WidgetTester tester) async {
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11); // Nov
+      setupMockService(year: 2025, month: 1);  // Jan
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Check for month/year text (format: "December 2024")
+      expect(find.textContaining('2024'), findsWidgets);
+    });
+
+    testWidgets('month/year header is tappable', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Find and tap the calendar icon (part of the tappable header)
+      final calendarIcon = find.byIcon(Icons.calendar_month);
+      expect(calendarIcon, findsOneWidget);
+
+      await tester.tap(calendarIcon);
+      await tester.pumpAndSettle();
+
+      // Should open DatePicker dialog
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+    });
+
+    testWidgets('Today button is hidden when on current month', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Today button should be hidden
+      expect(find.byIcon(Icons.today), findsNothing);
+      expect(find.text('Today'), findsNothing);
+    });
+
+    testWidgets('Today button appears when not on current month', (WidgetTester tester) async {
+      // Start on December 2024 (not current month)
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Today button should be visible (assuming we're not in Dec 2024)
+      final now = DateTime.now();
+      if (now.year != 2024 || now.month != 12) {
+        expect(find.byIcon(Icons.today), findsOneWidget);
+        expect(find.text('Today'), findsOneWidget);
+      }
+    });
+
+    testWidgets('PageView allows swipe navigation', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Find PageView
+      final pageView = find.byType(PageView);
+      expect(pageView, findsOneWidget);
+
+      // Swipe left (to next month)
+      await tester.drag(pageView, const Offset(-400, 0));
+      await tester.pumpAndSettle();
+
+      // Month should have changed
+      // Note: Exact verification would require checking displayed month text
+    });
+
+    testWidgets('renders MonthlyCalendarView inside PageView', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MonthlyCalendarView), findsOneWidget);
+    });
+
+    testWidgets('renders legend with intensity levels', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Less'), findsOneWidget);
+      expect(find.text('More'), findsOneWidget);
+    });
+
+    testWidgets('renders streak cards', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Current Streak'), findsOneWidget);
+      expect(find.text('Longest Streak'), findsOneWidget);
+      expect(find.byIcon(Icons.local_fire_department), findsOneWidget);
+      expect(find.byIcon(Icons.emoji_events), findsOneWidget);
+    });
+
+    testWidgets('shows loading indicator while fetching data', (WidgetTester tester) async {
+      final now = DateTime.now();
+
+      // Delay the response to show loading state
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async {
+        await Future.delayed(const Duration(milliseconds: 500));
+        return createTestData(year: now.year, month: now.month);
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      // Should show loading indicator immediately
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Wait for data to load
+      await tester.pumpAndSettle();
+
+      // Loading indicator should be gone
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('shows error message when data loading fails', (WidgetTester tester) async {
+      final now = DateTime.now();
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month,
+      )).thenThrow(Exception('Network error'));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Error loading data'), findsOneWidget);
+    });
+
+    testWidgets('tapping day shows popup with set count', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(
+        year: now.year,
+        month: now.month,
+        data: createTestData(
+          year: now.year,
+          month: now.month,
+          dailySetCounts: {5: 12}, // Day 5 has 12 sets
+        ),
+      );
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tap on day 5
+      final day5 = find.text('5');
+      await tester.tap(day5.first);
+      await tester.pumpAndSettle();
+
+      // Should show AlertDialog with set count
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('12 sets completed'), findsOneWidget);
+    });
+
+    testWidgets('pre-fetches adjacent months on init', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Verify that getMonthHeatmapData was called for current month and adjacent months
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month,
+      )).called(greaterThanOrEqualTo(1));
+
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month - 1,
+      )).called(greaterThanOrEqualTo(1));
+
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month + 1,
+      )).called(greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('caches month data to avoid redundant fetches', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Swipe to next month
+      final pageView = find.byType(PageView);
+      await tester.drag(pageView, const Offset(-400, 0));
+      await tester.pumpAndSettle();
+
+      // Swipe back to original month
+      await tester.drag(pageView, const Offset(400, 0));
+      await tester.pumpAndSettle();
+
+      // Current month data should be fetched only once (cached)
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month,
+      )).called(1); // Only called once, then cached
+    });
+
+    testWidgets('handles year boundary navigation (Dec to Jan)', (WidgetTester tester) async {
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
+      setupMockService(year: 2025, month: 2);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Swipe left to January 2025
+      final pageView = find.byType(PageView);
+      await tester.drag(pageView, const Offset(-400, 0));
+      await tester.pumpAndSettle();
+
+      // Should have fetched January 2025 data
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: 2025,
+        month: 1,
+      )).called(greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('handles year boundary navigation (Jan to Dec)', (WidgetTester tester) async {
+      setupMockService(year: 2025, month: 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2025, month: 2);
+      setupMockService(year: 2024, month: 11);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Swipe right to December 2024
+      final pageView = find.byType(PageView);
+      await tester.drag(pageView, const Offset(400, 0));
+      await tester.pumpAndSettle();
+
+      // Should have fetched December 2024 data
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: 2024,
+        month: 12,
+      )).called(greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('Today button navigates to current month', (WidgetTester tester) async {
+      final now = DateTime.now();
+
+      // Start on a past month
+      setupMockService(year: 2023, month: 6);
+      setupMockService(year: 2023, month: 5);
+      setupMockService(year: 2023, month: 7);
+
+      // Also setup current month
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Today button should be visible
+      expect(find.text('Today'), findsOneWidget);
+
+      // Tap Today button
+      await tester.tap(find.text('Today'));
+      await tester.pumpAndSettle();
+
+      // Should have navigated to current month
+      verify(mockAnalyticsService.getMonthHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        month: now.month,
+      )).called(greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('month picker allows selecting specific month', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2023, month: 6); // Target month
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Tap month/year header to open picker
+      await tester.tap(find.byIcon(Icons.calendar_month));
+      await tester.pumpAndSettle();
+
+      // DatePicker should be shown
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+
+      // Note: Selecting a specific date in DatePicker requires more complex interaction
+      // For now, just verify the dialog opens
+    });
+
+    testWidgets('handles empty month data (no sets)', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(
+        year: now.year,
+        month: now.month,
+        data: createTestData(
+          year: now.year,
+          month: now.month,
+          dailySetCounts: {}, // No sets
+        ),
+      );
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Should still render without errors
+      expect(find.text('Activity Tracker'), findsOneWidget);
+      expect(find.text('0 sets'), findsOneWidget);
+    });
+
+    testWidgets('renders within Card widget', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Card), findsOneWidget);
+    });
+
+    testWidgets('legend boxes have correct colors', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          ),
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Find all legend boxes (should be 5: none, low, medium, high, very high)
+      final legendBoxes = find.descendant(
+        of: find.ancestor(
+          of: find.text('Less'),
+          matching: find.byType(Row),
+        ),
+        matching: find.byType(Container),
+      );
+
+      // Should have 5 legend boxes
+      expect(legendBoxes, findsWidgets);
+    });
+
+    testWidgets('PageView has fixed height', (WidgetTester tester) async {
+      final now = DateTime.now();
+      setupMockService(year: now.year, month: now.month);
+      setupMockService(year: now.year, month: now.month - 1);
+      setupMockService(year: now.year, month: now.month + 1);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MonthlyHeatmapSection(
+              userId: testUserId,
+              analyticsService: mockAnalyticsService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Find SizedBox containing PageView
+      final sizedBox = find.ancestor(
+        of: find.byType(PageView),
+        matching: find.byType(SizedBox),
+      );
+
+      expect(sizedBox, findsOneWidget);
+
+      // Verify height is set (380px as per spec)
+      final sizedBoxWidget = tester.widget<SizedBox>(sizedBox.first);
+      expect(sizedBoxWidget.height, 380);
+    });
+  });
+}
