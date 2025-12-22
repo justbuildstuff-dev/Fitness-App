@@ -20,6 +20,10 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
+
+      // Stub Firestore methods called by provider constructor during auto-load
+      when(mockFirestoreService.getPrograms(testUserId))
+        .thenAnswer((_) => Stream.value([]));
     });
 
     MonthHeatmapData createTestMonthData({
