@@ -7,6 +7,7 @@ import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
+import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/cascade_delete_counts.dart';
 
 import 'program_provider_edit_delete_test.mocks.dart';
@@ -41,8 +42,6 @@ void main() {
     setUp(() {
       mockFirestoreService = MockFirestoreService();
       mockAnalyticsService = MockAnalyticsService();
-      // Use consistent userId throughout tests
-      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
 
       // Create test data
       testProgram = Program(
@@ -100,6 +99,68 @@ void main() {
 
       when(mockFirestoreService.deleteWeek(any, any, any))
           .thenAnswer((_) async {});
+
+      // Add stubs for analytics methods (called by provider constructor during auto-load)
+      final now = DateTime.now();
+      when(mockAnalyticsService.computeWorkoutAnalytics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => WorkoutAnalytics(
+        userId: 'user123',
+        startDate: now.subtract(const Duration(days: 30)),
+        endDate: now,
+        totalWorkouts: 0,
+        totalSets: 0,
+        totalVolume: 0.0,
+        totalDuration: 0,
+        exerciseTypeBreakdown: {},
+        completedWorkoutIds: [],
+      ));
+
+      when(mockAnalyticsService.generateSetBasedHeatmapData(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+        programId: anyNamed('programId'),
+      )).thenAnswer((_) async => ActivityHeatmapData(
+        userId: 'user123',
+        year: now.year,
+        dailySetCounts: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        totalSets: 0,
+      ));
+
+      when(mockAnalyticsService.getPersonalRecords(
+        userId: anyNamed('userId'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async => []);
+
+      when(mockAnalyticsService.computeKeyStatistics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => {});
+
+      // Add stubs for monthly heatmap methods (added in Monthly Habit Tracker feature)
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+        month: anyNamed('month'),
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: now.year,
+        month: now.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: now,
+      ));
+
+      when(mockAnalyticsService.prefetchAdjacentMonths(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+        month: anyNamed('month'),
+      )).thenAnswer((_) async {});
+
+      // Use consistent userId throughout tests
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
     });
 
     group('Program Edit Operations', () {
