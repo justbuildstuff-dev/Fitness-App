@@ -1454,6 +1454,13 @@ void _setupMockFirestore(
       ]));
 
   when(mockService.getSets(any, any, any, any, any)).thenAnswer((invocation) {
-    return Stream.value(testSets);
+    // Filter sets by workout ID to avoid duplicates across different workout queries
+    final workoutId = invocation.positionalArguments[3] as String;
+    final workoutSets = testSets.where((set) {
+      // Match sets to the workout based on date
+      final setDate = DateTime(set.createdAt.year, set.createdAt.month, set.createdAt.day);
+      return workoutId.contains('${setDate.millisecondsSinceEpoch}');
+    }).toList();
+    return Stream.value(workoutSets);
   });
 }
