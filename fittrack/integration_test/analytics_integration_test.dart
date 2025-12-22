@@ -4,7 +4,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
-import 'package:fittrack/screens/analytics/components/activity_heatmap_section.dart';
+import 'package:fittrack/screens/analytics/components/monthly_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
 import 'firebase_emulator_setup.dart';
 
@@ -124,8 +124,8 @@ void main() {
       await _navigateToAnalytics(tester);
 
       // Verify heatmap displays correctly
-      if (find.byType(ActivityHeatmapSection).evaluate().isNotEmpty) {
-        expect(find.byType(ActivityHeatmapSection), findsOneWidget);
+      if (find.byType(MonthlyHeatmapSection).evaluate().isNotEmpty) {
+        expect(find.byType(MonthlyHeatmapSection), findsOneWidget);
         
         // Check for year display
         final currentYear = DateTime.now().year;
@@ -325,12 +325,12 @@ Future<void> _testEmptyState(WidgetTester tester) async {
 
 Future<void> _testAnalyticsWithData(WidgetTester tester) async {
   // Look for analytics components
-  final hasHeatmap = find.byType(ActivityHeatmapSection).evaluate().isNotEmpty;
+  final hasHeatmap = find.byType(MonthlyHeatmapSection).evaluate().isNotEmpty;
   final hasStats = find.byType(KeyStatisticsSection).evaluate().isNotEmpty;
-  
+
   if (hasHeatmap) {
     print('Heatmap section found');
-    expect(find.byType(ActivityHeatmapSection), findsOneWidget);
+    expect(find.byType(MonthlyHeatmapSection), findsOneWidget);
   }
   
   if (hasStats) {
