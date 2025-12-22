@@ -63,6 +63,26 @@ void main() {
         dateRange: anyNamed('dateRange'),
       )).thenAnswer((_) async => {});
 
+      // Add stubs for monthly heatmap methods (added in Monthly Habit Tracker feature)
+      final now = DateTime.now();
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+        month: anyNamed('month'),
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: now.year,
+        month: now.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: now,
+      ));
+
+      when(mockAnalyticsService.prefetchAdjacentMonths(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+        month: anyNamed('month'),
+      )).thenAnswer((_) async {});
+
       provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
     });
 
