@@ -63,12 +63,12 @@ void main() {
         dateRange: anyNamed('dateRange'),
       )).thenAnswer((_) async => {});
 
-      // Add stubs for monthly heatmap methods (added in Monthly Habit Tracker feature)
+      // Add stubs for monthly heatmap methods with CONCRETE values (required for non-nullable params)
       final now = DateTime.now();
       when(mockAnalyticsService.getMonthHeatmapData(
-        userId: anyNamed('userId'),
-        year: anyNamed('year'),
-        month: anyNamed('month'),
+        userId: 'test_user',
+        year: now.year,
+        month: now.month,
       )).thenAnswer((_) async => MonthHeatmapData(
         year: now.year,
         month: now.month,
@@ -78,9 +78,9 @@ void main() {
       ));
 
       when(mockAnalyticsService.prefetchAdjacentMonths(
-        userId: anyNamed('userId'),
-        year: anyNamed('year'),
-        month: anyNamed('month'),
+        userId: 'test_user',
+        year: now.year,
+        month: now.month,
       )).thenAnswer((_) async {});
 
       provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
