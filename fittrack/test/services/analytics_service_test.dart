@@ -1417,18 +1417,26 @@ void _setupMockFirestore(
         ),
       ]));
 
-  when(mockService.getWorkouts(any, any, any)).thenAnswer((_) => Stream.value([
-        Workout(
-          id: 'w1',
-          name: 'Workout 1',
-          orderIndex: 0,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          userId: 'test_user',
-          weekId: 'wk1',
-          programId: programId ?? 'p1',
-        ),
-      ]));
+  when(mockService.getWorkouts(any, any, any)).thenAnswer((_) {
+    // Create workout dates that match the test sets
+    final workoutDates = testSets.map((s) => DateTime(s.createdAt.year, s.createdAt.month, s.createdAt.day)).toSet().toList();
+    if (workoutDates.isEmpty) {
+      workoutDates.add(DateTime.now()); // Default workout if no sets
+    }
+
+    return Stream.value(
+      workoutDates.map((date) => Workout(
+        id: 'w_${date.millisecondsSinceEpoch}',
+        name: 'Workout ${date.day}',
+        orderIndex: 0,
+        createdAt: date,
+        updatedAt: date,
+        userId: 'test_user',
+        weekId: 'wk1',
+        programId: programId ?? 'p1',
+      )).toList(),
+    );
+  });
 
   when(mockService.getExercises(any, any, any, any)).thenAnswer((_) => Stream.value([
         Exercise(

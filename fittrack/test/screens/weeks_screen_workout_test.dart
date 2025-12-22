@@ -620,8 +620,11 @@ void main() {
         verify(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id)).called(1);
 
         // Verify enhanced dialog is shown with correct elements
-        expect(find.text('Delete Week'), findsOneWidget,
-            reason: 'Should display delete week title');
+        expect(find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Delete Week'),
+        ), findsOneWidget,
+            reason: 'Should display delete week title in dialog');
         expect(find.text('Are you sure you want to delete this week?'), findsOneWidget,
             reason: 'Should display confirmation message');
         expect(find.text('Test Week 1'), findsOneWidget,
@@ -662,8 +665,12 @@ void main() {
         await tester.tap(find.text('Delete Week'));
         await tester.pumpAndSettle();
 
-        // Confirm deletion
-        final deleteButton = find.text('Delete Week').last;
+        // Confirm deletion - find delete button within dialog
+        final deleteButton = find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(ElevatedButton, 'Delete Week'),
+        );
+        expect(deleteButton, findsOneWidget);
         await tester.tap(deleteButton);
         await tester.pumpAndSettle();
 
@@ -698,8 +705,12 @@ void main() {
         await tester.tap(find.text('Delete Week'));
         await tester.pumpAndSettle();
 
-        // Confirm deletion
-        final deleteButton = find.text('Delete Week').last;
+        // Confirm deletion - find delete button within dialog
+        final deleteButton = find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(ElevatedButton, 'Delete Week'),
+        );
+        expect(deleteButton, findsOneWidget);
         await tester.tap(deleteButton);
         await tester.pumpAndSettle();
 
