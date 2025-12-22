@@ -148,6 +148,67 @@ void main() {
 
       when(mockFirestoreService.deleteExercise(any, any, any, any, any))
           .thenAnswer((_) async {});
+
+      // Add stubs for analytics methods (called by provider constructor during auto-load)
+      final now = DateTime.now();
+      when(mockAnalyticsService.computeWorkoutAnalytics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => WorkoutAnalytics(
+        userId: 'user123',
+        startDate: DateTime(now.year, 1, 1),
+        endDate: DateTime(now.year, 12, 31),
+        totalWorkouts: 0,
+        totalSets: 0,
+        totalVolume: 0,
+        totalDuration: 0,
+        exerciseTypeBreakdown: {},
+        completedWorkoutIds: [],
+      ));
+
+      when(mockAnalyticsService.generateSetBasedHeatmapData(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => ActivityHeatmapData(
+        userId: 'user123',
+        year: now.year,
+        dailySetCounts: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        totalSets: 0,
+      ));
+
+      when(mockAnalyticsService.getPersonalRecords(
+        userId: anyNamed('userId'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async => []);
+
+      when(mockAnalyticsService.computeKeyStatistics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => {});
+
+      // Add stubs for monthly heatmap methods with CONCRETE values (required for non-nullable params)
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'user123',
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: now.year,
+        month: now.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: now,
+      ));
+
+      when(mockAnalyticsService.prefetchAdjacentMonths(
+        userId: 'user123',
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async {});
+
+      // Instantiate provider with mocked services
+      provider = ProgramProvider.withServices('user123', mockFirestoreService, mockAnalyticsService);
     });
 
     group('Workout Edit Operations', () {
