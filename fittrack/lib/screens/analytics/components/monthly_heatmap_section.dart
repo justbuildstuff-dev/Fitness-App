@@ -42,6 +42,18 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   // Virtual page index offset (to allow infinite scrolling)
   static const int _virtualCenter = 10000;
 
+  /// Safely adds [months] to [date], handling year boundaries correctly
+  DateTime _addMonths(DateTime date, int months) {
+    // Calculate total months from year 0
+    int totalMonths = date.year * 12 + date.month - 1 + months;
+
+    // Extract year and month
+    int newYear = totalMonths ~/ 12;
+    int newMonth = (totalMonths % 12) + 1;
+
+    return DateTime(newYear, newMonth, 1);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -105,8 +117,8 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
 
   /// Pre-fetch adjacent months for smooth navigation
   Future<void> _preloadAdjacentMonths() async {
-    final prevMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
-    final nextMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+    final prevMonth = _addMonths(_currentMonth, -1);
+    final nextMonth = _addMonths(_currentMonth, 1);
 
     await Future.wait([
       _loadMonthData(prevMonth),
@@ -117,7 +129,7 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   /// Get month for a given page index
   DateTime _getMonthForPageIndex(int index) {
     final offset = index - _virtualCenter;
-    return DateTime(_currentMonth.year, _currentMonth.month + offset, 1);
+    return _addMonths(_currentMonth, offset);
   }
 
   /// Get cached data for a month

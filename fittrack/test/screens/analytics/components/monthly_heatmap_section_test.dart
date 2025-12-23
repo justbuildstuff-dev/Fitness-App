@@ -136,9 +136,18 @@ void main() {
       // Use actual current month for this test since it verifies current month behavior
       final now = DateTime.now();
       final currentMonth = DateTime(now.year, now.month, 1);
+
+      // Calculate adjacent months properly with year boundary handling
+      final prevMonth = now.month == 1
+          ? DateTime(now.year - 1, 12, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final nextMonth = now.month == 12
+          ? DateTime(now.year + 1, 1, 1)
+          : DateTime(now.year, now.month + 1, 1);
+
       setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: prevMonth.year, month: prevMonth.month);
+      setupMockService(year: nextMonth.year, month: nextMonth.month);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -319,11 +328,16 @@ void main() {
     });
 
     testWidgets('shows error message when data loading fails', (WidgetTester tester) async {
+      // Setup current month to throw error
       when(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
         year: 2024,
         month: 12,
       )).thenThrow(Exception('Network error'));
+
+      // Setup adjacent months to return empty data (they get pre-fetched)
+      setupMockService(year: 2024, month: 11, data: createTestData(year: 2024, month: 11, dailySetCounts: {}));
+      setupMockService(year: 2025, month: 1, data: createTestData(year: 2025, month: 1, dailySetCounts: {}));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -528,10 +542,17 @@ void main() {
       setupMockService(year: 2023, month: 5);
       setupMockService(year: 2023, month: 7);
 
-      // Also setup current month
+      // Also setup current month with proper year boundary handling
+      final prevMonth = now.month == 1
+          ? DateTime(now.year - 1, 12, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final nextMonth = now.month == 12
+          ? DateTime(now.year + 1, 1, 1)
+          : DateTime(now.year, now.month + 1, 1);
+
       setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: prevMonth.year, month: prevMonth.month);
+      setupMockService(year: nextMonth.year, month: nextMonth.month);
 
       await tester.pumpWidget(
         MaterialApp(
