@@ -256,8 +256,8 @@ void main() {
 
         await provider.updateWorkoutFields('workout123', name: 'New Name');
 
-        // Error should be cleared during operation
-        expect(provider.error, isNull);
+        // Programs error should be cleared during operation
+        expect(provider.programsError, isNull);
       });
 
       test('updateWorkoutFields handles service exceptions correctly', () async {
@@ -531,7 +531,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 10));
 
         // Start with clean state
-        expect(provider.error, isNull);
+        expect(provider.programsError, isNull);
 
         // Simulate operation that sets error
         when(mockFirestoreService.updateExerciseFields(

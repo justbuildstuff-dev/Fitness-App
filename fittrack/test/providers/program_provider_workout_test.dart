@@ -96,6 +96,20 @@ void main() {
         month: now.month,
       )).thenAnswer((_) async {});
 
+      // Add stub for generateSetBasedHeatmapData
+      when(mockAnalyticsService.generateSetBasedHeatmapData(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+        programId: anyNamed('programId'),
+      )).thenAnswer((_) async => ActivityHeatmapData(
+        userId: testUserId,
+        year: now.year,
+        dailySetCounts: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        totalSets: 0,
+      ));
+
       // Set up common mock stubs for methods called by provider internally
       when(mockFirestoreService.createWorkout(any))
           .thenAnswer((_) async => 'default-workout-id');
@@ -133,8 +147,8 @@ void main() {
         // Verify success
         expect(result, equals(expectedWorkoutId),
           reason: 'Should return the workout ID from Firestore');
-        expect(programProvider.error, isNull,
-          reason: 'Error should be null on successful creation');
+        expect(programProvider.programsError, isNull,
+          reason: 'Programs error should be null on successful creation');
 
         // Verify correct data was sent to Firestore
         final capturedWorkout = verify(mockFirestoreService.createWorkout(captureAny))
@@ -284,8 +298,8 @@ void main() {
         expect(programProvider.workouts[2].name, equals('Leg Day'));
         expect(programProvider.isLoadingWorkouts, isFalse,
           reason: 'Loading state should be false after successful load');
-        expect(programProvider.error, isNull,
-          reason: 'Error should be null on successful load');
+        expect(programProvider.programsError, isNull,
+          reason: 'Programs error should be null on successful load');
       });
 
       test('loadWorkouts handles empty workout list correctly', () async {
@@ -401,8 +415,8 @@ void main() {
 
         expect(result, isTrue,
           reason: 'Should return true on successful update');
-        expect(programProvider.error, isNull,
-          reason: 'Error should be null on successful update');
+        expect(programProvider.programsError, isNull,
+          reason: 'Programs error should be null on successful update');
 
         // Verify correct workout was sent to Firestore
         final capturedWorkout = verify(mockFirestoreService.updateWorkout(captureAny))
@@ -452,8 +466,8 @@ void main() {
 
         expect(result, isTrue,
           reason: 'Should return true on successful deletion');
-        expect(programProvider.error, isNull,
-          reason: 'Error should be null on successful deletion');
+        expect(programProvider.programsError, isNull,
+          reason: 'Programs error should be null on successful deletion');
 
         // Verify correct parameters were passed to Firestore
         verify(mockFirestoreService.deleteWorkout(

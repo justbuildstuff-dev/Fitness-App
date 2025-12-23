@@ -167,7 +167,7 @@ void main() {
         // Assert - These would test actual provider state
         // In real implementation, you'd check provider.currentAnalytics, etc.
         expect(provider.isLoadingAnalytics, isFalse);
-        expect(provider.error, isNull);
+        expect(provider.analyticsError, isNull);
       });
 
       test('handles analytics loading errors gracefully', () async {
@@ -184,8 +184,8 @@ void main() {
 
         // Assert
         expect(provider.isLoadingAnalytics, isFalse);
-        expect(provider.error, isNotNull);
-        expect(provider.error, contains('Failed to load analytics'));
+        expect(provider.analyticsError, isNotNull);
+        expect(provider.analyticsError, contains('Failed to load analytics'));
       });
 
       test('sets loading state correctly during analytics loading', () async {

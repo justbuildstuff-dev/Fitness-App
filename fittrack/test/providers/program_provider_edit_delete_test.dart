@@ -193,7 +193,7 @@ void main() {
         await provider.updateProgramFields('prog123', name: 'New Name');
 
         // Verify the operation completed without errors
-        expect(provider.error, isNull);
+        expect(provider.programsError, isNull);
       });
 
       test('updateProgramFields handles service exceptions correctly', () async {
@@ -396,7 +396,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 10));
 
         // Start with clean state
-        expect(provider.error, isNull);
+        expect(provider.programsError, isNull);
 
         // Simulate operation that sets error
         when(mockFirestoreService.updateWeekFields(
