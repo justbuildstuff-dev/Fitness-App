@@ -286,6 +286,13 @@ void main() {
         month: anyNamed('month'),
       )).thenThrow(Exception('Network error'));
 
+      // Stub prefetchAdjacentMonths to avoid unstubbed call error
+      when(mockAnalyticsService.prefetchAdjacentMonths(
+        userId: anyNamed('userId'),
+        year: anyNamed('year'),
+        month: anyNamed('month'),
+      )).thenAnswer((_) async => null);
+
       final provider = ProgramProvider.withServices(
         testUserId,
         mockFirestoreService,
