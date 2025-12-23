@@ -1438,20 +1438,29 @@ void _setupMockFirestore(
     );
   });
 
-  when(mockService.getExercises(any, any, any, any)).thenAnswer((_) => Stream.value([
-        Exercise(
-          id: 'ex1',
-          name: 'Exercise 1',
-          exerciseType: ExerciseType.strength,
-          orderIndex: 0,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          userId: 'test_user',
-          workoutId: 'w1',
-          weekId: 'wk1',
-          programId: programId ?? 'p1',
-        ),
-      ]));
+  when(mockService.getExercises(any, any, any, any)).thenAnswer((invocation) {
+    // Only return exercises for workouts from the first program to avoid duplicates
+    final queryProgramId = invocation.positionalArguments[1] as String;
+    if (programId == null && queryProgramId != 'p1') {
+      // If no specific programId set, only return exercises for p1 to avoid duplication
+      return Stream.value([]);
+    }
+
+    return Stream.value([
+      Exercise(
+        id: 'ex1',
+        name: 'Exercise 1',
+        exerciseType: ExerciseType.strength,
+        orderIndex: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'test_user',
+        workoutId: 'w1',
+        weekId: 'wk1',
+        programId: queryProgramId,
+      ),
+    ]);
+  });
 
   when(mockService.getSets(any, any, any, any, any)).thenAnswer((invocation) {
     // Filter sets by workout ID to avoid duplicates across different workout queries
