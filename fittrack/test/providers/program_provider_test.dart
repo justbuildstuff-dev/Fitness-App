@@ -280,18 +280,48 @@ void main() {
       // Clear default stubs from setUp
       reset(mockAnalyticsService);
 
+      // Stub getMonthHeatmapData to throw an error
       when(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
         year: anyNamed('year'),
         month: anyNamed('month'),
       )).thenThrow(Exception('Network error'));
 
-      // Stub prefetchAdjacentMonths to avoid unstubbed call error
+      // Stub all other analytics methods called during loadAnalytics
+      // (These would be called by Future.wait, so they need to be stubbed)
       when(mockAnalyticsService.prefetchAdjacentMonths(
         userId: anyNamed('userId'),
         year: anyNamed('year'),
         month: anyNamed('month'),
       )).thenAnswer((_) async => null);
+
+      when(mockAnalyticsService.computeWorkoutAnalytics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => createTestAnalytics());
+
+      when(mockAnalyticsService.generateSetBasedHeatmapData(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+        programId: anyNamed('programId'),
+      )).thenAnswer((_) async => ActivityHeatmapData(
+        userId: testUserId,
+        year: DateTime.now().year,
+        dailySetCounts: {},
+        currentStreak: 0,
+        longestStreak: 0,
+        totalSets: 0,
+      ));
+
+      when(mockAnalyticsService.getPersonalRecords(
+        userId: anyNamed('userId'),
+        limit: anyNamed('limit'),
+      )).thenAnswer((_) async => []);
+
+      when(mockAnalyticsService.computeKeyStatistics(
+        userId: anyNamed('userId'),
+        dateRange: anyNamed('dateRange'),
+      )).thenAnswer((_) async => {});
 
       final provider = ProgramProvider.withServices(
         testUserId,
