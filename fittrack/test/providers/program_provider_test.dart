@@ -333,7 +333,7 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 100));
 
       expect(provider.isLoadingAnalytics, isFalse);
-      expect(provider.error, contains('Failed to load analytics'));
+      expect(provider.analyticsError, contains('Failed to load analytics'));
     });
 
     test('loadAnalytics uses current year date range by default', () async {
