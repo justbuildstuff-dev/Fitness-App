@@ -15,6 +15,10 @@ void main() {
     late MockAnalyticsService mockAnalyticsService;
     const testUserId = 'test_user_123';
 
+    // Use fixed test month for deterministic testing
+    // December 2024: Dec 1 = Sunday, 31 days, needs 6 weeks
+    final testMonth = DateTime(2024, 12, 1);
+
     setUp(() {
       mockAnalyticsService = MockAnalyticsService();
     });
@@ -46,16 +50,15 @@ void main() {
     }
 
     testWidgets('renders header with title and total sets', (WidgetTester tester) async {
-      final now = DateTime.now();
       setupMockService(
-        year: now.year,
-        month: now.month,
-        data: createTestData(year: now.year, month: now.month, dailySetCounts: {1: 10, 2: 20}),
+        year: testMonth.year,
+        month: testMonth.month,
+        data: createTestData(year: testMonth.year, month: testMonth.month, dailySetCounts: {1: 10, 2: 20}),
       );
 
       // Pre-fetch adjacent months
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 11); // Nov 2024
+      setupMockService(year: 2025, month: 1);  // Jan 2025
 
       await tester.pumpWidget(
         MaterialApp(
@@ -63,6 +66,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -99,10 +103,9 @@ void main() {
     });
 
     testWidgets('month/year header is tappable', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -110,6 +113,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -129,7 +133,9 @@ void main() {
     });
 
     testWidgets('Today button is hidden when on current month', (WidgetTester tester) async {
+      // Use actual current month for this test since it verifies current month behavior
       final now = DateTime.now();
+      final currentMonth = DateTime(now.year, now.month, 1);
       setupMockService(year: now.year, month: now.month);
       setupMockService(year: now.year, month: now.month - 1);
       setupMockService(year: now.year, month: now.month + 1);
@@ -140,6 +146,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: currentMonth, // Start on actual current month
             ),
           ),
         ),
@@ -178,10 +185,9 @@ void main() {
     });
 
     testWidgets('PageView allows swipe navigation', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -189,6 +195,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -209,10 +216,9 @@ void main() {
     });
 
     testWidgets('renders MonthlyCalendarView inside PageView', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -220,6 +226,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -231,10 +238,9 @@ void main() {
     });
 
     testWidgets('renders legend with intensity levels', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -242,6 +248,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -254,10 +261,9 @@ void main() {
     });
 
     testWidgets('renders streak cards', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -265,6 +271,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -279,16 +286,14 @@ void main() {
     });
 
     testWidgets('shows loading indicator while fetching data', (WidgetTester tester) async {
-      final now = DateTime.now();
-
       // Delay the response to show loading state
       when(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
-        year: now.year,
-        month: now.month,
+        year: 2024,
+        month: 12,
       )).thenAnswer((_) async {
         await Future.delayed(const Duration(milliseconds: 500));
-        return createTestData(year: now.year, month: now.month);
+        return createTestData(year: 2024, month: 12);
       });
 
       await tester.pumpWidget(
@@ -297,6 +302,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -313,12 +319,10 @@ void main() {
     });
 
     testWidgets('shows error message when data loading fails', (WidgetTester tester) async {
-      final now = DateTime.now();
-
       when(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
-        year: now.year,
-        month: now.month,
+        year: 2024,
+        month: 12,
       )).thenThrow(Exception('Network error'));
 
       await tester.pumpWidget(
@@ -327,6 +331,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -338,18 +343,17 @@ void main() {
     });
 
     testWidgets('tapping day shows popup with set count', (WidgetTester tester) async {
-      final now = DateTime.now();
       setupMockService(
-        year: now.year,
-        month: now.month,
+        year: 2024,
+        month: 12,
         data: createTestData(
-          year: now.year,
-          month: now.month,
+          year: 2024,
+          month: 12,
           dailySetCounts: {5: 12}, // Day 5 has 12 sets
         ),
       );
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -357,6 +361,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -375,10 +380,9 @@ void main() {
     });
 
     testWidgets('pre-fetches adjacent months on init', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -386,6 +390,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -396,28 +401,27 @@ void main() {
       // Verify that getMonthHeatmapData was called for current month and adjacent months
       verify(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
-        year: now.year,
-        month: now.month,
+        year: 2024,
+        month: 12,
       )).called(greaterThanOrEqualTo(1));
 
       verify(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
-        year: now.year,
-        month: now.month - 1,
+        year: 2024,
+        month: 11,
       )).called(greaterThanOrEqualTo(1));
 
       verify(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
-        year: now.year,
-        month: now.month + 1,
+        year: 2025,
+        month: 1,
       )).called(greaterThanOrEqualTo(1));
     });
 
     testWidgets('caches month data to avoid redundant fetches', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -425,6 +429,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -444,8 +449,8 @@ void main() {
       // Current month data should be fetched only once (cached)
       verify(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
-        year: now.year,
-        month: now.month,
+        year: 2024,
+        month: 12,
       )).called(1); // Only called once, then cached
     });
 
@@ -558,10 +563,9 @@ void main() {
     });
 
     testWidgets('month picker allows selecting specific month', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
       setupMockService(year: 2023, month: 6); // Target month
 
       await tester.pumpWidget(
@@ -570,6 +574,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -589,18 +594,17 @@ void main() {
     });
 
     testWidgets('handles empty month data (no sets)', (WidgetTester tester) async {
-      final now = DateTime.now();
       setupMockService(
-        year: now.year,
-        month: now.month,
+        year: 2024,
+        month: 12,
         data: createTestData(
-          year: now.year,
-          month: now.month,
+          year: 2024,
+          month: 12,
           dailySetCounts: {}, // No sets
         ),
       );
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -608,6 +612,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -621,10 +626,9 @@ void main() {
     });
 
     testWidgets('renders within Card widget', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -632,6 +636,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -643,10 +648,9 @@ void main() {
     });
 
     testWidgets('legend boxes have correct colors', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -657,6 +661,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
@@ -678,10 +683,9 @@ void main() {
     });
 
     testWidgets('PageView has fixed height', (WidgetTester tester) async {
-      final now = DateTime.now();
-      setupMockService(year: now.year, month: now.month);
-      setupMockService(year: now.year, month: now.month - 1);
-      setupMockService(year: now.year, month: now.month + 1);
+      setupMockService(year: 2024, month: 12);
+      setupMockService(year: 2024, month: 11);
+      setupMockService(year: 2025, month: 1);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -689,6 +693,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: testMonth,
             ),
           ),
         ),
