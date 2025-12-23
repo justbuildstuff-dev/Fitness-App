@@ -86,6 +86,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: DateTime(2024, 12, 1),
             ),
           ),
         ),
@@ -94,7 +95,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check for month/year text (format: "December 2024")
-      expect(find.textContaining('2024'), findsWidgets);
+      expect(find.text('December 2024'), findsOneWidget);
     });
 
     testWidgets('month/year header is tappable', (WidgetTester tester) async {
@@ -152,7 +153,7 @@ void main() {
     });
 
     testWidgets('Today button appears when not on current month', (WidgetTester tester) async {
-      // Start on December 2024 (not current month)
+      // Start on December 2024 (not current month, since current is likely 2025)
       setupMockService(year: 2024, month: 12);
       setupMockService(year: 2024, month: 11);
       setupMockService(year: 2025, month: 1);
@@ -163,6 +164,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: DateTime(2024, 12, 1), // Start on past month
             ),
           ),
         ),
@@ -170,12 +172,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Today button should be visible (assuming we're not in Dec 2024)
-      final now = DateTime.now();
-      if (now.year != 2024 || now.month != 12) {
-        expect(find.byIcon(Icons.today), findsOneWidget);
-        expect(find.text('Today'), findsOneWidget);
-      }
+      // Today button should be visible since we're viewing Dec 2024
+      expect(find.byIcon(Icons.today), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
     });
 
     testWidgets('PageView allows swipe navigation', (WidgetTester tester) async {
@@ -462,6 +461,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: DateTime(2024, 12, 1), // Start on Dec 2024
             ),
           ),
         ),
@@ -494,6 +494,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: DateTime(2025, 1, 1), // Start on Jan 2025
             ),
           ),
         ),
@@ -533,6 +534,7 @@ void main() {
             body: MonthlyHeatmapSection(
               userId: testUserId,
               analyticsService: mockAnalyticsService,
+              initialMonth: DateTime(2023, 6, 1), // Start on past month
             ),
           ),
         ),

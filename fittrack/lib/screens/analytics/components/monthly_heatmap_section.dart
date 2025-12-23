@@ -15,11 +15,13 @@ import 'monthly_calendar_view.dart';
 class MonthlyHeatmapSection extends StatefulWidget {
   final String userId;
   final AnalyticsService analyticsService;
+  final DateTime? initialMonth; // Optional: defaults to current month
 
   const MonthlyHeatmapSection({
     super.key,
     required this.userId,
     required this.analyticsService,
+    this.initialMonth,
   });
 
   @override
@@ -43,7 +45,9 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   @override
   void initState() {
     super.initState();
-    _currentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    final now = DateTime.now();
+    final initialDate = widget.initialMonth ?? now;
+    _currentMonth = DateTime(initialDate.year, initialDate.month, 1);
     _pageController = PageController(initialPage: _virtualCenter);
     _loadInitialData();
   }
