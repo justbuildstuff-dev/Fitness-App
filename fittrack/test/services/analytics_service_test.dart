@@ -1387,41 +1387,54 @@ void _setupMockFirestore(
 }) {
   final testSets = sets ?? [];
 
-  when(mockService.getPrograms(any)).thenAnswer((_) => Stream.value([
-        Program(
-          id: programId ?? 'p1',
-          name: 'Test Program',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          userId: 'test_user',
-        ),
-        if (programId == null)
+  // Determine which programs actually have sets in the test data
+  final programsWithSets = testSets.map((s) => s.programId).toSet();
+
+  // Create programs only for those that have sets (or use specified programId)
+  final programs = programId != null
+      ? [
           Program(
-            id: 'p2',
-            name: 'Test Program 2',
+            id: programId,
+            name: 'Test Program',
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
             userId: 'test_user',
           ),
-      ]));
+        ]
+      : programsWithSets.map((pid) => Program(
+            id: pid,
+            name: 'Test Program $pid',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            userId: 'test_user',
+          )).toList();
 
-  when(mockService.getWeeks(any, any)).thenAnswer((_) => Stream.value([
-        Week(
-          id: 'wk1',
-          name: 'Week 1',
-          order: 1,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          userId: 'test_user',
-          programId: programId ?? 'p1',
-        ),
-      ]));
+  when(mockService.getPrograms(any)).thenAnswer((_) => Stream.value(programs));
 
-  when(mockService.getWorkouts(any, any, any)).thenAnswer((_) {
-    // Create workout dates that match the test sets
-    final workoutDates = testSets.map((s) => DateTime(s.createdAt.year, s.createdAt.month, s.createdAt.day)).toSet().toList();
+  when(mockService.getWeeks(any, any)).thenAnswer((invocation) {
+    final queryProgramId = invocation.positionalArguments[1] as String;
+    return Stream.value([
+      Week(
+        id: 'wk1',
+        name: 'Week 1',
+        order: 1,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'test_user',
+        programId: queryProgramId,
+      ),
+    ]);
+  });
+
+  when(mockService.getWorkouts(any, any, any)).thenAnswer((invocation) {
+    final queryProgramId = invocation.positionalArguments[1] as String;
+
+    // Create workout dates that match the test sets for this program
+    final programSets = testSets.where((s) => s.programId == queryProgramId).toList();
+    final workoutDates = programSets.map((s) => DateTime(s.createdAt.year, s.createdAt.month, s.createdAt.day)).toSet().toList();
+
     if (workoutDates.isEmpty) {
-      workoutDates.add(DateTime.now()); // Default workout if no sets
+      return Stream.value([]);
     }
 
     return Stream.value(
@@ -1433,16 +1446,16 @@ void _setupMockFirestore(
         updatedAt: date,
         userId: 'test_user',
         weekId: 'wk1',
-        programId: programId ?? 'p1',
+        programId: queryProgramId,
       )).toList(),
     );
   });
 
   when(mockService.getExercises(any, any, any, any)).thenAnswer((invocation) {
-    // Only return exercises for workouts from the first program to avoid duplicates
     final queryProgramId = invocation.positionalArguments[1] as String;
-    if (programId == null && queryProgramId != 'p1') {
-      // If no specific programId set, only return exercises for p1 to avoid duplication
+    final hasSetsForProgram = testSets.any((set) => set.programId == queryProgramId);
+
+    if (!hasSetsForProgram) {
       return Stream.value([]);
     }
 
@@ -1463,12 +1476,13 @@ void _setupMockFirestore(
   });
 
   when(mockService.getSets(any, any, any, any, any)).thenAnswer((invocation) {
-    // Filter sets by workout ID to avoid duplicates across different workout queries
+    final queryProgramId = invocation.positionalArguments[1] as String;
     final workoutId = invocation.positionalArguments[3] as String;
+
     final workoutSets = testSets.where((set) {
-      // Match sets to the workout based on date
       final setDate = DateTime(set.createdAt.year, set.createdAt.month, set.createdAt.day);
-      return workoutId.contains('${setDate.millisecondsSinceEpoch}');
+      return workoutId.contains('${setDate.millisecondsSinceEpoch}') &&
+             set.programId == queryProgramId;
     }).toList();
     return Stream.value(workoutSets);
   });
