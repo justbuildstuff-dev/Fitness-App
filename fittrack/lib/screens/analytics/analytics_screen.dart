@@ -9,7 +9,12 @@ import 'components/charts_section.dart';
 
 /// Analytics screen providing comprehensive workout insights
 class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key});
+  final AnalyticsService? analyticsService;
+
+  const AnalyticsScreen({
+    super.key,
+    this.analyticsService,
+  });
 
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
@@ -117,7 +122,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   if (provider.monthHeatmapData != null && provider.userId != null)
                     MonthlyHeatmapSection(
                       userId: provider.userId!,
-                      analyticsService: AnalyticsService.instance,
+                      analyticsService: widget.analyticsService ?? AnalyticsService.instance,
                     ),
 
                   // Key Statistics Section

@@ -7,7 +7,7 @@ import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/screens/analytics/components/monthly_heatmap_section.dart';
 import 'package:fittrack/screens/analytics/components/monthly_calendar_view.dart';
 
-@GenerateMocks([AnalyticsService])
+@GenerateNiceMocks([MockSpec<AnalyticsService>()])
 import 'monthly_heatmap_section_test.mocks.dart';
 
 void main() {

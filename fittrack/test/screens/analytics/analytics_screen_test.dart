@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/screens/analytics/components/monthly_heatmap_section.dart';
@@ -14,11 +15,14 @@ import 'package:fittrack/screens/analytics/components/charts_section.dart';
 import 'analytics_screen_test.mocks.dart';
 
 @GenerateMocks([ProgramProvider])
+@GenerateNiceMocks([MockSpec<AnalyticsService>()])
 void main() {
   late MockProgramProvider mockProvider;
+  late MockAnalyticsService mockAnalyticsService;
 
   setUp(() {
     mockProvider = MockProgramProvider();
+    mockAnalyticsService = MockAnalyticsService();
 
     // Default setup: no data, not loading, no error
     when(mockProvider.isLoadingAnalytics).thenReturn(false);
@@ -34,7 +38,7 @@ void main() {
     return MaterialApp(
       home: ChangeNotifierProvider<ProgramProvider>.value(
         value: mockProvider,
-        child: const AnalyticsScreen(),
+        child: AnalyticsScreen(analyticsService: mockAnalyticsService),
       ),
     );
   }
