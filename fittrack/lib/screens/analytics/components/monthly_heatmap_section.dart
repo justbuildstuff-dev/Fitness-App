@@ -320,7 +320,7 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
 
   Widget _buildPageView(BuildContext context) {
     return SizedBox(
-      height: 380, // Fixed height for calendar grid
+      height: 420, // Fixed height for calendar grid (increased to prevent overflow)
       child: PageView.builder(
         controller: _pageController,
         onPageChanged: _onPageChanged,

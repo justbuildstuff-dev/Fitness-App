@@ -730,9 +730,9 @@ void main() {
 
       expect(sizedBox, findsOneWidget);
 
-      // Verify height is set (380px as per spec)
+      // Verify height is set (420px to prevent overflow)
       final sizedBoxWidget = tester.widget<SizedBox>(sizedBox.first);
-      expect(sizedBoxWidget.height, 380);
+      expect(sizedBoxWidget.height, 420);
     });
   });
 }
