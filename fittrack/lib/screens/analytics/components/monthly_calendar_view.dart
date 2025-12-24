@@ -25,6 +25,7 @@ class MonthlyCalendarView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         _buildDayLabels(context),
         const SizedBox(height: 8),
@@ -60,6 +61,7 @@ class MonthlyCalendarView extends StatelessWidget {
     final weeks = _generateWeeksData();
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: weeks.map((week) {
         return _buildWeekRow(context, week);
       }).toList(),

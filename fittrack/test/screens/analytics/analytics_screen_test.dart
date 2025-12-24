@@ -59,7 +59,7 @@ void main() {
       await tester.pumpWidget(createTestWidget());
 
       expect(find.text('Unable to load analytics data. Please check your connection and try again.'), findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Try Again'), findsOneWidget);
     });
 
     testWidgets('shows no data message when no analytics available', (WidgetTester tester) async {
@@ -258,7 +258,7 @@ void main() {
       await tester.pumpWidget(createTestWidget());
 
       // Find and tap retry button
-      final retryButton = find.text('Retry');
+      final retryButton = find.text('Try Again');
       expect(retryButton, findsOneWidget);
 
       await tester.tap(retryButton);

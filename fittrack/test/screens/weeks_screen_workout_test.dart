@@ -620,11 +620,12 @@ void main() {
         verify(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id)).called(1);
 
         // Verify enhanced dialog is shown with correct elements
+        // "Delete Week" appears twice: once in title, once in button
         expect(find.descendant(
           of: find.byType(AlertDialog),
           matching: find.text('Delete Week'),
-        ), findsOneWidget,
-            reason: 'Should display delete week title in dialog');
+        ), findsNWidgets(2),
+            reason: 'Should display delete week title and button in dialog');
         expect(find.text('Are you sure you want to delete this week?'), findsOneWidget,
             reason: 'Should display confirmation message');
         expect(find.text('Test Week 1'), findsOneWidget,
