@@ -1,2 +1,28 @@
 # Claude Code local settings (user-specific, not for version control)
 .claude/settings.local.json
+.claude/settings.json
+
+# Sensitive configuration files
+*.env
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+pr_diff.txt
+*.diff
+*.patch
+
+# API keys and secrets
+*secret*
+*credential*
+# Note: google-services.json and firebase_options.dart are intentionally tracked
+# Firebase client API keys are designed to be public and protected by Firestore Security Rules
+
+# Security files (Android signing)
+key.properties
+**/*.keystore
+**/*.jks
+**/*.pem
+**/*.p12
+**/*.key
