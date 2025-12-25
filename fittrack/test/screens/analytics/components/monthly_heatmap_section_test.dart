@@ -616,10 +616,12 @@ void main() {
       // Tap Today button
       await tester.tap(find.text('Today'));
       await tester.pump(); // Start the animation
-      await tester.pump(const Duration(milliseconds: 500)); // Allow page animation
+      await tester.pump(const Duration(seconds: 2)); // Allow page animation to complete
       // Don't use pumpAndSettle as PageView animations may not settle immediately
 
-      // Should have navigated to current month
+      // Should have navigated to current month (and pre-fetched adjacent months)
+      // After a large jump (June 2023 → Dec 2025), the PageView will land on current month
+      // and trigger pre-fetch of adjacent months (Nov 2025, Jan 2026)
       verify(mockAnalyticsService.getMonthHeatmapData(
         userId: testUserId,
         year: now.year,
