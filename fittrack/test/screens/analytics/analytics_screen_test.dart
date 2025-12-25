@@ -142,6 +142,21 @@ void main() {
         'averageDuration': 45,
       });
 
+      // Must provide at least one of monthHeatmapData or currentAnalytics to avoid "No Data Available"
+      when(mockProvider.currentAnalytics).thenReturn(
+        WorkoutAnalytics(
+          userId: 'test-user-id',
+          startDate: DateTime(2024, 1, 1),
+          endDate: DateTime(2024, 12, 31),
+          totalWorkouts: 50,
+          totalSets: 100,
+          totalVolume: 10000,
+          totalDuration: 2700,
+          exerciseTypeBreakdown: {ExerciseType.strength: 5},
+          completedWorkoutIds: ['w1'],
+        ),
+      );
+
       await tester.pumpWidget(createTestWidget());
 
       expect(find.byType(KeyStatisticsSection), findsOneWidget);
