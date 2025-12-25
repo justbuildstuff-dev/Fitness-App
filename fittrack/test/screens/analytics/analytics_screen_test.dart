@@ -230,6 +230,51 @@ void main() {
       when(mockProvider.userId).thenReturn('test-user-id');
       when(mockProvider.refreshAnalytics()).thenAnswer((_) async => Future.value());
 
+      // MonthlyHeatmapSection will load current month (Dec 2025) and adjacent months
+      final now = DateTime.now();
+      final prevMonth = now.month == 1
+          ? DateTime(now.year - 1, 12, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final nextMonth = now.month == 12
+          ? DateTime(now.year + 1, 1, 1)
+          : DateTime(now.year, now.month + 1, 1);
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test-user-id',
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: now.year,
+        month: now.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: DateTime.now(),
+      ));
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test-user-id',
+        year: prevMonth.year,
+        month: prevMonth.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: prevMonth.year,
+        month: prevMonth.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: DateTime.now(),
+      ));
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test-user-id',
+        year: nextMonth.year,
+        month: nextMonth.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: nextMonth.year,
+        month: nextMonth.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: DateTime.now(),
+      ));
+
       await tester.pumpWidget(createTestWidget());
 
       // Find and tap refresh button
@@ -254,6 +299,51 @@ void main() {
       when(mockProvider.monthHeatmapData).thenReturn(testMonthData);
       when(mockProvider.userId).thenReturn('test-user-id');
       when(mockProvider.refreshAnalytics()).thenAnswer((_) async => Future.value());
+
+      // MonthlyHeatmapSection will load current month (Dec 2025) and adjacent months
+      final now = DateTime.now();
+      final prevMonth = now.month == 1
+          ? DateTime(now.year - 1, 12, 1)
+          : DateTime(now.year, now.month - 1, 1);
+      final nextMonth = now.month == 12
+          ? DateTime(now.year + 1, 1, 1)
+          : DateTime(now.year, now.month + 1, 1);
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test-user-id',
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: now.year,
+        month: now.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: DateTime.now(),
+      ));
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test-user-id',
+        year: prevMonth.year,
+        month: prevMonth.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: prevMonth.year,
+        month: prevMonth.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: DateTime.now(),
+      ));
+
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test-user-id',
+        year: nextMonth.year,
+        month: nextMonth.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: nextMonth.year,
+        month: nextMonth.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: DateTime.now(),
+      ));
 
       await tester.pumpWidget(createTestWidget());
 

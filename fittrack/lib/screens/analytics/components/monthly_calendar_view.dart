@@ -193,9 +193,9 @@ class MonthlyCalendarView extends StatelessWidget {
     final lastDayOfMonth = displayMonth.month == 12
         ? DateTime(displayMonth.year, 12, 31)  // Dec 31
         : DateTime(displayMonth.year, displayMonth.month + 1, 0); // Last day via month+1, day 0
-    final endDate = startDate.add(const Duration(days: 35)); // 5 weeks minimum
+    final endDate = startDate.add(const Duration(days: 34)); // End of 5th week (day 35 is index 34)
 
-    // If last day of month is after 35-day mark, we need 6 weeks
+    // If last day of month is after end of 5th week, we need 6 weeks
     final needsSixWeeks = lastDayOfMonth.isAfter(endDate);
     final totalDays = needsSixWeeks ? 42 : 35;
 

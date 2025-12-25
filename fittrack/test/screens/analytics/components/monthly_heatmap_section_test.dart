@@ -615,7 +615,9 @@ void main() {
 
       // Tap Today button
       await tester.tap(find.text('Today'));
-      await tester.pumpAndSettle();
+      await tester.pump(); // Start the animation
+      await tester.pump(const Duration(milliseconds: 500)); // Allow page animation
+      // Don't use pumpAndSettle as PageView animations may not settle immediately
 
       // Should have navigated to current month
       verify(mockAnalyticsService.getMonthHeatmapData(
