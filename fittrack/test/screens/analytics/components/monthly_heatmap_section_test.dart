@@ -63,10 +63,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -110,10 +112,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -201,10 +205,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -232,10 +238,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -254,10 +262,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -277,10 +287,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -308,10 +320,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -342,10 +356,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -372,10 +388,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -401,10 +419,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -440,10 +460,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -592,10 +614,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -630,10 +654,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -654,10 +680,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
@@ -711,10 +739,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
