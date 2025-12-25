@@ -210,7 +210,6 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
