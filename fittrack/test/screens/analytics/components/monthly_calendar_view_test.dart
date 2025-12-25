@@ -113,8 +113,9 @@ void main() {
 
       // Adjacent month days should be rendered but not have heatmap colors
       // Dec 2024 starts on Sunday, so Nov 25-30 appear in first week
-      expect(find.text('25'), findsOneWidget); // Nov 25
-      expect(find.text('26'), findsOneWidget); // Nov 26
+      // Also Dec 25-26 appear in current month, so these numbers appear twice
+      expect(find.text('25'), findsNWidgets(2)); // Nov 25 + Dec 25
+      expect(find.text('26'), findsNWidgets(2)); // Nov 26 + Dec 26
     });
 
     testWidgets('highlights current day with border', (WidgetTester tester) async {
@@ -179,11 +180,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find Dec 5 (has 8 sets - medium intensity)
+      // Note: "5" appears twice (Dec 5 + Jan 5), so tap first occurrence
       final dec5Finder = find.text('5');
-      expect(dec5Finder, findsOneWidget);
+      expect(dec5Finder, findsNWidgets(2));
 
-      // Tap on Dec 5
-      await tester.tap(dec5Finder);
+      // Tap on first occurrence (Dec 5)
+      await tester.tap(dec5Finder.first);
       await tester.pumpAndSettle();
 
       // Verify callback was called with correct date
@@ -213,11 +215,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find Dec 2 (not in dailySetCounts, so 0 sets)
+      // Note: "2" appears twice (Dec 2 + Jan 2), so tap first occurrence
       final dec2Finder = find.text('2');
-      expect(dec2Finder, findsOneWidget);
+      expect(dec2Finder, findsNWidgets(2));
 
-      // Tap on Dec 2
-      await tester.tap(dec2Finder);
+      // Tap on first occurrence (Dec 2)
+      await tester.tap(dec2Finder.first);
       await tester.pumpAndSettle();
 
       // Verify callback was NOT called
@@ -244,11 +247,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find Nov 25 (adjacent month day in first week)
+      // Note: "25" appears twice (Nov 25 + Dec 25), so tap first occurrence
       final nov25Finder = find.text('25');
-      expect(nov25Finder, findsOneWidget);
+      expect(nov25Finder, findsNWidgets(2));
 
-      // Tap on Nov 25
-      await tester.tap(nov25Finder);
+      // Tap on first occurrence (Nov 25)
+      await tester.tap(nov25Finder.first);
       await tester.pumpAndSettle();
 
       // Verify callback was NOT called
@@ -281,8 +285,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should have 35 cells (5 weeks × 7 days)
-      final containers = tester.widgetList<Container>(find.byType(Container));
-      // Count containers that are part of the calendar grid (exclude outer containers)
+      // Count GestureDetectors that wrap each calendar cell
       final gestureDetectors = tester.widgetList<GestureDetector>(find.byType(GestureDetector));
       expect(gestureDetectors.length, 35);
     });
@@ -448,13 +451,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // December 2024 first week (Mon-Sun): Nov 25, 26, 27, 28, 29, 30, Dec 1
-      expect(find.text('25'), findsOneWidget); // Nov 25 (Mon)
-      expect(find.text('26'), findsOneWidget); // Nov 26 (Tue)
-      expect(find.text('27'), findsOneWidget); // Nov 27 (Wed)
-      expect(find.text('28'), findsOneWidget); // Nov 28 (Thu)
-      expect(find.text('29'), findsOneWidget); // Nov 29 (Fri)
-      expect(find.text('30'), findsWidgets);   // Nov 30 (Sat) + Dec 30
-      expect(find.text('1'), findsWidgets);    // Dec 1 (Sun) + Jan 1
+      // Days 25-30 appear twice (Nov + Dec)
+      expect(find.text('25'), findsNWidgets(2)); // Nov 25 (Mon) + Dec 25
+      expect(find.text('26'), findsNWidgets(2)); // Nov 26 (Tue) + Dec 26
+      expect(find.text('27'), findsNWidgets(2)); // Nov 27 (Wed) + Dec 27
+      expect(find.text('28'), findsNWidgets(2)); // Nov 28 (Thu) + Dec 28
+      expect(find.text('29'), findsNWidgets(2)); // Nov 29 (Fri) + Dec 29
+      expect(find.text('30'), findsNWidgets(2)); // Nov 30 (Sat) + Dec 30
+      expect(find.text('1'), findsNWidgets(2));  // Dec 1 (Sun) + Jan 1
     });
 
     testWidgets('displays correct day numbers for last week of December 2024', (WidgetTester tester) async {
@@ -556,8 +560,9 @@ void main() {
       expect(find.text('1'), findsWidgets);
 
       // Tapping should not cause errors
+      // "5" appears twice (Dec 5 + Jan 5), so tap first occurrence
       final dec5Finder = find.text('5');
-      await tester.tap(dec5Finder);
+      await tester.tap(dec5Finder.first);
       await tester.pumpAndSettle();
 
       // No errors expected
