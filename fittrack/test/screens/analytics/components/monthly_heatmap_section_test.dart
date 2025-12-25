@@ -89,10 +89,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: DateTime(2024, 12, 1),
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: DateTime(2024, 12, 1),
+              ),
             ),
           ),
         ),
@@ -156,10 +158,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: currentMonth, // Start on actual current month
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: currentMonth, // Start on actual current month
+              ),
             ),
           ),
         ),
@@ -181,10 +185,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: DateTime(2024, 12, 1), // Start on past month
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: DateTime(2024, 12, 1), // Start on past month
+              ),
             ),
           ),
         ),
@@ -499,10 +505,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: DateTime(2024, 12, 1), // Start on Dec 2024
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: DateTime(2024, 12, 1), // Start on Dec 2024
+              ),
             ),
           ),
         ),
@@ -532,10 +540,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: DateTime(2025, 1, 1), // Start on Jan 2025
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: DateTime(2025, 1, 1), // Start on Jan 2025
+              ),
             ),
           ),
         ),
@@ -579,10 +589,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: DateTime(2023, 6, 1), // Start on past month
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: DateTime(2023, 6, 1), // Start on past month
+              ),
             ),
           ),
         ),
@@ -707,10 +719,12 @@ void main() {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           ),
           home: Scaffold(
-            body: MonthlyHeatmapSection(
-              userId: testUserId,
-              analyticsService: mockAnalyticsService,
-              initialMonth: testMonth,
+            body: SingleChildScrollView(
+              child: MonthlyHeatmapSection(
+                userId: testUserId,
+                analyticsService: mockAnalyticsService,
+                initialMonth: testMonth,
+              ),
             ),
           ),
         ),
