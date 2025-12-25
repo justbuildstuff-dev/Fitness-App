@@ -676,14 +676,18 @@ void main() {
         );
         expect(deleteButton, findsOneWidget);
         await tester.tap(deleteButton);
-        await tester.pumpAndSettle();
+        await tester.pump(); // Start delete and close dialog
+        await tester.pump(); // Show SnackBar
 
         // Verify deleteWeekById was called
         verify(mockProvider.deleteWeekById(testWeek.id)).called(1);
 
-        // Verify success message is shown
+        // Verify success message is shown (before navigation completes)
         expect(find.text('Week "Test Week 1" deleted successfully'), findsOneWidget,
             reason: 'Should display success message with week name');
+
+        // Allow navigation to complete
+        await tester.pumpAndSettle();
 
         // Note: Navigation verification would require NavigatorObserver mock
       });
