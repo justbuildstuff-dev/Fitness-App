@@ -207,6 +207,7 @@ void main() {
       setupMockService(year: 2024, month: 12);
       setupMockService(year: 2024, month: 11);
       setupMockService(year: 2025, month: 1);
+      setupMockService(year: 2025, month: 2); // Pre-fetched when swiping to Jan
 
       await tester.pumpWidget(
         MaterialApp(
@@ -462,6 +463,7 @@ void main() {
       setupMockService(year: 2024, month: 12);
       setupMockService(year: 2024, month: 11);
       setupMockService(year: 2025, month: 1);
+      setupMockService(year: 2025, month: 2); // Pre-fetched when swiping to Jan
 
       await tester.pumpWidget(
         MaterialApp(
@@ -585,6 +587,12 @@ void main() {
       setupMockService(year: now.year, month: now.month);
       setupMockService(year: prevMonth.year, month: prevMonth.month);
       setupMockService(year: nextMonth.year, month: nextMonth.month);
+
+      // Add extra month that might be pre-fetched during navigation
+      final nextNextMonth = now.month >= 11
+          ? DateTime(now.year + 1, (now.month + 2) % 12 == 0 ? 12 : (now.month + 2) % 12, 1)
+          : DateTime(now.year, now.month + 2, 1);
+      setupMockService(year: nextNextMonth.year, month: nextNextMonth.month);
 
       await tester.pumpWidget(
         MaterialApp(
