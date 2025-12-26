@@ -177,6 +177,131 @@ class AnalyticsService {
     return heatmapData;
   }
 
+  /// Generate heatmap data for a specific month (all programs aggregated)
+  ///
+  /// This method provides monthly calendar view data for the monthly swipe feature.
+  /// It queries all programs and aggregates set counts by day for the specified month.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID to retrieve analytics for
+  /// - [year]: Year (e.g., 2024)
+  /// - [month]: Month (1-12)
+  ///
+  /// **Returns:**
+  /// [MonthHeatmapData] containing:
+  /// - Daily set counts mapped by day of month (1-31)
+  /// - Total completed sets for the month
+  /// - Timestamp when data was fetched (for cache validation)
+  ///
+  /// **Caching:**
+  /// Results are cached for 5 minutes to improve performance. The cache key
+  /// includes userId, year, and month to ensure correct data isolation.
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final monthData = await analyticsService.getMonthHeatmapData(
+  ///   userId: 'user123',
+  ///   year: 2024,
+  ///   month: 12, // December
+  /// );
+  ///
+  /// // Get set count for a specific day
+  /// final day15Count = monthData.getSetCountForDay(15);
+  /// ```
+  Future<MonthHeatmapData> getMonthHeatmapData({
+    required String userId,
+    required int year,
+    required int month,
+  }) async {
+    final cacheKey = '${userId}_month_${year}_$month';
+
+    // Check cache first
+    if (_cache.containsKey(cacheKey)) {
+      final cached = _cache[cacheKey]!.data as MonthHeatmapData;
+      if (cached.isCacheValid) {
+        return cached;
+      }
+    }
+
+    // Calculate month date range
+    final monthStart = DateTime(year, month, 1);
+    final monthEnd = DateTime(year, month + 1, 0, 23, 59, 59);
+    final dateRange = DateRange(start: monthStart, end: monthEnd);
+
+    // Get all sets for the month (all programs aggregated)
+    final allSets = await _getAllUserSets(userId, dateRange);
+
+    // Filter only checked sets (completed sets)
+    final checkedSets = allSets.where((set) => set.checked).toList();
+
+    // Group sets by day of month
+    final Map<int, int> dailySetCounts = {};
+    for (final set in checkedSets) {
+      final day = set.createdAt.day;
+      dailySetCounts[day] = (dailySetCounts[day] ?? 0) + 1;
+    }
+
+    final monthData = MonthHeatmapData(
+      year: year,
+      month: month,
+      dailySetCounts: dailySetCounts,
+      totalSets: checkedSets.length,
+      fetchedAt: DateTime.now(),
+    );
+
+    // Cache the result for 5 minutes
+    _cache[cacheKey] = _CachedAnalytics(
+      data: monthData,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return monthData;
+  }
+
+  /// Pre-fetch data for adjacent months to enable smooth swiping
+  ///
+  /// This method fetches data for the previous and next month in parallel
+  /// to improve perceived performance when users swipe between months.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID to retrieve analytics for
+  /// - [year]: Current month's year
+  /// - [month]: Current month (1-12)
+  ///
+  /// **Returns:**
+  /// A Future that completes when both adjacent months are fetched and cached.
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // User is viewing December 2024
+  /// await analyticsService.prefetchAdjacentMonths(
+  ///   userId: 'user123',
+  ///   year: 2024,
+  ///   month: 12,
+  /// );
+  /// // Now Nov 2024 and Jan 2025 are cached
+  /// ```
+  Future<void> prefetchAdjacentMonths({
+    required String userId,
+    required int year,
+    required int month,
+  }) async {
+    // Calculate previous month
+    final prevMonth = month == 1 ? 12 : month - 1;
+    final prevYear = month == 1 ? year - 1 : year;
+
+    // Calculate next month
+    final nextMonth = month == 12 ? 1 : month + 1;
+    final nextYear = month == 12 ? year + 1 : year;
+
+    // Fetch both in parallel for better performance
+    await Future.wait([
+      getMonthHeatmapData(userId: userId, year: prevYear, month: prevMonth),
+      getMonthHeatmapData(userId: userId, year: nextYear, month: nextMonth),
+    ]);
+  }
+
   /// Get personal records for a user
   Future<List<PersonalRecord>> getPersonalRecords({
     required String userId,

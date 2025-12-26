@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
+import '../../services/analytics_service.dart';
 import '../../widgets/error_display.dart';
-import 'components/activity_heatmap_section.dart';
+import 'components/monthly_heatmap_section.dart';
 import 'components/key_statistics_section.dart';
 import 'components/charts_section.dart';
 
 /// Analytics screen providing comprehensive workout insights
 class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key});
+  final AnalyticsService? analyticsService;
+
+  const AnalyticsScreen({
+    super.key,
+    this.analyticsService,
+  });
 
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
@@ -69,7 +75,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           }
 
           // Check if we have any data to display
-          if (provider.heatmapData == null && provider.currentAnalytics == null) {
+          if (provider.monthHeatmapData == null && provider.currentAnalytics == null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -112,19 +118,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Activity Heatmap Section with dynamic timeframe and program filtering
-                  if (provider.heatmapData != null)
-                    ActivityHeatmapSection(
-                      data: provider.heatmapData!,
-                      selectedTimeframe: provider.selectedHeatmapTimeframe,
-                      selectedProgramId: provider.selectedHeatmapProgramId,
-                      availablePrograms: provider.programs,
-                      onTimeframeChanged: (timeframe) {
-                        provider.setHeatmapTimeframe(timeframe);
-                      },
-                      onProgramFilterChanged: (programId) {
-                        provider.setHeatmapProgramFilter(programId);
-                      },
+                  // Monthly Heatmap Section with swipe navigation
+                  if (provider.monthHeatmapData != null && provider.userId != null)
+                    MonthlyHeatmapSection(
+                      userId: provider.userId!,
+                      analyticsService: widget.analyticsService ?? AnalyticsService.instance,
                     ),
 
                   // Key Statistics Section

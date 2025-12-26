@@ -25,25 +25,42 @@ Based on research into leading fitness apps in 2024 (Strong, Gravitus, StrengthL
 
 ### Screen Layout (Mobile-First)
 
-#### Top Section (1/3): Activity Heatmap
+#### Top Section (1/3): Monthly Activity Tracker (Swipe Navigation)
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ACTIVITY HEATMAP                        │
+│                 ACTIVITY TRACKER                           │
+│                  42 sets                                    │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌─ 2024 Activity ──────────────────────── 156 workouts ─┐ │
-│  │    J  F  M  A  M  J  J  A  S  O  N  D                │ │
-│  │ M  ▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢     │ │
-│  │ T  ▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢     │ │
-│  │ W  ▢██▢▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢█     │ │
-│  │ T  ██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██     │ │
-│  │ F  ▢▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢     │ │
-│  │ S  ▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢██▢▢▢██▢▢█     │ │
-│  │ S  ▢█▢▢▢█▢▢▢█▢▢▢█▢▢▢█▢▢▢█▢▢▢█▢▢▢█▢▢▢     │ │
-│  │                                              │ │
-│  │ Current Streak: 7 days  •  Longest: 23 days │ │
-│  └──────────────────────────────────────────────┘ │
+│  ┌──────────── ◄ December 2024 📅 ► ──────────────┐        │
+│  │                  [Today Button]                  │        │
+│  │                                                  │        │
+│  │        Mon  Tue  Wed  Thu  Fri  Sat  Sun        │        │
+│  │         26   27   28   29   30    1    2        │        │
+│  │          3    4    5    6    7    8    9        │        │
+│  │         10   11   12   13   14   15   16        │        │
+│  │         17   18   19   20   21   22   23        │        │
+│  │         24   25   26   27   28   29   30        │        │
+│  │         31    1    2    3    4    5    6        │        │
+│  │                                                  │        │
+│  │  Cells colored by intensity (0-5 sets light,    │        │
+│  │  6-15 sets medium, 16-25 sets dark, 26+ darkest)│        │
+│  │                                                  │        │
+│  │  Less ▢ ▢ ▢ ▢ ▢ More                            │        │
+│  │                                                  │        │
+│  │  ┌──────────────┐  ┌──────────────┐            │        │
+│  │  │ 🔥 0 days    │  │ 🏆 0 days    │            │        │
+│  │  │ Current      │  │ Longest      │            │        │
+│  │  │ Streak       │  │ Streak       │            │        │
+│  │  └──────────────┘  └──────────────┘            │        │
+│  └──────────────────────────────────────────────────┘        │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Navigation:**
+- **Swipe left/right** to navigate between months
+- **Tap month/year** to open date picker
+- **Tap "Today"** button to return to current month (hidden when on current month)
+- **Tap day cell** to view set count in popup
 
 #### Middle Section (1/3): Statistics Cards
 ```
@@ -145,35 +162,60 @@ enum PRType {
 }
 ```
 
-#### ActivityHeatmapData Model
+#### MonthHeatmapData Model (Issue #209 - Current Implementation)
 ```dart
+class MonthHeatmapData {
+  final int year;
+  final int month;
+  final Map<int, int> dailySetCounts;  // day (1-31) → set count
+  final int totalSets;
+  final DateTime fetchedAt;
+
+  // Methods
+  int getSetCountForDay(int day);
+  HeatmapIntensity getIntensityForDay(int day);
+  bool get isCacheValid;  // 5-minute cache TTL
+}
+```
+
+**Monthly Calendar View (Issue #209 - Completed 2024-12-21):**
+The analytics screen now features a **monthly swipe view** with:
+- **Simplified UX**: Single month view with swipe navigation (replaces 4 timeframe options)
+- **Infinite scrolling**: PageView with virtual center offset for unlimited month navigation
+- **Data caching**: 5-minute TTL cache with pre-fetching for smooth navigation
+- **Traditional calendar layout**: ISO 8601 week start (Monday-Sunday), 5-6 week grid
+- **Performance**: <500ms initial load, 0ms cache hits, pre-fetches adjacent months
+
+See [Docs/Technical_Designs/Monthly_Habit_Tracker_Technical_Design.md](../Technical_Designs/Monthly_Habit_Tracker_Technical_Design.md) for complete technical specification.
+
+#### ActivityHeatmapData Model (Legacy - Deprecated)
+```dart
+// NOTE: This model is no longer used in the AnalyticsScreen heatmap.
+// Retained for backward compatibility with other analytics features.
 class ActivityHeatmapData {
   final String userId;
   final int year;
-  final Map<DateTime, int> dailySetCounts; // Date -> set count (UPDATED: was dailyWorkoutCounts)
+  final Map<DateTime, int> dailySetCounts;
   final int currentStreak;
   final int longestStreak;
-  final int totalSets;                     // UPDATED: was totalWorkouts
-  final String? programId;                 // NEW: For program filtering
+  final int totalSets;
+  final String? programId;
 
   // Methods
   List<HeatmapDay> getHeatmapDays();
-  int getSetCountForDate(DateTime date);   // UPDATED: was getWorkoutCountForDate
+  int getSetCountForDate(DateTime date);
   HeatmapIntensity getIntensityForDate(DateTime date);
 }
+```
 
-class HeatmapDay {
-  final DateTime date;
-  final int workoutCount;  // Note: Used for set count internally
-  final HeatmapIntensity intensity;
-}
-
+#### HeatmapIntensity Enum
+```dart
 enum HeatmapIntensity {
-  none,     // 0 sets - gray
-  low,      // 1-5 sets - light color           (UPDATED thresholds)
-  medium,   // 6-15 sets - medium color         (UPDATED thresholds)
-  high,     // 16-25 sets - dark color          (UPDATED thresholds)
-  veryHigh; // 26+ sets - darkest color         (NEW level)
+  none,     // 0 sets
+  low,      // 1-5 sets
+  medium,   // 6-15 sets
+  high,     // 16-25 sets
+  veryHigh; // 26+ sets
 
   static HeatmapIntensity fromSetCount(int setCount) {
     if (setCount == 0) return HeatmapIntensity.none;
@@ -184,13 +226,6 @@ enum HeatmapIntensity {
   }
 }
 ```
-
-**Implementation Note (Issue #48 - Completed 2025-11-23):**
-The heatmap now tracks **completed sets** (where `checked: true`) instead of workouts, providing more granular activity measurement. This change was implemented with:
-- 4 dynamic timeframes (This Week, This Month, Last 30 Days, This Year)
-- Program filtering capabilities
-- SharedPreferences persistence for user preferences
-- Adaptive layouts based on selected timeframe
 
 ### Data Storage Strategy
 
@@ -225,11 +260,25 @@ class AnalyticsService {
     required DateRange dateRange,
   });
   
-  // Heatmap data generation (UPDATED: now uses set-based tracking)
+  // Monthly heatmap data (NEW: Issue #209)
+  Future<MonthHeatmapData> getMonthHeatmapData({
+    required String userId,
+    required int year,
+    required int month,
+  });
+
+  // Pre-fetch adjacent months for smooth navigation (NEW: Issue #209)
+  Future<void> prefetchAdjacentMonths({
+    required String userId,
+    required int year,
+    required int month,
+  });
+
+  // Heatmap data generation (LEGACY: for backward compatibility)
   Future<ActivityHeatmapData> generateSetBasedHeatmapData({
     required String userId,
-    required DateRange dateRange,    // UPDATED: was year
-    String? programId,               // NEW: Program filter support
+    required DateRange dateRange,
+    String? programId,
   });
   
   // Personal records tracking

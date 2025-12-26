@@ -620,12 +620,19 @@ void main() {
         verify(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id)).called(1);
 
         // Verify enhanced dialog is shown with correct elements
-        expect(find.text('Delete Week'), findsOneWidget,
-            reason: 'Should display delete week title');
+        // "Delete Week" appears twice: once in title, once in button
+        expect(find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Delete Week'),
+        ), findsNWidgets(2),
+            reason: 'Should display delete week title and button in dialog');
         expect(find.text('Are you sure you want to delete this week?'), findsOneWidget,
             reason: 'Should display confirmation message');
-        expect(find.text('Test Week 1'), findsOneWidget,
-            reason: 'Should display week name highlight');
+        expect(find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Test Week 1'),
+        ), findsOneWidget,
+            reason: 'Should display week name highlight in dialog');
 
         // Verify cascade counts are displayed
         expect(find.text('3 workouts'), findsOneWidget,
@@ -662,17 +669,25 @@ void main() {
         await tester.tap(find.text('Delete Week'));
         await tester.pumpAndSettle();
 
-        // Confirm deletion
-        final deleteButton = find.text('Delete Week').last;
+        // Confirm deletion - find delete button within dialog
+        final deleteButton = find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(TextButton, 'Delete Week'),
+        );
+        expect(deleteButton, findsOneWidget);
         await tester.tap(deleteButton);
-        await tester.pumpAndSettle();
+        await tester.pump(); // Start delete and close dialog
+        await tester.pump(); // Show SnackBar
 
         // Verify deleteWeekById was called
         verify(mockProvider.deleteWeekById(testWeek.id)).called(1);
 
-        // Verify success message is shown
+        // Verify success message is shown (before navigation completes)
         expect(find.text('Week "Test Week 1" deleted successfully'), findsOneWidget,
             reason: 'Should display success message with week name');
+
+        // Allow navigation to complete
+        await tester.pumpAndSettle();
 
         // Note: Navigation verification would require NavigatorObserver mock
       });
@@ -698,8 +713,12 @@ void main() {
         await tester.tap(find.text('Delete Week'));
         await tester.pumpAndSettle();
 
-        // Confirm deletion
-        final deleteButton = find.text('Delete Week').last;
+        // Confirm deletion - find delete button within dialog
+        final deleteButton = find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(TextButton, 'Delete Week'),
+        );
+        expect(deleteButton, findsOneWidget);
         await tester.tap(deleteButton);
         await tester.pumpAndSettle();
 
@@ -772,8 +791,12 @@ void main() {
         verify(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-1')).called(1);
 
         // Verify enhanced dialog is shown
-        expect(find.text('Delete Workout'), findsOneWidget,
-            reason: 'Should display delete workout title');
+        // "Delete Workout" appears twice: once in title, once in button
+        expect(find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Delete Workout'),
+        ), findsNWidgets(2),
+            reason: 'Should display delete workout title and button in dialog');
         expect(find.text('Are you sure you want to delete this workout?'), findsOneWidget,
             reason: 'Should display confirmation message');
         expect(find.text('Push Day'), findsAtLeastNWidgets(1),
@@ -915,8 +938,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify dialog is shown (even with zero counts)
-        expect(find.text('Delete Workout'), findsOneWidget,
-            reason: 'Should show dialog even for empty workout');
+        // "Delete Workout" appears twice: once in title, once in button
+        expect(find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Delete Workout'),
+        ), findsNWidgets(2),
+            reason: 'Should show dialog title and button even for empty workout');
         expect(find.text('Push Day'), findsAtLeastNWidgets(1),
             reason: 'Should show workout name');
       });

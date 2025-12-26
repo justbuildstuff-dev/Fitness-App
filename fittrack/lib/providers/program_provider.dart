@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/program.dart';
 import '../models/week.dart';
 import '../models/workout.dart';
@@ -21,8 +20,6 @@ class ProgramProvider extends ChangeNotifier {
   ProgramProvider(this._userId)
     : _firestoreService = FirestoreService.instance,
       _analyticsService = AnalyticsService.instance {
-    // Load heatmap preferences from SharedPreferences
-    _loadHeatmapPreferences();
     // Auto-load data when userId is set and has changed
     _autoLoadDataIfNeeded();
   }
@@ -33,8 +30,6 @@ class ProgramProvider extends ChangeNotifier {
     this._firestoreService,
     this._analyticsService
   ) {
-    // Load heatmap preferences from SharedPreferences
-    _loadHeatmapPreferences();
     // Auto-load data for testing constructor too
     _autoLoadDataIfNeeded();
   }
@@ -66,7 +61,8 @@ class ProgramProvider extends ChangeNotifier {
   List<Program> _programs = [];
   Program? _selectedProgram;
   bool _isLoadingPrograms = false;
-  String? _error;
+  String? _programsError;
+  String? _analyticsError;
 
   // Weeks
   List<Week> _weeks = [];
@@ -90,15 +86,10 @@ class ProgramProvider extends ChangeNotifier {
   // Analytics
   WorkoutAnalytics? _currentAnalytics;
   ActivityHeatmapData? _heatmapData;
+  MonthHeatmapData? _monthHeatmapData;
   List<PersonalRecord>? _recentPRs;
   Map<String, dynamic>? _keyStatistics;
   bool _isLoadingAnalytics = false;
-
-  // Heatmap state persistence
-  HeatmapTimeframe _selectedHeatmapTimeframe = HeatmapTimeframe.thisYear;
-  String? _selectedHeatmapProgramId; // null means "All Programs"
-  static const String _heatmapTimeframeKey = 'heatmap_timeframe';
-  static const String _heatmapProgramFilterKey = 'heatmap_program_filter';
 
   // Disposal tracking
   bool _disposed = false;
@@ -114,7 +105,15 @@ class ProgramProvider extends ChangeNotifier {
   List<Program> get programs => _programs;
   Program? get selectedProgram => _selectedProgram;
   bool get isLoadingPrograms => _isLoadingPrograms;
-  String? get error => _error;
+
+  /// Get program-specific error
+  String? get programsError => _programsError;
+
+  /// Get analytics-specific error
+  String? get analyticsError => _analyticsError;
+
+  /// Get any error (backward compatible - returns first available error)
+  String? get error => _programsError ?? _analyticsError;
 
   List<Week> get weeks => _weeks;
   Week? get selectedWeek => _selectedWeek;
@@ -137,10 +136,7 @@ class ProgramProvider extends ChangeNotifier {
   List<PersonalRecord>? get recentPRs => _recentPRs;
   Map<String, dynamic>? get keyStatistics => _keyStatistics;
   bool get isLoadingAnalytics => _isLoadingAnalytics;
-
-  // Heatmap state getters
-  HeatmapTimeframe get selectedHeatmapTimeframe => _selectedHeatmapTimeframe;
-  String? get selectedHeatmapProgramId => _selectedHeatmapProgramId;
+  MonthHeatmapData? get monthHeatmapData => _monthHeatmapData;
 
   /// Get current sets (convenience method)
   List<ExerciseSet> getCurrentSets() => _sets;
@@ -158,7 +154,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Load all programs for the user
   void loadPrograms() {
     if (_userId == null) {
-      _error = 'User not authenticated. Please log in to view your programs.';
+      _programsError = 'User not authenticated. Please log in to view your programs.';
       _isLoadingPrograms = false;
       notifyListeners();
       debugPrint('[ProgramProvider] loadPrograms called with null userId');
@@ -167,21 +163,21 @@ class ProgramProvider extends ChangeNotifier {
 
     debugPrint('[ProgramProvider] Loading programs for userId: $_userId');
     _isLoadingPrograms = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     // Cancel previous subscription
     _programsSubscription?.cancel();
-    
+
     _programsSubscription = _firestoreService.getPrograms(_userId!).listen(
       (programs) {
         _programs = programs;
         _isLoadingPrograms = false;
-        _error = null;
+        // Don't clear error here to avoid race condition with concurrent analytics loading
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load programs: $error';
+        _programsError = 'Failed to load programs: $error';
         _isLoadingPrograms = false;
         notifyListeners();
       },
@@ -196,7 +192,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final program = Program(
@@ -211,7 +207,7 @@ class ProgramProvider extends ChangeNotifier {
       final programId = await _firestoreService.createProgram(program);
       return programId;
     } catch (e) {
-      _error = 'Failed to create program: $e';
+      _programsError = 'Failed to create program: $e';
       notifyListeners();
       return null;
     }
@@ -220,7 +216,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a program
   Future<bool> updateProgram(Program program) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedProgram = program.copyWith(
@@ -230,7 +226,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateProgram(updatedProgram);
       return true;
     } catch (e) {
-      _error = 'Failed to update program: $e';
+      _programsError = 'Failed to update program: $e';
       notifyListeners();
       return false;
     }
@@ -245,7 +241,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) throw Exception('User not authenticated');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateProgramFields(
@@ -257,7 +253,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Programs will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update program: $e';
+      _programsError = 'Failed to update program: $e';
       notifyListeners();
       rethrow;
     }
@@ -268,13 +264,13 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.archiveProgram(_userId!, programId);
       return true;
     } catch (e) {
-      _error = 'Failed to archive program: $e';
+      _programsError = 'Failed to archive program: $e';
       notifyListeners();
       return false;
     }
@@ -285,14 +281,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) throw Exception('User not authenticated');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteProgram(_userId!, programId);
       
       // Programs will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete program: $e';
+      _programsError = 'Failed to delete program: $e';
       notifyListeners();
       rethrow;
     }
@@ -322,7 +318,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingWeeks = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     // Cancel previous subscription
@@ -332,11 +328,11 @@ class ProgramProvider extends ChangeNotifier {
       (weeks) {
         _weeks = weeks;
         _isLoadingWeeks = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load weeks: $error';
+        _programsError = 'Failed to load weeks: $error';
         _isLoadingWeeks = false;
         notifyListeners();
       },
@@ -352,7 +348,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next order
@@ -374,7 +370,7 @@ class ProgramProvider extends ChangeNotifier {
       final weekId = await _firestoreService.createWeek(week);
       return weekId;
     } catch (e) {
-      _error = 'Failed to create week: $e';
+      _programsError = 'Failed to create week: $e';
       notifyListeners();
       return null;
     }
@@ -383,7 +379,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a week
   Future<bool> updateWeek(Week week) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedWeek = week.copyWith(
@@ -393,7 +389,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateWeek(updatedWeek);
       return true;
     } catch (e) {
-      _error = 'Failed to update week: $e';
+      _programsError = 'Failed to update week: $e';
       notifyListeners();
       return false;
     }
@@ -410,7 +406,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedProgram == null) throw Exception('No program selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateWeekFields(
@@ -424,7 +420,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Weeks will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update week: $e';
+      _programsError = 'Failed to update week: $e';
       notifyListeners();
       rethrow;
     }
@@ -435,13 +431,13 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWeek(_userId!, programId, weekId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete week: $e';
+      _programsError = 'Failed to delete week: $e';
       notifyListeners();
       return false;
     }
@@ -453,14 +449,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedProgram == null) throw Exception('No program selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWeek(_userId!, _selectedProgram!.id, weekId);
       
       // Weeks will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete week: $e';
+      _programsError = 'Failed to delete week: $e';
       notifyListeners();
       rethrow;
     }
@@ -474,7 +470,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final result = await _firestoreService.duplicateWeek(
@@ -485,7 +481,7 @@ class ProgramProvider extends ChangeNotifier {
 
       return result;
     } catch (e) {
-      _error = 'Failed to duplicate week: $e';
+      _programsError = 'Failed to duplicate week: $e';
       notifyListeners();
       return null;
     }
@@ -513,7 +509,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingWorkouts = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     // Cancel previous subscription
@@ -523,11 +519,11 @@ class ProgramProvider extends ChangeNotifier {
       (workouts) {
         _workouts = workouts;
         _isLoadingWorkouts = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load workouts: $error';
+        _programsError = 'Failed to load workouts: $error';
         _isLoadingWorkouts = false;
         notifyListeners();
       },
@@ -547,19 +543,19 @@ class ProgramProvider extends ChangeNotifier {
     // Validate workout name
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
-      _error = 'Workout name cannot be empty';
+      _programsError = 'Workout name cannot be empty';
       notifyListeners();
       return null;
     }
 
     if (trimmedName.length > 200) {
-      _error = 'Workout name must be 200 characters or less';
+      _programsError = 'Workout name must be 200 characters or less';
       notifyListeners();
       return null;
     }
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next order index
@@ -583,7 +579,7 @@ class ProgramProvider extends ChangeNotifier {
       final workoutId = await _firestoreService.createWorkout(workout);
       return workoutId;
     } catch (e) {
-      _error = 'Failed to create workout: $e';
+      _programsError = 'Failed to create workout: $e';
       notifyListeners();
       return null;
     }
@@ -592,7 +588,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a workout
   Future<bool> updateWorkout(Workout workout) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedWorkout = workout.copyWith(
@@ -602,7 +598,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateWorkout(updatedWorkout);
       return true;
     } catch (e) {
-      _error = 'Failed to update workout: $e';
+      _programsError = 'Failed to update workout: $e';
       notifyListeners();
       return false;
     }
@@ -617,13 +613,13 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWorkout(_userId!, programId, weekId, workoutId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete workout: $e';
+      _programsError = 'Failed to delete workout: $e';
       notifyListeners();
       return false;
     }
@@ -642,7 +638,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWeek == null) throw Exception('No week selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateWorkoutFields(
@@ -658,7 +654,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Workouts will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update workout: $e';
+      _programsError = 'Failed to update workout: $e';
       notifyListeners();
       rethrow;
     }
@@ -671,7 +667,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWeek == null) throw Exception('No week selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWorkout(
@@ -683,7 +679,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Workouts will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete workout: $e';
+      _programsError = 'Failed to delete workout: $e';
       notifyListeners();
       rethrow;
     }
@@ -709,18 +705,18 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingExercises = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     _firestoreService.getExercises(_userId!, programId, weekId, workoutId).listen(
       (exercises) {
         _exercises = exercises;
         _isLoadingExercises = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load exercises: $error';
+        _programsError = 'Failed to load exercises: $error';
         _isLoadingExercises = false;
         notifyListeners();
       },
@@ -739,7 +735,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next order index
@@ -764,7 +760,7 @@ class ProgramProvider extends ChangeNotifier {
       final exerciseId = await _firestoreService.createExercise(exercise);
       return exerciseId;
     } catch (e) {
-      _error = 'Failed to create exercise: $e';
+      _programsError = 'Failed to create exercise: $e';
       notifyListeners();
       return null;
     }
@@ -773,7 +769,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update an exercise
   Future<bool> updateExercise(Exercise exercise) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedExercise = exercise.copyWith(
@@ -783,7 +779,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateExercise(updatedExercise);
       return true;
     } catch (e) {
-      _error = 'Failed to update exercise: $e';
+      _programsError = 'Failed to update exercise: $e';
       notifyListeners();
       return false;
     }
@@ -799,14 +795,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteExercise(
           _userId!, programId, weekId, workoutId, exerciseId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete exercise: $e';
+      _programsError = 'Failed to delete exercise: $e';
       notifyListeners();
       return false;
     }
@@ -826,7 +822,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWorkout == null) throw Exception('No workout selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateExerciseFields(
@@ -843,7 +839,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Exercises will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update exercise: $e';
+      _programsError = 'Failed to update exercise: $e';
       notifyListeners();
       rethrow;
     }
@@ -857,7 +853,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWorkout == null) throw Exception('No workout selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteExercise(
@@ -870,7 +866,7 @@ class ProgramProvider extends ChangeNotifier {
 
       // Exercises will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete exercise: $e';
+      _programsError = 'Failed to delete exercise: $e';
       notifyListeners();
       rethrow;
     }
@@ -949,18 +945,18 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingSets = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     _firestoreService.getSets(_userId!, programId, weekId, workoutId, exerciseId).listen(
       (sets) {
         _sets = sets;
         _isLoadingSets = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load sets: $error';
+        _programsError = 'Failed to load sets: $error';
         _isLoadingSets = false;
         notifyListeners();
       },
@@ -983,7 +979,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next set number
@@ -1012,7 +1008,7 @@ class ProgramProvider extends ChangeNotifier {
       final setId = await _firestoreService.createSet(set);
       return setId;
     } catch (e) {
-      _error = 'Failed to create set: $e';
+      _programsError = 'Failed to create set: $e';
       notifyListeners();
       return null;
     }
@@ -1021,7 +1017,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a set
   Future<bool> updateSet(ExerciseSet set) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedSet = set.copyWith(
@@ -1031,7 +1027,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateSet(updatedSet);
       return true;
     } catch (e) {
-      _error = 'Failed to update set: $e';
+      _programsError = 'Failed to update set: $e';
       notifyListeners();
       return false;
     }
@@ -1048,14 +1044,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteSet(
           _userId!, programId, weekId, workoutId, exerciseId, setId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete set: $e';
+      _programsError = 'Failed to delete set: $e';
       notifyListeners();
       return false;
     }
@@ -1068,7 +1064,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Load analytics data for the user
   Future<void> loadAnalytics({DateRange? dateRange}) async {
     if (_userId == null) {
-      _error = 'User not authenticated. Please log in to view analytics.';
+      _analyticsError = 'User not authenticated. Please log in to view analytics.';
       _isLoadingAnalytics = false;
       if (!_disposed) {
         notifyListeners();
@@ -1080,25 +1076,38 @@ class ProgramProvider extends ChangeNotifier {
     debugPrint('[ProgramProvider] Loading analytics for userId: $_userId');
     try {
       _isLoadingAnalytics = true;
-      _error = null;
+      _analyticsError = null;
       if (!_disposed) {
         notifyListeners();
       }
 
-      // Use the date range from selected timeframe if not provided
-      final selectedDateRange = dateRange ?? _getDateRangeForTimeframe(_selectedHeatmapTimeframe);
+      final now = DateTime.now();
+
+      // Use provided date range or default to current year
+      final selectedDateRange = dateRange ?? DateRange.thisYear();
 
       // Load analytics data concurrently
       final futures = [
+        // Fetch current month heatmap data
+        _analyticsService.getMonthHeatmapData(
+          userId: _userId!,
+          year: now.year,
+          month: now.month,
+        ),
+        // Pre-fetch adjacent months for smooth navigation
+        _analyticsService.prefetchAdjacentMonths(
+          userId: _userId!,
+          year: now.year,
+          month: now.month,
+        ),
+        // Load other analytics (for key stats, PRs, etc.)
         _analyticsService.computeWorkoutAnalytics(
           userId: _userId!,
           dateRange: selectedDateRange,
-          programId: _selectedHeatmapProgramId,
         ),
         _analyticsService.generateSetBasedHeatmapData(
           userId: _userId!,
           dateRange: selectedDateRange,
-          programId: _selectedHeatmapProgramId,
         ),
         _analyticsService.getPersonalRecords(
           userId: _userId!,
@@ -1112,13 +1121,15 @@ class ProgramProvider extends ChangeNotifier {
 
       final results = await Future.wait(futures);
 
-      _currentAnalytics = results[0] as WorkoutAnalytics;
-      _heatmapData = results[1] as ActivityHeatmapData;
-      _recentPRs = results[2] as List<PersonalRecord>;
-      _keyStatistics = results[3] as Map<String, dynamic>;
+      _monthHeatmapData = results[0] as MonthHeatmapData;
+      // results[1] is void (prefetch)
+      _currentAnalytics = results[2] as WorkoutAnalytics;
+      _heatmapData = results[3] as ActivityHeatmapData;
+      _recentPRs = results[4] as List<PersonalRecord>;
+      _keyStatistics = results[5] as Map<String, dynamic>;
 
     } catch (e) {
-      _error = 'Failed to load analytics: $e';
+      _analyticsError = 'Failed to load analytics: $e';
       debugPrint('[ProgramProvider] loadAnalytics error: $e');
     } finally {
       _isLoadingAnalytics = false;
@@ -1164,132 +1175,12 @@ class ProgramProvider extends ChangeNotifier {
   }
 
   // ========================================
-  // HEATMAP STATE PERSISTENCE
-  // ========================================
-
-  /// Load heatmap preferences from SharedPreferences
-  Future<void> _loadHeatmapPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      // Load timeframe (default to thisYear if not found or invalid)
-      final timeframeIndex = prefs.getInt(_heatmapTimeframeKey);
-      if (timeframeIndex != null &&
-          timeframeIndex >= 0 &&
-          timeframeIndex < HeatmapTimeframe.values.length) {
-        _selectedHeatmapTimeframe = HeatmapTimeframe.values[timeframeIndex];
-      }
-
-      // Load program filter (null means "All Programs")
-      _selectedHeatmapProgramId = prefs.getString(_heatmapProgramFilterKey);
-
-      debugPrint('[ProgramProvider] Loaded heatmap preferences: timeframe=$_selectedHeatmapTimeframe, programId=$_selectedHeatmapProgramId');
-    } catch (e) {
-      debugPrint('[ProgramProvider] Failed to load heatmap preferences: $e');
-      // Keep defaults on error
-    }
-  }
-
-  /// Set the selected heatmap timeframe and persist to SharedPreferences
-  Future<void> setHeatmapTimeframe(HeatmapTimeframe timeframe) async {
-    _selectedHeatmapTimeframe = timeframe;
-    notifyListeners();
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_heatmapTimeframeKey, timeframe.index);
-      debugPrint('[ProgramProvider] Saved heatmap timeframe: $timeframe');
-
-      // Reload analytics with new timeframe
-      await loadAnalytics();
-    } catch (e) {
-      debugPrint('[ProgramProvider] Failed to save heatmap timeframe: $e');
-    }
-  }
-
-  /// Set the selected heatmap program filter and persist to SharedPreferences
-  ///
-  /// Filters the heatmap to show activity from a specific program or all programs.
-  ///
-  /// **Parameters:**
-  /// - [programId]: The program ID to filter by, or null for "All Programs"
-  ///
-  /// **Behavior:**
-  /// - Updates the UI immediately via notifyListeners()
-  /// - Persists the selection to SharedPreferences for the next app launch
-  /// - If null, removes the saved preference (defaults to all programs)
-  /// - Reloads analytics data with the new filter applied
-  ///
-  /// **Example:**
-  /// ```dart
-  /// // Filter by specific program
-  /// await provider.setHeatmapProgramFilter('program_123');
-  ///
-  /// // Show all programs
-  /// await provider.setHeatmapProgramFilter(null);
-  /// ```
-  Future<void> setHeatmapProgramFilter(String? programId) async {
-    _selectedHeatmapProgramId = programId;
-    notifyListeners();
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (programId == null) {
-        await prefs.remove(_heatmapProgramFilterKey);
-      } else {
-        await prefs.setString(_heatmapProgramFilterKey, programId);
-      }
-      debugPrint('[ProgramProvider] Saved heatmap program filter: $programId');
-
-      // Reload analytics with new program filter
-      await loadAnalytics();
-    } catch (e) {
-      debugPrint('[ProgramProvider] Failed to save heatmap program filter: $e');
-    }
-  }
-
-  /// Get DateRange for the selected timeframe
-  DateRange _getDateRangeForTimeframe(HeatmapTimeframe timeframe) {
-    final now = DateTime.now();
-
-    switch (timeframe) {
-      case HeatmapTimeframe.thisWeek:
-        // Monday of current week to Sunday
-        final weekStart = now.subtract(Duration(days: now.weekday - 1));
-        final weekEnd = weekStart.add(const Duration(days: 6));
-        return DateRange(
-          start: DateTime(weekStart.year, weekStart.month, weekStart.day),
-          end: DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59),
-        );
-
-      case HeatmapTimeframe.thisMonth:
-        // First day of current month to last day
-        final monthStart = DateTime(now.year, now.month, 1);
-        final monthEnd = DateTime(now.year, now.month + 1, 0);
-        return DateRange(
-          start: monthStart,
-          end: DateTime(monthEnd.year, monthEnd.month, monthEnd.day, 23, 59, 59),
-        );
-
-      case HeatmapTimeframe.last30Days:
-        // Rolling 30-day window
-        final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
-        final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
-        return DateRange(start: startDate, end: endDate);
-
-      case HeatmapTimeframe.thisYear:
-        // Full current year
-        return DateRange.thisYear();
-    }
-  }
-
-  // ========================================
   // UTILITY METHODS
   // ========================================
 
   /// Clear error message
   void clearError() {
-    _error = null;
+    _programsError = null;
     notifyListeners();
   }
 
@@ -1326,8 +1217,12 @@ class ProgramProvider extends ChangeNotifier {
   /// Sets error state for testing purposes
   /// This method is only intended for use in unit tests
   @visibleForTesting
-  void setErrorForTesting(String error) {
-    _error = error;
+  void setErrorForTesting(String error, {bool isAnalyticsError = false}) {
+    if (isAnalyticsError) {
+      _analyticsError = error;
+    } else {
+      _programsError = error;
+    }
     notifyListeners();
   }
 }
