@@ -40,6 +40,7 @@ void main() {
       when(mockAuthProvider.isAuthenticated).thenReturn(false);
       when(mockAuthProvider.isEmailVerified).thenReturn(false);
       when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.error).thenReturn(null); // Stub error getter to prevent MissingStubError
     });
 
     Widget createTestWidget() {
