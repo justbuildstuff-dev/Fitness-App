@@ -26,7 +26,8 @@ import 'auth_wrapper_test.mocks.dart';
 /// - Authentication routing logic
 /// - Email verification flow
 /// - User session management
-@GenerateMocks([app.AuthProvider, User, ProgramProvider])
+@GenerateMocks([app.AuthProvider, User])
+@GenerateNiceMocks([MockSpec<ProgramProvider>()])
 void main() {
   group('AuthWrapper Routing Tests', () {
     late MockAuthProvider mockAuthProvider;
