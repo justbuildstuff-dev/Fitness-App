@@ -61,7 +61,7 @@ void main() {
       /// Failure indicates poor UX or missing UI elements
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.text('Verify Email'), findsOneWidget,
         reason: 'Should display screen title');
@@ -83,7 +83,7 @@ void main() {
       when(mockUser.email).thenReturn('user@example.com');
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.text('user@example.com'), findsOneWidget,
         reason: 'Should display the user email address');
@@ -95,7 +95,7 @@ void main() {
       /// Failure indicates incomplete UI design
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.byIcon(Icons.email_outlined), findsOneWidget,
         reason: 'Should display email icon');
@@ -107,7 +107,7 @@ void main() {
       /// Failure indicates missing critical navigation
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.text('Sign Out'), findsOneWidget,
         reason: 'Should display sign out button in app bar');
@@ -119,10 +119,10 @@ void main() {
       /// Failure indicates broken authentication flow
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump();
+      await tester.pump(); // Initial render
 
       await tester.tap(find.text('Sign Out'));
-      await tester.pump();
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete any timers
 
       verify(mockAuthProvider.signOut()).called(1);
     });
@@ -133,7 +133,7 @@ void main() {
       /// Failure indicates poor UX feedback
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pump(); // Just initial render, don't complete timer yet
 
       expect(find.textContaining('You can resend in 60 seconds'), findsOneWidget,
         reason: 'Should display resend countdown message initially');
@@ -145,15 +145,14 @@ void main() {
       /// Failure indicates broken resend functionality
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump();
+      await tester.pump(); // Initial render
 
       // Initially should not show resend button
       expect(find.text('Resend Email'), findsNothing,
         reason: 'Should not show resend button initially');
 
-      // Fast forward 60 seconds
-      await tester.pump(const Duration(seconds: 60));
-      await tester.pump(); // Rebuild after timer completes
+      // Fast forward 60 seconds - pumpAndSettle with duration completes the timer
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       // Should now show resend button
       expect(find.text('Resend Email'), findsOneWidget,
@@ -166,11 +165,8 @@ void main() {
       /// Failure indicates broken email verification flow
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump();
-
       // Fast forward to show resend button
-      await tester.pump(const Duration(seconds: 60));
-      await tester.pump(); // Rebuild after timer completes
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       // Tap resend button
       await tester.tap(find.text('Resend Email'));
@@ -185,17 +181,14 @@ void main() {
       /// Failure indicates rate limiting doesn't work
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump();
-
       // Fast forward to show resend button
-      await tester.pump(const Duration(seconds: 60));
-      await tester.pump(); // Rebuild after timer completes
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
-      // Tap resend button
+      // Tap resend button - this triggers a new 60s timer
       await tester.tap(find.text('Resend Email'));
-      await tester.pump();
+      await tester.pump(); // Process tap
 
-      // Resend button should be hidden again
+      // Resend button should be hidden again (new timer started)
       expect(find.text('Resend Email'), findsNothing,
         reason: 'Resend button should be hidden after click');
       expect(find.textContaining('You can resend in 60 seconds'), findsOneWidget,
@@ -210,7 +203,7 @@ void main() {
       when(mockAuthProvider.successMessage).thenReturn('Verification email sent! Please check your inbox.');
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.text('Verification email sent! Please check your inbox.'), findsOneWidget,
         reason: 'Should display success message');
@@ -226,7 +219,7 @@ void main() {
       when(mockAuthProvider.error).thenReturn('Failed to send verification email: Network error');
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.textContaining('Failed to send verification email'), findsOneWidget,
         reason: 'Should display error message');
@@ -242,7 +235,7 @@ void main() {
       when(mockAuthProvider.successMessage).thenReturn('Success message');
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       final successContainer = tester.widget<Container>(
         find.ancestor(
@@ -264,7 +257,7 @@ void main() {
       when(mockAuthProvider.error).thenReturn('Error message');
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       final errorContainer = tester.widget<Container>(
         find.ancestor(
@@ -284,7 +277,7 @@ void main() {
       /// Failure indicates missing helpful hint
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       expect(find.textContaining('Check your spam folder'), findsOneWidget,
         reason: 'Should display spam folder tip');
@@ -314,11 +307,11 @@ void main() {
       /// Failure indicates resource leak
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump();
+      await tester.pump(); // Initial render
 
-      // Remove widget
+      // Remove widget - this should cancel timers
       await tester.pumpWidget(const MaterialApp(home: Scaffold()));
-      await tester.pump();
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete any timers
 
       // Reset and pump more time
       clearInteractions(mockUser);
@@ -336,7 +329,7 @@ void main() {
       when(mockUser.email).thenReturn(null);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       // Should display empty string or placeholder, not crash
       expect(find.byType(EmailVerificationScreen), findsOneWidget,
@@ -351,7 +344,7 @@ void main() {
       when(mockAuthProvider.user).thenReturn(null);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pumpAndSettle(const Duration(seconds: 61)); // Complete 60s timer
 
       // Should display empty string for email, not crash
       expect(find.byType(EmailVerificationScreen), findsOneWidget,
@@ -364,11 +357,8 @@ void main() {
       /// Failure indicates incomplete UI design
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump();
-
       // Fast forward to show resend button
-      await tester.pump(const Duration(seconds: 60));
-      await tester.pump(); // Rebuild after timer completes
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       // Button is ElevatedButton.icon, so just verify icon exists
       expect(find.byIcon(Icons.refresh), findsOneWidget,
@@ -385,7 +375,7 @@ void main() {
       when(mockUser.email).thenReturn('complete@test.com');
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Don't use pumpAndSettle - has 60s timer
+      await tester.pump(); // Just initial render, check elements before timer completes
 
       // Verify all major elements exist
       expect(find.byIcon(Icons.email_outlined), findsOneWidget);

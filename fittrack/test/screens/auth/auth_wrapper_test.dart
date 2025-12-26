@@ -102,9 +102,13 @@ void main() {
       when(mockAuthProvider.user).thenReturn(mockUser);
       when(mockUser.email).thenReturn('test@example.com');
       when(mockUser.reload()).thenAnswer((_) async {});
+      when(mockAuthProvider.successMessage).thenReturn(null);
+      when(mockAuthProvider.sendEmailVerification()).thenAnswer((_) async {});
+      when(mockAuthProvider.signOut()).thenAnswer((_) async {});
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      // EmailVerificationScreen has 60s timer, complete it to allow test to finish
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       expect(find.byType(EmailVerificationScreen), findsOneWidget,
         reason: 'Should display EmailVerificationScreen when authenticated but not verified');
@@ -244,9 +248,13 @@ void main() {
       when(mockAuthProvider.user).thenReturn(mockUser);
       when(mockUser.email).thenReturn('newuser@example.com');
       when(mockUser.reload()).thenAnswer((_) async {});
+      when(mockAuthProvider.successMessage).thenReturn(null);
+      when(mockAuthProvider.sendEmailVerification()).thenAnswer((_) async {});
+      when(mockAuthProvider.signOut()).thenAnswer((_) async {});
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      // EmailVerificationScreen has 60s timer, complete it to allow test to finish
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       expect(find.byType(EmailVerificationScreen), findsOneWidget,
         reason: 'Should transition to EmailVerificationScreen after signup');
@@ -265,9 +273,13 @@ void main() {
       when(mockAuthProvider.user).thenReturn(mockUser);
       when(mockUser.email).thenReturn('test@example.com');
       when(mockUser.reload()).thenAnswer((_) async {});
+      when(mockAuthProvider.successMessage).thenReturn(null);
+      when(mockAuthProvider.sendEmailVerification()).thenAnswer((_) async {});
+      when(mockAuthProvider.signOut()).thenAnswer((_) async {});
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      // EmailVerificationScreen has 60s timer, complete it to allow test to finish
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       expect(find.byType(EmailVerificationScreen), findsOneWidget);
 
@@ -335,9 +347,13 @@ void main() {
       when(mockAuthProvider.user).thenReturn(mockUser);
       when(mockUser.email).thenReturn('test@example.com');
       when(mockUser.reload()).thenAnswer((_) async {});
+      when(mockAuthProvider.successMessage).thenReturn(null);
+      when(mockAuthProvider.sendEmailVerification()).thenAnswer((_) async {});
+      when(mockAuthProvider.signOut()).thenAnswer((_) async {});
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      // EmailVerificationScreen has 60s timer, complete it to allow test to finish
+      await tester.pumpAndSettle(const Duration(seconds: 61));
 
       expect(find.byType(EmailVerificationScreen), findsOneWidget,
         reason: 'Verification screen should show when not verified');
