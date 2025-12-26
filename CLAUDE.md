@@ -59,9 +59,32 @@ Every document includes a `userId` field for security and efficient querying.
 ## Security & Authorization
 
 - **Authentication**: Firebase Auth with per-user data scoping
-- **Authorization**: Firestore rules enforce `request.auth.uid == userId` 
+- **Authorization**: Firestore rules enforce `request.auth.uid == userId`
 - **Admin Role**: Custom claims with `admin: true` for support operations
 - **Validation**: Server-side validation for all document fields and types
+
+### Repository Security
+
+**CRITICAL: This repository is PUBLIC.**
+
+Before committing ANY code:
+1. **Verify no API tokens** - See `.claude/skills/github_workflow/SKILL.md` security checklist
+2. **Check .gitignore** - Sensitive files must be ignored
+3. **Use templates** - Never commit `.env` or `settings.json` with real values
+4. **Scan commits** - Run security verification commands before push
+
+**Protected files** (in `.gitignore`, never commit):
+- `.claude/settings.json` - Contains GitHub/Notion tokens
+- `.env*` files with real values
+- Private keys (`.pem`, `.key`, `.p12`)
+- Keystores (`.jks`, `.keystore`)
+- Any file with API tokens or credentials
+
+**Safe to commit:**
+- Firebase client API keys (protected by Firestore rules)
+- Template files (`.template`, `.example`)
+- Test fixtures with fake credentials
+- Documentation
 
 ## Key Implementation Patterns
 

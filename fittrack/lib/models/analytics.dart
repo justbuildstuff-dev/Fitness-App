@@ -462,6 +462,131 @@ enum HeatmapIntensity {
   }
 }
 
+/// Heatmap data for a single month
+///
+/// Represents activity data for one calendar month with daily set counts.
+/// This model is used by the monthly calendar view to display workout activity
+/// intensity across the days of the month.
+///
+/// The [dailySetCounts] map uses day of month (1-31) as keys and total
+/// checked sets as values. Days with no activity are not included in the map.
+///
+/// Example:
+/// ```dart
+/// final monthData = MonthHeatmapData(
+///   year: 2024,
+///   month: 12,
+///   dailySetCounts: {
+///     1: 8,   // December 1st: 8 sets
+///     2: 12,  // December 2nd: 12 sets
+///     5: 6,   // December 5th: 6 sets
+///   },
+///   totalSets: 26,
+///   fetchedAt: DateTime.now(),
+/// );
+///
+/// // Get set count for a specific day
+/// final day5Count = monthData.getSetCountForDay(5); // Returns 6
+/// final day3Count = monthData.getSetCountForDay(3); // Returns 0 (no data)
+///
+/// // Get heatmap intensity for visualization
+/// final day5Intensity = monthData.getIntensityForDay(5); // Returns HeatmapIntensity.medium
+/// ```
+class MonthHeatmapData {
+  /// Year (e.g., 2024)
+  final int year;
+
+  /// Month (1-12)
+  final int month;
+
+  /// Map of day of month (1-31) to total checked sets for that day
+  ///
+  /// Only days with activity are included. Days with no sets are absent from the map.
+  /// Values represent the total count of sets where `checked: true`.
+  final Map<int, int> dailySetCounts;
+
+  /// Total sets completed in the month (sum of all dailySetCounts values)
+  final int totalSets;
+
+  /// Timestamp when this data was fetched from Firestore
+  ///
+  /// Used for cache validation. Data is considered stale after 5 minutes.
+  final DateTime fetchedAt;
+
+  const MonthHeatmapData({
+    required this.year,
+    required this.month,
+    required this.dailySetCounts,
+    required this.totalSets,
+    required this.fetchedAt,
+  });
+
+  /// Get set count for a specific day of the month
+  ///
+  /// Returns 0 if no data exists for the day.
+  ///
+  /// Parameters:
+  /// - [day]: Day of month (1-31)
+  ///
+  /// Returns:
+  /// Total checked sets for the day, or 0 if no data.
+  ///
+  /// Example:
+  /// ```dart
+  /// final count = monthData.getSetCountForDay(15);
+  /// if (count > 0) {
+  ///   print('December 15: $count sets');
+  /// }
+  /// ```
+  int getSetCountForDay(int day) {
+    return dailySetCounts[day] ?? 0;
+  }
+
+  /// Get heatmap intensity for a specific day
+  ///
+  /// Intensity levels are based on set count thresholds:
+  /// - none: 0 sets
+  /// - low: 1-5 sets
+  /// - medium: 6-15 sets
+  /// - high: 16-25 sets
+  /// - veryHigh: 26+ sets
+  ///
+  /// Parameters:
+  /// - [day]: Day of month (1-31)
+  ///
+  /// Returns:
+  /// HeatmapIntensity enum value for the day's activity level.
+  ///
+  /// Example:
+  /// ```dart
+  /// final intensity = monthData.getIntensityForDay(10);
+  /// final color = _getColorForIntensity(intensity);
+  /// ```
+  HeatmapIntensity getIntensityForDay(int day) {
+    final count = getSetCountForDay(day);
+    return HeatmapIntensity.fromSetCount(count);
+  }
+
+  /// Check if cache is still valid (within 5 minutes)
+  ///
+  /// Returns true if less than 5 minutes have passed since [fetchedAt],
+  /// false otherwise. Used to determine if cached data can be reused or
+  /// if a fresh Firestore query is needed.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (cachedData.isCacheValid) {
+  ///   return cachedData;
+  /// } else {
+  ///   return await fetchFreshData();
+  /// }
+  /// ```
+  bool get isCacheValid {
+    final now = DateTime.now();
+    return now.difference(fetchedAt).inMinutes < 5;
+  }
+}
+
 /// Date range utility class for heatmap timeframe calculations
 ///
 /// Provides factory methods for common timeframe selections:
@@ -538,154 +663,3 @@ class DateRange {
   int get durationInDays => end.difference(start).inDays + 1;
 }
 
-/// Timeframe options for heatmap visualization
-enum HeatmapTimeframe {
-  thisWeek,
-  thisMonth,
-  last30Days,
-  thisYear;
-
-  String get displayName {
-    switch (this) {
-      case HeatmapTimeframe.thisWeek:
-        return 'This Week';
-      case HeatmapTimeframe.thisMonth:
-        return 'This Month';
-      case HeatmapTimeframe.last30Days:
-        return 'Last 30 Days';
-      case HeatmapTimeframe.thisYear:
-        return 'This Year';
-    }
-  }
-}
-
-/// Configuration for heatmap layout based on selected timeframe
-class HeatmapLayoutConfig {
-  final HeatmapTimeframe timeframe;
-  final int rows;
-  final int columns;
-  final DateTime startDate;
-  final DateTime endDate;
-  final List<String> rowLabels;
-  final List<String> columnLabels;
-  final bool showMonthLabels;
-  final bool enableVerticalScroll;
-  final int? maxVisibleRows;
-
-  const HeatmapLayoutConfig({
-    required this.timeframe,
-    required this.rows,
-    required this.columns,
-    required this.startDate,
-    required this.endDate,
-    required this.rowLabels,
-    required this.columnLabels,
-    this.showMonthLabels = false,
-    this.enableVerticalScroll = false,
-    this.maxVisibleRows,
-  });
-
-  /// Factory constructor to generate layout config for a specific timeframe
-  factory HeatmapLayoutConfig.forTimeframe(HeatmapTimeframe timeframe) {
-    final now = DateTime.now();
-
-    switch (timeframe) {
-      case HeatmapTimeframe.thisWeek:
-        return _buildWeekLayout(now);
-      case HeatmapTimeframe.thisMonth:
-        return _buildMonthLayout(now);
-      case HeatmapTimeframe.last30Days:
-        return _buildLast30DaysLayout(now);
-      case HeatmapTimeframe.thisYear:
-        return _buildYearLayout(now);
-    }
-  }
-
-  /// Build layout for This Week view (1 row × 7 columns, Mon-Sun)
-  static HeatmapLayoutConfig _buildWeekLayout(DateTime now) {
-    // Calculate Monday of current week (weekday: Mon=1, Sun=7)
-    final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    final weekEnd = weekStart.add(const Duration(days: 6));
-
-    return HeatmapLayoutConfig(
-      timeframe: HeatmapTimeframe.thisWeek,
-      rows: 1,
-      columns: 7,
-      startDate: DateTime(weekStart.year, weekStart.month, weekStart.day),
-      endDate: DateTime(weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59),
-      rowLabels: const [''],
-      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      showMonthLabels: false,
-      enableVerticalScroll: false,
-    );
-  }
-
-  /// Build layout for This Month view (weeks as rows, days as columns)
-  static HeatmapLayoutConfig _buildMonthLayout(DateTime now) {
-    final monthStart = DateTime(now.year, now.month, 1);
-    final monthEnd = DateTime(now.year, now.month + 1, 0);
-
-    // Calculate how many weeks we need
-    // Start from the Monday of the week containing the 1st
-    final startWeekday = monthStart.weekday;
-    final daysInMonth = monthEnd.day;
-    final weeksNeeded = ((daysInMonth + startWeekday - 1) / 7).ceil();
-
-    return HeatmapLayoutConfig(
-      timeframe: HeatmapTimeframe.thisMonth,
-      rows: weeksNeeded,
-      columns: 7,
-      startDate: monthStart,
-      endDate: DateTime(monthEnd.year, monthEnd.month, monthEnd.day, 23, 59, 59),
-      rowLabels: List.generate(weeksNeeded, (i) => 'Week ${i + 1}'),
-      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      showMonthLabels: false,
-      enableVerticalScroll: false,
-    );
-  }
-
-  /// Build layout for Last 30 Days view (rolling 30-day window)
-  static HeatmapLayoutConfig _buildLast30DaysLayout(DateTime now) {
-    final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    final startDate = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 29));
-
-    // Calculate weeks needed for 30 days
-    final weeksNeeded = (30 / 7).ceil();
-
-    return HeatmapLayoutConfig(
-      timeframe: HeatmapTimeframe.last30Days,
-      rows: weeksNeeded,
-      columns: 7,
-      startDate: startDate,
-      endDate: endDate,
-      rowLabels: List.generate(weeksNeeded, (i) => 'Week ${i + 1}'),
-      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      showMonthLabels: false,
-      enableVerticalScroll: false,
-    );
-  }
-
-  /// Build layout for This Year view (full year with vertical scrolling)
-  static HeatmapLayoutConfig _buildYearLayout(DateTime now) {
-    final yearStart = DateTime(now.year, 1, 1);
-    final yearEnd = DateTime(now.year, 12, 31, 23, 59, 59);
-
-    // Calculate total weeks in year
-    final isLeapYear = now.year % 4 == 0 && (now.year % 100 != 0 || now.year % 400 == 0);
-    final totalDays = isLeapYear ? 366 : 365;
-    final totalWeeks = (totalDays / 7).ceil();
-
-    return HeatmapLayoutConfig(
-      timeframe: HeatmapTimeframe.thisYear,
-      rows: totalWeeks,
-      columns: 7,
-      startDate: yearStart,
-      endDate: yearEnd,
-      rowLabels: List.generate(totalWeeks, (i) => ''), // No row labels for year view
-      columnLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      showMonthLabels: true,
-      enableVerticalScroll: true,
-      maxVisibleRows: 10,
-    );
-  }
-}
