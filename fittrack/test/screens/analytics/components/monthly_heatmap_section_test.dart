@@ -624,12 +624,7 @@ void main() {
       }
 
       // After navigating to current month, the Today button should be hidden
-      // Note: Due to PageView animation behavior with large jumps, we verify
-      // the button was tappable rather than exact navigation endpoint
-      await tester.pumpAndSettle();
-
-      // Today button should now be hidden (or at least the tap was successful)
-      // The widget will hide the Today button when on current month
+      // Note: We don't use pumpAndSettle() as PageView animations may cause timeouts
       expect(find.text('Today'), findsNothing,
           reason: 'Today button should be hidden after navigating to current month');
     });
