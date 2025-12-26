@@ -133,10 +133,13 @@ void main() {
       /// Failure indicates poor UX feedback
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Just initial render, don't complete timer yet
+      await tester.pump(); // Just initial render, check state before timer completes
 
       expect(find.textContaining('You can resend in 60 seconds'), findsOneWidget,
         reason: 'Should display resend countdown message initially');
+
+      // Complete timers to avoid "Pending timers" error at test end
+      await tester.pumpAndSettle(const Duration(seconds: 61));
     });
 
     testWidgets('shows resend button after cooldown period', (WidgetTester tester) async {
@@ -168,11 +171,14 @@ void main() {
       // Fast forward to show resend button
       await tester.pumpAndSettle(const Duration(seconds: 61));
 
-      // Tap resend button
+      // Tap resend button - this creates a NEW 60s timer
       await tester.tap(find.text('Resend Email'));
       await tester.pump();
 
       verify(mockAuthProvider.sendEmailVerification()).called(1);
+
+      // Complete the NEW 60s timer created by clicking resend
+      await tester.pumpAndSettle(const Duration(seconds: 61));
     });
 
     testWidgets('resend button resets cooldown after click', (WidgetTester tester) async {
@@ -193,6 +199,9 @@ void main() {
         reason: 'Resend button should be hidden after click');
       expect(find.textContaining('You can resend in 60 seconds'), findsOneWidget,
         reason: 'Should show cooldown message again');
+
+      // Complete the NEW 60s timer created by resend
+      await tester.pumpAndSettle(const Duration(seconds: 61));
     });
 
     testWidgets('displays success message when set', (WidgetTester tester) async {
@@ -299,6 +308,9 @@ void main() {
 
       // Should have called reload
       verify(mockUser.reload()).called(greaterThan(0));
+
+      // Complete the 60s resend timer to avoid "Pending timers" error
+      await tester.pumpAndSettle(const Duration(seconds: 61));
     });
 
     testWidgets('auto-check timer stops when widget disposed', (WidgetTester tester) async {
@@ -387,6 +399,9 @@ void main() {
       expect(find.textContaining('You can resend in 60 seconds'), findsOneWidget);
       expect(find.textContaining('Check your spam folder'), findsOneWidget);
       expect(find.text('Sign Out'), findsOneWidget);
+
+      // Complete timers to avoid "Pending timers" error at test end
+      await tester.pumpAndSettle(const Duration(seconds: 61));
     });
   });
 }

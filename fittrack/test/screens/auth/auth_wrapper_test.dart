@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:fittrack/providers/auth_provider.dart' as app;
+import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/screens/auth/auth_wrapper.dart';
 import 'package:fittrack/screens/auth/sign_in_screen.dart';
 import 'package:fittrack/screens/auth/email_verification_screen.dart';
@@ -25,15 +26,17 @@ import 'auth_wrapper_test.mocks.dart';
 /// - Authentication routing logic
 /// - Email verification flow
 /// - User session management
-@GenerateMocks([app.AuthProvider, User])
+@GenerateMocks([app.AuthProvider, User, ProgramProvider])
 void main() {
   group('AuthWrapper Routing Tests', () {
     late MockAuthProvider mockAuthProvider;
     late MockUser mockUser;
+    late MockProgramProvider mockProgramProvider;
 
     setUp(() {
       mockAuthProvider = MockAuthProvider();
       mockUser = MockUser();
+      mockProgramProvider = MockProgramProvider();
 
       // Default mock setup
       when(mockAuthProvider.isLoading).thenReturn(false);
@@ -45,8 +48,11 @@ void main() {
 
     Widget createTestWidget() {
       return MaterialApp(
-        home: ChangeNotifierProvider<app.AuthProvider>.value(
-          value: mockAuthProvider,
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<app.AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
+          ],
           child: const AuthWrapper(),
         ),
       );
@@ -60,7 +66,7 @@ void main() {
       when(mockAuthProvider.isLoading).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget,
         reason: 'Should display loading indicator when isLoading is true');
@@ -81,7 +87,7 @@ void main() {
       when(mockAuthProvider.isAuthenticated).thenReturn(false);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Should display SignInScreen when not authenticated');
@@ -129,7 +135,7 @@ void main() {
       when(mockAuthProvider.user).thenReturn(mockUser);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Should display HomeScreen when authenticated and verified');
@@ -149,7 +155,7 @@ void main() {
       when(mockAuthProvider.user).thenReturn(null);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Should display SignInScreen when user is null');
@@ -165,7 +171,7 @@ void main() {
       when(mockAuthProvider.isLoading).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       // Find the Center widget containing the loading indicator
       final centerFinder = find.ancestor(
@@ -186,7 +192,7 @@ void main() {
       when(mockAuthProvider.isAuthenticated).thenReturn(false);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Should initially show SignInScreen');
@@ -198,7 +204,7 @@ void main() {
 
       // Trigger rebuild by pumping
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Should update to HomeScreen after authentication');
@@ -212,7 +218,7 @@ void main() {
       when(mockAuthProvider.isLoading).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
@@ -221,7 +227,7 @@ void main() {
       when(mockAuthProvider.isAuthenticated).thenReturn(false);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Should transition to SignInScreen after loading');
@@ -238,7 +244,7 @@ void main() {
       when(mockAuthProvider.isAuthenticated).thenReturn(false);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() for initial SignInScreen
 
       expect(find.byType(SignInScreen), findsOneWidget);
 
@@ -287,7 +293,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() for HomeScreen to avoid infinite timer timeout
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Should transition to HomeScreen after verification');
@@ -303,7 +309,7 @@ void main() {
       when(mockAuthProvider.isLoading).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       final scaffoldFinder = find.ancestor(
         of: find.byType(CircularProgressIndicator),
@@ -325,7 +331,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget,
         reason: 'Loading should have highest priority');
@@ -336,7 +342,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Sign in should show when not authenticated');
@@ -362,7 +368,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(); // Use pump() for HomeScreen to avoid infinite timer timeout
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Home screen should show when authenticated and verified');
