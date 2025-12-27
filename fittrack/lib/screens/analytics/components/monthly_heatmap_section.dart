@@ -153,9 +153,14 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   /// Navigate to a specific month
   void _navigateToMonth(DateTime month) {
     final targetMonth = DateTime(month.year, month.month, 1);
+
+    // Use current page position as base instead of _virtualCenter
+    // This prevents drift when _currentMonth updates but page doesn't reset
+    final currentPage = _pageController.page?.round() ?? _virtualCenter;
+
     final monthOffset = (targetMonth.year - _currentMonth.year) * 12 +
                         (targetMonth.month - _currentMonth.month);
-    final targetPage = _virtualCenter + monthOffset;
+    final targetPage = currentPage + monthOffset;
 
     _pageController.animateToPage(
       targetPage,
