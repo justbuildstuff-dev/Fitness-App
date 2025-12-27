@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
@@ -23,6 +23,9 @@ import 'auth_provider_test.mocks.dart';
 /// - User session handling
 @GenerateMocks([FirebaseAuth, User, UserCredential, FirebaseFirestore, CollectionReference, DocumentReference, DocumentSnapshot])
 void main() {
+  // Initialize Flutter bindings for Firebase
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('AuthProvider Email Verification Tests', () {
     late MockFirebaseAuth mockAuth;
     late MockUser mockUser;

@@ -45,6 +45,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(false);
       when(mockAuthProvider.user).thenReturn(null);
       when(mockAuthProvider.error).thenReturn(null); // Stub error getter to prevent MissingStubError
+      when(mockAuthProvider.userProfile).thenReturn(null); // Stub userProfile getter for HomeScreen
     });
 
     Widget createTestWidget() {
