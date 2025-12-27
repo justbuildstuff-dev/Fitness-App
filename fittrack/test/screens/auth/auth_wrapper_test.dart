@@ -210,7 +210,7 @@ void main() {
 
       // Trigger rebuild by pumping
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Use pump() to avoid infinite timer timeout
+      await tester.pumpAndSettle(); // Allow widget tree to fully rebuild
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Should update to HomeScreen after authentication');
@@ -233,7 +233,7 @@ void main() {
       when(mockAuthProvider.isAuthenticated).thenReturn(false);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Use pump() to avoid infinite timer timeout
+      await tester.pumpAndSettle(); // Allow widget tree to fully rebuild
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Should transition to SignInScreen after loading');
@@ -299,7 +299,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Use pump() for HomeScreen to avoid infinite timer timeout
+      await tester.pumpAndSettle(); // Allow widget tree to fully rebuild
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Should transition to HomeScreen after verification');
@@ -348,7 +348,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Use pump() to avoid infinite timer timeout
+      await tester.pumpAndSettle(); // Allow widget tree to fully rebuild
 
       expect(find.byType(SignInScreen), findsOneWidget,
         reason: 'Sign in should show when not authenticated');
@@ -374,7 +374,7 @@ void main() {
       when(mockAuthProvider.isEmailVerified).thenReturn(true);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pump(); // Use pump() for HomeScreen to avoid infinite timer timeout
+      await tester.pumpAndSettle(); // Allow widget tree to fully rebuild
 
       expect(find.byType(HomeScreen), findsOneWidget,
         reason: 'Home screen should show when authenticated and verified');
