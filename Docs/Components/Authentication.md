@@ -17,7 +17,11 @@ The FitTrack authentication system is built on Firebase Authentication with cust
 ```
 App Launch → AuthWrapper → Check Auth State → Route to Screen
                     ↓
-            [Authenticated] → HomeScreen
+            [Authenticated] → Check Email Verified
+                    ↓                    ↓
+            [Not Verified]        [Verified]
+                    ↓                    ↓
+         EmailVerificationScreen    HomeScreen
                     ↓
             [Unauthenticated] → SignInScreen
 ```
@@ -48,6 +52,7 @@ class AuthProvider extends ChangeNotifier {
 #### Authentication Status
 ```dart
 bool get isAuthenticated;      // True if user is signed in
+bool get isEmailVerified;     // True if user's email is verified
 User? get user;               // Current Firebase user
 UserProfile? get userProfile; // Extended profile data
 bool get isLoading;           // Loading state for UI
@@ -64,11 +69,15 @@ Future<bool> signUpWithEmail({
   String? displayName,
 });
 
-// User Sign-In  
+// User Sign-In
 Future<void> signInWithEmail({
   required String email,
   required String password,
 });
+
+// Email Verification
+Future<void> sendEmailVerification();  // Send verification email
+Future<void> checkEmailVerified();     // Check verification status
 
 // Sign Out
 Future<void> signOut();
@@ -312,10 +321,119 @@ Future<void> _createUserProfile(User user, String? displayName) async {
 }
 ```
 
+## Email Verification
+
+### Purpose
+Ensures users verify their email addresses before accessing the app, preventing spam accounts and confirming email ownership.
+
+### Email Verification Screen
+
+#### Features
+- **Auto-Check Timer**: Checks verification status every 3 seconds
+- **Resend Email**: 60-second cooldown to prevent spam
+- **Sign Out Option**: Allows switching to different account
+- **User Feedback**: Success/error messages for operations
+- **Spam Folder Tip**: Helpful reminder to check spam folder
+
+#### Implementation
+```dart
+class EmailVerificationScreen extends StatefulWidget {
+  // Auto-check timer runs every 3 seconds
+  Timer.periodic(const Duration(seconds: 3), (timer) {
+    if (mounted) {
+      authProvider.checkEmailVerified();
+    }
+  });
+
+  // Resend email with cooldown
+  Future<void> _resendVerificationEmail() async {
+    await authProvider.sendEmailVerification();
+    setState(() {
+      _canResend = false;
+      _resendCooldown = 60;
+    });
+  }
+}
+```
+
+#### User Experience
+- Screen displays immediately after registration
+- Automatically refreshes when email is verified
+- Clear instructions and email address display
+- Visual feedback for all operations
+- Accessible sign-out option
+
+### Email Verification Flow
+
+```dart
+// After successful registration
+Future<bool> signUpWithEmail({...}) async {
+  final result = await _auth.createUserWithEmailAndPassword(...);
+
+  if (result.user != null) {
+    await _createUserProfile(result.user!, displayName);
+
+    // Send verification email automatically
+    await result.user!.sendEmailVerification();
+
+    return true;
+  }
+}
+
+// Check verification status (called by auto-check timer)
+Future<void> checkEmailVerified() async {
+  await _user?.reload();
+  final verified = _user?.emailVerified ?? false;
+
+  if (verified != (_emailVerified ?? false)) {
+    _emailVerified = verified;
+    notifyListeners();
+  }
+}
+
+// Manual resend
+Future<void> sendEmailVerification() async {
+  try {
+    await _user?.sendEmailVerification();
+    _setSuccessMessage('Verification email sent! Please check your inbox.');
+  } catch (e) {
+    _setError('Failed to send verification email: ${e.toString()}');
+  }
+}
+```
+
+### Timer Management
+```dart
+// Auto-check timer
+Timer? _verificationCheckTimer;
+
+@override
+void initState() {
+  super.initState();
+
+  // Start auto-check timer
+  _verificationCheckTimer = Timer.periodic(
+    const Duration(seconds: 3),
+    (timer) {
+      if (mounted) {
+        context.read<AuthProvider>().checkEmailVerified();
+      }
+    },
+  );
+}
+
+@override
+void dispose() {
+  // Critical: Cancel timer to prevent memory leak
+  _verificationCheckTimer?.cancel();
+  super.dispose();
+}
+```
+
 ## AuthWrapper (Route Guard)
 
 ### Purpose
-Centralized authentication routing that determines which screen to display based on authentication state.
+Centralized authentication routing that determines which screen to display based on authentication and verification state.
 
 ### Implementation
 ```dart
@@ -332,11 +450,17 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         }
-        
+
         // Route based on authentication state
-        return authProvider.isAuthenticated 
-            ? const HomeScreen() 
-            : const SignInScreen();
+        if (authProvider.isAuthenticated) {
+          // Check email verification
+          if (!authProvider.isEmailVerified) {
+            return const EmailVerificationScreen();
+          }
+          return const HomeScreen();
+        } else {
+          return const SignInScreen();
+        }
       },
     );
   }
@@ -354,9 +478,10 @@ MaterialApp(
 
 ### State Handling
 - **Loading**: Shows loading indicator during auth state checks
-- **Authenticated**: Routes to HomeScreen (main app)
+- **Authenticated + Verified**: Routes to HomeScreen (main app)
+- **Authenticated + Unverified**: Routes to EmailVerificationScreen
 - **Unauthenticated**: Routes to SignInScreen (login flow)
-- **Automatic Updates**: Rebuilds when authentication state changes
+- **Automatic Updates**: Rebuilds when authentication or verification state changes
 
 ## Firebase Configuration
 
