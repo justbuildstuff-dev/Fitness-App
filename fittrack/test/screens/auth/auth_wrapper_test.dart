@@ -46,6 +46,10 @@ void main() {
       when(mockAuthProvider.user).thenReturn(null);
       when(mockAuthProvider.error).thenReturn(null); // Stub error getter to prevent MissingStubError
       when(mockAuthProvider.userProfile).thenReturn(null); // Stub userProfile getter for HomeScreen
+
+      // Stub mockUser properties used by HomeScreen
+      when(mockUser.email).thenReturn('test@example.com');
+      when(mockUser.uid).thenReturn('test-user-123');
     });
 
     Widget createTestWidget() {
