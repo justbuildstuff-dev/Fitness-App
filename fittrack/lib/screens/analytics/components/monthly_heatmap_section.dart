@@ -31,6 +31,7 @@ class MonthlyHeatmapSection extends StatefulWidget {
 class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   late PageController _pageController;
   late DateTime _currentMonth;
+  late DateTime _initialMonth; // Fixed reference month at _virtualCenter
 
   // Cache for month data (key: "year_month", value: MonthHeatmapData)
   final Map<String, MonthHeatmapData> _monthCache = {};
@@ -59,7 +60,8 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
     super.initState();
     final now = DateTime.now();
     final initialDate = widget.initialMonth ?? now;
-    _currentMonth = DateTime(initialDate.year, initialDate.month, 1);
+    _initialMonth = DateTime(initialDate.year, initialDate.month, 1);
+    _currentMonth = _initialMonth;
     _pageController = PageController(initialPage: _virtualCenter);
     _loadInitialData();
   }
@@ -129,7 +131,9 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   /// Get month for a given page index
   DateTime _getMonthForPageIndex(int index) {
     final offset = index - _virtualCenter;
-    return _addMonths(_currentMonth, offset);
+    // Use _initialMonth as fixed reference, not _currentMonth
+    // This prevents drift when navigating between months
+    return _addMonths(_initialMonth, offset);
   }
 
   /// Get cached data for a month
@@ -154,13 +158,10 @@ class _MonthlyHeatmapSectionState extends State<MonthlyHeatmapSection> {
   void _navigateToMonth(DateTime month) {
     final targetMonth = DateTime(month.year, month.month, 1);
 
-    // Use current page position as base instead of _virtualCenter
-    // This prevents drift when _currentMonth updates but page doesn't reset
-    final currentPage = _pageController.page?.round() ?? _virtualCenter;
-
-    final monthOffset = (targetMonth.year - _currentMonth.year) * 12 +
-                        (targetMonth.month - _currentMonth.month);
-    final targetPage = currentPage + monthOffset;
+    // Calculate offset from _initialMonth (the month at _virtualCenter)
+    final monthOffset = (targetMonth.year - _initialMonth.year) * 12 +
+                        (targetMonth.month - _initialMonth.month);
+    final targetPage = _virtualCenter + monthOffset;
 
     _pageController.animateToPage(
       targetPage,
