@@ -7,9 +7,9 @@ import '../models/user_profile.dart';
 import '../converters/user_profile_converter.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
   User? _user;
   UserProfile? _userProfile;
   bool _isLoading = false;
@@ -25,7 +25,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   bool get isEmailVerified => _user?.emailVerified ?? false;
 
-  AuthProvider() {
+  AuthProvider({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance {
     // Listen to auth state changes
     _authStateSubscription = _auth.authStateChanges().listen((User? user) async {
       debugPrint('[AuthProvider] Auth state changed - userId: ${user?.uid ?? 'null'}');

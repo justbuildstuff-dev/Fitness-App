@@ -23,9 +23,6 @@ import 'auth_provider_test.mocks.dart';
 /// - User session handling
 @GenerateMocks([FirebaseAuth, User, UserCredential, FirebaseFirestore, CollectionReference, DocumentReference, DocumentSnapshot])
 void main() {
-  // Initialize Flutter bindings for Firebase
-  TestWidgetsFlutterBinding.ensureInitialized();
-
   group('AuthProvider Email Verification Tests', () {
     late MockFirebaseAuth mockAuth;
     late MockUser mockUser;
@@ -80,7 +77,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(mockVerifiedUser);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(mockVerifiedUser));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Wait for auth state to propagate
         await Future.delayed(const Duration(milliseconds: 100));
@@ -103,7 +100,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(mockUnverifiedUser);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(mockUnverifiedUser));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Wait for auth state to propagate
         await Future.delayed(const Duration(milliseconds: 100));
@@ -120,7 +117,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(null);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(null));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         expect(provider.isEmailVerified, isFalse,
           reason: 'Should return false when user is null');
@@ -143,7 +140,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(mockUnverifiedUser);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(mockUnverifiedUser));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Wait for auth state to propagate
         await Future.delayed(const Duration(milliseconds: 100));
@@ -171,7 +168,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(mockVerifiedUser);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(mockVerifiedUser));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Wait for auth state to propagate
         await Future.delayed(const Duration(milliseconds: 100));
@@ -191,7 +188,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(null);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(null));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         await provider.sendEmailVerification();
 
@@ -216,7 +213,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(mockUnverifiedUser);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(mockUnverifiedUser));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Wait for auth state to propagate
         await Future.delayed(const Duration(milliseconds: 100));
@@ -244,7 +241,7 @@ void main() {
         when(mockAuth.currentUser).thenReturn(mockUnverifiedUser);
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(mockUnverifiedUser));
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Wait for auth state to propagate
         await Future.delayed(const Duration(milliseconds: 100));
@@ -291,7 +288,7 @@ void main() {
 
         when(mockDocRef.set(any)).thenAnswer((_) async {});
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         final result = await provider.signUpWithEmail(
           email: 'newuser@example.com',
@@ -334,7 +331,7 @@ void main() {
 
         when(mockDocRef.set(any)).thenAnswer((_) async {});
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         await provider.signUpWithEmail(
           email: 'newuser@example.com',
@@ -378,7 +375,7 @@ void main() {
 
         when(mockDocRef.set(any)).thenAnswer((_) async {});
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         final result = await provider.signUpWithEmail(
           email: 'newuser@example.com',
@@ -412,7 +409,7 @@ void main() {
         final authStateStream = StreamController<User?>();
         when(mockAuth.authStateChanges()).thenAnswer((_) => authStateStream.stream);
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Emit auth state change
         authStateStream.add(mockUnverifiedUser);
@@ -434,7 +431,7 @@ void main() {
         when(mockAuth.authStateChanges()).thenAnswer((_) => authStateStream.stream);
         when(mockAuth.currentUser).thenReturn(null);
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         // Emit null (user signed out)
         authStateStream.add(null);
@@ -473,7 +470,7 @@ void main() {
         // Start with unverified user
         when(mockAuth.currentUser).thenReturn(mockUser1);
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         authStateStream.add(mockUser1);
         await Future.delayed(const Duration(milliseconds: 100));
@@ -499,7 +496,7 @@ void main() {
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(null));
         when(mockAuth.currentUser).thenReturn(null);
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         provider.clearSuccessMessage();
 
@@ -515,7 +512,7 @@ void main() {
         when(mockAuth.authStateChanges()).thenAnswer((_) => Stream.value(null));
         when(mockAuth.currentUser).thenReturn(null);
 
-        final provider = app.AuthProvider();
+        final provider = app.AuthProvider(auth: mockAuth, firestore: mockFirestore);
 
         provider.clearError();
 
