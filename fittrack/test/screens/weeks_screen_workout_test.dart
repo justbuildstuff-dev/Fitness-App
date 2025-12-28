@@ -752,7 +752,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify delete was NOT called
-        verifyNever(mockProvider.deleteWeekById(any));
+        verifyNever(mockProvider.deleteWeek(any, any));
 
         // Verify dialog is dismissed
         expect(find.text('Delete Week'), findsNothing,
@@ -842,8 +842,8 @@ void main() {
         await tester.tap(confirmButton);
         await tester.pumpAndSettle();
 
-        // Verify deleteWorkoutById was called
-        verify(mockProvider.deleteWorkoutById('workout-2')).called(1);
+        // Verify deleteWorkout was called
+        verify(mockProvider.deleteWorkout(testProgram.id, testWeek.id, 'workout-2')).called(1);
 
         // Verify success message is shown
         expect(find.text('Workout "Pull Day" deleted successfully'), findsOneWidget,
@@ -910,7 +910,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify delete was NOT called
-        verifyNever(mockProvider.deleteWorkoutById(any));
+        verifyNever(mockProvider.deleteWorkout(any, any, any));
 
         // Verify dialog is dismissed
         expect(find.text('Delete Workout'), findsNothing,
