@@ -555,7 +555,15 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
     if (confirmed == true) {
       try {
-        await provider.deleteExerciseById(widget.exercise.id);
+        // Use full delete method with explicit IDs (not deleteExerciseById)
+        // deleteExerciseById requires _selectedWorkout to be set, but this screen
+        // receives workout as a navigation parameter
+        await provider.deleteExercise(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+          widget.exercise.id,
+        );
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(

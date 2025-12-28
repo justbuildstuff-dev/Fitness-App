@@ -245,6 +245,8 @@ class _WeeksScreenState extends State<WeeksScreen> {
                     itemBuilder: (context, index) {
                       final workout = programProvider.workouts[index];
                       return _WorkoutCard(
+                        program: widget.program,
+                        week: widget.week,
                         workout: workout,
                         onTap: () => _navigateToWorkout(context, workout),
                       );
@@ -387,7 +389,11 @@ class _WeeksScreenState extends State<WeeksScreen> {
 
     if (confirmed == true) {
       try {
-        await programProvider.deleteWeekById(widget.week.id);
+        // Use full delete method with explicit IDs (not deleteWeekById)
+        await programProvider.deleteWeek(
+          widget.program.id,
+          widget.week.id,
+        );
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
@@ -461,10 +467,14 @@ class _StatCard extends StatelessWidget {
 }
 
 class _WorkoutCard extends StatelessWidget {
+  final Program program;
+  final Week week;
   final Workout workout;
   final VoidCallback onTap;
 
   const _WorkoutCard({
+    required this.program,
+    required this.week,
     required this.workout,
     required this.onTap,
   });
@@ -587,8 +597,13 @@ class _WorkoutCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        await programProvider.deleteWorkoutById(workout.id);
-        
+        // Use full delete method with explicit IDs (not deleteWorkoutById)
+        await programProvider.deleteWorkout(
+          program.id,
+          week.id,
+          workout.id,
+        );
+
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
