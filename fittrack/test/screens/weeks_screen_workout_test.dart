@@ -658,8 +658,8 @@ void main() {
 
         when(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id))
             .thenAnswer((_) async => cascadeCounts);
-        when(mockProvider.deleteWeekById(testWeek.id))
-            .thenAnswer((_) async => Future.value());
+        when(mockProvider.deleteWeek(testProgram.id, testWeek.id))
+            .thenAnswer((_) async => true);
 
         await tester.pumpWidget(createTestWidget());
 
@@ -679,8 +679,8 @@ void main() {
         await tester.pump(); // Start delete and close dialog
         await tester.pump(); // Show SnackBar
 
-        // Verify deleteWeekById was called
-        verify(mockProvider.deleteWeekById(testWeek.id)).called(1);
+        // Verify deleteWeek was called with explicit IDs
+        verify(mockProvider.deleteWeek(testProgram.id, testWeek.id)).called(1);
 
         // Verify success message is shown (before navigation completes)
         expect(find.text('Week "Test Week 1" deleted successfully'), findsOneWidget,
@@ -702,7 +702,7 @@ void main() {
 
         when(mockProvider.getCascadeDeleteCounts(weekId: testWeek.id))
             .thenAnswer((_) async => cascadeCounts);
-        when(mockProvider.deleteWeekById(testWeek.id))
+        when(mockProvider.deleteWeek(testProgram.id, testWeek.id))
             .thenThrow(Exception(errorMessage));
 
         await tester.pumpWidget(createTestWidget());
@@ -752,7 +752,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify delete was NOT called
-        verifyNever(mockProvider.deleteWeekById(any));
+        verifyNever(mockProvider.deleteWeek(any, any));
 
         // Verify dialog is dismissed
         expect(find.text('Delete Week'), findsNothing,
@@ -826,8 +826,8 @@ void main() {
         when(mockProvider.workouts).thenReturn(mockWorkouts);
         when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-2'))
             .thenAnswer((_) async => cascadeCounts);
-        when(mockProvider.deleteWorkoutById('workout-2'))
-            .thenAnswer((_) async => Future.value());
+        when(mockProvider.deleteWorkout(testProgram.id, testWeek.id, 'workout-2'))
+            .thenAnswer((_) async => true);
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -842,8 +842,8 @@ void main() {
         await tester.tap(confirmButton);
         await tester.pumpAndSettle();
 
-        // Verify deleteWorkoutById was called
-        verify(mockProvider.deleteWorkoutById('workout-2')).called(1);
+        // Verify deleteWorkout was called
+        verify(mockProvider.deleteWorkout(testProgram.id, testWeek.id, 'workout-2')).called(1);
 
         // Verify success message is shown
         expect(find.text('Workout "Pull Day" deleted successfully'), findsOneWidget,
@@ -862,7 +862,7 @@ void main() {
         when(mockProvider.workouts).thenReturn(mockWorkouts);
         when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-3'))
             .thenAnswer((_) async => cascadeCounts);
-        when(mockProvider.deleteWorkoutById('workout-3'))
+        when(mockProvider.deleteWorkout(testProgram.id, testWeek.id, 'workout-3'))
             .thenThrow(Exception(errorMessage));
 
         await tester.pumpWidget(createTestWidget());
@@ -910,7 +910,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify delete was NOT called
-        verifyNever(mockProvider.deleteWorkoutById(any));
+        verifyNever(mockProvider.deleteWorkout(any, any, any));
 
         // Verify dialog is dismissed
         expect(find.text('Delete Workout'), findsNothing,

@@ -230,6 +230,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                     itemBuilder: (context, index) {
                       final week = programProvider.weeks[index];
                       return _WeekCard(
+                        program: widget.program,
                         week: week,
                         onTap: () => _navigateToWeek(context, week),
                       );
@@ -389,10 +390,12 @@ class _StatCard extends StatelessWidget {
 }
 
 class _WeekCard extends StatelessWidget {
+  final Program program;
   final Week week;
   final VoidCallback onTap;
 
   const _WeekCard({
+    required this.program,
     required this.week,
     required this.onTap,
   });
@@ -572,7 +575,11 @@ class _WeekCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        await programProvider.deleteWeekById(week.id);
+        // Use full delete method with explicit IDs (not deleteWeekById)
+        await programProvider.deleteWeek(
+          program.id,
+          week.id,
+        );
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
