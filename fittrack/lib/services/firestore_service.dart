@@ -113,18 +113,15 @@ class FirestoreService {
         .orderBy('createdAt', descending: true)
         .snapshots(includeMetadataChanges: true)
         .map((snapshot) {
-          // Filter out pending writes (hasPendingWrites) to avoid showing
-          // optimistic updates before they're confirmed by the server
-          if (snapshot.metadata.hasPendingWrites) {
-            // Return cached data while write is pending
-            return snapshot.docs
-                .map((doc) => ProgramConverter.fromFirestore(doc))
-                .toList();
-          }
-          // Return server data once confirmed
-          return snapshot.docs
+          // Convert all documents to Program objects
+          final programs = snapshot.docs
               .map((doc) => ProgramConverter.fromFirestore(doc))
               .toList();
+
+          // CRITICAL: Even with query filtering, we must manually filter
+          // archived programs because pending writes may include documents
+          // that will be filtered by the server but are still in local cache
+          return programs.where((program) => !program.isArchived).toList();
         });
   }
 
