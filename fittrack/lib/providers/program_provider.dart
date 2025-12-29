@@ -171,12 +171,14 @@ class ProgramProvider extends ChangeNotifier {
 
     _programsSubscription = _firestoreService.getPrograms(_userId!).listen(
       (programs) {
+        debugPrint('[ProgramProvider] Programs loaded successfully: ${programs.length} programs');
         _programs = programs;
         _isLoadingPrograms = false;
         _programsError = null; // Clear error on successful load
         notifyListeners();
       },
       onError: (error) {
+        debugPrint('[ProgramProvider] Programs load error: $error');
         _programsError = 'Failed to load programs: $error';
         _isLoadingPrograms = false;
         notifyListeners();
