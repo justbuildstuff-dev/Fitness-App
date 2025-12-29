@@ -173,7 +173,7 @@ class ProgramProvider extends ChangeNotifier {
       (programs) {
         _programs = programs;
         _isLoadingPrograms = false;
-        // Don't clear error here to avoid race condition with concurrent analytics loading
+        _programsError = null; // Clear error on successful load
         notifyListeners();
       },
       onError: (error) {
