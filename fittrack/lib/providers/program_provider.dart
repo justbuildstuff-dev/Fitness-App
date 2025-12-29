@@ -20,6 +20,7 @@ class ProgramProvider extends ChangeNotifier {
   ProgramProvider(this._userId)
     : _firestoreService = FirestoreService.instance,
       _analyticsService = AnalyticsService.instance {
+    debugPrint('[ProgramProvider] Constructor called with userId: $_userId');
     // Auto-load data when userId is set and has changed
     _autoLoadDataIfNeeded();
   }
@@ -38,22 +39,24 @@ class ProgramProvider extends ChangeNotifier {
   /// This prevents the race condition where screens call load methods
   /// before the provider has been updated with the userId
   void _autoLoadDataIfNeeded() {
+    debugPrint('[ProgramProvider] _autoLoadDataIfNeeded called - userId: $_userId, previousUserId: $_previousUserId');
+
     // Only load if we have a userId and it's different from previous
     if (_userId != null && _userId != _previousUserId) {
       _previousUserId = _userId;
 
-      debugPrint('[ProgramProvider] Auto-loading data for userId: $_userId');
+      debugPrint('[ProgramProvider] ✓ Auto-loading data for userId: $_userId');
 
       // Schedule load for next frame to avoid calling notifyListeners during build
       Future.microtask(() {
-        debugPrint('[ProgramProvider] Executing auto-load for programs and analytics');
+        debugPrint('[ProgramProvider] ✓ Executing auto-load for programs and analytics');
         loadPrograms();
         loadAnalytics();
       });
     } else if (_userId == null) {
-      debugPrint('[ProgramProvider] Skipping auto-load - userId is null');
+      debugPrint('[ProgramProvider] ✗ Skipping auto-load - userId is null');
     } else {
-      debugPrint('[ProgramProvider] Skipping auto-load - userId unchanged ($_userId)');
+      debugPrint('[ProgramProvider] ✗ Skipping auto-load - userId unchanged ($_userId)');
     }
   }
 
