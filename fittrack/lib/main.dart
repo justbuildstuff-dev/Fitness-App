@@ -71,14 +71,9 @@ class FitTrackApp extends StatelessWidget {
             final userId = authProvider.user?.uid;
             debugPrint('[Provider] Updating ProgramProvider with userId: ${userId ?? 'null'}');
 
-            // CRITICAL: Only create new instance if userId has actually changed
-            // This prevents unnecessary recreation and ensures auto-load triggers correctly
-            if (previousProgramProvider != null && previousProgramProvider.userId == userId) {
-              debugPrint('[Provider] UserId unchanged, reusing existing ProgramProvider');
-              return previousProgramProvider;
-            }
-
-            debugPrint('[Provider] UserId changed, creating new ProgramProvider');
+            // CRITICAL: Always create new instance to ensure auto-load triggers
+            // The provider constructor handles auto-loading data when userId is set
+            // Reusing instances can cause stale subscriptions and failed load states
             return ProgramProvider(userId);
           },
         ),

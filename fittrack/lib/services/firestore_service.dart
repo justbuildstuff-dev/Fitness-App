@@ -113,15 +113,16 @@ class FirestoreService {
         .orderBy('createdAt', descending: true)
         .snapshots(includeMetadataChanges: true)
         .map((snapshot) {
-          // Convert all documents to Program objects
+          // Convert all documents to Program objects and filter archived programs
+          // Client-side filtering is critical because:
+          // 1. Pending writes may include documents before server applies the query filter
+          // 2. Archive updates may not be reflected in the query immediately
           final programs = snapshot.docs
               .map((doc) => ProgramConverter.fromFirestore(doc))
+              .where((program) => !program.isArchived)
               .toList();
 
-          // CRITICAL: Even with query filtering, we must manually filter
-          // archived programs because pending writes may include documents
-          // that will be filtered by the server but are still in local cache
-          return programs.where((program) => !program.isArchived).toList();
+          return programs;
         });
   }
 
