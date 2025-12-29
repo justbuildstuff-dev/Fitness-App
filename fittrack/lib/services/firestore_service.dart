@@ -111,10 +111,21 @@ class FirestoreService {
         .collection('programs')
         .where('isArchived', isEqualTo: false)
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ProgramConverter.fromFirestore(doc))
-            .toList());
+        .snapshots(includeMetadataChanges: true)
+        .map((snapshot) {
+          // Filter out pending writes (hasPendingWrites) to avoid showing
+          // optimistic updates before they're confirmed by the server
+          if (snapshot.metadata.hasPendingWrites) {
+            // Return cached data while write is pending
+            return snapshot.docs
+                .map((doc) => ProgramConverter.fromFirestore(doc))
+                .toList();
+          }
+          // Return server data once confirmed
+          return snapshot.docs
+              .map((doc) => ProgramConverter.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Get a specific program
