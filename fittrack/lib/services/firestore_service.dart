@@ -302,7 +302,7 @@ class FirestoreService {
         .doc(programId)
         .collection('weeks')
         .orderBy('order')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => WeekConverter.fromFirestore(doc, programId: programId))
             .toList());
@@ -720,7 +720,7 @@ class FirestoreService {
         .doc(weekId)
         .collection('workouts')
         .orderBy('orderIndex')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => WorkoutConverter.fromFirestore(doc, weekId, programId))
             .toList());
@@ -923,7 +923,7 @@ class FirestoreService {
         .doc(workoutId)
         .collection('exercises')
         .orderBy('orderIndex')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => ExerciseConverter.fromFirestore(doc, workoutId, weekId, programId))
             .toList());
@@ -1328,7 +1328,7 @@ class FirestoreService {
         .doc(exerciseId)
         .collection('sets')
         .orderBy('setNumber')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => ExerciseSetConverter.fromFirestore(
                 doc, exerciseId, workoutId, weekId, programId))
