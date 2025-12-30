@@ -23,8 +23,19 @@ permissions:
 
 jobs:
   # Parallel test execution for faster feedback
+  #
+  # Test Job Descriptions:
+  # - unit-tests: Fast validation of business logic (models, services, providers) using mocks
+  # - widget-tests: UI component testing with mocked dependencies
+  # - integration-tests: End-to-end tests on Android emulator (SLOW, known flaky - see #29)
+  # - enhanced-tests: REAL Firebase integration tests connecting to emulators (validates actual Firebase operations)
+  # - performance-tests: Edge case and performance validation
+  # - security-checks: Dependency audits and security scanning
+  #
+  # See Docs/Testing/TestClassification.md for complete test type definitions
+
   unit-tests:
-    name: Unit Tests
+    name: Unit Tests (Business Logic)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -82,7 +93,7 @@ jobs:
         name: unit-test-coverage
 
   widget-tests:
-    name: Widget Tests
+    name: Widget Tests (UI Components)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -122,7 +133,7 @@ jobs:
           
 
   integration-tests:
-    name: Integration Tests (Android)
+    name: E2E Tests (Android Emulator)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -335,7 +346,7 @@ jobs:
       
 
   performance-tests:
-    name: Performance Tests
+    name: Performance Tests (Edge Cases)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -367,9 +378,10 @@ jobs:
           --reporter=github
           
 
-  # Enhanced tests with comprehensive coverage
+  # Real Firebase integration tests using emulators
+  # These tests MUST connect to Firebase and validate actual operations
   enhanced-tests:
-    name: Enhanced Integration Tests (Firebase Emulators)
+    name: Integration Tests (Firebase Emulators)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
