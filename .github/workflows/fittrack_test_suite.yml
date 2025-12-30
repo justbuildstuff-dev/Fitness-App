@@ -274,6 +274,7 @@ jobs:
         sudo udevadm trigger --name-match=kvm
         
     - name: Run Android Integration Test
+      id: integration_test
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 29
@@ -292,25 +293,77 @@ jobs:
           echo "📱 Flutter and emulator info:"
           flutter --version
           flutter devices -v
-          
+
           echo "🔗 Verifying Firebase emulator connectivity:"
           curl -f http://localhost:8080/ && echo "✅ Firestore emulator responding" || echo "❌ Firestore emulator not responding"
           curl -f http://localhost:9099/ && echo "✅ Auth emulator responding" || echo "❌ Auth emulator not responding"
-          
+
           echo "⏰ Warming up Android emulator before tests..."
           adb devices -l
           adb -s emulator-5554 shell pm list packages | head -5 || echo "Emulator warming up..."
           sleep 10
-          
+
           # Verify emulator is responsive
           echo "🔍 Checking emulator health..."
           adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null || (echo "⚠️  Emulator not responding, waiting longer..." && sleep 15)
-          
+
           echo "🚀 Running integration tests on Android with flutter drive..."
 
           echo "Running analytics integration test..."
           # First test needs longer timeout to include APK build time (Gradle + NDK download)
           # Subsequent tests reuse the built APK and only need time for test execution
+          timeout 1800 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
+
+          echo "Running workout creation integration test..."
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554'
+
+          echo "Running complete workflow integration test..."
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554'
+
+          echo "Running cascade delete integration test..."
+          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554'
+
+    - name: Retry Integration Test on Failure
+      if: failure() && steps.integration_test.outcome == 'failure'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        target: google_apis
+        arch: x86_64
+        profile: pixel_2
+        ram-size: 1536M
+        heap-size: 256M
+        disk-size: 2048M
+        avd-name: test-retry
+        disable-animations: true
+        emulator-boot-timeout: 900
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        script: |
+          echo "::warning::Integration test failed on first attempt, retrying once..."
+          echo "⏳ Waiting 30 seconds before retry..."
+          sleep 30
+
+          echo "🔍 Starting Android Integration Test (Retry Attempt)..."
+          echo "📱 Flutter and emulator info:"
+          flutter --version
+          flutter devices -v
+
+          echo "🔗 Verifying Firebase emulator connectivity:"
+          curl -f http://localhost:8080/ && echo "✅ Firestore emulator responding" || echo "❌ Firestore emulator not responding"
+          curl -f http://localhost:9099/ && echo "✅ Auth emulator responding" || echo "❌ Auth emulator not responding"
+
+          echo "⏰ Warming up Android emulator before tests..."
+          adb devices -l
+          adb -s emulator-5554 shell pm list packages | head -5 || echo "Emulator warming up..."
+          sleep 10
+
+          # Verify emulator is responsive
+          echo "🔍 Checking emulator health..."
+          adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null || (echo "⚠️  Emulator not responding, waiting longer..." && sleep 15)
+
+          echo "🚀 Running integration tests on Android with flutter drive..."
+
+          echo "Running analytics integration test..."
           timeout 1800 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
 
           echo "Running workout creation integration test..."
