@@ -262,6 +262,11 @@ Future<void> _signInWithTestAccount(WidgetTester tester) async {
 }
 
 Future<void> _ensureSignedIn(WidgetTester tester) async {
+  // Wait for AuthProvider to check existing auth state
+  // The auth state listener is async, so give it time to fire
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pumpAndSettle();
+
   // Check if we're on sign-in screen
   if (find.text('Sign In').evaluate().isNotEmpty) {
     await _signInWithTestAccount(tester);

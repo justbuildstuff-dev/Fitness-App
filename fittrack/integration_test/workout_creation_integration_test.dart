@@ -123,6 +123,9 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        // The auth state listener is async, so give it time to fire
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         print('✅ App launched');
@@ -270,6 +273,8 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate through the app to create workout screen
@@ -339,11 +344,13 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
-        
+
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle();
         
@@ -390,6 +397,8 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to weeks screen
@@ -455,6 +464,8 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         await tester.tap(find.text('Integration Test Program'));
@@ -487,6 +498,8 @@ void main() {
         await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 3));
 
         // Navigate back to the weeks screen
@@ -544,6 +557,8 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate and create workout as second user
@@ -587,6 +602,8 @@ void main() {
         final prefs2 = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to first user's workouts
@@ -618,6 +635,8 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // Wait for AuthProvider to check existing auth state
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to weeks screen
