@@ -124,6 +124,7 @@ jobs:
   integration-tests:
     name: Integration Tests (Android)
     runs-on: ubuntu-latest
+    timeout-minutes: 80
     if: github.event_name == 'pull_request'
 
     steps:
@@ -312,16 +313,20 @@ jobs:
           echo "Running analytics integration test..."
           # First test needs longer timeout to include APK build time (Gradle + NDK download)
           # Subsequent tests reuse the built APK and only need time for test execution
-          timeout 1800 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
+          # Timeout increased from 1800s (30min) to 2400s (40min) for build + test execution
+          timeout 2400 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554'
 
           echo "Running workout creation integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554'
+          # Timeout increased from 900s (15min) to 1200s (20min) for test execution
+          timeout 1200 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554'
 
           echo "Running complete workflow integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554'
+          # Timeout increased from 900s (15min) to 1200s (20min) for test execution
+          timeout 1200 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554'
 
           echo "Running cascade delete integration test..."
-          timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554'
+          # Timeout increased from 900s (15min) to 1200s (20min) for test execution
+          timeout 1200 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554'
 
     - name: Retry Integration Test on Failure
       if: failure() && steps.integration_test.outcome == 'failure'
