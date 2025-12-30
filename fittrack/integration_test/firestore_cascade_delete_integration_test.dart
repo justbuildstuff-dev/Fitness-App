@@ -125,6 +125,7 @@ void main() {
         'order': 1,
         'notes': 'Test notes',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
       });
@@ -133,9 +134,10 @@ void main() {
       // Create first workout with 2 exercises
       final workout1Ref = await weekRef.collection('workouts').add({
         'name': 'Workout 1',
-        'order': 1,
+        'orderIndex': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -143,10 +145,11 @@ void main() {
 
       final exercise1Ref = await workout1Ref.collection('exercises').add({
         'name': 'Exercise 1',
-        'order': 1,
+        'orderIndex': 1,
         'exerciseType': 'strength',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -155,22 +158,29 @@ void main() {
 
       // Add 3 sets to exercise 1
       for (int i = 0; i < 3; i++) {
+        final now = DateTime.now();
         await exercise1Ref.collection('sets').add({
           'reps': 10,
           'weight': 100.0,
-          'order': i + 1,
+          'setNumber': i + 1,
           'checked': false,
-          'createdAt': DateTime.now(),
+          'createdAt': now,
+          'updatedAt': now,
           'userId': testUserId,
+          'exerciseId': exercise1Ref.id,
+          'workoutId': workout1Ref.id,
+          'weekId': testWeekId,
+          'programId': testProgramId,
         });
       }
 
       final exercise2Ref = await workout1Ref.collection('exercises').add({
         'name': 'Exercise 2',
-        'order': 2,
+        'orderIndex': 2,
         'exerciseType': 'strength',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -179,22 +189,29 @@ void main() {
 
       // Add 2 sets to exercise 2
       for (int i = 0; i < 2; i++) {
+        final now = DateTime.now();
         await exercise2Ref.collection('sets').add({
           'reps': 10,
           'weight': 100.0,
-          'order': i + 1,
+          'setNumber': i + 1,
           'checked': false,
-          'createdAt': DateTime.now(),
+          'createdAt': now,
+          'updatedAt': now,
           'userId': testUserId,
+          'exerciseId': exercise2Ref.id,
+          'workoutId': workout1Ref.id,
+          'weekId': testWeekId,
+          'programId': testProgramId,
         });
       }
 
       // Create second workout with 1 exercise
       final workout2Ref = await weekRef.collection('workouts').add({
         'name': 'Workout 2',
-        'order': 2,
+        'orderIndex': 2,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -202,10 +219,11 @@ void main() {
 
       final exercise3Ref = await workout2Ref.collection('exercises').add({
         'name': 'Exercise 3',
-        'order': 1,
+        'orderIndex': 1,
         'exerciseType': 'strength',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -213,13 +231,19 @@ void main() {
       });
 
       // Add 1 set to exercise 3
+      final now = DateTime.now();
       await exercise3Ref.collection('sets').add({
         'reps': 10,
         'weight': 100.0,
-        'order': 1,
+        'setNumber': 1,
         'checked': false,
-        'createdAt': DateTime.now(),
+        'createdAt': now,
+        'updatedAt': now,
         'userId': testUserId,
+        'exerciseId': exercise3Ref.id,
+        'workoutId': workout2Ref.id,
+        'weekId': testWeekId,
+        'programId': testProgramId,
       });
 
       // Wait for Firestore to sync
@@ -266,6 +290,7 @@ void main() {
         'order': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
       });
@@ -274,9 +299,10 @@ void main() {
       // Create workout
       final workoutRef = await weekRef.collection('workouts').add({
         'name': 'Test Workout',
-        'order': 1,
+        'orderIndex': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -286,10 +312,11 @@ void main() {
       // Create first exercise with 4 sets
       final exercise1Ref = await workoutRef.collection('exercises').add({
         'name': 'Exercise 1',
-        'order': 1,
+        'orderIndex': 1,
         'exerciseType': 'strength',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -297,23 +324,30 @@ void main() {
       });
 
       for (int i = 0; i < 4; i++) {
+        final now = DateTime.now();
         await exercise1Ref.collection('sets').add({
           'reps': 10,
           'weight': 100.0,
-          'order': i + 1,
+          'setNumber': i + 1,
           'checked': false,
-          'createdAt': DateTime.now(),
+          'createdAt': now,
+          'updatedAt': now,
           'userId': testUserId,
+          'exerciseId': exercise1Ref.id,
+          'workoutId': testWorkoutId,
+          'weekId': testWeekId,
+          'programId': testProgramId,
         });
       }
 
       // Create second exercise with 3 sets
       final exercise2Ref = await workoutRef.collection('exercises').add({
         'name': 'Exercise 2',
-        'order': 2,
+        'orderIndex': 2,
         'exerciseType': 'cardio',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -321,13 +355,19 @@ void main() {
       });
 
       for (int i = 0; i < 3; i++) {
+        final now = DateTime.now();
         await exercise2Ref.collection('sets').add({
           'duration': 300,
           'distance': 5.0,
-          'order': i + 1,
+          'setNumber': i + 1,
           'checked': false,
-          'createdAt': DateTime.now(),
+          'createdAt': now,
+          'updatedAt': now,
           'userId': testUserId,
+          'exerciseId': exercise2Ref.id,
+          'workoutId': testWorkoutId,
+          'weekId': testWeekId,
+          'programId': testProgramId,
         });
       }
 
@@ -373,6 +413,7 @@ void main() {
         'order': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
       });
@@ -380,9 +421,10 @@ void main() {
 
       final workoutRef = await weekRef.collection('workouts').add({
         'name': 'Test Workout',
-        'order': 1,
+        'orderIndex': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -391,10 +433,11 @@ void main() {
 
       final exerciseRef = await workoutRef.collection('exercises').add({
         'name': 'Test Exercise',
-        'order': 1,
+        'orderIndex': 1,
         'exerciseType': 'strength',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -404,13 +447,19 @@ void main() {
 
       // Create 5 sets
       for (int i = 0; i < 5; i++) {
+        final now = DateTime.now();
         await exerciseRef.collection('sets').add({
           'reps': 10 + i,
           'weight': 100.0 + (i * 5),
-          'order': i + 1,
+          'setNumber': i + 1,
           'checked': false,
-          'createdAt': DateTime.now(),
+          'createdAt': now,
+          'updatedAt': now,
           'userId': testUserId,
+          'exerciseId': testExerciseId!,
+          'workoutId': testWorkoutId!,
+          'weekId': testWeekId!,
+          'programId': testProgramId!,
         });
       }
 
@@ -447,11 +496,13 @@ void main() {
       final programRef = await _createTestProgram(testUserId);
       testProgramId = programRef.id;
 
+      final now = DateTime.now();
       final weekRef = await programRef.collection('weeks').add({
         'name': 'Empty Week',
         'order': 1,
         'notes': '',
-        'createdAt': DateTime.now(),
+        'createdAt': now,
+        'updatedAt': now,
         'userId': testUserId,
         'programId': testProgramId,
       });
@@ -492,6 +543,7 @@ void main() {
         'order': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
       });
@@ -499,9 +551,10 @@ void main() {
 
       final workoutRef = await weekRef.collection('workouts').add({
         'name': 'Test Workout',
-        'order': 1,
+        'orderIndex': 1,
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -510,10 +563,11 @@ void main() {
 
       final exerciseRef = await workoutRef.collection('exercises').add({
         'name': 'Empty Exercise',
-        'order': 1,
+        'orderIndex': 1,
         'exerciseType': 'strength',
         'notes': '',
         'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
         'userId': testUserId,
         'programId': testProgramId,
         'weekId': testWeekId,
@@ -555,6 +609,7 @@ Future<DocumentReference> _createTestProgram(String userId) async {
     'name': 'Test Program',
     'description': 'Integration test program',
     'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
     'updatedAt': DateTime.now(),
     'userId': userId,
     'isArchived': false,
