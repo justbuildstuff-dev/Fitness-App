@@ -180,15 +180,7 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
-        
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        api-level: 33
-        target: google_apis
-        arch: x86_64
-        profile: Nexus 6
-        
+
     - name: Cache Gradle dependencies and NDK
       uses: actions/cache@v4
       with:
