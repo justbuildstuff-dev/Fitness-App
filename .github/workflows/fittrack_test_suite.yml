@@ -302,10 +302,11 @@ jobs:
           adb -s emulator-5554 shell pm list packages | head -5 || echo "Emulator warming up..."
           sleep 10
           
-          # Verify emulator is responsive
-          echo "🔍 Checking emulator health..."
-          adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null || (echo "⚠️  Emulator not responding, waiting longer..." && sleep 15)
-          
+          # Run comprehensive emulator health check
+          echo "🔍 Running comprehensive emulator health checks..."
+          chmod +x fittrack/scripts/verify_emulator_ready.sh
+          ./fittrack/scripts/verify_emulator_ready.sh
+
           echo "🚀 Running integration tests on Android with flutter drive..."
 
           echo "Running analytics integration test..."
