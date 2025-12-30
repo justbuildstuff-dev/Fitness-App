@@ -315,45 +315,7 @@ jobs:
           chmod +x fittrack/scripts/verify_emulator_ready.sh
           ./fittrack/scripts/verify_emulator_ready.sh
 
-          echo "🚀 Running integration tests on Android with flutter drive..."
-
-          # Create log file for capturing test output
-          echo "" > /tmp/integration_test_output.log
-
-          echo "Running analytics integration test..."
-          cd fittrack
-          timeout 2400 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log
-          TEST_EXIT_CODE=$?
-          cd ..
-
-          if [ $TEST_EXIT_CODE -eq 0 ]; then
-            echo "Running workout creation integration test..."
-            cd fittrack
-            timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log
-            TEST_EXIT_CODE=$?
-            cd ..
-          fi
-
-          if [ $TEST_EXIT_CODE -eq 0 ]; then
-            echo "Running complete workflow integration test..."
-            cd fittrack
-            timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log
-            TEST_EXIT_CODE=$?
-            cd ..
-          fi
-
-          if [ $TEST_EXIT_CODE -eq 0 ]; then
-            echo "Running cascade delete integration test..."
-            cd fittrack
-            timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log
-            TEST_EXIT_CODE=$?
-            cd ..
-          fi
-
-          # Copy output for failure classification
-          cp /tmp/integration_test_output.log /tmp/last_test_output.log
-
-          exit $TEST_EXIT_CODE
+          echo "🚀 Running integration tests on Android with flutter drive..." && echo "" > /tmp/integration_test_output.log && echo "Running analytics integration test..." && cd fittrack && (timeout 2400 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && echo "Running workout creation integration test..." && cd fittrack && (timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && echo "Running complete workflow integration test..." && cd fittrack && (timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && echo "Running cascade delete integration test..." && cd fittrack && (timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && cp /tmp/integration_test_output.log /tmp/last_test_output.log; FINAL_EXIT_CODE=$?; cp /tmp/integration_test_output.log /tmp/last_test_output.log; exit $FINAL_EXIT_CODE
 
     - name: Retry Integration Test on Failure
       if: failure() && steps.integration_test.outcome == 'failure'
