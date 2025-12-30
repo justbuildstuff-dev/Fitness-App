@@ -274,6 +274,7 @@ jobs:
         sudo udevadm trigger --name-match=kvm
         
     - name: Run Android Integration Test
+      id: integration_test
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 29
@@ -321,6 +322,55 @@ jobs:
 
           echo "Running cascade delete integration test..."
           timeout 900 bash -c 'cd fittrack && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554'
+
+    - name: Analyze Integration Test Failure
+      if: failure() && steps.integration_test.outcome == 'failure'
+      run: |
+        echo "::group::Analyzing integration test failure..."
+
+        # Check for known infrastructure failure patterns
+        FAILURE_TYPE="UNKNOWN"
+
+        # Pattern matching for infrastructure failures
+        if grep -qi "Failed to install" "$GITHUB_STEP_SUMMARY" 2>/dev/null || \
+           grep -qi "installation failed" "$GITHUB_STEP_SUMMARY" 2>/dev/null; then
+          FAILURE_TYPE="INFRASTRUCTURE: APK Installation"
+          echo "::warning::INFRASTRUCTURE FAILURE DETECTED: APK installation issue"
+          echo "This is likely a transient emulator issue, not a code problem."
+
+        elif grep -qi "Timed out\|timeout" "$GITHUB_STEP_SUMMARY" 2>/dev/null; then
+          FAILURE_TYPE="INFRASTRUCTURE: Timeout"
+          echo "::warning::INFRASTRUCTURE FAILURE DETECTED: Operation timeout"
+          echo "This is likely due to slow emulator or CI runner resource constraints."
+
+        elif grep -qi "Connection refused\|ECONNREFUSED" "$GITHUB_STEP_SUMMARY" 2>/dev/null; then
+          FAILURE_TYPE="INFRASTRUCTURE: Network/Connection"
+          echo "::warning::INFRASTRUCTURE FAILURE DETECTED: Network connection issue"
+          echo "This is likely an emulator-to-host connectivity problem."
+
+        elif grep -qi "ADB\|adb.*failed\|device offline" "$GITHUB_STEP_SUMMARY" 2>/dev/null; then
+          FAILURE_TYPE="INFRASTRUCTURE: ADB Connection"
+          echo "::warning::INFRASTRUCTURE FAILURE DETECTED: ADB connection issue"
+          echo "This is likely an emulator communication problem."
+
+        elif grep -qi "Gradle\|download.*failed" "$GITHUB_STEP_SUMMARY" 2>/dev/null; then
+          FAILURE_TYPE="INFRASTRUCTURE: Build/Download"
+          echo "::warning::INFRASTRUCTURE FAILURE DETECTED: Build dependency issue"
+          echo "This is likely a Gradle or NDK download problem."
+
+        else
+          FAILURE_TYPE="CODE: Test Assertion or Logic"
+          echo "::error::CODE FAILURE DETECTED: This appears to be a test or code issue"
+          echo "Review test logs carefully - this may be a real bug."
+        fi
+
+        echo ""
+        echo "================================================"
+        echo "FAILURE CLASSIFICATION: $FAILURE_TYPE"
+        echo "================================================"
+        echo ""
+        echo "See CI_Integration_Tests_Guide.md for troubleshooting steps."
+        echo "::endgroup::"
 
     - name: Stop Firebase emulators
       if: always()
