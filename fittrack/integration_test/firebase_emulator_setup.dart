@@ -206,14 +206,12 @@ class FirebaseEmulatorSetup {
       //
       // Use Firebase Auth Emulator REST API to set emailVerified: true
       // This is the recommended approach for integration tests with emulators
+      // The helper will reload the user and verify the change took effect
       await _setEmailVerifiedInEmulator(userCredential.user!);
 
-      // Force reload to get latest state from emulator
-      await userCredential.user!.reload();
       final currentUser = FirebaseAuth.instance.currentUser;
-
       print('✅ Test user created: ${currentUser?.uid ?? 'null'} ($email)');
-      print('   Email verified: ${currentUser?.emailVerified ?? false}');
+      print('   Final emailVerified status: ${currentUser?.emailVerified ?? false}');
 
       if (currentUser?.emailVerified == false) {
         print('   ⚠️  WARNING: Email NOT verified - tests may fail!');
@@ -256,6 +254,18 @@ class FirebaseEmulatorSetup {
 
       if (response.statusCode == 200) {
         print('✅ Email verified via Auth Emulator REST API');
+        print('   Response: ${response.body}');
+
+        // CRITICAL: Wait for emulator to process the update
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Force reload to get updated state from emulator
+        await user.reload();
+
+        // Check if it actually worked
+        final updatedUser = FirebaseAuth.instance.currentUser;
+        print('   After reload - emailVerified: ${updatedUser?.emailVerified ?? false}');
+
       } else {
         print('⚠️  Failed to verify email via REST API: ${response.statusCode} - ${response.body}');
       }
