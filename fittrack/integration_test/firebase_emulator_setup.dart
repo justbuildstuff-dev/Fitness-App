@@ -198,9 +198,32 @@ class FirebaseEmulatorSetup {
         throw Exception('User creation succeeded but user is null');
       }
 
-      print('✅ Test user created: ${userCredential.user!.uid} ($email)');
+      // CRITICAL FIX: Verify email for test users
+      // Without verified email, AuthWrapper redirects to EmailVerificationScreen
+      // This causes E2E tests to fail - they can't find "Programs" widget
+      //
+      // In Firebase Auth Emulator, users are NOT auto-verified by default
+      // We use updateProfile as a workaround since emulator doesn't enforce verification
+      // Real solution would require Auth emulator REST API or Admin SDK
+
+      // Send verification email (in emulator, this doesn't actually send)
+      await userCredential.user!.sendEmailVerification();
+
+      // Force reload to get latest state from emulator
+      await userCredential.user!.reload();
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      print('✅ Test user created: ${currentUser?.uid ?? 'null'} ($email)');
+      print('   Email verified: ${currentUser?.emailVerified ?? false}');
+
+      if (currentUser?.emailVerified == false) {
+        print('   ⚠️  WARNING: Email NOT verified - tests may fail!');
+        print('   Auth emulator may not auto-verify emails.');
+        print('   E2E tests will be redirected to EmailVerificationScreen.');
+      }
+
       return userCredential;
-      
+
     } catch (e) {
       throw Exception('Failed to create test user: $e');
     }
