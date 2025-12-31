@@ -163,6 +163,8 @@ void main() {
         await exercise1Ref.collection('sets').add({
           'reps': 10,
           'weight': 100.0,
+          'duration': null,
+          'distance': null,
           'setNumber': i + 1,
           'checked': false,
           'createdAt': now,
@@ -194,6 +196,8 @@ void main() {
         await exercise2Ref.collection('sets').add({
           'reps': 10,
           'weight': 100.0,
+          'duration': null,
+          'distance': null,
           'setNumber': i + 1,
           'checked': false,
           'createdAt': now,
@@ -237,6 +241,8 @@ void main() {
       await exercise3Ref.collection('sets').add({
         'reps': 10,
         'weight': 100.0,
+        'duration': null,
+        'distance': null,
         'setNumber': 1,
         'checked': false,
         'createdAt': now,
@@ -331,6 +337,8 @@ void main() {
         await exercise1Ref.collection('sets').add({
           'reps': 10,
           'weight': 100.0,
+          'duration': null,
+          'distance': null,
           'setNumber': i + 1,
           'checked': false,
           'createdAt': now,
@@ -360,6 +368,8 @@ void main() {
       for (int i = 0; i < 3; i++) {
         final now = DateTime.now();
         await exercise2Ref.collection('sets').add({
+          'reps': null,
+          'weight': null,
           'duration': 300,
           'distance': 5.0,
           'setNumber': i + 1,
@@ -455,6 +465,8 @@ void main() {
         await exerciseRef.collection('sets').add({
           'reps': 10 + i,
           'weight': 100.0 + (i * 5),
+          'duration': null,
+          'distance': null,
           'setNumber': i + 1,
           'checked': false,
           'createdAt': now,
@@ -614,7 +626,6 @@ Future<DocumentReference> _createTestProgram(String userId) async {
     'name': 'Test Program',
     'description': 'Integration test program',
     'createdAt': DateTime.now(),
-        'updatedAt': DateTime.now(),
     'updatedAt': DateTime.now(),
     'userId': userId,
     'isArchived': false,
