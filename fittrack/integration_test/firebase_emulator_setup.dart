@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 
 /// Firebase Emulator Setup Utilities for Integration Tests
 /// 
@@ -173,10 +175,10 @@ class FirebaseEmulatorSetup {
   }
 
   /// Create a test user account in the Auth emulator for integration tests
-  /// 
+  ///
   /// Integration tests need authenticated users to test workout creation workflows.
   /// This method creates isolated test users that don't affect production data.
-  /// 
+  ///
   /// Returns: UserCredential for the created test user
   static Future<UserCredential> createTestUser({
     String email = 'test@example.com',
@@ -198,16 +200,13 @@ class FirebaseEmulatorSetup {
         throw Exception('User creation succeeded but user is null');
       }
 
-      // CRITICAL FIX: Verify email for test users
+      // CRITICAL FIX: Mark email as verified for E2E tests
       // Without verified email, AuthWrapper redirects to EmailVerificationScreen
       // This causes E2E tests to fail - they can't find "Programs" widget
       //
-      // In Firebase Auth Emulator, users are NOT auto-verified by default
-      // We use updateProfile as a workaround since emulator doesn't enforce verification
-      // Real solution would require Auth emulator REST API or Admin SDK
-
-      // Send verification email (in emulator, this doesn't actually send)
-      await userCredential.user!.sendEmailVerification();
+      // Use Firebase Auth Emulator REST API to set emailVerified: true
+      // This is the recommended approach for integration tests with emulators
+      await _setEmailVerifiedInEmulator(userCredential.user!);
 
       // Force reload to get latest state from emulator
       await userCredential.user!.reload();
@@ -218,7 +217,7 @@ class FirebaseEmulatorSetup {
 
       if (currentUser?.emailVerified == false) {
         print('   ⚠️  WARNING: Email NOT verified - tests may fail!');
-        print('   Auth emulator may not auto-verify emails.');
+        print('   Auth emulator REST API may not have updated the user.');
         print('   E2E tests will be redirected to EmailVerificationScreen.');
       }
 
@@ -226,6 +225,43 @@ class FirebaseEmulatorSetup {
 
     } catch (e) {
       throw Exception('Failed to create test user: $e');
+    }
+  }
+
+  /// Set emailVerified flag using Firebase Auth Emulator REST API
+  ///
+  /// The Firebase Auth Emulator provides a REST API for managing test users.
+  /// This method uses the update endpoint to set emailVerified: true.
+  ///
+  /// Documentation: https://firebase.google.com/docs/emulator-suite/connect_auth#admin_actions
+  static Future<void> _setEmailVerifiedInEmulator(User user) async {
+    try {
+      final idToken = await user.getIdToken();
+
+      // Auth Emulator REST API endpoint
+      // http://10.0.2.2:9099/identitytoolkit.googleapis.com/v1/accounts:update?key=test-api-key
+      final url = Uri.parse(
+        'http://$_authEmulatorHost:$_authEmulatorPort/identitytoolkit.googleapis.com/v1/accounts:update?key=test-api-key'
+      );
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'idToken': idToken,
+          'emailVerified': true,
+          'returnSecureToken': true,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Email verified via Auth Emulator REST API');
+      } else {
+        print('⚠️  Failed to verify email via REST API: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('⚠️  Error calling Auth Emulator REST API: $e');
+      // Don't throw - this is a best-effort operation
     }
   }
 
