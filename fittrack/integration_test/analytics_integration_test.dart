@@ -31,15 +31,32 @@ void main() {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
+      print('DEBUG: SharedPreferences initialized');
 
       // Launch the app
+      print('DEBUG: Pumping FitTrackApp widget...');
       await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
+
+      // CRITICAL: Wait for AuthProvider's async auth state listener to fire
+      // Without this delay, AuthProvider hasn't checked if user is signed in yet
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
+      print('DEBUG: Auth state check complete, checking UI state...');
 
       // Skip if we're not on the sign-in screen (already signed in)
-      if (find.text('Sign In').evaluate().isNotEmpty) {
+      final signInButton = find.text('Sign In');
+      final programsText = find.text('Programs');
+      print('DEBUG: Sign In button found: ${signInButton.evaluate().isNotEmpty}');
+      print('DEBUG: Programs text found: ${programsText.evaluate().isNotEmpty}');
+
+      if (signInButton.evaluate().isNotEmpty) {
+        print('DEBUG: User not signed in, signing in with test account...');
         // Sign in with test credentials
         await _signInWithTestAccount(tester);
+        print('DEBUG: Sign in complete');
+      } else {
+        print('DEBUG: User already signed in from previous test');
       }
 
       // Navigate to Analytics tab
@@ -80,9 +97,16 @@ void main() {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
+      print('DEBUG: SharedPreferences initialized');
 
+      print('DEBUG: Pumping FitTrackApp widget...');
       await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
+
+      // CRITICAL: Wait for AuthProvider's async auth state listener to fire
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
+      print('DEBUG: Auth state check complete');
 
       // Ensure we're signed in
       await _ensureSignedIn(tester);
@@ -111,9 +135,18 @@ void main() {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
+      print('DEBUG: SharedPreferences initialized');
 
+      // Launch the app
+      print('DEBUG: Pumping FitTrackApp widget...');
       await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
+
+      // CRITICAL: Wait for AuthProvider's async auth state listener to fire
+      // Without this delay, AuthProvider hasn't checked if user is signed in yet
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
+      print('DEBUG: Auth state check complete, checking UI state...');
 
       await _ensureSignedIn(tester);
 
@@ -147,9 +180,18 @@ void main() {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
+      print('DEBUG: SharedPreferences initialized');
 
+      // Launch the app
+      print('DEBUG: Pumping FitTrackApp widget...');
       await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
+
+      // CRITICAL: Wait for AuthProvider's async auth state listener to fire
+      // Without this delay, AuthProvider hasn't checked if user is signed in yet
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
+      print('DEBUG: Auth state check complete, checking UI state...');
 
       await _ensureSignedIn(tester);
 
@@ -185,9 +227,18 @@ void main() {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
+      print('DEBUG: SharedPreferences initialized');
 
+      // Launch the app
+      print('DEBUG: Pumping FitTrackApp widget...');
       await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
+
+      // CRITICAL: Wait for AuthProvider's async auth state listener to fire
+      // Without this delay, AuthProvider hasn't checked if user is signed in yet
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
+      print('DEBUG: Auth state check complete, checking UI state...');
 
       await _ensureSignedIn(tester);
 
@@ -214,14 +265,23 @@ void main() {
       // Initialize SharedPreferences for testing
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
+      print('DEBUG: SharedPreferences initialized');
 
+      // Launch the app
+      print('DEBUG: Pumping FitTrackApp widget...');
       await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
+
+      // CRITICAL: Wait for AuthProvider's async auth state listener to fire
+      // Without this delay, AuthProvider hasn't checked if user is signed in yet
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
+      print('DEBUG: Auth state check complete, checking UI state...');
 
       // Test with no network or Firebase issues
       // This would require mocking network failures
       // For now, just verify error UI works if errors occur
-      
+
       await _ensureSignedIn(tester);
 
       // Navigate to analytics tab
@@ -262,19 +322,36 @@ Future<void> _signInWithTestAccount(WidgetTester tester) async {
 }
 
 Future<void> _ensureSignedIn(WidgetTester tester) async {
+  print('DEBUG: _ensureSignedIn() called');
+
   // Wait for AuthProvider to check existing auth state
   // The auth state listener is async, so give it time to fire
+  print('DEBUG: Pumping 500ms to allow auth state to propagate...');
   await tester.pump(const Duration(milliseconds: 500));
   await tester.pumpAndSettle();
+  print('DEBUG: Auth state propagation complete');
 
   // Check if we're on sign-in screen
-  if (find.text('Sign In').evaluate().isNotEmpty) {
+  final signInButton = find.text('Sign In');
+  final programsText = find.text('Programs');
+  print('DEBUG: Sign In button found: ${signInButton.evaluate().isNotEmpty}');
+  print('DEBUG: Programs text found: ${programsText.evaluate().isNotEmpty}');
+
+  if (signInButton.evaluate().isNotEmpty) {
+    print('DEBUG: User not authenticated, signing in...');
     await _signInWithTestAccount(tester);
+    print('DEBUG: Sign in complete, verifying Programs screen...');
+  } else {
+    print('DEBUG: User already authenticated');
   }
 
   // Wait for home screen to load
   await tester.pumpAndSettle();
-  expect(find.text('Programs'), findsOneWidget);
+  print('DEBUG: Final UI state - Sign In: ${signInButton.evaluate().isNotEmpty}, Programs: ${programsText.evaluate().isNotEmpty}');
+
+  // This is where tests are failing - can't find Programs widget
+  expect(find.text('Programs'), findsOneWidget, reason: 'Programs screen should be visible after sign in');
+  print('DEBUG: Programs widget verified successfully');
 }
 
 Future<void> _navigateToAnalytics(WidgetTester tester) async {
