@@ -226,51 +226,77 @@ class FirebaseEmulatorSetup {
     }
   }
 
-  /// Set emailVerified flag using Firebase Auth Emulator REST API
+  /// Set emailVerified flag using Firebase Auth Emulator OOB codes endpoint
   ///
-  /// The Firebase Auth Emulator provides a REST API for managing test users.
-  /// This method uses the update endpoint to set emailVerified: true.
+  /// The Firebase Auth Emulator provides an OOB (Out-of-Band) codes endpoint
+  /// that simulates clicking the email verification link. This is the proper
+  /// way to verify emails in the emulator environment.
   ///
-  /// Documentation: https://firebase.google.com/docs/emulator-suite/connect_auth#admin_actions
+  /// Documentation: https://firebase.google.com/docs/emulator-suite/connect_auth
   static Future<void> _setEmailVerifiedInEmulator(User user) async {
     try {
-      final idToken = await user.getIdToken();
+      // Step 1: Send verification email (creates OOB code in emulator)
+      await user.sendEmailVerification();
+      print('📧 Sent verification email (created OOB code in emulator)');
 
-      // Auth Emulator REST API endpoint
-      // http://10.0.2.2:9099/identitytoolkit.googleapis.com/v1/accounts:update?key=test-api-key
-      final url = Uri.parse(
-        'http://$_authEmulatorHost:$_authEmulatorPort/identitytoolkit.googleapis.com/v1/accounts:update?key=test-api-key'
+      // Step 2: Get the OOB code from emulator's OOB codes endpoint
+      final oobUrl = Uri.parse(
+        'http://$_authEmulatorHost:$_authEmulatorPort/emulator/v1/projects/fitness-app-8505e/oobCodes'
       );
 
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'idToken': idToken,
-          'emailVerified': true,
-          'returnSecureToken': true,
-        }),
-      );
+      final oobResponse = await http.get(oobUrl);
 
-      if (response.statusCode == 200) {
-        print('✅ Email verified via Auth Emulator REST API');
-        print('   Response: ${response.body}');
+      if (oobResponse.statusCode == 200) {
+        final oobData = json.decode(oobResponse.body);
+        final oobCodes = oobData['oobCodes'] as List<dynamic>?;
 
-        // CRITICAL: Wait for emulator to process the update
-        await Future.delayed(const Duration(milliseconds: 100));
+        if (oobCodes != null && oobCodes.isNotEmpty) {
+          // Find the most recent verification code for this user
+          final userOobCode = oobCodes.lastWhere(
+            (code) => code['email'] == user.email && code['requestType'] == 'VERIFY_EMAIL',
+            orElse: () => null,
+          );
 
-        // Force reload to get updated state from emulator
-        await user.reload();
+          if (userOobCode != null) {
+            final oobCode = userOobCode['oobCode'] as String;
+            print('✅ Found OOB verification code: ${oobCode.substring(0, 10)}...');
 
-        // Check if it actually worked
-        final updatedUser = FirebaseAuth.instance.currentUser;
-        print('   After reload - emailVerified: ${updatedUser?.emailVerified ?? false}');
+            // Step 3: Apply the OOB code (simulates clicking verification link)
+            final applyUrl = Uri.parse(
+              'http://$_authEmulatorHost:$_authEmulatorPort/identitytoolkit.googleapis.com/v1/accounts:update?key=test-api-key'
+            );
 
+            final applyResponse = await http.post(
+              applyUrl,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'oobCode': oobCode,
+              }),
+            );
+
+            if (applyResponse.statusCode == 200) {
+              print('✅ Email verified via OOB code application');
+
+              // Step 4: Reload user to get updated emailVerified status
+              await Future.delayed(const Duration(milliseconds: 100));
+              await user.reload();
+
+              final updatedUser = FirebaseAuth.instance.currentUser;
+              print('   After reload - emailVerified: ${updatedUser?.emailVerified ?? false}');
+            } else {
+              print('⚠️  Failed to apply OOB code: ${applyResponse.statusCode} - ${applyResponse.body}');
+            }
+          } else {
+            print('⚠️  No verification OOB code found for ${user.email}');
+          }
+        } else {
+          print('⚠️  No OOB codes available in emulator');
+        }
       } else {
-        print('⚠️  Failed to verify email via REST API: ${response.statusCode} - ${response.body}');
+        print('⚠️  Failed to get OOB codes: ${oobResponse.statusCode}');
       }
     } catch (e) {
-      print('⚠️  Error calling Auth Emulator REST API: $e');
+      print('⚠️  Error verifying email via OOB code: $e');
       // Don't throw - this is a best-effort operation
     }
   }
