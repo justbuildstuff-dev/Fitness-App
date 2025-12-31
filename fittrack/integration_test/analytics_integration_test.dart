@@ -8,6 +8,48 @@ import 'package:fittrack/screens/analytics/components/monthly_heatmap_section.da
 import 'package:fittrack/screens/analytics/components/key_statistics_section.dart';
 import 'firebase_emulator_setup.dart';
 
+// Helper function to print current screen information for debugging
+void _printCurrentScreen(WidgetTester tester, String context) {
+  print('DEBUG [$context]: Current screen info:');
+
+  // Try to find AppBar and its title
+  final appBarFinder = find.byType(AppBar);
+  if (appBarFinder.evaluate().isNotEmpty) {
+    final appBar = tester.widget<AppBar>(appBarFinder.first);
+    if (appBar.title != null) {
+      final titleWidget = appBar.title;
+      if (titleWidget is Text) {
+        print('   AppBar title: "${titleWidget.data}"');
+      } else {
+        print('   AppBar title: $titleWidget (not Text widget)');
+      }
+    } else {
+      print('   AppBar: No title');
+    }
+  } else {
+    print('   No AppBar found');
+  }
+
+  // Check for common screen indicators
+  final signInButton = find.text('Sign In');
+  final emailVerificationText = find.text('Verify Your Email');
+  final programsText = find.text('Programs');
+  final analyticsText = find.text('Analytics');
+
+  print('   Sign In button: ${signInButton.evaluate().isNotEmpty}');
+  print('   Email Verification: ${emailVerificationText.evaluate().isNotEmpty}');
+  print('   Programs text: ${programsText.evaluate().isNotEmpty}');
+  print('   Analytics text: ${analyticsText.evaluate().isNotEmpty}');
+
+  // Check for BottomNavigationBar
+  final bottomNavFinder = find.byType(BottomNavigationBar);
+  if (bottomNavFinder.evaluate().isNotEmpty) {
+    print('   BottomNavigationBar: Found (likely on HomeScreen)');
+  } else {
+    print('   BottomNavigationBar: Not found');
+  }
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -43,6 +85,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
       print('DEBUG: Auth state check complete, checking UI state...');
+
+      // Print current screen state for debugging
+      _printCurrentScreen(tester, 'After auth check');
 
       // Skip if we're not on the sign-in screen (already signed in)
       final signInButton = find.text('Sign In');
@@ -108,6 +153,9 @@ void main() {
       await tester.pumpAndSettle();
       print('DEBUG: Auth state check complete');
 
+      // Print current screen state
+      _printCurrentScreen(tester, 'Test 2 - After auth check');
+
       // Ensure we're signed in
       await _ensureSignedIn(tester);
 
@@ -147,6 +195,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
       print('DEBUG: Auth state check complete, checking UI state...');
+
+      // Print current screen state
+      _printCurrentScreen(tester, 'Test 3 - After auth check');
 
       await _ensureSignedIn(tester);
 
@@ -192,6 +243,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
       print('DEBUG: Auth state check complete, checking UI state...');
+
+      // Print current screen state
+      _printCurrentScreen(tester, 'Test 4 - After auth check');
 
       await _ensureSignedIn(tester);
 
@@ -240,6 +294,9 @@ void main() {
       await tester.pumpAndSettle();
       print('DEBUG: Auth state check complete, checking UI state...');
 
+      // Print current screen state
+      _printCurrentScreen(tester, 'Test 5 - After auth check');
+
       await _ensureSignedIn(tester);
 
       // Navigate to analytics tab
@@ -277,6 +334,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
       print('DEBUG: Auth state check complete, checking UI state...');
+
+      // Print current screen state
+      _printCurrentScreen(tester, 'Test 6 - After auth check');
 
       // Test with no network or Firebase issues
       // This would require mocking network failures
@@ -331,6 +391,9 @@ Future<void> _ensureSignedIn(WidgetTester tester) async {
   await tester.pumpAndSettle();
   print('DEBUG: Auth state propagation complete');
 
+  // Print current screen state
+  _printCurrentScreen(tester, 'Inside _ensureSignedIn');
+
   // Check if we're on sign-in screen
   final signInButton = find.text('Sign In');
   final programsText = find.text('Programs');
@@ -341,6 +404,7 @@ Future<void> _ensureSignedIn(WidgetTester tester) async {
     print('DEBUG: User not authenticated, signing in...');
     await _signInWithTestAccount(tester);
     print('DEBUG: Sign in complete, verifying Programs screen...');
+    _printCurrentScreen(tester, 'After sign in');
   } else {
     print('DEBUG: User already authenticated');
   }
