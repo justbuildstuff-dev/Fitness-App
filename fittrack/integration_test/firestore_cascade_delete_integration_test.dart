@@ -135,6 +135,7 @@ void main() {
       final workout1Ref = await weekRef.collection('workouts').add({
         'name': 'Workout 1',
         'orderIndex': 1,
+        'dayOfWeek': null,
         'notes': '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
@@ -209,6 +210,7 @@ void main() {
       final workout2Ref = await weekRef.collection('workouts').add({
         'name': 'Workout 2',
         'orderIndex': 2,
+        'dayOfWeek': null,
         'notes': '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
@@ -300,6 +302,7 @@ void main() {
       final workoutRef = await weekRef.collection('workouts').add({
         'name': 'Test Workout',
         'orderIndex': 1,
+        'dayOfWeek': null,
         'notes': '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
@@ -422,6 +425,7 @@ void main() {
       final workoutRef = await weekRef.collection('workouts').add({
         'name': 'Test Workout',
         'orderIndex': 1,
+        'dayOfWeek': null,
         'notes': '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
@@ -552,6 +556,7 @@ void main() {
       final workoutRef = await weekRef.collection('workouts').add({
         'name': 'Test Workout',
         'orderIndex': 1,
+        'dayOfWeek': null,
         'notes': '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),

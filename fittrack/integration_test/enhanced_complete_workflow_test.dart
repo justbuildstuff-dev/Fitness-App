@@ -21,7 +21,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fittrack/main.dart' as app;
@@ -97,6 +96,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         // Authenticate test user
@@ -211,6 +211,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -263,6 +264,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -298,6 +300,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -336,6 +339,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -375,6 +379,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -413,6 +418,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -441,6 +447,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -478,6 +485,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -517,6 +525,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -555,6 +564,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail, testPassword);
@@ -697,9 +707,12 @@ Future<void> _cleanupTestData(String userId) async {
     for (final program in programs) {
       await FirestoreService.instance.deleteProgram(userId, program.id);
     }
-    
-    // Delete user profile
-    await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+
+    // Note: Not deleting user profile document because:
+    // 1. Requires admin permissions (firestore.rules line 48: allow delete: if isAdmin())
+    // 2. Each test creates unique user (timestamp-based email)
+    // 3. Emulators are destroyed after test run anyway
+    // 4. This is cleanup code, not part of test validation
   } catch (e) {
     print('Cleanup error: $e');
   }
