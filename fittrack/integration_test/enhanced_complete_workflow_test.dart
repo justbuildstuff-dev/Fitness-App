@@ -77,10 +77,26 @@ void main() {
     tearDown(() async {
       /// Test Purpose: Clean up test data after each test
       /// This ensures clean state for subsequent tests
-      
+      ///
+      /// FIX: Enhanced cleanup with proper provider lifecycle management
+      /// Problem: AuthProvider was being used after disposal, causing errors
+      /// Solution: Sign out and allow time for provider cleanup before next test
+
       try {
+        // Clean up test data first
         await _cleanupTestData(testUserId);
-        await FirebaseAuth.instance.signOut();
+
+        // Sign out to reset authentication state
+        final auth = FirebaseAuth.instance;
+        if (auth.currentUser != null) {
+          print('DEBUG: Signing out user ${auth.currentUser!.email}');
+          await auth.signOut();
+
+          // CRITICAL: Allow time for AuthProvider's listener to process signOut
+          // Without this delay, the provider may be disposed while still processing
+          await Future.delayed(const Duration(milliseconds: 300));
+          print('DEBUG: Sign-out complete');
+        }
       } catch (e) {
         print('Cleanup error: $e');
       }
@@ -90,18 +106,23 @@ void main() {
       testWidgets('creates complete program with weeks, workouts, exercises, and sets', (WidgetTester tester) async {
         /// Test Purpose: Verify complete program creation workflow from start to finish
         /// This tests the entire user journey for creating a structured workout program
-        
-        // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
-        final prefs = await SharedPreferences.getInstance();
+        ///
+        /// FIX: Wrap test logic in try-finally for proper cleanup
+        /// Problem: Providers were being used after disposal when tests failed
+        /// Solution: Ensure proper cleanup even on test failure
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle();
+        try {
+          // Initialize SharedPreferences for testing
+          SharedPreferences.setMockInitialValues({});
+          final prefs = await SharedPreferences.getInstance();
 
-        // Authenticate test user
-        await _authenticateTestUser(tester, testEmail, testPassword);
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+          await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pumpAndSettle();
+
+          // Authenticate test user
+          await _authenticateTestUser(tester, testEmail, testPassword);
+          await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Navigate to programs screen
         expect(find.text('Programs'), findsOneWidget);
@@ -200,6 +221,11 @@ void main() {
         final sets = await FirestoreService.instance.getSets(testUserId, programs.first.id, weeks.first.id, workouts.first.id, exercises.first.id).first;
         expect(sets, hasLength(3));
         expect(sets.map((s) => s.reps), containsAll([9, 10, 11]));
+        } finally {
+          // CRITICAL: Allow providers to settle before test completes
+          // This prevents "provider used after disposal" errors
+          await tester.pumpAndSettle(const Duration(milliseconds: 500));
+        }
       });
 
       testWidgets('handles program duplication workflow', (WidgetTester tester) async {
@@ -609,10 +635,48 @@ void main() {
 /// Test utility functions for integration testing
 
 Future<void> _authenticateTestUser(WidgetTester tester, String email, String password) async {
-  /// Authenticate test user through the UI
-  await tester.enterText(find.byKey(const Key('email-field')), email);
+  /// Authenticate test user through the UI with state checking
+  ///
+  /// FIX: Check authentication state before attempting sign-in
+  /// Problem: Tests were calling this when already authenticated, causing
+  /// "Bad state: No element" errors because email/password fields don't exist
+  /// on HomeScreen.
+
+  // Check if already authenticated (on HomeScreen with BottomNavigationBar)
+  final bottomNav = find.byType(BottomNavigationBar);
+  if (bottomNav.evaluate().isNotEmpty) {
+    print('DEBUG: Already authenticated, skipping sign-in');
+    return;
+  }
+
+  // Check if email field exists (on SignInScreen)
+  final emailField = find.byKey(const Key('email-field'));
+  if (emailField.evaluate().isEmpty) {
+    print('ERROR: Not on SignInScreen and not authenticated');
+    print('ERROR: Cannot find email field - current screen state unknown');
+    // Print current screen for debugging
+    final appBar = find.byType(AppBar);
+    if (appBar.evaluate().isNotEmpty) {
+      print('ERROR: AppBar found but no email field - might be on wrong screen');
+    }
+    throw StateError('Cannot authenticate - not on SignInScreen and not already authenticated');
+  }
+
+  // Perform authentication
+  print('DEBUG: Signing in with $email');
+  await tester.enterText(emailField, email);
   await tester.enterText(find.byKey(const Key('password-field')), password);
   await tester.tap(find.byKey(const Key('sign-in-button')));
+  await tester.pumpAndSettle();
+
+  // Verify authentication succeeded
+  await tester.pump(const Duration(milliseconds: 500));
+  final bottomNavAfter = find.byType(BottomNavigationBar);
+  if (bottomNavAfter.evaluate().isEmpty) {
+    print('WARNING: Sign-in attempted but not on HomeScreen yet');
+  } else {
+    print('DEBUG: Successfully authenticated');
+  }
 }
 
 Future<Program> _createCompleteTestProgram(String userId) async {

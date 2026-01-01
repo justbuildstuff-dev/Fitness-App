@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/main.dart' as app;
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
@@ -64,9 +65,28 @@ void main() {
       );
     });
 
+    tearDown(() async {
+      /// FIX: Add per-test cleanup to reset authentication state
+      /// Problem: Tests were staying authenticated, causing state conflicts
+      /// Solution: Sign out after each test to ensure clean state
+
+      try {
+        final auth = FirebaseAuth.instance;
+        if (auth.currentUser != null) {
+          print('DEBUG: Signing out user ${auth.currentUser!.email} after test');
+          await auth.signOut();
+          // Allow time for provider cleanup
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      } catch (e) {
+        print('Teardown error: $e');
+      }
+    });
+
     tearDownAll(() async {
       await cleanupFirebaseEmulators();
     });
+
     testWidgets('complete analytics flow with real data', (tester) async {
       print('DEBUG: ===== Starting Test 1 - complete analytics flow with real data =====');
 

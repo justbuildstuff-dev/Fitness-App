@@ -73,6 +73,24 @@ void main() {
       }
     });
 
+    tearDown(() async {
+      /// FIX: Add per-test cleanup to reset authentication state
+      /// Problem: Tests were staying authenticated, causing state conflicts
+      /// Solution: Sign out after each test to ensure clean state
+
+      try {
+        final auth = FirebaseAuth.instance;
+        if (auth.currentUser != null) {
+          print('DEBUG: Signing out user ${auth.currentUser!.email} after test');
+          await auth.signOut();
+          // Allow time for provider cleanup
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      } catch (e) {
+        print('Teardown error: $e');
+      }
+    });
+
     /// Clean up test data and sign out users after all tests
     /// This ensures clean state for subsequent test runs
     tearDownAll(() async {
