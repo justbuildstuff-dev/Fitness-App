@@ -847,6 +847,53 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       }
 
       print('DEBUG: Successfully navigated to ExerciseDetailScreen');
+
+      // DIAGNOSTIC: Verify the screen's actual state by checking breadcrumb
+      // The breadcrumb should show: "program → week → workout"
+      // ExerciseDetailScreen displays: "Program: {program} > Week: {week} > Workout: {workout}"
+      print('DEBUG: ===== VERIFYING EXERCISE DETAIL SCREEN BREADCRUMB =====');
+      final allText = find.byType(Text);
+      print('DEBUG: Checking for breadcrumb text to verify object state...');
+      bool foundTestAnalyticsProgram = false;
+      bool foundTestWeek1 = false;
+      bool foundTestWorkout2 = false;
+
+      for (var i = 0; i < allText.evaluate().length; i++) {
+        final textWidget = allText.evaluate().elementAt(i).widget as Text;
+        final data = textWidget.data;
+        if (data != null) {
+          // Look for breadcrumb pattern with ">" or "→"
+          if (data.contains('>') || data.contains('→')) {
+            print('DEBUG: Found breadcrumb-like text: "$data"');
+          }
+          // Check for specific object names
+          if (data.contains('Test Analytics Program')) {
+            foundTestAnalyticsProgram = true;
+            print('DEBUG: ✓ Found "Test Analytics Program" in breadcrumb');
+          }
+          if (data == 'Test Week 1' || data.contains('Test Week 1')) {
+            foundTestWeek1 = true;
+            print('DEBUG: ✓ Found "Test Week 1" in breadcrumb');
+          }
+          if (data == 'Test Workout 2' || data.contains('Test Workout 2')) {
+            foundTestWorkout2 = true;
+            print('DEBUG: ✓ Found "Test Workout 2" in breadcrumb');
+          }
+        }
+      }
+
+      print('DEBUG: Breadcrumb verification results:');
+      print('DEBUG:   - Test Analytics Program: $foundTestAnalyticsProgram');
+      print('DEBUG:   - Test Week 1: $foundTestWeek1');
+      print('DEBUG:   - Test Workout 2: $foundTestWorkout2');
+
+      if (!foundTestAnalyticsProgram || !foundTestWeek1 || !foundTestWorkout2) {
+        print('DEBUG: WARNING - ExerciseDetailScreen breadcrumb may have incorrect objects!');
+        print('DEBUG: Expected: "Test Analytics Program > Test Week 1 > Test Workout 2"');
+      } else {
+        print('DEBUG: ✓ ExerciseDetailScreen has correct breadcrumb - objects are NOT corrupted yet');
+      }
+      print('DEBUG: ===== END BREADCRUMB VERIFICATION =====');
       print('DEBUG: ===== END SCREEN VERIFICATION =====');
 
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
