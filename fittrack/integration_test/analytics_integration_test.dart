@@ -852,8 +852,17 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       // Add sets with heavier weights than first workout (which had 100, 105, 110kg)
       // These heavier weights should trigger PRs
       for (int i = 0; i < 3; i++) {
-        if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
-          await tester.tap(find.byType(FloatingActionButton));
+        // FIX: Ensure we tap the correct FAB (the one on ExerciseDetailScreen)
+        // Multiple screens in nav stack may have FABs, so verify we're tapping
+        // the FAB that's actually on the current screen
+        final fabFinder = find.byType(FloatingActionButton);
+        final fabCount = fabFinder.evaluate().length;
+        print('DEBUG: Found $fabCount FAB(s) in widget tree before tapping');
+
+        if (fabCount > 0) {
+          // Tap the last FAB in the tree (most likely the current screen's FAB)
+          await tester.tap(fabFinder.last);
+          print('DEBUG: Tapped FAB to add set #${i + 1}');
 
           // FIX: Wait longer for CreateSetScreen to fully load
           // The screen navigation animation takes time, and the title
