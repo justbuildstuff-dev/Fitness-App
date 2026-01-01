@@ -812,12 +812,28 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       // Verify we reached ExerciseDetailScreen
       print('DEBUG: ===== AFTER TAPPING EXERCISE - VERIFICATION =====');
 
-      // Check for ExerciseDetailScreen indicators
+      // Check for ExerciseDetailScreen by verifying AppBar title shows exercise name
+      final appBarFinder = find.byType(AppBar);
+      bool onExerciseDetailScreen = false;
+
+      if (appBarFinder.evaluate().isNotEmpty) {
+        final appBar = tester.widget<AppBar>(appBarFinder.first);
+        if (appBar.title is Text) {
+          final titleText = (appBar.title as Text).data;
+          print('DEBUG: AppBar title: "$titleText"');
+          if (titleText == 'Bench Press') {
+            onExerciseDetailScreen = true;
+            print('DEBUG: Confirmed on ExerciseDetailScreen - AppBar title matches exercise name');
+          }
+        }
+      }
+
+      // Check for FAB as secondary confirmation
       final fabCount = find.byType(FloatingActionButton).evaluate().length;
       print('DEBUG: FAB count: $fabCount');
 
-      if (fabCount == 0) {
-        print('DEBUG: ERROR - No FAB found! Not on ExerciseDetailScreen');
+      if (!onExerciseDetailScreen) {
+        print('DEBUG: ERROR - Not on ExerciseDetailScreen!');
         print('DEBUG: Dumping all Text widgets:');
         final allText = find.byType(Text);
         for (var i = 0; i < allText.evaluate().length; i++) {
@@ -827,7 +843,7 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
             print('DEBUG: Text widget $i: "$data"');
           }
         }
-        throw TestFailure('Failed to navigate to ExerciseDetailScreen - no FAB found');
+        throw TestFailure('Failed to navigate to ExerciseDetailScreen - AppBar title does not show "Bench Press"');
       }
 
       print('DEBUG: Successfully navigated to ExerciseDetailScreen');
