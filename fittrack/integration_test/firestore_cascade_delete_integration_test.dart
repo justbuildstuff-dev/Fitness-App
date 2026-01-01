@@ -636,17 +636,48 @@ Future<DocumentReference> _createTestProgram(String userId) async {
 
 /// Helper: Delete all documents in a collection
 Future<void> _deleteCollection(CollectionReference collection) async {
+  /// FIX: More defensive collection deletion to avoid permission errors
+  ///
+  /// Problem: Trying to access subcollections that don't exist causes permission errors
+  /// Solution: Only process documents that actually exist, and don't throw on errors
+
   try {
     final snapshots = await collection.get();
+
+    // If collection is empty, nothing to delete
+    if (snapshots.docs.isEmpty) {
+      return;
+    }
+
     for (final doc in snapshots.docs) {
-      // Recursively delete subcollections
-      final subcollections = ['weeks', 'workouts', 'exercises', 'sets'];
-      for (final subcoll in subcollections) {
-        await _deleteCollection(doc.reference.collection(subcoll));
+      try {
+        // Only try to delete known subcollections for specific document types
+        // This prevents permission errors from accessing non-existent collections
+        final subcollections = <String>[];
+
+        // Determine subcollections based on collection path
+        if (collection.path.endsWith('/weeks')) {
+          subcollections.add('workouts');
+        } else if (collection.path.endsWith('/workouts')) {
+          subcollections.add('exercises');
+        } else if (collection.path.endsWith('/exercises')) {
+          subcollections.add('sets');
+        }
+
+        // Recursively delete known subcollections
+        for (final subcoll in subcollections) {
+          await _deleteCollection(doc.reference.collection(subcoll));
+        }
+
+        // Delete the document itself
+        await doc.reference.delete();
+      } catch (docError) {
+        // Log but don't fail - allow cleanup to continue
+        print('Error deleting document ${doc.id}: $docError');
       }
-      await doc.reference.delete();
     }
   } catch (e) {
-    print('Error deleting collection: $e');
+    // Log but don't throw - this is cleanup code
+    print('Error deleting collection ${collection.path}: $e');
   }
 }

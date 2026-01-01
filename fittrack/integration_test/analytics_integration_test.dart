@@ -838,7 +838,14 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
       for (int i = 0; i < 3; i++) {
         if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
           await tester.tap(find.byType(FloatingActionButton));
-          await tester.pumpAndSettle();
+
+          // FIX: Wait longer for CreateSetScreen to fully load
+          // The screen navigation animation takes time, and the title
+          // widget needs to be fully rendered before we can find it
+          await tester.pumpAndSettle(const Duration(seconds: 2));
+
+          // Additional pump to ensure all widgets are built
+          await tester.pump(const Duration(milliseconds: 500));
 
           // Verify we're on CreateSetScreen
           print('DEBUG: ===== AFTER TAPPING FAB - VERIFICATION =====');
