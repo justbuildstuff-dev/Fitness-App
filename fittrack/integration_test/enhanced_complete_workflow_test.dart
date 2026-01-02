@@ -53,25 +53,40 @@ void main() {
     setUp(() async {
       /// Test Purpose: Create fresh test user for each test
       /// This ensures test isolation and prevents data contamination
+      ///
+      /// IMPORTANT: Creates user in Firebase Auth but does NOT sign them in.
+      /// Tests must authenticate through the UI to trigger OOB email verification.
+      /// This matches production authentication flow and security rules.
 
       // Generate UNIQUE email for EACH test to prevent email-already-in-use errors
       // Use microsecondsSinceEpoch for higher precision than milliseconds
       final timestamp = DateTime.now().microsecondsSinceEpoch;
       testEmail = 'test$timestamp@fittrack.test';
 
-      // Create test user with unique email
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      // Create test user in Firebase Auth (but don't sign them in)
+      // Use OOB code for email verification (required for tests)
+      await FirebaseEmulatorSetup.createTestUser(
+        email: testEmail,
+        password: testPassword,
+      );
+
+      // Sign in temporarily to get userId and create profile, then sign out
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: testEmail,
         password: testPassword,
       );
       testUserId = userCredential.user!.uid;
-      
+
       // Initialize user profile
       await FirestoreService.instance.createUserProfile(
         userId: testUserId,
         displayName: 'Test User',
         email: testEmail,
       );
+
+      // Sign out so tests can authenticate through UI
+      await FirebaseAuth.instance.signOut();
+      await Future.delayed(const Duration(milliseconds: 200));
     });
 
     tearDown(() async {
