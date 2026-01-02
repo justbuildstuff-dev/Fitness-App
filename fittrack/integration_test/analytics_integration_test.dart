@@ -651,33 +651,51 @@ Future<void> _createWorkoutWithProgressiveSets(WidgetTester tester) async {
   // Create initial workout with baseline sets
   await _createTestWorkoutData(tester);
 
-  // Navigate back to week view (we're currently in Sets screen after _createTestWorkoutData)
-  // Navigation stack: Programs → Week → Workouts → Workout Details → Exercise → Sets
-  // Need to go back 2 levels to get to Workouts list
+  // Navigate back to WeekDetailScreen (we're currently in Sets screen after _createTestWorkoutData)
+  // Current navigation stack: Programs → Week Detail → Workout Detail → Exercise Detail → Sets (CreateSetScreen)
+  // WeekDetailScreen is where workouts are listed and created
+  // Need to go back 3 levels: Sets → Exercise Detail → Workout Detail → Week Detail
 
-  // Back from Sets to Exercise
+  print('DEBUG: Navigating back to WeekDetailScreen to create second workout');
+
+  // Back from Sets (CreateSetScreen) to Exercise Detail
   var backButton = find.byTooltip('Back');
   if (backButton.evaluate().isNotEmpty) {
+    print('DEBUG: Step 1 - Back from CreateSetScreen to ExerciseDetailScreen');
     await tester.tap(backButton);
     await tester.pumpAndSettle();
   }
 
-  // Back from Exercise to Workout Details (Workouts list view)
+  // Back from Exercise Detail to Workout Detail
   backButton = find.byTooltip('Back');
   if (backButton.evaluate().isNotEmpty) {
+    print('DEBUG: Step 2 - Back from ExerciseDetailScreen to WorkoutDetailScreen');
     await tester.tap(backButton);
     await tester.pumpAndSettle();
   }
 
-  // Verify we can see the FAB for creating a new workout
-  print('DEBUG: Looking for FAB to create second workout');
+  // Back from Workout Detail to Week Detail (THIS IS THE CRITICAL STEP THAT WAS MISSING!)
+  backButton = find.byTooltip('Back');
+  if (backButton.evaluate().isNotEmpty) {
+    print('DEBUG: Step 3 - Back from WorkoutDetailScreen to WeekDetailScreen');
+    await tester.tap(backButton);
+    await tester.pumpAndSettle();
+  }
+
+  // Verify we're on WeekDetailScreen by checking for workout creation FAB
+  print('DEBUG: Verifying we reached WeekDetailScreen');
   if (find.byType(FloatingActionButton).evaluate().isEmpty) {
-    print('DEBUG: No FAB found, trying to navigate back one more time');
-    backButton = find.byTooltip('Back');
-    if (backButton.evaluate().isNotEmpty) {
-      await tester.tap(backButton);
-      await tester.pumpAndSettle();
+    print('DEBUG: ERROR - No FAB found on expected WeekDetailScreen!');
+    print('DEBUG: Dumping current screen state:');
+    final allText = find.byType(Text);
+    for (var i = 0; i < allText.evaluate().length && i < 20; i++) {
+      final textWidget = allText.evaluate().elementAt(i).widget as Text;
+      if (textWidget.data != null && textWidget.data!.isNotEmpty) {
+        print('DEBUG:   Text: "${textWidget.data}"');
+      }
     }
+  } else {
+    print('DEBUG: ✓ Successfully navigated to WeekDetailScreen - FAB found');
   }
 
   // Create second workout with progressive overload
