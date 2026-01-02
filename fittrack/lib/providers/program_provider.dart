@@ -41,6 +41,15 @@ class ProgramProvider extends ChangeNotifier {
   void _autoLoadDataIfNeeded() {
     debugPrint('[ProgramProvider] _autoLoadDataIfNeeded called - userId: $_userId, previousUserId: $_previousUserId');
 
+    // If userId is null (user signed out), cancel all listeners
+    // This prevents permission-denied errors from orphaned listeners
+    if (_userId == null && _previousUserId != null) {
+      debugPrint('[ProgramProvider] User signed out - canceling all active listeners');
+      _cancelAllListeners();
+      _previousUserId = null;
+      return;
+    }
+
     // Only load if we have a userId and it's different from previous
     if (_userId != null && _userId != _previousUserId) {
       _previousUserId = _userId;
@@ -50,7 +59,7 @@ class ProgramProvider extends ChangeNotifier {
       // Schedule load for next frame to avoid calling notifyListeners during build
       Future.microtask(() {
         debugPrint('[ProgramProvider] ✓ Executing auto-load for programs and analytics');
-        loadPrograms();
+        loadPrograms();  // Creates new listeners for new user
         loadAnalytics();
       });
     } else if (_userId == null) {
@@ -58,6 +67,35 @@ class ProgramProvider extends ChangeNotifier {
     } else {
       debugPrint('[ProgramProvider] ✗ Skipping auto-load - userId unchanged ($_userId)');
     }
+  }
+
+  /// Cancel all active Firestore listeners
+  /// Called when user signs out to prevent permission-denied errors from orphaned listeners
+  void _cancelAllListeners() {
+    debugPrint('[ProgramProvider] Canceling all active Firestore listeners');
+    _programsSubscription?.cancel();
+    _programsSubscription = null;
+    _weeksSubscription?.cancel();
+    _weeksSubscription = null;
+    _workoutsSubscription?.cancel();
+    _workoutsSubscription = null;
+    _exercisesSubscription?.cancel();
+    _exercisesSubscription = null;
+    _setsSubscription?.cancel();
+    _setsSubscription = null;
+
+    // Clear all data to prevent stale data from previous user
+    _programs = [];
+    _weeks = [];
+    _workouts = [];
+    _exercises = [];
+    _sets = [];
+    _selectedProgram = null;
+    _selectedWeek = null;
+    _selectedWorkout = null;
+    _selectedExercise = null;
+
+    debugPrint('[ProgramProvider] All listeners canceled and data cleared');
   }
 
   // Programs
