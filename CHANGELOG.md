@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - #51 - Sets no longer crossed out when completed (improved readability with read-only fields instead)
+- #230 - E2E integration test stability improvements
+  - Fixed Firebase emulator re-initialization preventing test suite from running
+  - Fixed authentication flow in Complete Workflow tests (proper OOB pattern)
+  - Fixed Firestore listener cleanup on sign-out (prevents orphaned listeners)
+  - Fixed property validation in cascade delete tests (restTime/notes fields)
+  - Updated analytics tests to match current UI (monthly heatmap)
+  - Improved test reliability: 27.5% → 47.5% pass rate (11/40 → 19/40 passing)
 
 ### Deprecated
 - WorkoutDetailScreen - Use ConsolidatedWorkoutScreen instead
