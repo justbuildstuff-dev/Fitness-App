@@ -1036,7 +1036,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingAllWorkoutSets = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     try {
@@ -1064,10 +1064,10 @@ class ProgramProvider extends ChangeNotifier {
 
       _allWorkoutSets = setsMap;
       _isLoadingAllWorkoutSets = false;
-      _error = null;
+      _programsError = null;
       notifyListeners();
     } catch (e) {
-      _error = 'Failed to load workout sets: $e';
+      _programsError = 'Failed to load workout sets: $e';
       _isLoadingAllWorkoutSets = false;
       _allWorkoutSets = {};
       notifyListeners();
