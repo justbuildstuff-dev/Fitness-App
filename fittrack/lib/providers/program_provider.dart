@@ -1027,7 +1027,8 @@ class ProgramProvider extends ChangeNotifier {
 
   /// Load all sets for all exercises in a workout
   /// This is an optimized method for the ConsolidatedWorkoutScreen that loads
-  /// all sets for all exercises in a single operation to minimize queries
+  /// all sets for all exercises in a single operation to minimize queries.
+  /// Uses _programsError for error state management.
   Future<void> loadAllSetsForWorkout({
     required String programId,
     required String weekId,
