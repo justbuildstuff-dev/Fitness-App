@@ -5,21 +5,19 @@ import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
+import '../../models/exercise_set.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
+import '../../widgets/exercise_card.dart';
 import '../exercises/create_exercise_screen.dart';
-import '../exercises/exercise_detail_screen.dart';
 
-/// DEPRECATED: Use ConsolidatedWorkoutScreen instead.
-/// This screen will be removed in a future version.
-/// ConsolidatedWorkoutScreen provides an improved UX with inline set editing
-/// and eliminates the need for separate exercise detail screens.
-@Deprecated('Use ConsolidatedWorkoutScreen instead')
-class WorkoutDetailScreen extends StatefulWidget {
+/// Consolidated workout screen that displays all exercises and their sets inline
+/// Replaces the separate WorkoutDetailScreen and ExerciseDetailScreen with a single unified view
+class ConsolidatedWorkoutScreen extends StatefulWidget {
   final Program program;
   final Week week;
   final Workout workout;
 
-  const WorkoutDetailScreen({
+  const ConsolidatedWorkoutScreen({
     super.key,
     required this.program,
     required this.week,
@@ -27,20 +25,29 @@ class WorkoutDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<WorkoutDetailScreen> createState() => _WorkoutDetailScreenState();
+  State<ConsolidatedWorkoutScreen> createState() => _ConsolidatedWorkoutScreenState();
 }
 
-class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
+class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
   @override
   void initState() {
     super.initState();
-    // Load exercises when screen opens
+    // Load exercises and all sets when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+
+      // First load exercises
       programProvider.loadExercises(
         widget.program.id,
         widget.week.id,
         widget.workout.id,
+      );
+
+      // Then load all sets for all exercises
+      programProvider.loadAllSetsForWorkout(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
       );
     });
   }
@@ -80,10 +87,12 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       body: Consumer<ProgramProvider>(
         builder: (context, provider, child) {
           final exercises = provider.exercises;
-          final isLoading = provider.isLoadingExercises;
+          final isLoadingExercises = provider.isLoadingExercises;
+          final isLoadingSets = provider.isLoadingAllWorkoutSets;
           final error = provider.error;
 
-          if (isLoading && exercises.isEmpty) {
+          // Show loading indicator while exercises or sets are loading
+          if ((isLoadingExercises || isLoadingSets) && exercises.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -126,97 +135,15 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             );
           }
 
-          return Column(
-            children: [
-              // Workout Info Header
-              _buildWorkoutHeader(),
-              
-              // Exercises List
-              Expanded(
-                child: exercises.isEmpty
-                    ? _buildEmptyState()
-                    : _buildExercisesList(exercises),
-              ),
-            ],
-          );
+          return exercises.isEmpty
+              ? _buildEmptyState()
+              : _buildExercisesList(exercises);
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addExercise(context),
         tooltip: 'Add Exercise',
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildWorkoutHeader() {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Breadcrumb
-            Text(
-              '${widget.program.name} → ${widget.week.name}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            // Workout Name
-            Text(
-              widget.workout.name,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            
-            // Day of Week if present
-            if (widget.workout.dayOfWeek != null) ...[
-              const SizedBox(height: 8),
-              Chip(
-                label: Text(_getDayName(widget.workout.dayOfWeek!)),
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                labelStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-            
-            // Notes if present
-            if (widget.workout.notes != null && widget.workout.notes!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.notes,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        widget.workout.notes!,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -258,106 +185,252 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   Widget _buildExercisesList(List<Exercise> exercises) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.all(16),
       itemCount: exercises.length,
+      onReorder: (oldIndex, newIndex) => _reorderExercises(context, oldIndex, newIndex),
       itemBuilder: (context, index) {
         final exercise = exercises[index];
-        return _buildExerciseCard(exercise, index);
+        final sets = provider.getSetsForExercise(exercise.id);
+
+        return ExerciseCard(
+          key: ValueKey(exercise.id),
+          exercise: exercise,
+          sets: sets,
+          onAddSet: () => _addSet(context, exercise),
+          onEditName: () => _editExerciseName(context, exercise),
+          onDelete: () => _deleteExercise(context, exercise),
+          onUpdateSet: (updatedSet) => _updateSet(context, updatedSet),
+          onDeleteSet: (exerciseId, setId) => _deleteSet(context, exerciseId, setId),
+        );
       },
     );
   }
 
-  Widget _buildExerciseCard(Exercise exercise, int index) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: _getExerciseTypeColor(exercise.exerciseType).withValues(alpha: 0.1),
-          child: Icon(
-            _getExerciseTypeIcon(exercise.exerciseType),
-            color: _getExerciseTypeColor(exercise.exerciseType),
+  Future<void> _addSet(BuildContext context, Exercise exercise) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await provider.createSet(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
+        exerciseId: exercise.id,
+      );
+
+      // Reload all sets to get the new one
+      await provider.loadAllSetsForWorkout(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
+      );
+
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Set added successfully'),
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-        title: Text(
-          exercise.name,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to add set: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              exercise.exerciseType.displayName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: _getExerciseTypeColor(exercise.exerciseType),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (exercise.notes != null && exercise.notes!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                exercise.notes!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: () => _editExercise(context, exercise),
-              tooltip: 'Edit exercise',
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-              onPressed: () => _deleteExercise(context, exercise),
-              tooltip: 'Delete exercise',
-            ),
-          ],
-        ),
-        onTap: () => _navigateToExerciseDetail(exercise),
-      ),
-    );
+        );
+      }
+    }
   }
 
-  String _getDayName(int dayOfWeek) {
-    const days = [
-      'Monday',
-      'Tuesday', 
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
-    ];
-    return days[dayOfWeek - 1]; // dayOfWeek is 1-based
+  Future<void> _updateSet(BuildContext context, ExerciseSet updatedSet) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    try {
+      await provider.updateSet(updatedSet);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update set: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
-  void _editExercise(BuildContext context, Exercise exercise) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CreateExerciseScreen(
-          program: widget.program,
-          week: widget.week,
-          workout: widget.workout,
-          exercise: exercise,
-        ),
+  Future<void> _deleteSet(BuildContext context, String exerciseId, String setId) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Set'),
+        content: const Text('Are you sure you want to delete this set?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
-    
-    if (result == true) {
-      // Exercise was updated successfully - no action needed as UI updates via stream
+
+    if (confirmed == true) {
+      try {
+        await provider.deleteSet(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+          exerciseId,
+          setId,
+        );
+
+        // Reload all sets
+        await provider.loadAllSetsForWorkout(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          workoutId: widget.workout.id,
+        );
+
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Set deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete set: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _editExerciseName(BuildContext context, Exercise exercise) async {
+    final nameController = TextEditingController(text: exercise.name);
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Exercise Name'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Exercise Name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(nameController.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && result != exercise.name) {
+      try {
+        final updatedExercise = exercise.copyWith(
+          name: result,
+          updatedAt: DateTime.now(),
+        );
+
+        await provider.updateExercise(updatedExercise);
+
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Exercise name updated'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to update exercise name: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+
+    nameController.dispose();
+  }
+
+  Future<void> _reorderExercises(BuildContext context, int oldIndex, int newIndex) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    // Adjust newIndex if moving down the list
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    try {
+      // Get the current exercises list
+      final exercises = List<Exercise>.from(provider.exercises);
+
+      // Reorder in local list
+      final exercise = exercises.removeAt(oldIndex);
+      exercises.insert(newIndex, exercise);
+
+      // Update orderIndex for all affected exercises
+      for (int i = 0; i < exercises.length; i++) {
+        if (exercises[i].orderIndex != i) {
+          final updatedExercise = exercises[i].copyWith(
+            orderIndex: i,
+            updatedAt: DateTime.now(),
+          );
+          await provider.updateExercise(updatedExercise);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reorder exercises: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -383,13 +456,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        // Use full delete method with explicit IDs (not deleteExerciseById)
-        await programProvider.deleteExercise(
-          widget.program.id,
-          widget.week.id,
-          widget.workout.id,
-          exercise.id,
-        );
+        await programProvider.deleteExerciseById(exercise.id);
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
@@ -415,36 +482,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     }
   }
 
-  Color _getExerciseTypeColor(ExerciseType type) {
-    switch (type) {
-      case ExerciseType.strength:
-        return Colors.blue;
-      case ExerciseType.cardio:
-        return Colors.red;
-      case ExerciseType.timeBased:
-        return Colors.orange;
-      case ExerciseType.bodyweight:
-        return Colors.green;
-      case ExerciseType.custom:
-        return Colors.purple;
-    }
-  }
-
-  IconData _getExerciseTypeIcon(ExerciseType type) {
-    switch (type) {
-      case ExerciseType.strength:
-        return Icons.fitness_center;
-      case ExerciseType.cardio:
-        return Icons.directions_run;
-      case ExerciseType.timeBased:
-        return Icons.timer;
-      case ExerciseType.bodyweight:
-        return Icons.accessibility_new;
-      case ExerciseType.custom:
-        return Icons.tune;
-    }
-  }
-
   void _editWorkout(BuildContext context) {
     // TODO: Implement edit workout functionality
     ScaffoldMessenger.of(context).showSnackBar(
@@ -458,7 +495,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   void _addExercise(BuildContext context) async {
     final navigator = Navigator.of(context);
     final provider = Provider.of<ProgramProvider>(context, listen: false);
-    
+
     final result = await navigator.push<bool>(
       MaterialPageRoute(
         builder: (context) => CreateExerciseScreen(
@@ -471,31 +508,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (result == true && mounted) {
       // Refresh exercises list
-      provider.loadExercises(
-        widget.program.id,
-        widget.week.id,
-        widget.workout.id,
-      );
-    }
-  }
-
-  void _navigateToExerciseDetail(Exercise exercise) async {
-    final navigator = Navigator.of(context);
-    final provider = Provider.of<ProgramProvider>(context, listen: false);
-    
-    await navigator.push(
-      MaterialPageRoute(
-        builder: (context) => ExerciseDetailScreen(
-          program: widget.program,
-          week: widget.week,
-          workout: widget.workout,
-          exercise: exercise,
-        ),
-      ),
-    );
-
-    // Refresh exercises when returning (in case exercise was deleted)
-    if (mounted) {
       provider.loadExercises(
         widget.program.id,
         widget.week.id,
@@ -529,12 +541,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        // Use full delete method with explicit IDs (not deleteWorkoutById)
-        await provider.deleteWorkout(
-          widget.program.id,
-          widget.week.id,
-          widget.workout.id,
-        );
+        await provider.deleteWorkoutById(widget.workout.id);
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(

@@ -6,7 +6,7 @@ import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../workouts/create_workout_screen.dart';
-import '../workouts/workout_detail_screen.dart';
+import '../workouts/consolidated_workout_screen.dart';
 
 class WeeksScreen extends StatefulWidget {
   final Program program;
@@ -287,7 +287,7 @@ class _WeeksScreenState extends State<WeeksScreen> {
   void _navigateToWorkout(BuildContext context, Workout workout) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => WorkoutDetailScreen(
+        builder: (context) => ConsolidatedWorkoutScreen(
           program: widget.program,
           week: widget.week,
           workout: workout,

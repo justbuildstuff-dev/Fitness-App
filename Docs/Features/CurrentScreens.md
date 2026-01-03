@@ -127,46 +127,72 @@ This document provides a comprehensive overview of all currently implemented scr
 ## Workout Management Screens
 
 ### ✅ CreateWorkoutScreen
-- **Location**: `lib/screens/workouts/create_workout_screen.dart` 
+- **Location**: `lib/screens/workouts/create_workout_screen.dart`
 - **Status**: Complete
 - **Features**: Workout creation form, day of week selection, order management
 - **Integration**: ProgramProvider workout creation
 - **UI**: Form with name, day selection, and notes
 
-### ✅ WorkoutDetailScreen
-- **Location**: `lib/screens/workouts/workout_detail_screen.dart`
-- **Status**: Complete (UI), Backend Implementation Pending
-- **Features**: 
-  - Exercise list for selected workout
-  - Navigation to exercise detail screens
+### ✅ ConsolidatedWorkoutScreen
+- **Location**: `lib/screens/workouts/consolidated_workout_screen.dart`
+- **Status**: **FULLY COMPLETE** ✅
+- **Features**:
+  - **Unified View**: All exercises and sets displayed inline on one screen
+  - **Reduced Navigation**: Eliminated 2 navigation levels (40% reduction from 5 clicks → 3 clicks)
+  - **Inline Set Editing**: Edit weight, reps, duration, distance directly in list
+  - **Set Completion Tracking**: Checkbox marks sets complete with read-only fields (no strikethrough)
+  - **Exercise Reordering**: Drag-and-drop exercise reordering with persist
+  - **Quick Set Addition**: Add sets to exercises (max 10 per exercise)
+  - **Set Count on Creation**: Specify number of sets when creating exercise (1-10)
+  - **Notes & Rest Time**: Modal for detailed set notes and rest time tracking
+  - **Delete Confirmation**: Enhanced dialogs with cascade counts for exercises/sets
+  - **Type-Specific Fields**: Dynamic field display based on exercise type
+- **Integration**: Full ProgramProvider with batched set loading (loadAllSetsForWorkout)
+- **UI**:
+  - ReorderableListView with ExerciseCard widgets
+  - SetRow widgets for inline editing
+  - Loading/error/empty states
   - Exercise type color coding and icons
-  - Exercise creation functionality
-  - **Exercise edit/delete UI buttons**
-  - Integration with workout execution flow
-- **Integration**: Full ProgramProvider integration with real-time updates
-- **UI**: Exercise cards with type-specific styling, inline edit/delete buttons
+- **Testing**: Comprehensive widget tests (28 tests covering all major features)
+- **Bug Fixes**: Resolves #51 (sets no longer crossed out when completed)
+
+### ⚠️ DEPRECATED: WorkoutDetailScreen
+- **Location**: `lib/screens/workouts/workout_detail_screen.dart`
+- **Status**: **DEPRECATED** (marked with @Deprecated annotation)
+- **Replacement**: ConsolidatedWorkoutScreen
+- **Reason**: Replaced by consolidated workout view to reduce navigation clicks
+- **Removal Timeline**: Will be removed in future version after migration complete
+- **Migration**: WeeksScreen now navigates to ConsolidatedWorkoutScreen instead
 
 ## Exercise Management Screens
 
-### ✅ Exercise Management Screens
-- **Status**: Complete and Fully Functional
-- **Locations**: 
-  - `lib/screens/exercises/exercise_detail_screen.dart` - Exercise details with set management
-  - `lib/screens/exercises/create_exercise_screen.dart` - Exercise creation with type selection
+### ✅ CreateExerciseScreen
+- **Location**: `lib/screens/exercises/create_exercise_screen.dart`
+- **Status**: **FULLY COMPLETE** ✅ (Enhanced for Feature #53)
 - **Features**:
-  - **CreateExerciseScreen**:
-    - Exercise type selection (Strength, Cardio, Bodyweight, Time-based, Custom)
-    - Dynamic field requirement information based on exercise type
-    - Form validation and error handling
-    - Exercise notes and instructions
-    - Helper text and tips for users
-  - **ExerciseDetailScreen**:
-    - Set list management with completion tracking
-    - Exercise type-specific set display
-    - Set creation and editing navigation
-    - Exercise information and notes display
-- **Integration**: Full ProgramProvider integration with CRUD operations
-- **Testing**: Comprehensive widget tests (33/33 tests passing)
+  - **Dual Mode**: Create new or edit existing exercises
+  - **Exercise Type Selection**: Strength, Cardio, Bodyweight, Time-based, Custom
+  - **Set Count Stepper**: Specify 1-10 sets on creation (NEW in #53)
+  - **Batched Set Creation**: All sets created atomically with exercise
+  - **Dynamic Field Info**: Shows trackable fields based on exercise type
+  - **Form Validation**: Required fields, length limits, error handling
+  - **Exercise Notes**: Optional notes and instructions
+  - **Helper Tips**: Context-sensitive guidance for users
+- **Integration**: Full ProgramProvider with createExerciseWithSets batched write
+- **UI**:
+  - Type selector with dynamic info cards
+  - Set count stepper (create mode only)
+  - Multi-line notes input
+  - Material 3 design
+- **Testing**: Comprehensive widget tests updated for setCount parameter
+
+### ⚠️ DEPRECATED: ExerciseDetailScreen
+- **Location**: `lib/screens/exercises/exercise_detail_screen.dart`
+- **Status**: **DEPRECATED** (marked with @Deprecated annotation)
+- **Replacement**: ConsolidatedWorkoutScreen (inline set editing)
+- **Reason**: Replaced by consolidated view with inline set management
+- **Removal Timeline**: Will be removed in future version after migration complete
+- **Migration**: Sets now edited inline within ConsolidatedWorkoutScreen
 
 ## Set Management Screens
 

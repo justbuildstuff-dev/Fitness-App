@@ -63,6 +63,7 @@ void main() {
         name: anyNamed('name'),
         exerciseType: anyNamed('exerciseType'),
         notes: anyNamed('notes'),
+        setCount: anyNamed('setCount'),
       )).thenAnswer((_) async => 'new-exercise-id');
     });
 
@@ -145,9 +146,9 @@ void main() {
     testWidgets('validates exercise name is required', (tester) async {
       /// Test Purpose: Verify that form validation prevents empty exercise names
       /// Users must provide a name before creating exercise
-      
+
       await tester.pumpWidget(createTestWidget());
-      
+
       // Try to save without entering name
       await tester.tap(find.text('CREATE'));
       await tester.pump();
@@ -160,6 +161,7 @@ void main() {
         name: anyNamed('name'),
         exerciseType: anyNamed('exerciseType'),
         notes: anyNamed('notes'),
+        setCount: anyNamed('setCount'),
       )); // Should not be called due to validation failure
     });
 
@@ -207,6 +209,7 @@ void main() {
         name: 'Bench Press',
         exerciseType: ExerciseType.strength, // Default selection
         notes: null,
+        setCount: 1, // Default set count
       )).called(1);
     });
 
@@ -247,6 +250,7 @@ void main() {
         name: 'Deadlift',
         exerciseType: ExerciseType.bodyweight,
         notes: 'Focus on proper form and full range of motion',
+        setCount: 1, // Default set count
       )).called(1);
     });
 
@@ -383,31 +387,195 @@ void main() {
     testWidgets('exercise type information shows correct field requirements for each type', (tester) async {
       /// Test Purpose: Verify that field requirement information is accurate
       /// Users need to understand what they can track for each exercise type
-      
+
       await tester.pumpWidget(createTestWidget());
-      
+
       // Test strength exercise info
       expect(find.text('• Reps (required)'), findsOneWidget);
       expect(find.text('• Weight (optional)'), findsOneWidget);
       expect(find.text('• Rest Time (optional)'), findsOneWidget);
-      
+
       // Change to cardio and verify different requirements
       await tester.tap(find.byType(DropdownButtonFormField<ExerciseType>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cardio').last);
       await tester.pumpAndSettle();
-      
+
       expect(find.text('• Duration (required)'), findsOneWidget);
       expect(find.text('• Distance (optional)'), findsOneWidget);
-      
+
       // Change to custom and verify flexible requirements
       await tester.tap(find.byType(DropdownButtonFormField<ExerciseType>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Custom').last);
       await tester.pumpAndSettle();
-      
+
       expect(find.text('• Any metric (at least one required)'), findsOneWidget);
       expect(find.text('Flexible tracking with any combination of metrics'), findsOneWidget);
+    });
+
+    testWidgets('shows set count stepper when creating new exercise', (tester) async {
+      /// Test Purpose: Verify stepper is visible for new exercises
+      /// Users should be able to specify how many sets to create
+
+      await tester.pumpWidget(createTestWidget());
+
+      // Stepper should be visible for new exercises
+      expect(find.text('Number of Sets'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget); // Default value
+      expect(find.byIcon(Icons.remove_circle_outline), findsOneWidget);
+      expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
+    });
+
+    testWidgets('does not show set count stepper when editing exercise', (tester) async {
+      /// Test Purpose: Verify stepper is hidden when editing existing exercise
+      /// Set count is only configurable at creation time
+
+      final testExercise = Exercise(
+        id: 'exercise-1',
+        name: 'Existing Exercise',
+        exerciseType: ExerciseType.strength,
+        orderIndex: 0,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: 'user-1',
+        workoutId: 'workout-1',
+        weekId: 'week-1',
+        programId: 'program-1',
+      );
+
+      final widget = CreateExerciseScreen(
+        program: testProgram,
+        week: testWeek,
+        workout: testWorkout,
+        exercise: testExercise, // Editing mode
+      );
+
+      await tester.pumpWidget(TestSetupHelper.createTestAppWithMockedProviders(
+        programProvider: mockProvider,
+        child: widget,
+      ));
+
+      // Stepper should NOT be visible when editing
+      expect(find.text('Number of Sets'), findsNothing);
+    });
+
+    testWidgets('increments set count when plus button tapped', (tester) async {
+      /// Test Purpose: Verify plus button increases set count
+      /// Users should be able to increment set count
+
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.text('1'), findsOneWidget);
+
+      // Tap plus button
+      await tester.tap(find.byIcon(Icons.add_circle_outline));
+      await tester.pump();
+
+      expect(find.text('2'), findsOneWidget);
+    });
+
+    testWidgets('decrements set count when minus button tapped', (tester) async {
+      /// Test Purpose: Verify minus button decreases set count
+      /// Users should be able to decrement set count
+
+      await tester.pumpWidget(createTestWidget());
+
+      // First increment to 2
+      await tester.tap(find.byIcon(Icons.add_circle_outline));
+      await tester.pump();
+      expect(find.text('2'), findsOneWidget);
+
+      // Then decrement back to 1
+      await tester.tap(find.byIcon(Icons.remove_circle_outline));
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget);
+    });
+
+    testWidgets('disables minus button at minimum (1)', (tester) async {
+      /// Test Purpose: Verify minimum set count boundary
+      /// Users should not be able to go below 1 set
+
+      await tester.pumpWidget(createTestWidget());
+
+      final minusButton = find.byIcon(Icons.remove_circle_outline);
+      expect(minusButton, findsOneWidget);
+
+      // Button should be disabled at minimum
+      final IconButton button = tester.widget(minusButton);
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('disables plus button at maximum (10)', (tester) async {
+      /// Test Purpose: Verify maximum set count boundary
+      /// Users should not be able to exceed 10 sets
+
+      await tester.pumpWidget(createTestWidget());
+
+      // Tap plus button 9 times to reach 10
+      for (int i = 0; i < 9; i++) {
+        await tester.tap(find.byIcon(Icons.add_circle_outline));
+        await tester.pump();
+      }
+
+      expect(find.text('10'), findsOneWidget);
+
+      final plusButton = find.byIcon(Icons.add_circle_outline);
+      expect(plusButton, findsOneWidget);
+
+      // Button should be disabled at maximum
+      final IconButton button = tester.widget(plusButton);
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('creates exercise with custom set count', (tester) async {
+      /// Test Purpose: Verify custom set count is passed to createExercise
+      /// Users should be able to create exercises with any count from 1-10
+
+      await tester.pumpWidget(createTestWidget());
+
+      // Set count to 5
+      for (int i = 0; i < 4; i++) {
+        await tester.tap(find.byIcon(Icons.add_circle_outline));
+        await tester.pump();
+      }
+
+      expect(find.text('5'), findsOneWidget);
+
+      // Enter exercise name
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Exercise Name *'),
+        'Squats',
+      );
+
+      // Save
+      await tester.tap(find.text('CREATE'));
+      await tester.pump();
+      await tester.pump();
+
+      // Verify createExercise called with setCount: 5
+      verify(mockProvider.createExercise(
+        programId: 'program-1',
+        weekId: 'week-1',
+        workoutId: 'workout-1',
+        name: 'Squats',
+        exerciseType: ExerciseType.strength,
+        notes: null,
+        setCount: 5,
+      )).called(1);
+    });
+
+    testWidgets('shows updated tips text with set count information', (tester) async {
+      /// Test Purpose: Verify tips section includes set count guidance
+      /// Users should understand how to use the set count stepper
+
+      await tester.pumpWidget(createTestWidget());
+
+      // Scroll to tips section
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Select how many sets to create'), findsOneWidget);
     });
   });
 }
