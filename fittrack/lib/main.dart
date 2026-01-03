@@ -18,18 +18,23 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase with timeout to prevent indefinite hangs
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(
-      const Duration(seconds: 10),
-      onTimeout: () {
-        throw Exception('Firebase initialization timed out after 10 seconds. Check your internet connection and Firebase configuration.');
-      },
-    );
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-    // Run app with error state - AuthProvider will handle the error gracefully
+  // Skip if already initialized (e.g., by integration tests)
+  if (Firebase.apps.isEmpty) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Firebase initialization timed out after 10 seconds. Check your internet connection and Firebase configuration.');
+        },
+      );
+    } catch (e) {
+      debugPrint('Firebase initialization error: $e');
+      // Run app with error state - AuthProvider will handle the error gracefully
+    }
+  } else {
+    debugPrint('Firebase already initialized (likely by integration tests), skipping initialization');
   }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)

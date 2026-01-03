@@ -20,7 +20,7 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         }
-        
+
         // Show appropriate screen based on authentication state
         if (authProvider.isAuthenticated) {
           // Check email verification
