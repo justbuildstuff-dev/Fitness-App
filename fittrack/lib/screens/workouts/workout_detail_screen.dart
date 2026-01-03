@@ -383,9 +383,14 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        
-        await programProvider.deleteExerciseById(exercise.id);
-        
+        // Use full delete method with explicit IDs (not deleteExerciseById)
+        await programProvider.deleteExercise(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+          exercise.id,
+        );
+
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
@@ -524,7 +529,12 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        await provider.deleteWorkoutById(widget.workout.id);
+        // Use full delete method with explicit IDs (not deleteWorkoutById)
+        await provider.deleteWorkout(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+        );
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(

@@ -7,9 +7,9 @@ import '../models/user_profile.dart';
 import '../converters/user_profile_converter.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+
   User? _user;
   UserProfile? _userProfile;
   bool _isLoading = false;
@@ -23,13 +23,26 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   String? get successMessage => _successMessage;
   bool get isAuthenticated => _user != null;
+  bool get isEmailVerified => _user?.emailVerified ?? false;
 
-  AuthProvider() {
+  AuthProvider({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance {
     // Listen to auth state changes
-    _authStateSubscription = _auth.authStateChanges().listen((User? user) {
+    _authStateSubscription = _auth.authStateChanges().listen((User? user) async {
       debugPrint('[AuthProvider] Auth state changed - userId: ${user?.uid ?? 'null'}');
-      _user = user;
+
+      // Reload user to get latest emailVerified status
       if (user != null) {
+        await user.reload();
+        _user = _auth.currentUser;
+      } else {
+        _user = null;
+      }
+
+      if (_user != null) {
         _loadUserProfile();
       } else {
         _userProfile = null;
@@ -61,14 +74,17 @@ class AuthProvider extends ChangeNotifier {
       if (result.user != null) {
         // Create user profile document
         await _createUserProfile(result.user!, displayName);
-        
+
         // Update display name if provided
         if (displayName != null && displayName.trim().isNotEmpty) {
           await result.user!.updateDisplayName(displayName.trim());
         }
-        
+
+        // Send email verification
+        await result.user!.sendEmailVerification();
+
         // Set success message
-        _setSuccessMessage('Account created successfully! Please sign in with your new credentials.');
+        _setSuccessMessage('Account created! Please check your email to verify your account.');
         return true;
       }
       return false;
@@ -127,7 +143,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      
+
       await _auth.sendPasswordResetEmail(email: email.trim());
     } on FirebaseAuthException catch (e) {
       _setError(_getAuthErrorMessage(e));
@@ -135,6 +151,22 @@ class AuthProvider extends ChangeNotifier {
       _setError(e.toString());
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<void> sendEmailVerification() async {
+    if (_user == null) return;
+
+    try {
+      _clearError();
+      _clearSuccessMessage();
+
+      if (!_user!.emailVerified) {
+        await _user!.sendEmailVerification();
+        _setSuccessMessage('Verification email sent! Please check your inbox.');
+      }
+    } catch (e) {
+      _setError('Failed to send verification email: ${e.toString()}');
     }
   }
 

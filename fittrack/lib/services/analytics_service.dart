@@ -25,6 +25,7 @@ class AnalyticsService {
   Future<WorkoutAnalytics> computeWorkoutAnalytics({
     required String userId,
     required DateRange dateRange,
+    String? programId,
   }) async {
     final cacheKey = '${userId}_${dateRange.start.toIso8601String()}_${dateRange.end.toIso8601String()}';
     
@@ -93,6 +94,212 @@ class AnalyticsService {
     );
 
     return heatmapData;
+  }
+
+  /// Generate heatmap data based on completed sets (checked: true)
+  ///
+  /// This method provides set-based activity tracking for the heatmap calendar.
+  /// Only sets marked as completed (`checked: true`) are counted.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID to retrieve analytics for
+  /// - [dateRange]: The time period to analyze (e.g., this week, this month, etc.)
+  /// - [programId]: Optional program filter. If null, includes sets from all programs
+  ///
+  /// **Returns:**
+  /// [ActivityHeatmapData] containing:
+  /// - Daily set counts grouped by date
+  /// - Current streak (consecutive days with at least 1 set)
+  /// - Longest streak within the date range
+  /// - Total completed sets
+  ///
+  /// **Caching:**
+  /// Results are cached for 5 minutes to improve performance. The cache key
+  /// includes userId, dateRange, and programId to ensure correct data isolation.
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final heatmapData = await analyticsService.generateSetBasedHeatmapData(
+  ///   userId: 'user123',
+  ///   dateRange: DateRange.thisWeek(),
+  ///   programId: 'program456', // or null for all programs
+  /// );
+  /// ```
+  Future<ActivityHeatmapData> generateSetBasedHeatmapData({
+    required String userId,
+    required DateRange dateRange,
+    String? programId,
+  }) async {
+    final cacheKey = '${userId}_heatmap_sets_${dateRange.start.toIso8601String()}_${dateRange.end.toIso8601String()}_${programId ?? 'all'}';
+
+    // Check cache first
+    if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid) {
+      return _cache[cacheKey]!.data as ActivityHeatmapData;
+    }
+
+    // Get all sets for the date range (with optional program filter)
+    final allSets = await _getAllUserSets(userId, dateRange, programId: programId);
+
+    // Filter only checked sets (completed sets)
+    final checkedSets = allSets.where((set) => set.checked).toList();
+
+    // Group sets by date (normalize to midnight for consistent day-level grouping)
+    final Map<DateTime, int> dailySetCounts = {};
+    for (final set in checkedSets) {
+      final date = DateTime(
+        set.createdAt.year,
+        set.createdAt.month,
+        set.createdAt.day,
+      );
+      dailySetCounts[date] = (dailySetCounts[date] ?? 0) + 1;
+    }
+
+    // Calculate streaks based on consecutive days with at least 1 set
+    final streaks = _calculateStreaks(dailySetCounts, dateRange);
+
+    final heatmapData = ActivityHeatmapData(
+      userId: userId,
+      year: dateRange.start.year,
+      dailySetCounts: dailySetCounts,
+      currentStreak: streaks.current,
+      longestStreak: streaks.longest,
+      totalSets: checkedSets.length,
+      programId: programId,
+    );
+
+    // Cache the result for 5 minutes
+    _cache[cacheKey] = _CachedAnalytics(
+      data: heatmapData,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return heatmapData;
+  }
+
+  /// Generate heatmap data for a specific month (all programs aggregated)
+  ///
+  /// This method provides monthly calendar view data for the monthly swipe feature.
+  /// It queries all programs and aggregates set counts by day for the specified month.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID to retrieve analytics for
+  /// - [year]: Year (e.g., 2024)
+  /// - [month]: Month (1-12)
+  ///
+  /// **Returns:**
+  /// [MonthHeatmapData] containing:
+  /// - Daily set counts mapped by day of month (1-31)
+  /// - Total completed sets for the month
+  /// - Timestamp when data was fetched (for cache validation)
+  ///
+  /// **Caching:**
+  /// Results are cached for 5 minutes to improve performance. The cache key
+  /// includes userId, year, and month to ensure correct data isolation.
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final monthData = await analyticsService.getMonthHeatmapData(
+  ///   userId: 'user123',
+  ///   year: 2024,
+  ///   month: 12, // December
+  /// );
+  ///
+  /// // Get set count for a specific day
+  /// final day15Count = monthData.getSetCountForDay(15);
+  /// ```
+  Future<MonthHeatmapData> getMonthHeatmapData({
+    required String userId,
+    required int year,
+    required int month,
+  }) async {
+    final cacheKey = '${userId}_month_${year}_$month';
+
+    // Check cache first
+    if (_cache.containsKey(cacheKey)) {
+      final cached = _cache[cacheKey]!.data as MonthHeatmapData;
+      if (cached.isCacheValid) {
+        return cached;
+      }
+    }
+
+    // Calculate month date range
+    final monthStart = DateTime(year, month, 1);
+    final monthEnd = DateTime(year, month + 1, 0, 23, 59, 59);
+    final dateRange = DateRange(start: monthStart, end: monthEnd);
+
+    // Get all sets for the month (all programs aggregated)
+    final allSets = await _getAllUserSets(userId, dateRange);
+
+    // Filter only checked sets (completed sets)
+    final checkedSets = allSets.where((set) => set.checked).toList();
+
+    // Group sets by day of month
+    final Map<int, int> dailySetCounts = {};
+    for (final set in checkedSets) {
+      final day = set.createdAt.day;
+      dailySetCounts[day] = (dailySetCounts[day] ?? 0) + 1;
+    }
+
+    final monthData = MonthHeatmapData(
+      year: year,
+      month: month,
+      dailySetCounts: dailySetCounts,
+      totalSets: checkedSets.length,
+      fetchedAt: DateTime.now(),
+    );
+
+    // Cache the result for 5 minutes
+    _cache[cacheKey] = _CachedAnalytics(
+      data: monthData,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return monthData;
+  }
+
+  /// Pre-fetch data for adjacent months to enable smooth swiping
+  ///
+  /// This method fetches data for the previous and next month in parallel
+  /// to improve perceived performance when users swipe between months.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID to retrieve analytics for
+  /// - [year]: Current month's year
+  /// - [month]: Current month (1-12)
+  ///
+  /// **Returns:**
+  /// A Future that completes when both adjacent months are fetched and cached.
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // User is viewing December 2024
+  /// await analyticsService.prefetchAdjacentMonths(
+  ///   userId: 'user123',
+  ///   year: 2024,
+  ///   month: 12,
+  /// );
+  /// // Now Nov 2024 and Jan 2025 are cached
+  /// ```
+  Future<void> prefetchAdjacentMonths({
+    required String userId,
+    required int year,
+    required int month,
+  }) async {
+    // Calculate previous month
+    final prevMonth = month == 1 ? 12 : month - 1;
+    final prevYear = month == 1 ? year - 1 : year;
+
+    // Calculate next month
+    final nextMonth = month == 12 ? 1 : month + 1;
+    final nextYear = month == 12 ? year + 1 : year;
+
+    // Fetch both in parallel for better performance
+    await Future.wait([
+      getMonthHeatmapData(userId: userId, year: prevYear, month: prevMonth),
+      getMonthHeatmapData(userId: userId, year: nextYear, month: nextMonth),
+    ]);
   }
 
   /// Get personal records for a user
@@ -255,27 +462,36 @@ class AnalyticsService {
     return allExercises;
   }
 
-  Future<List<ExerciseSet>> _getAllUserSets(String userId, DateRange dateRange) async {
+  Future<List<ExerciseSet>> _getAllUserSets(
+    String userId,
+    DateRange dateRange,
+    {String? programId}
+  ) async {
     final List<ExerciseSet> allSets = [];
-    
+
     try {
       final programs = await _firestoreService.getPrograms(userId).first;
-      
-      for (final program in programs) {
+
+      // Filter by program if specified
+      final targetPrograms = programId != null
+          ? programs.where((p) => p.id == programId).toList()
+          : programs;
+
+      for (final program in targetPrograms) {
         final weeks = await _firestoreService.getWeeks(userId, program.id).first;
-        
+
         for (final week in weeks) {
           final workouts = await _firestoreService.getWorkouts(userId, program.id, week.id).first;
-          
+
           for (final workout in workouts) {
             if (dateRange.contains(workout.createdAt)) {
               final exercises = await _firestoreService.getExercises(
                 userId, program.id, week.id, workout.id).first;
-              
+
               for (final exercise in exercises) {
                 final sets = await _firestoreService.getSets(
                   userId, program.id, week.id, workout.id, exercise.id).first;
-                
+
                 // Filter sets by date range
                 final filteredSets = sets.where((s) => dateRange.contains(s.createdAt));
                 allSets.addAll(filteredSets);
@@ -287,7 +503,7 @@ class AnalyticsService {
     } catch (e) {
       return [];
     }
-    
+
     return allSets;
   }
 
@@ -554,6 +770,45 @@ class AnalyticsService {
     }
 
     return null;
+  }
+
+  /// Calculate current and longest streaks from daily counts
+  ({int current, int longest}) _calculateStreaks(
+      Map<DateTime, int> dailyCounts, DateRange dateRange) {
+    final today = DateTime.now();
+    final sortedDates = dailyCounts.keys.toList()..sort();
+
+    if (sortedDates.isEmpty) return (current: 0, longest: 0);
+
+    int currentStreak = 0;
+    int longestStreak = 0;
+    int tempStreak = 0;
+
+    // Calculate longest streak
+    DateTime? lastDate;
+    for (final date in sortedDates) {
+      if (lastDate == null ||
+          date.difference(lastDate).inDays == 1) {
+        tempStreak++;
+      } else if (date.difference(lastDate).inDays > 1) {
+        longestStreak = tempStreak > longestStreak ? tempStreak : longestStreak;
+        tempStreak = 1;
+      }
+      lastDate = date;
+    }
+    longestStreak = tempStreak > longestStreak ? tempStreak : longestStreak;
+
+    // Calculate current streak (working backwards from today)
+    final todayNormalized = DateTime(today.year, today.month, today.day);
+    DateTime checkDate = todayNormalized;
+
+    while (dailyCounts.containsKey(checkDate) &&
+           dailyCounts[checkDate]! > 0) {
+      currentStreak++;
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    return (current: currentStreak, longest: longestStreak);
   }
 }
 

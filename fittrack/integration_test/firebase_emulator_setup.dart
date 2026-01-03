@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 
 /// Firebase Emulator Setup Utilities for Integration Tests
 /// 
@@ -173,10 +175,10 @@ class FirebaseEmulatorSetup {
   }
 
   /// Create a test user account in the Auth emulator for integration tests
-  /// 
+  ///
   /// Integration tests need authenticated users to test workout creation workflows.
   /// This method creates isolated test users that don't affect production data.
-  /// 
+  ///
   /// Returns: UserCredential for the created test user
   static Future<UserCredential> createTestUser({
     String email = 'test@example.com',
@@ -198,11 +200,104 @@ class FirebaseEmulatorSetup {
         throw Exception('User creation succeeded but user is null');
       }
 
-      print('✅ Test user created: ${userCredential.user!.uid} ($email)');
+      // CRITICAL FIX: Mark email as verified for E2E tests
+      // Without verified email, AuthWrapper redirects to EmailVerificationScreen
+      // This causes E2E tests to fail - they can't find "Programs" widget
+      //
+      // Use Firebase Auth Emulator REST API to set emailVerified: true
+      // This is the recommended approach for integration tests with emulators
+      // The helper will reload the user and verify the change took effect
+      await _setEmailVerifiedInEmulator(userCredential.user!);
+
+      final currentUser = FirebaseAuth.instance.currentUser;
+      print('✅ Test user created: ${currentUser?.uid ?? 'null'} ($email)');
+      print('   Final emailVerified status: ${currentUser?.emailVerified ?? false}');
+
+      if (currentUser?.emailVerified == false) {
+        print('   ⚠️  WARNING: Email NOT verified - tests may fail!');
+        print('   Auth emulator REST API may not have updated the user.');
+        print('   E2E tests will be redirected to EmailVerificationScreen.');
+      }
+
       return userCredential;
-      
+
     } catch (e) {
       throw Exception('Failed to create test user: $e');
+    }
+  }
+
+  /// Set emailVerified flag using Firebase Auth Emulator OOB codes endpoint
+  ///
+  /// The Firebase Auth Emulator provides an OOB (Out-of-Band) codes endpoint
+  /// that simulates clicking the email verification link. This is the proper
+  /// way to verify emails in the emulator environment.
+  ///
+  /// Documentation: https://firebase.google.com/docs/emulator-suite/connect_auth
+  static Future<void> _setEmailVerifiedInEmulator(User user) async {
+    try {
+      // Step 1: Send verification email (creates OOB code in emulator)
+      await user.sendEmailVerification();
+      print('📧 Sent verification email (created OOB code in emulator)');
+
+      // Step 2: Get the OOB code from emulator's OOB codes endpoint
+      final oobUrl = Uri.parse(
+        'http://$_authEmulatorHost:$_authEmulatorPort/emulator/v1/projects/fitness-app-8505e/oobCodes'
+      );
+
+      final oobResponse = await http.get(oobUrl);
+
+      if (oobResponse.statusCode == 200) {
+        final oobData = json.decode(oobResponse.body);
+        final oobCodes = oobData['oobCodes'] as List<dynamic>?;
+
+        if (oobCodes != null && oobCodes.isNotEmpty) {
+          // Find the most recent verification code for this user
+          final userOobCode = oobCodes.lastWhere(
+            (code) => code['email'] == user.email && code['requestType'] == 'VERIFY_EMAIL',
+            orElse: () => null,
+          );
+
+          if (userOobCode != null) {
+            final oobCode = userOobCode['oobCode'] as String;
+            print('✅ Found OOB verification code: ${oobCode.substring(0, 10)}...');
+
+            // Step 3: Apply the OOB code (simulates clicking verification link)
+            final applyUrl = Uri.parse(
+              'http://$_authEmulatorHost:$_authEmulatorPort/identitytoolkit.googleapis.com/v1/accounts:update?key=test-api-key'
+            );
+
+            final applyResponse = await http.post(
+              applyUrl,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'oobCode': oobCode,
+              }),
+            );
+
+            if (applyResponse.statusCode == 200) {
+              print('✅ Email verified via OOB code application');
+
+              // Step 4: Reload user to get updated emailVerified status
+              await Future.delayed(const Duration(milliseconds: 100));
+              await user.reload();
+
+              final updatedUser = FirebaseAuth.instance.currentUser;
+              print('   After reload - emailVerified: ${updatedUser?.emailVerified ?? false}');
+            } else {
+              print('⚠️  Failed to apply OOB code: ${applyResponse.statusCode} - ${applyResponse.body}');
+            }
+          } else {
+            print('⚠️  No verification OOB code found for ${user.email}');
+          }
+        } else {
+          print('⚠️  No OOB codes available in emulator');
+        }
+      } else {
+        print('⚠️  Failed to get OOB codes: ${oobResponse.statusCode}');
+      }
+    } catch (e) {
+      print('⚠️  Error verifying email via OOB code: $e');
+      // Don't throw - this is a best-effort operation
     }
   }
 

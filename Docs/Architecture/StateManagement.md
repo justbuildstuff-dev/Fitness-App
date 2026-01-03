@@ -157,8 +157,9 @@ bool _isLoadingExercises = false;
 List<ExerciseSet> _sets = [];
 bool _isLoadingSets = false;
 
-// Global State
-String? _error;
+// Error State (Separate fields to prevent race conditions)
+String? _programsError;    // Errors from program/week/workout/exercise/set operations
+String? _analyticsError;   // Errors from analytics operations
 ```
 
 **Stream Management**:
@@ -399,18 +400,34 @@ if (programProvider.isLoadingWeeks) {
 
 ### Error Handling
 ```dart
-// Global error state shared across all operations
-String? get error => _error;
+// Separate error fields to prevent race conditions between concurrent operations
+String? get programsError => _programsError;
+String? get analyticsError => _analyticsError;
 
-// Error setting pattern
-void _setError(String errorMessage) {
-  _error = errorMessage;
+// Backward compatible - returns first available error
+String? get error => _programsError ?? _analyticsError;
+
+// Error setting pattern for programs
+void _setProgramsError(String errorMessage) {
+  _programsError = errorMessage;
   notifyListeners();
 }
 
-// Error clearing
-void clearError() {
-  _error = null;
+// Error setting pattern for analytics
+void _setAnalyticsError(String errorMessage) {
+  _analyticsError = errorMessage;
+  notifyListeners();
+}
+
+// Error clearing for programs
+void clearProgramsError() {
+  _programsError = null;
+  notifyListeners();
+}
+
+// Error clearing for analytics
+void clearAnalyticsError() {
+  _analyticsError = null;
   notifyListeners();
 }
 ```
@@ -542,36 +559,74 @@ void _onCreateWeek() async {
 
 ### Provider-Level Error Handling
 ```dart
-// Centralized error state
-String? _error;
+// Separate error states prevent race conditions during concurrent operations
+String? _programsError;
+String? _analyticsError;
 
-// Error setting with automatic UI updates
-void _handleError(String operation, dynamic error) {
-  _error = 'Failed to $operation: ${error.toString()}';
-  _isLoading = false;
+// Error setting with automatic UI updates (programs)
+void _handleProgramsError(String operation, dynamic error) {
+  _programsError = 'Failed to $operation: ${error.toString()}';
+  _isLoadingPrograms = false;
+  notifyListeners();
+}
+
+// Error setting with automatic UI updates (analytics)
+void _handleAnalyticsError(String operation, dynamic error) {
+  _analyticsError = 'Failed to $operation: ${error.toString()}';
+  _isLoadingAnalytics = false;
   notifyListeners();
 }
 
 // Usage in operations
 try {
-  await _performOperation();
+  await _performProgramOperation();
 } catch (e) {
-  _handleError('create program', e);
+  _handleProgramsError('create program', e);
+}
+
+try {
+  await _performAnalyticsOperation();
+} catch (e) {
+  _handleAnalyticsError('load analytics', e);
 }
 ```
 
 ### UI-Level Error Display
 ```dart
-// Error handling in UI
-if (provider.error != null) {
+// Display program-specific errors
+if (provider.programsError != null) {
   return Column(
     children: [
       ErrorBanner(
-        message: provider.error!,
-        onDismiss: () => provider.clearError(),
+        message: provider.programsError!,
+        onDismiss: () => provider.clearProgramsError(),
       ),
       // Continue with normal UI...
     ],
+  );
+}
+
+// Display analytics-specific errors
+if (provider.analyticsError != null) {
+  return Column(
+    children: [
+      ErrorBanner(
+        message: provider.analyticsError!,
+        onDismiss: () => provider.clearAnalyticsError(),
+      ),
+      // Continue with normal UI...
+    ],
+  );
+}
+
+// Or use backward-compatible error getter for general error display
+if (provider.error != null) {
+  return ErrorBanner(
+    message: provider.error!,
+    onDismiss: () {
+      provider.clearProgramsError();
+      provider.clearAnalyticsError();
+    },
   );
 }
 ```
@@ -727,6 +782,7 @@ testWidgets('displays programs correctly', (tester) async {
 3. **Stream Management**: Always cancel subscriptions in dispose()
 4. **Error Boundaries**: Handle errors at appropriate levels
 5. **Loading States**: Provide feedback for async operations
+6. **Separate Error States**: Use domain-specific error fields to prevent race conditions in concurrent operations
 
 ### State Updates
 ```dart
@@ -771,18 +827,84 @@ void clearAllData() {
 
 ### Error Recovery
 ```dart
-// Provide retry mechanisms
+// Provide retry mechanisms for programs
 void retryLoadPrograms() {
-  _error = null;
+  _programsError = null;
   loadPrograms();
+}
+
+// Provide retry mechanisms for analytics
+void retryLoadAnalytics() {
+  _analyticsError = null;
+  loadAnalytics();
 }
 
 // Graceful degradation
 List<Program> get availablePrograms {
-  return _programs.isNotEmpty 
-      ? _programs 
+  return _programs.isNotEmpty
+      ? _programs
       : _getCachedPrograms(); // Fallback to cached data
 }
 ```
 
-This state management architecture provides a robust foundation for the FitTrack application, ensuring reactive UI updates, proper resource management, and excellent user experience through comprehensive loading and error states.
+## Race Condition Prevention
+
+### Problem: Single Error Field with Concurrent Operations
+
+When using a single `_error` field for all operations, race conditions can occur with concurrent async operations:
+
+**Scenario**:
+1. `loadPrograms()` starts (Stream subscription)
+2. `loadAnalytics()` starts (Future-based async)
+3. Both clear `_error = null` at start
+4. `loadAnalytics()` fails first → sets `_error = 'Failed to load analytics'`
+5. `loadPrograms()` succeeds → stream handler clears `_error = null`
+6. Analytics error is lost, UI shows no error despite failure
+
+**Timeline**:
+```
+T0: loadPrograms() starts  → _error = null
+T1: loadAnalytics() starts → _error = null
+T2: loadAnalytics() fails  → _error = 'Failed to load analytics'
+T3: loadPrograms() succeeds → _error = null  [OVERWRITES ANALYTICS ERROR]
+```
+
+### Solution: Separate Error Fields
+
+The solution uses domain-specific error fields:
+
+```dart
+// Separate error states for independent operations
+String? _programsError;    // Errors from program/week/workout/exercise/set operations
+String? _analyticsError;   // Errors from analytics operations
+
+// Backward-compatible error getter
+String? get error => _programsError ?? _analyticsError;
+```
+
+**Benefits**:
+1. **No Race Conditions**: Each operation manages its own error state independently
+2. **Better UX**: Users see specific context about which operation failed
+3. **Concurrent Operations**: Programs and analytics can load simultaneously without interference
+4. **Backward Compatible**: Generic `error` getter maintains existing UI patterns
+5. **Scalable**: Easy to add more error domains if needed (e.g., `_settingsError`)
+
+**Pattern**:
+```dart
+// Each operation uses its own error field
+void loadPrograms() {
+  _isLoadingPrograms = true;
+  _programsError = null;  // Only clears programs errors
+  // ... operation ...
+}
+
+Future<void> loadAnalytics() async {
+  _isLoadingAnalytics = true;
+  _analyticsError = null;  // Only clears analytics errors
+  // ... operation ...
+}
+```
+
+This prevents operations from interfering with each other's error states.
+
+This state management architecture provides a robust foundation for the FitTrack application, ensuring reactive UI updates, proper resource management, race condition prevention, and excellent user experience through comprehensive loading and error states.

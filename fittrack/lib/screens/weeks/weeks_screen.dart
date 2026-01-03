@@ -245,6 +245,8 @@ class _WeeksScreenState extends State<WeeksScreen> {
                     itemBuilder: (context, index) {
                       final workout = programProvider.workouts[index];
                       return _WorkoutCard(
+                        program: widget.program,
+                        week: widget.week,
                         workout: workout,
                         onTap: () => _navigateToWorkout(context, workout),
                       );
@@ -296,38 +298,67 @@ class _WeeksScreenState extends State<WeeksScreen> {
 
   void _handleMenuAction(BuildContext context, String action) async {
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-    
+
     switch (action) {
       case 'duplicate':
-        final result = await programProvider.duplicateWeek(
-          programId: widget.program.id,
-          weekId: widget.week.id,
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        final errorColor = Theme.of(context).colorScheme.error;
+
+        // Show loading dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
         );
-        
-        if (context.mounted) {
-          if (result != null && result['success'] == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Week duplicated successfully!'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
+
+        try {
+          final result = await programProvider.duplicateWeek(
+            programId: widget.program.id,
+            weekId: widget.week.id,
+          );
+
+          if (context.mounted) {
+            Navigator.of(context).pop(); // Dismiss loading dialog
+
+            if (result != null && result['success'] == true) {
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(
+                  content: Text('Week duplicated successfully!'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              // Navigate back to program detail screen to see the duplicated week
+              Navigator.of(context).pop();
+            } else {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(programProvider.error ?? 'Failed to duplicate week'),
+                  backgroundColor: errorColor,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (context.mounted) {
+            Navigator.of(context).pop(); // Dismiss loading dialog
+            scaffoldMessenger.showSnackBar(
               SnackBar(
-                content: Text(programProvider.error ?? 'Failed to duplicate week'),
-                backgroundColor: Theme.of(context).colorScheme.error,
+                content: Text('Error duplicating week: $e'),
+                backgroundColor: errorColor,
                 behavior: SnackBarBehavior.floating,
               ),
             );
           }
         }
         break;
-      
+
       case 'edit':
         // TODO: Navigate to edit week screen
         break;
-        
+
       case 'delete':
         _showDeleteDialog(context);
         break;
@@ -358,7 +389,11 @@ class _WeeksScreenState extends State<WeeksScreen> {
 
     if (confirmed == true) {
       try {
-        await programProvider.deleteWeekById(widget.week.id);
+        // Use full delete method with explicit IDs (not deleteWeekById)
+        await programProvider.deleteWeek(
+          widget.program.id,
+          widget.week.id,
+        );
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
@@ -432,10 +467,14 @@ class _StatCard extends StatelessWidget {
 }
 
 class _WorkoutCard extends StatelessWidget {
+  final Program program;
+  final Week week;
   final Workout workout;
   final VoidCallback onTap;
 
   const _WorkoutCard({
+    required this.program,
+    required this.week,
     required this.workout,
     required this.onTap,
   });
@@ -558,8 +597,13 @@ class _WorkoutCard extends StatelessWidget {
 
     if (confirmed == true) {
       try {
-        await programProvider.deleteWorkoutById(workout.id);
-        
+        // Use full delete method with explicit IDs (not deleteWorkoutById)
+        await programProvider.deleteWorkout(
+          program.id,
+          week.id,
+          workout.id,
+        );
+
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(

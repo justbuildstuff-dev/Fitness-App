@@ -20,6 +20,7 @@ class ProgramProvider extends ChangeNotifier {
   ProgramProvider(this._userId)
     : _firestoreService = FirestoreService.instance,
       _analyticsService = AnalyticsService.instance {
+    debugPrint('[ProgramProvider] Constructor called with userId: $_userId');
     // Auto-load data when userId is set and has changed
     _autoLoadDataIfNeeded();
   }
@@ -38,30 +39,71 @@ class ProgramProvider extends ChangeNotifier {
   /// This prevents the race condition where screens call load methods
   /// before the provider has been updated with the userId
   void _autoLoadDataIfNeeded() {
+    debugPrint('[ProgramProvider] _autoLoadDataIfNeeded called - userId: $_userId, previousUserId: $_previousUserId');
+
+    // If userId is null (user signed out), cancel all listeners
+    // This prevents permission-denied errors from orphaned listeners
+    if (_userId == null && _previousUserId != null) {
+      debugPrint('[ProgramProvider] User signed out - canceling all active listeners');
+      _cancelAllListeners();
+      _previousUserId = null;
+      return;
+    }
+
     // Only load if we have a userId and it's different from previous
     if (_userId != null && _userId != _previousUserId) {
       _previousUserId = _userId;
 
-      debugPrint('[ProgramProvider] Auto-loading data for userId: $_userId');
+      debugPrint('[ProgramProvider] ✓ Auto-loading data for userId: $_userId');
 
       // Schedule load for next frame to avoid calling notifyListeners during build
       Future.microtask(() {
-        debugPrint('[ProgramProvider] Executing auto-load for programs and analytics');
-        loadPrograms();
+        debugPrint('[ProgramProvider] ✓ Executing auto-load for programs and analytics');
+        loadPrograms();  // Creates new listeners for new user
         loadAnalytics();
       });
     } else if (_userId == null) {
-      debugPrint('[ProgramProvider] Skipping auto-load - userId is null');
+      debugPrint('[ProgramProvider] ✗ Skipping auto-load - userId is null');
     } else {
-      debugPrint('[ProgramProvider] Skipping auto-load - userId unchanged ($_userId)');
+      debugPrint('[ProgramProvider] ✗ Skipping auto-load - userId unchanged ($_userId)');
     }
+  }
+
+  /// Cancel all active Firestore listeners
+  /// Called when user signs out to prevent permission-denied errors from orphaned listeners
+  void _cancelAllListeners() {
+    debugPrint('[ProgramProvider] Canceling all active Firestore listeners');
+    _programsSubscription?.cancel();
+    _programsSubscription = null;
+    _weeksSubscription?.cancel();
+    _weeksSubscription = null;
+    _workoutsSubscription?.cancel();
+    _workoutsSubscription = null;
+    _exercisesSubscription?.cancel();
+    _exercisesSubscription = null;
+    _setsSubscription?.cancel();
+    _setsSubscription = null;
+
+    // Clear all data to prevent stale data from previous user
+    _programs = [];
+    _weeks = [];
+    _workouts = [];
+    _exercises = [];
+    _sets = [];
+    _selectedProgram = null;
+    _selectedWeek = null;
+    _selectedWorkout = null;
+    _selectedExercise = null;
+
+    debugPrint('[ProgramProvider] All listeners canceled and data cleared');
   }
 
   // Programs
   List<Program> _programs = [];
   Program? _selectedProgram;
   bool _isLoadingPrograms = false;
-  String? _error;
+  String? _programsError;
+  String? _analyticsError;
 
   // Weeks
   List<Week> _weeks = [];
@@ -90,6 +132,7 @@ class ProgramProvider extends ChangeNotifier {
   // Analytics
   WorkoutAnalytics? _currentAnalytics;
   ActivityHeatmapData? _heatmapData;
+  MonthHeatmapData? _monthHeatmapData;
   List<PersonalRecord>? _recentPRs;
   Map<String, dynamic>? _keyStatistics;
   bool _isLoadingAnalytics = false;
@@ -108,7 +151,15 @@ class ProgramProvider extends ChangeNotifier {
   List<Program> get programs => _programs;
   Program? get selectedProgram => _selectedProgram;
   bool get isLoadingPrograms => _isLoadingPrograms;
-  String? get error => _error;
+
+  /// Get program-specific error
+  String? get programsError => _programsError;
+
+  /// Get analytics-specific error
+  String? get analyticsError => _analyticsError;
+
+  /// Get any error (backward compatible - returns first available error)
+  String? get error => _programsError ?? _analyticsError;
 
   List<Week> get weeks => _weeks;
   Week? get selectedWeek => _selectedWeek;
@@ -140,6 +191,7 @@ class ProgramProvider extends ChangeNotifier {
   List<PersonalRecord>? get recentPRs => _recentPRs;
   Map<String, dynamic>? get keyStatistics => _keyStatistics;
   bool get isLoadingAnalytics => _isLoadingAnalytics;
+  MonthHeatmapData? get monthHeatmapData => _monthHeatmapData;
 
   /// Get current sets (convenience method)
   List<ExerciseSet> getCurrentSets() => _sets;
@@ -157,7 +209,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Load all programs for the user
   void loadPrograms() {
     if (_userId == null) {
-      _error = 'User not authenticated. Please log in to view your programs.';
+      _programsError = 'User not authenticated. Please log in to view your programs.';
       _isLoadingPrograms = false;
       notifyListeners();
       debugPrint('[ProgramProvider] loadPrograms called with null userId');
@@ -166,21 +218,23 @@ class ProgramProvider extends ChangeNotifier {
 
     debugPrint('[ProgramProvider] Loading programs for userId: $_userId');
     _isLoadingPrograms = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     // Cancel previous subscription
     _programsSubscription?.cancel();
-    
+
     _programsSubscription = _firestoreService.getPrograms(_userId!).listen(
       (programs) {
+        debugPrint('[ProgramProvider] Programs loaded successfully: ${programs.length} programs');
         _programs = programs;
         _isLoadingPrograms = false;
-        _error = null;
+        _programsError = null; // Clear error on successful load
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load programs: $error';
+        debugPrint('[ProgramProvider] Programs load error: $error');
+        _programsError = 'Failed to load programs: $error';
         _isLoadingPrograms = false;
         notifyListeners();
       },
@@ -195,7 +249,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final program = Program(
@@ -210,7 +264,7 @@ class ProgramProvider extends ChangeNotifier {
       final programId = await _firestoreService.createProgram(program);
       return programId;
     } catch (e) {
-      _error = 'Failed to create program: $e';
+      _programsError = 'Failed to create program: $e';
       notifyListeners();
       return null;
     }
@@ -219,7 +273,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a program
   Future<bool> updateProgram(Program program) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedProgram = program.copyWith(
@@ -229,7 +283,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateProgram(updatedProgram);
       return true;
     } catch (e) {
-      _error = 'Failed to update program: $e';
+      _programsError = 'Failed to update program: $e';
       notifyListeners();
       return false;
     }
@@ -244,7 +298,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) throw Exception('User not authenticated');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateProgramFields(
@@ -256,7 +310,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Programs will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update program: $e';
+      _programsError = 'Failed to update program: $e';
       notifyListeners();
       rethrow;
     }
@@ -267,13 +321,13 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.archiveProgram(_userId!, programId);
       return true;
     } catch (e) {
-      _error = 'Failed to archive program: $e';
+      _programsError = 'Failed to archive program: $e';
       notifyListeners();
       return false;
     }
@@ -284,14 +338,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) throw Exception('User not authenticated');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteProgram(_userId!, programId);
       
       // Programs will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete program: $e';
+      _programsError = 'Failed to delete program: $e';
       notifyListeners();
       rethrow;
     }
@@ -321,7 +375,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingWeeks = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     // Cancel previous subscription
@@ -331,11 +385,11 @@ class ProgramProvider extends ChangeNotifier {
       (weeks) {
         _weeks = weeks;
         _isLoadingWeeks = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load weeks: $error';
+        _programsError = 'Failed to load weeks: $error';
         _isLoadingWeeks = false;
         notifyListeners();
       },
@@ -351,7 +405,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next order
@@ -373,7 +427,7 @@ class ProgramProvider extends ChangeNotifier {
       final weekId = await _firestoreService.createWeek(week);
       return weekId;
     } catch (e) {
-      _error = 'Failed to create week: $e';
+      _programsError = 'Failed to create week: $e';
       notifyListeners();
       return null;
     }
@@ -382,7 +436,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a week
   Future<bool> updateWeek(Week week) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedWeek = week.copyWith(
@@ -392,7 +446,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateWeek(updatedWeek);
       return true;
     } catch (e) {
-      _error = 'Failed to update week: $e';
+      _programsError = 'Failed to update week: $e';
       notifyListeners();
       return false;
     }
@@ -409,7 +463,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedProgram == null) throw Exception('No program selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateWeekFields(
@@ -423,7 +477,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Weeks will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update week: $e';
+      _programsError = 'Failed to update week: $e';
       notifyListeners();
       rethrow;
     }
@@ -434,13 +488,13 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWeek(_userId!, programId, weekId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete week: $e';
+      _programsError = 'Failed to delete week: $e';
       notifyListeners();
       return false;
     }
@@ -452,14 +506,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedProgram == null) throw Exception('No program selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWeek(_userId!, _selectedProgram!.id, weekId);
       
       // Weeks will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete week: $e';
+      _programsError = 'Failed to delete week: $e';
       notifyListeners();
       rethrow;
     }
@@ -473,7 +527,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final result = await _firestoreService.duplicateWeek(
@@ -484,7 +538,7 @@ class ProgramProvider extends ChangeNotifier {
 
       return result;
     } catch (e) {
-      _error = 'Failed to duplicate week: $e';
+      _programsError = 'Failed to duplicate week: $e';
       notifyListeners();
       return null;
     }
@@ -512,7 +566,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingWorkouts = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     // Cancel previous subscription
@@ -522,11 +576,11 @@ class ProgramProvider extends ChangeNotifier {
       (workouts) {
         _workouts = workouts;
         _isLoadingWorkouts = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load workouts: $error';
+        _programsError = 'Failed to load workouts: $error';
         _isLoadingWorkouts = false;
         notifyListeners();
       },
@@ -546,19 +600,19 @@ class ProgramProvider extends ChangeNotifier {
     // Validate workout name
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
-      _error = 'Workout name cannot be empty';
+      _programsError = 'Workout name cannot be empty';
       notifyListeners();
       return null;
     }
 
     if (trimmedName.length > 200) {
-      _error = 'Workout name must be 200 characters or less';
+      _programsError = 'Workout name must be 200 characters or less';
       notifyListeners();
       return null;
     }
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next order index
@@ -582,7 +636,7 @@ class ProgramProvider extends ChangeNotifier {
       final workoutId = await _firestoreService.createWorkout(workout);
       return workoutId;
     } catch (e) {
-      _error = 'Failed to create workout: $e';
+      _programsError = 'Failed to create workout: $e';
       notifyListeners();
       return null;
     }
@@ -591,7 +645,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a workout
   Future<bool> updateWorkout(Workout workout) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedWorkout = workout.copyWith(
@@ -601,7 +655,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateWorkout(updatedWorkout);
       return true;
     } catch (e) {
-      _error = 'Failed to update workout: $e';
+      _programsError = 'Failed to update workout: $e';
       notifyListeners();
       return false;
     }
@@ -616,13 +670,13 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWorkout(_userId!, programId, weekId, workoutId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete workout: $e';
+      _programsError = 'Failed to delete workout: $e';
       notifyListeners();
       return false;
     }
@@ -641,7 +695,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWeek == null) throw Exception('No week selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateWorkoutFields(
@@ -657,7 +711,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Workouts will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update workout: $e';
+      _programsError = 'Failed to update workout: $e';
       notifyListeners();
       rethrow;
     }
@@ -670,7 +724,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWeek == null) throw Exception('No week selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteWorkout(
@@ -682,7 +736,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Workouts will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete workout: $e';
+      _programsError = 'Failed to delete workout: $e';
       notifyListeners();
       rethrow;
     }
@@ -708,18 +762,18 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingExercises = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     _firestoreService.getExercises(_userId!, programId, weekId, workoutId).listen(
       (exercises) {
         _exercises = exercises;
         _isLoadingExercises = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load exercises: $error';
+        _programsError = 'Failed to load exercises: $error';
         _isLoadingExercises = false;
         notifyListeners();
       },
@@ -739,7 +793,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next order index
@@ -768,7 +822,7 @@ class ProgramProvider extends ChangeNotifier {
       );
       return exerciseId;
     } catch (e) {
-      _error = 'Failed to create exercise: $e';
+      _programsError = 'Failed to create exercise: $e';
       notifyListeners();
       return null;
     }
@@ -777,7 +831,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update an exercise
   Future<bool> updateExercise(Exercise exercise) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedExercise = exercise.copyWith(
@@ -787,7 +841,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateExercise(updatedExercise);
       return true;
     } catch (e) {
-      _error = 'Failed to update exercise: $e';
+      _programsError = 'Failed to update exercise: $e';
       notifyListeners();
       return false;
     }
@@ -803,14 +857,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteExercise(
           _userId!, programId, weekId, workoutId, exerciseId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete exercise: $e';
+      _programsError = 'Failed to delete exercise: $e';
       notifyListeners();
       return false;
     }
@@ -830,7 +884,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWorkout == null) throw Exception('No workout selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.updateExerciseFields(
@@ -847,7 +901,7 @@ class ProgramProvider extends ChangeNotifier {
       
       // Exercises will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to update exercise: $e';
+      _programsError = 'Failed to update exercise: $e';
       notifyListeners();
       rethrow;
     }
@@ -861,7 +915,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_selectedWorkout == null) throw Exception('No workout selected');
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteExercise(
@@ -874,7 +928,7 @@ class ProgramProvider extends ChangeNotifier {
 
       // Exercises will be automatically updated via the stream
     } catch (e) {
-      _error = 'Failed to delete exercise: $e';
+      _programsError = 'Failed to delete exercise: $e';
       notifyListeners();
       rethrow;
     }
@@ -953,18 +1007,18 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return;
 
     _isLoadingSets = true;
-    _error = null;
+    _programsError = null;
     notifyListeners();
 
     _firestoreService.getSets(_userId!, programId, weekId, workoutId, exerciseId).listen(
       (sets) {
         _sets = sets;
         _isLoadingSets = false;
-        _error = null;
+        _programsError = null;
         notifyListeners();
       },
       onError: (error) {
-        _error = 'Failed to load sets: $error';
+        _programsError = 'Failed to load sets: $error';
         _isLoadingSets = false;
         notifyListeners();
       },
@@ -1036,7 +1090,7 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return null;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       // Calculate next set number
@@ -1065,7 +1119,7 @@ class ProgramProvider extends ChangeNotifier {
       final setId = await _firestoreService.createSet(set);
       return setId;
     } catch (e) {
-      _error = 'Failed to create set: $e';
+      _programsError = 'Failed to create set: $e';
       notifyListeners();
       return null;
     }
@@ -1074,7 +1128,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Update a set
   Future<bool> updateSet(ExerciseSet set) async {
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       final updatedSet = set.copyWith(
@@ -1084,7 +1138,7 @@ class ProgramProvider extends ChangeNotifier {
       await _firestoreService.updateSet(updatedSet);
       return true;
     } catch (e) {
-      _error = 'Failed to update set: $e';
+      _programsError = 'Failed to update set: $e';
       notifyListeners();
       return false;
     }
@@ -1101,14 +1155,14 @@ class ProgramProvider extends ChangeNotifier {
     if (_userId == null) return false;
 
     try {
-      _error = null;
+      _programsError = null;
       notifyListeners();
 
       await _firestoreService.deleteSet(
           _userId!, programId, weekId, workoutId, exerciseId, setId);
       return true;
     } catch (e) {
-      _error = 'Failed to delete set: $e';
+      _programsError = 'Failed to delete set: $e';
       notifyListeners();
       return false;
     }
@@ -1121,7 +1175,7 @@ class ProgramProvider extends ChangeNotifier {
   /// Load analytics data for the user
   Future<void> loadAnalytics({DateRange? dateRange}) async {
     if (_userId == null) {
-      _error = 'User not authenticated. Please log in to view analytics.';
+      _analyticsError = 'User not authenticated. Please log in to view analytics.';
       _isLoadingAnalytics = false;
       if (!_disposed) {
         notifyListeners();
@@ -1133,23 +1187,38 @@ class ProgramProvider extends ChangeNotifier {
     debugPrint('[ProgramProvider] Loading analytics for userId: $_userId');
     try {
       _isLoadingAnalytics = true;
-      _error = null;
+      _analyticsError = null;
       if (!_disposed) {
         notifyListeners();
       }
 
+      final now = DateTime.now();
+
+      // Use provided date range or default to current year
       final selectedDateRange = dateRange ?? DateRange.thisYear();
-      final currentYear = DateTime.now().year;
 
       // Load analytics data concurrently
       final futures = [
+        // Fetch current month heatmap data
+        _analyticsService.getMonthHeatmapData(
+          userId: _userId!,
+          year: now.year,
+          month: now.month,
+        ),
+        // Pre-fetch adjacent months for smooth navigation
+        _analyticsService.prefetchAdjacentMonths(
+          userId: _userId!,
+          year: now.year,
+          month: now.month,
+        ),
+        // Load other analytics (for key stats, PRs, etc.)
         _analyticsService.computeWorkoutAnalytics(
           userId: _userId!,
           dateRange: selectedDateRange,
         ),
-        _analyticsService.generateHeatmapData(
+        _analyticsService.generateSetBasedHeatmapData(
           userId: _userId!,
-          year: currentYear,
+          dateRange: selectedDateRange,
         ),
         _analyticsService.getPersonalRecords(
           userId: _userId!,
@@ -1163,13 +1232,15 @@ class ProgramProvider extends ChangeNotifier {
 
       final results = await Future.wait(futures);
 
-      _currentAnalytics = results[0] as WorkoutAnalytics;
-      _heatmapData = results[1] as ActivityHeatmapData;
-      _recentPRs = results[2] as List<PersonalRecord>;
-      _keyStatistics = results[3] as Map<String, dynamic>;
+      _monthHeatmapData = results[0] as MonthHeatmapData;
+      // results[1] is void (prefetch)
+      _currentAnalytics = results[2] as WorkoutAnalytics;
+      _heatmapData = results[3] as ActivityHeatmapData;
+      _recentPRs = results[4] as List<PersonalRecord>;
+      _keyStatistics = results[5] as Map<String, dynamic>;
 
     } catch (e) {
-      _error = 'Failed to load analytics: $e';
+      _analyticsError = 'Failed to load analytics: $e';
       debugPrint('[ProgramProvider] loadAnalytics error: $e');
     } finally {
       _isLoadingAnalytics = false;
@@ -1220,7 +1291,7 @@ class ProgramProvider extends ChangeNotifier {
 
   /// Clear error message
   void clearError() {
-    _error = null;
+    _programsError = null;
     notifyListeners();
   }
 
@@ -1257,8 +1328,12 @@ class ProgramProvider extends ChangeNotifier {
   /// Sets error state for testing purposes
   /// This method is only intended for use in unit tests
   @visibleForTesting
-  void setErrorForTesting(String error) {
-    _error = error;
+  void setErrorForTesting(String error, {bool isAnalyticsError = false}) {
+    if (isAnalyticsError) {
+      _analyticsError = error;
+    } else {
+      _programsError = error;
+    }
     notifyListeners();
   }
 }
