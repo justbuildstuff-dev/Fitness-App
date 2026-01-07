@@ -1094,10 +1094,12 @@ class ProgramProvider extends ChangeNotifier {
       _programsError = null;
       notifyListeners();
 
-      // Calculate next set number
-      final nextSetNumber = _sets.isEmpty 
-          ? 1 
-          : _sets.map((s) => s.setNumber).reduce((a, b) => a > b ? a : b) + 1;
+      // Calculate next set number from the correct source
+      // Use _allWorkoutSets[exerciseId] if available, otherwise fall back to _sets
+      final existingSets = _allWorkoutSets[exerciseId] ?? _sets.where((s) => s.exerciseId == exerciseId).toList();
+      final nextSetNumber = existingSets.isEmpty
+          ? 1
+          : existingSets.map((s) => s.setNumber).reduce((a, b) => a > b ? a : b) + 1;
 
       final set = ExerciseSet(
         id: '',

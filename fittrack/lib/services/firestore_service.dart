@@ -1001,9 +1001,27 @@ class FirestoreService {
     );
     batch.set(exerciseRef, ExerciseConverter.toFirestore(exerciseWithId));
 
-    // Create N sets with default values
+    // Create N sets with default values based on exercise type
+    // Firestore rules require at least one metric (reps, duration, or distance) to be non-null
     for (int i = 0; i < setCount; i++) {
       final setRef = exerciseRef.collection('sets').doc();
+
+      // Set default metric values based on exercise type to satisfy Firestore validation
+      int? defaultReps;
+      int? defaultDuration;
+      switch (exercise.exerciseType) {
+        case ExerciseType.strength:
+        case ExerciseType.bodyweight:
+          defaultReps = 0; // Default to 0 reps for strength/bodyweight exercises
+          break;
+        case ExerciseType.cardio:
+        case ExerciseType.timeBased:
+          defaultDuration = 0; // Default to 0 seconds for cardio/time-based exercises
+          break;
+        case ExerciseType.custom:
+          defaultReps = 0; // Default to reps for custom exercises
+          break;
+      }
 
       final set = ExerciseSet(
         id: setRef.id,
@@ -1011,8 +1029,8 @@ class FirestoreService {
         checked: false,
         // Default values based on exercise type
         weight: null,
-        reps: null,
-        duration: null,
+        reps: defaultReps,
+        duration: defaultDuration,
         distance: null,
         notes: null,
         restTime: null,

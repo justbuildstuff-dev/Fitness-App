@@ -72,8 +72,15 @@ void main() {
         onUpdate: (_) {},
       ));
 
-      expect(find.text('Reps'), findsOneWidget);
-      expect(find.text('Weight (kg)'), findsOneWidget);
+      // Find TextField widgets and check their labels
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(textFields.length, greaterThanOrEqualTo(2));
+
+      // Check for Reps and Weight labels
+      expect(find.widgetWithText(TextField, 'Reps *'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Weight'), findsOneWidget);
+
+      // Check values are displayed
       expect(find.text('10'), findsOneWidget);
       expect(find.text('100'), findsOneWidget);
     });
@@ -140,8 +147,9 @@ void main() {
         onUpdate: (_) {},
       ));
 
-      expect(find.text('Duration (min)'), findsOneWidget);
-      expect(find.text('Distance (km)'), findsOneWidget);
+      // Check for Duration and Distance labels
+      expect(find.widgetWithText(TextField, 'Duration *'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Distance'), findsOneWidget);
     });
 
     testWidgets('displays only reps for bodyweight exercise', (tester) async {
@@ -153,8 +161,8 @@ void main() {
         onUpdate: (_) {},
       ));
 
-      expect(find.text('Reps'), findsOneWidget);
-      expect(find.text('Weight (kg)'), findsNothing);
+      expect(find.widgetWithText(TextField, 'Reps *'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Weight'), findsNothing);
     });
 
     testWidgets('delete button shown when not last set', (tester) async {
@@ -171,7 +179,7 @@ void main() {
       expect(find.byIcon(Icons.delete), findsOneWidget);
     });
 
-    testWidgets('delete button hidden when last set', (tester) async {
+    testWidgets('delete button disabled when last set', (tester) async {
       /// Test Purpose: Verify last set cannot be deleted
 
       await tester.pumpWidget(createTestWidget(
@@ -182,7 +190,9 @@ void main() {
         onDelete: null,
       ));
 
-      expect(find.byIcon(Icons.delete), findsNothing);
+      // Button is still visible but disabled
+      final deleteButton = tester.widget<IconButton>(find.byIcon(Icons.delete));
+      expect(deleteButton.onPressed, isNull); // Disabled
     });
 
     testWidgets('tapping delete button calls onDelete', (tester) async {
@@ -228,7 +238,8 @@ void main() {
         onUpdate: (_) {},
       ));
 
-      expect(find.byIcon(Icons.notes), findsOneWidget);
+      // When notes exist, icon is note_alt
+      expect(find.byIcon(Icons.note_alt), findsOneWidget);
     });
 
     testWidgets('fields are disabled when set is checked', (tester) async {
