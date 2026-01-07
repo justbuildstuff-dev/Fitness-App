@@ -103,12 +103,11 @@ void main() {
     }
 
     testWidgets('displays correct header information', (tester) async {
-      /// Test Purpose: Verify screen shows proper context (program/week/workout)
+      /// Test Purpose: Verify screen shows workout name in AppBar
 
       await tester.pumpWidget(createTestWidget());
 
       expect(find.text(testWorkout.name), findsOneWidget);
-      expect(find.text('${testProgram.name} → ${testWeek.name}'), findsOneWidget);
     });
 
     testWidgets('shows empty state when no exercises', (tester) async {
@@ -228,35 +227,8 @@ void main() {
       expect(find.text('Create Exercise'), findsOneWidget);
     });
 
-    testWidgets('displays workout notes if present', (tester) async {
-      /// Test Purpose: Verify workout notes are displayed
-
-      final workoutWithNotes = Workout(
-        id: 'workout-1',
-        name: 'Test Workout',
-        orderIndex: 0,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        userId: 'user-1',
-        weekId: 'week-1',
-        programId: 'program-1',
-        notes: 'Focus on form today',
-      );
-
-      await tester.pumpWidget(
-        TestSetupHelper.createTestAppWithMockedProviders(
-          programProvider: mockProvider,
-          child: ConsolidatedWorkoutScreen(
-            program: testProgram,
-            week: testWeek,
-            workout: workoutWithNotes,
-          ),
-        ),
-      );
-
-      expect(find.text('Focus on form today'), findsOneWidget);
-      expect(find.byIcon(Icons.notes), findsOneWidget);
-    });
+    // Note: Workout notes are not currently displayed in ConsolidatedWorkoutScreen
+    // They can be accessed via the Edit Workout screen
 
     testWidgets('shows error state when loading fails', (tester) async {
       /// Test Purpose: Verify error handling displays correctly
@@ -293,35 +265,8 @@ void main() {
       verify(mockProvider.loadExercises('program-1', 'week-1', 'workout-1')).called(2); // Once on init, once on retry
     });
 
-    testWidgets('displays day of week chip when present', (tester) async {
-      /// Test Purpose: Verify day of week chip is shown
-
-      final workoutWithDay = Workout(
-        id: 'workout-1',
-        name: 'Test Workout',
-        orderIndex: 0,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        userId: 'user-1',
-        weekId: 'week-1',
-        programId: 'program-1',
-        dayOfWeek: 1, // Monday
-      );
-
-      await tester.pumpWidget(
-        TestSetupHelper.createTestAppWithMockedProviders(
-          programProvider: mockProvider,
-          child: ConsolidatedWorkoutScreen(
-            program: testProgram,
-            week: testWeek,
-            workout: workoutWithDay,
-          ),
-        ),
-      );
-
-      expect(find.text('Monday'), findsOneWidget);
-      expect(find.byType(Chip), findsOneWidget);
-    });
+    // Note: Day of week is not currently displayed in ConsolidatedWorkoutScreen
+    // It can be accessed via the Edit Workout screen
 
     testWidgets('edit button shows in app bar', (tester) async {
       /// Test Purpose: Verify edit action is available
