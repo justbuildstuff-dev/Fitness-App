@@ -75,9 +75,9 @@ void main() {
       when(mockProvider.getSetsForExercise(any)).thenReturn([]);
       when(mockProvider.loadExercises(any, any, any)).thenAnswer((_) async {});
       when(mockProvider.loadAllSetsForWorkout(
-        programId: any(named: 'programId'),
-        weekId: any(named: 'weekId'),
-        workoutId: any(named: 'workoutId'),
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
       )).thenAnswer((_) async {});
 
       // Set up auth provider mocks to prevent Firebase calls

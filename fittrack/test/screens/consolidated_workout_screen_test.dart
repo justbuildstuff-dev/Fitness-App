@@ -79,8 +79,8 @@ void main() {
         restTime: anyNamed('restTime'),
         notes: anyNamed('notes'),
       )).thenAnswer((_) async => 'new-set-id');
-      when(mockProvider.updateSet(any)).thenAnswer((_) async {});
-      when(mockProvider.deleteSet(any, any)).thenAnswer((_) async {});
+      when(mockProvider.updateSet(any)).thenAnswer((_) async => true);
+      when(mockProvider.deleteSet(any, any, any, any, any)).thenAnswer((_) async => true);
       when(mockProvider.updateExercise(any)).thenAnswer((_) async {});
       when(mockProvider.deleteExerciseById(any)).thenAnswer((_) async {});
       when(mockProvider.deleteWorkoutById(any)).thenAnswer((_) async {});
