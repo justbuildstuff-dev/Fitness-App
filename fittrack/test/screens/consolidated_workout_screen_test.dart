@@ -58,7 +58,28 @@ void main() {
       when(mockProvider.error).thenReturn(null);
       when(mockProvider.exercises).thenReturn([]);
       when(mockProvider.isLoadingExercises).thenReturn(false);
+      when(mockProvider.isLoadingAllWorkoutSets).thenReturn(false);
       when(mockProvider.allWorkoutSets).thenReturn({});
+      when(mockProvider.getSetsForExercise(any)).thenReturn([]);
+      when(mockProvider.loadExercises(any, any, any)).thenAnswer((_) async {});
+      when(mockProvider.loadAllSetsForWorkout(
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+      )).thenAnswer((_) async {});
+      when(mockProvider.createSet(
+        exerciseId: anyNamed('exerciseId'),
+        exerciseType: anyNamed('exerciseType'),
+      )).thenAnswer((_) async => 'new-set-id');
+      when(mockProvider.updateSet(any)).thenAnswer((_) async {});
+      when(mockProvider.deleteSet(any, any)).thenAnswer((_) async {});
+      when(mockProvider.updateExercise(any)).thenAnswer((_) async {});
+      when(mockProvider.deleteExerciseById(any)).thenAnswer((_) async {});
+      when(mockProvider.deleteWorkoutById(any)).thenAnswer((_) async {});
+      when(mockProvider.getCascadeDeleteCounts(
+        exerciseId: anyNamed('exerciseId'),
+        workoutId: anyNamed('workoutId'),
+      )).thenAnswer((_) async => {'sets': 0});
     });
 
     Widget createTestWidget() {
@@ -143,6 +164,8 @@ void main() {
             id: 'set-1',
             setNumber: 1,
             checked: false,
+            reps: 10,
+            weight: 100.0,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
             userId: 'user-1',
@@ -157,6 +180,8 @@ void main() {
             id: 'set-2',
             setNumber: 1,
             checked: false,
+            reps: 10,
+            weight: 100.0,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
             userId: 'user-1',
