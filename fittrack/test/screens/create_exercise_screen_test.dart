@@ -466,6 +466,10 @@ void main() {
 
       await tester.pumpWidget(createTestWidget());
 
+      // Scroll to set count stepper (it's below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+
       expect(find.text('1'), findsOneWidget);
 
       // Tap plus button
@@ -480,6 +484,10 @@ void main() {
       /// Users should be able to decrement set count
 
       await tester.pumpWidget(createTestWidget());
+
+      // Scroll to set count stepper (it's below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
 
       // First increment to 2
       await tester.tap(find.byIcon(Icons.add_circle_outline));
@@ -498,6 +506,10 @@ void main() {
 
       await tester.pumpWidget(createTestWidget());
 
+      // Scroll to set count stepper (it's below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+
       final minusButton = find.byIcon(Icons.remove_circle_outline);
       expect(minusButton, findsOneWidget);
 
@@ -511,6 +523,10 @@ void main() {
       /// Users should not be able to exceed 10 sets
 
       await tester.pumpWidget(createTestWidget());
+
+      // Scroll to set count stepper (it's below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
 
       // Tap plus button 9 times to reach 10
       for (int i = 0; i < 9; i++) {
@@ -534,6 +550,10 @@ void main() {
 
       await tester.pumpWidget(createTestWidget());
 
+      // Scroll to set count stepper (it's below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+
       // Set count to 5
       for (int i = 0; i < 4; i++) {
         await tester.tap(find.byIcon(Icons.add_circle_outline));
@@ -541,6 +561,10 @@ void main() {
       }
 
       expect(find.text('5'), findsOneWidget);
+
+      // Scroll back to top to access exercise name field
+      await tester.drag(find.byType(ListView), const Offset(0, 300));
+      await tester.pumpAndSettle();
 
       // Enter exercise name
       await tester.enterText(
