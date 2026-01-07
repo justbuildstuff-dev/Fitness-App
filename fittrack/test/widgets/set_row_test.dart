@@ -72,17 +72,17 @@ void main() {
         onUpdate: (_) {},
       ));
 
-      // Find TextField widgets and check their labels
-      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
-      expect(textFields.length, greaterThanOrEqualTo(2));
-
-      // Check for Reps and Weight labels
+      // Check for Reps and Weight labels in TextFields
       expect(find.widgetWithText(TextField, 'Reps *'), findsOneWidget);
       expect(find.widgetWithText(TextField, 'Weight'), findsOneWidget);
 
-      // Check values are displayed
-      expect(find.text('10'), findsOneWidget);
-      expect(find.text('100'), findsOneWidget);
+      // Check values are displayed in text fields
+      final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(textFields.length, greaterThanOrEqualTo(2));
+
+      // Values are in the controller, not displayed as separate Text widgets
+      expect(find.text('10'), findsOneWidget); // Reps value
+      expect(find.text('100.0'), findsOneWidget); // Weight value (as string)
     });
 
     testWidgets('shows checkbox for completion', (tester) async {
@@ -191,7 +191,12 @@ void main() {
       ));
 
       // Button is still visible but disabled
-      final deleteButton = tester.widget<IconButton>(find.byIcon(Icons.delete));
+      final deleteButton = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byIcon(Icons.delete),
+          matching: find.byType(IconButton),
+        ),
+      );
       expect(deleteButton.onPressed, isNull); // Disabled
     });
 

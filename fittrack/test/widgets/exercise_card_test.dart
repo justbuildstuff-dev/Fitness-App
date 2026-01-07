@@ -207,7 +207,10 @@ void main() {
       ));
 
       final addButton = tester.widget<IconButton>(
-        find.byIcon(Icons.add).hitTestable(),
+        find.ancestor(
+          of: find.byIcon(Icons.add),
+          matching: find.byType(IconButton),
+        ).hitTestable(),
       );
       expect(addButton.onPressed, isNull);
       expect(find.byTooltip('Maximum 10 sets per exercise'), findsOneWidget);
