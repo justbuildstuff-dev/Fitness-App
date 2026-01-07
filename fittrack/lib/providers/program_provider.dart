@@ -944,45 +944,50 @@ class ProgramProvider extends ChangeNotifier {
   ///
   /// Returns zero counts if required context (_selectedProgram, etc.) is missing.
   Future<CascadeDeleteCounts> getCascadeDeleteCounts({
+    String? programId,
     String? weekId,
     String? workoutId,
     String? exerciseId,
   }) async {
     if (_userId == null) return const CascadeDeleteCounts();
 
-    String? programId;
+    String? resolvedProgramId = programId;
     String? resolvedWeekId = weekId;
     String? resolvedWorkoutId = workoutId;
 
     // Determine programId and resolve IDs based on context
+    // Use provided IDs first, fall back to selected state if not provided
     if (exerciseId != null) {
       // Deleting exercise - need program, week, workout, exercise IDs
-      if (_selectedProgram == null || _selectedWeek == null || _selectedWorkout == null) {
+      resolvedProgramId ??= _selectedProgram?.id;
+      resolvedWeekId ??= _selectedWeek?.id;
+      resolvedWorkoutId ??= _selectedWorkout?.id;
+
+      if (resolvedProgramId == null || resolvedWeekId == null || resolvedWorkoutId == null) {
         return const CascadeDeleteCounts();
       }
-      programId = _selectedProgram!.id;
-      resolvedWeekId = _selectedWeek!.id;
-      resolvedWorkoutId = _selectedWorkout!.id;
     } else if (workoutId != null) {
       // Deleting workout - need program, week, workout IDs
-      if (_selectedProgram == null || _selectedWeek == null) {
+      resolvedProgramId ??= _selectedProgram?.id;
+      resolvedWeekId ??= _selectedWeek?.id;
+
+      if (resolvedProgramId == null || resolvedWeekId == null) {
         return const CascadeDeleteCounts();
       }
-      programId = _selectedProgram!.id;
-      resolvedWeekId = _selectedWeek!.id;
     } else if (weekId != null) {
       // Deleting week - need program, week IDs
-      if (_selectedProgram == null) {
+      resolvedProgramId ??= _selectedProgram?.id;
+
+      if (resolvedProgramId == null) {
         return const CascadeDeleteCounts();
       }
-      programId = _selectedProgram!.id;
     } else {
       return const CascadeDeleteCounts();
     }
 
     return await _firestoreService.getCascadeDeleteCounts(
       userId: _userId!,
-      programId: programId,
+      programId: resolvedProgramId,
       weekId: resolvedWeekId,
       workoutId: resolvedWorkoutId,
       exerciseId: exerciseId,
@@ -1041,11 +1046,12 @@ class ProgramProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // First ensure exercises are loaded
-      if (_exercises.isEmpty) {
-        // Load exercises first using the existing method
-        await _firestoreService.getExercises(_userId!, programId, weekId, workoutId).first;
-      }
+      // Always reload exercises to ensure we have the latest data
+      // This is critical after creating/deleting exercises or sets
+      final exercises = await _firestoreService.getExercises(_userId!, programId, weekId, workoutId).first;
+
+      // Update the exercises list
+      _exercises = exercises;
 
       // Load sets for all exercises in parallel
       final setsFutures = _exercises.map((exercise) {
@@ -1094,6 +1100,12 @@ class ProgramProvider extends ChangeNotifier {
       _programsError = null;
       notifyListeners();
 
+      // Find the exercise to get its type for default values
+      final exercise = _exercises.firstWhere(
+        (e) => e.id == exerciseId,
+        orElse: () => throw Exception('Exercise not found'),
+      );
+
       // Calculate next set number from the correct source
       // Use _allWorkoutSets[exerciseId] if available, otherwise fall back to _sets
       final existingSets = _allWorkoutSets[exerciseId] ?? _sets.where((s) => s.exerciseId == exerciseId).toList();
@@ -1101,12 +1113,34 @@ class ProgramProvider extends ChangeNotifier {
           ? 1
           : existingSets.map((s) => s.setNumber).reduce((a, b) => a > b ? a : b) + 1;
 
+      // Set default metric values based on exercise type to satisfy Firestore validation
+      // Firestore rules require at least one metric (reps, duration, or distance) to be non-null
+      int? defaultReps = reps;
+      int? defaultDuration = duration;
+
+      if (defaultReps == null && defaultDuration == null && distance == null) {
+        // No metrics provided, set defaults based on exercise type
+        switch (exercise.exerciseType) {
+          case ExerciseType.strength:
+          case ExerciseType.bodyweight:
+            defaultReps = 0; // Default to 0 reps for strength/bodyweight exercises
+            break;
+          case ExerciseType.cardio:
+          case ExerciseType.timeBased:
+            defaultDuration = 0; // Default to 0 seconds for cardio/time-based exercises
+            break;
+          case ExerciseType.custom:
+            defaultReps = 0; // Default to reps for custom exercises
+            break;
+        }
+      }
+
       final set = ExerciseSet(
         id: '',
         setNumber: nextSetNumber,
-        reps: reps,
+        reps: defaultReps,
         weight: weight,
-        duration: duration,
+        duration: defaultDuration,
         distance: distance,
         restTime: restTime,
         notes: notes?.trim(),
@@ -1120,6 +1154,42 @@ class ProgramProvider extends ChangeNotifier {
       );
 
       final setId = await _firestoreService.createSet(set);
+
+      // Update local state immediately for responsive UI
+      if (setId != null) {
+        // Create a new ExerciseSet with the returned ID
+        final createdSet = ExerciseSet(
+          id: setId,
+          setNumber: set.setNumber,
+          reps: set.reps,
+          weight: set.weight,
+          duration: set.duration,
+          distance: set.distance,
+          restTime: set.restTime,
+          checked: set.checked,
+          notes: set.notes,
+          createdAt: set.createdAt,
+          updatedAt: set.updatedAt,
+          userId: set.userId,
+          exerciseId: set.exerciseId,
+          workoutId: set.workoutId,
+          weekId: set.weekId,
+          programId: set.programId,
+        );
+
+        // Update _allWorkoutSets if it's being used
+        if (_allWorkoutSets.containsKey(exerciseId)) {
+          _allWorkoutSets[exerciseId] = [..._allWorkoutSets[exerciseId]!, createdSet];
+        }
+
+        // Update _sets if it's being used
+        if (_sets.any((s) => s.exerciseId == exerciseId)) {
+          _sets = [..._sets, createdSet];
+        }
+
+        notifyListeners();
+      }
+
       return setId;
     } catch (e) {
       _programsError = 'Failed to create set: $e';
@@ -1139,6 +1209,27 @@ class ProgramProvider extends ChangeNotifier {
       );
 
       await _firestoreService.updateSet(updatedSet);
+
+      // Update local state immediately for responsive UI
+      // Update _allWorkoutSets if it contains this exercise
+      if (_allWorkoutSets.containsKey(updatedSet.exerciseId)) {
+        final sets = _allWorkoutSets[updatedSet.exerciseId]!;
+        final index = sets.indexWhere((s) => s.id == updatedSet.id);
+        if (index != -1) {
+          final updatedSets = [...sets];
+          updatedSets[index] = updatedSet;
+          _allWorkoutSets[updatedSet.exerciseId] = updatedSets;
+        }
+      }
+
+      // Update _sets if it contains this set
+      final setsIndex = _sets.indexWhere((s) => s.id == updatedSet.id);
+      if (setsIndex != -1) {
+        _sets = [..._sets];
+        _sets[setsIndex] = updatedSet;
+      }
+
+      notifyListeners();
       return true;
     } catch (e) {
       _programsError = 'Failed to update set: $e';
@@ -1163,6 +1254,19 @@ class ProgramProvider extends ChangeNotifier {
 
       await _firestoreService.deleteSet(
           _userId!, programId, weekId, workoutId, exerciseId, setId);
+
+      // Update local state immediately for responsive UI
+      // Remove from _allWorkoutSets if it contains this exercise
+      if (_allWorkoutSets.containsKey(exerciseId)) {
+        _allWorkoutSets[exerciseId] = _allWorkoutSets[exerciseId]!
+            .where((s) => s.id != setId)
+            .toList();
+      }
+
+      // Remove from _sets if it contains this set
+      _sets = _sets.where((s) => s.id != setId).toList();
+
+      notifyListeners();
       return true;
     } catch (e) {
       _programsError = 'Failed to delete set: $e';

@@ -214,24 +214,25 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      await provider.createSet(
+      final setId = await provider.createSet(
         programId: widget.program.id,
         weekId: widget.week.id,
         workoutId: widget.workout.id,
         exerciseId: exercise.id,
       );
 
-      // Reload all sets to get the new one
-      await provider.loadAllSetsForWorkout(
-        programId: widget.program.id,
-        weekId: widget.week.id,
-        workoutId: widget.workout.id,
-      );
-
-      if (mounted) {
+      if (mounted && setId != null) {
         scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Set added successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else if (mounted && setId == null) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to add set: ${provider.error ?? "Unknown error"}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -295,7 +296,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
 
     if (confirmed == true) {
       try {
-        await provider.deleteSet(
+        final success = await provider.deleteSet(
           widget.program.id,
           widget.week.id,
           widget.workout.id,
@@ -303,17 +304,18 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
           setId,
         );
 
-        // Reload all sets
-        await provider.loadAllSetsForWorkout(
-          programId: widget.program.id,
-          weekId: widget.week.id,
-          workoutId: widget.workout.id,
-        );
-
-        if (mounted) {
+        if (mounted && success) {
           scaffoldMessenger.showSnackBar(
             const SnackBar(
               content: Text('Set deleted successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else if (mounted && !success) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete set: ${provider.error ?? "Unknown error"}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -440,6 +442,9 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
 
     // Fetch cascade counts before showing dialog
     final cascadeCounts = await programProvider.getCascadeDeleteCounts(
+      programId: widget.program.id,
+      weekId: widget.week.id,
+      workoutId: widget.workout.id,
       exerciseId: exercise.id,
     );
 
@@ -456,19 +461,35 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
 
     if (confirmed == true) {
       try {
-        await programProvider.deleteExerciseById(exercise.id);
+        // Use full delete method with explicit IDs (not deleteExerciseById)
+        // deleteExerciseById requires _selectedWorkout to be set, but this screen
+        // receives workout as a navigation parameter
+        final success = await programProvider.deleteExercise(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+          exercise.id,
+        );
 
-        if (context.mounted) {
+        if (context.mounted && success) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text('Exercise "${exercise.name}" deleted successfully'),
               behavior: SnackBarBehavior.floating,
             ),
           );
+        } else if (context.mounted && !success) {
+          final errorColor = Theme.of(context).colorScheme.error;
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete exercise: ${programProvider.error ?? "Unknown error"}'),
+              backgroundColor: errorColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       } catch (e) {
         if (context.mounted) {
-          final scaffoldMessenger = ScaffoldMessenger.of(context);
           final errorColor = Theme.of(context).colorScheme.error;
           scaffoldMessenger.showSnackBar(
             SnackBar(
@@ -507,11 +528,18 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
     );
 
     if (result == true && mounted) {
-      // Refresh exercises list
+      // Refresh exercises list and load all sets for the workout
+      // This ensures newly created exercise sets appear immediately
       provider.loadExercises(
         widget.program.id,
         widget.week.id,
         widget.workout.id,
+      );
+
+      await provider.loadAllSetsForWorkout(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
       );
     }
   }
@@ -524,6 +552,8 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
 
     // Fetch cascade counts before showing dialog
     final cascadeCounts = await provider.getCascadeDeleteCounts(
+      programId: widget.program.id,
+      weekId: widget.week.id,
       workoutId: widget.workout.id,
     );
 
