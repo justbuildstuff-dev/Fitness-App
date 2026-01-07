@@ -73,7 +73,7 @@ void main() {
       when(mockProvider.isLoadingExercises).thenReturn(false);
       when(mockProvider.isLoadingAllWorkoutSets).thenReturn(false);
       when(mockProvider.getSetsForExercise(any)).thenReturn([]);
-      when(mockProvider.loadExercises(any, any, any)).thenAnswer((_) {});
+      when(mockProvider.loadExercises(any, any, any)).thenAnswer((_) async {});
       when(mockProvider.loadAllSetsForWorkout(
         programId: any(named: 'programId'),
         weekId: any(named: 'weekId'),

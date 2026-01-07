@@ -231,6 +231,10 @@ void main() {
       await tester.tap(find.text('Bodyweight').last);
       await tester.pumpAndSettle();
       
+      // Scroll to notes field (below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+
       // Enter notes
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Notes (Optional)'),
@@ -370,16 +374,20 @@ void main() {
     testWidgets('notes field accepts multi-line input', (tester) async {
       /// Test Purpose: Verify that notes field supports longer text input
       /// Notes should allow detailed instructions or comments
-      
+
       await tester.pumpWidget(createTestWidget());
-      
+
+      // Scroll to notes field (below the fold)
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+
       final notesField = find.widgetWithText(TextFormField, 'Notes (Optional)');
       expect(notesField, findsOneWidget);
-      
+
       // Test functionality - enter multi-line text
       await tester.enterText(notesField, 'Line 1\nLine 2\nLine 3');
       await tester.pump();
-      
+
       // Verify the text was accepted
       expect(find.text('Line 1\nLine 2\nLine 3'), findsOneWidget);
     });
@@ -514,7 +522,12 @@ void main() {
       expect(minusButton, findsOneWidget);
 
       // Button should be disabled at minimum
-      final IconButton button = tester.widget(minusButton);
+      final IconButton button = tester.widget(
+        find.ancestor(
+          of: minusButton,
+          matching: find.byType(IconButton),
+        ),
+      );
       expect(button.onPressed, isNull);
     });
 
@@ -540,7 +553,12 @@ void main() {
       expect(plusButton, findsOneWidget);
 
       // Button should be disabled at maximum
-      final IconButton button = tester.widget(plusButton);
+      final IconButton button = tester.widget(
+        find.ancestor(
+          of: plusButton,
+          matching: find.byType(IconButton),
+        ),
+      );
       expect(button.onPressed, isNull);
     });
 

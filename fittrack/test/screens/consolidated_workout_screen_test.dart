@@ -68,8 +68,16 @@ void main() {
         workoutId: anyNamed('workoutId'),
       )).thenAnswer((_) async {});
       when(mockProvider.createSet(
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
         exerciseId: anyNamed('exerciseId'),
-        exerciseType: anyNamed('exerciseType'),
+        reps: anyNamed('reps'),
+        weight: anyNamed('weight'),
+        duration: anyNamed('duration'),
+        distance: anyNamed('distance'),
+        restTime: anyNamed('restTime'),
+        notes: anyNamed('notes'),
       )).thenAnswer((_) async => 'new-set-id');
       when(mockProvider.updateSet(any)).thenAnswer((_) async {});
       when(mockProvider.deleteSet(any, any)).thenAnswer((_) async {});
