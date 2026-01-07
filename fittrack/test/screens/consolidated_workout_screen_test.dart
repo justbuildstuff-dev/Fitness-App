@@ -9,6 +9,7 @@ import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
+import 'package:fittrack/models/cascade_delete_counts.dart';
 
 import 'create_exercise_screen_test.mocks.dart';
 import '../integration/test_setup_helper.dart';
@@ -81,13 +82,13 @@ void main() {
       )).thenAnswer((_) async => 'new-set-id');
       when(mockProvider.updateSet(any)).thenAnswer((_) async => true);
       when(mockProvider.deleteSet(any, any, any, any, any)).thenAnswer((_) async => true);
-      when(mockProvider.updateExercise(any)).thenAnswer((_) async {});
+      when(mockProvider.updateExercise(any)).thenAnswer((_) async => true);
       when(mockProvider.deleteExerciseById(any)).thenAnswer((_) async {});
       when(mockProvider.deleteWorkoutById(any)).thenAnswer((_) async {});
       when(mockProvider.getCascadeDeleteCounts(
         exerciseId: anyNamed('exerciseId'),
         workoutId: anyNamed('workoutId'),
-      )).thenAnswer((_) async => {'sets': 0});
+      )).thenAnswer((_) async => const CascadeDeleteCounts());
     });
 
     Widget createTestWidget() {
