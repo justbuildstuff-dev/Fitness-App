@@ -141,17 +141,17 @@ class _SetRowState extends State<SetRow> {
     final isReadOnly = widget.set.checked;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8, right: 8), // Add right margin to prevent overlap with drag handle
+      margin: const EdgeInsets.only(bottom: 8, right: 16), // Increased right margin to create more space
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Reduced horizontal padding from 12 to 8
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), // Further reduced padding
         child: Row(
           children: [
             // Set number
             SizedBox(
-              width: 32, // Reduced from 40 to 32
+              width: 24, // Further reduced from 32 to 24
               child: Text(
                 '${widget.set.setNumber}',
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith( // Changed from titleMedium
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -159,14 +159,14 @@ class _SetRowState extends State<SetRow> {
               ),
             ),
 
-            const SizedBox(width: 6), // Reduced from 8 to 6
+            const SizedBox(width: 4), // Further reduced from 6 to 4
 
             // Fields based on exercise type
             Expanded(
               child: _buildFieldsForExerciseType(isReadOnly),
             ),
 
-            const SizedBox(width: 4), // Reduced from 8 to 4
+            const SizedBox(width: 2), // Further reduced from 4 to 2
 
             // Notes button
             IconButton(
@@ -174,10 +174,10 @@ class _SetRowState extends State<SetRow> {
                 widget.set.notes != null && widget.set.notes!.isNotEmpty
                     ? Icons.note_alt
                     : Icons.note_add,
-                size: 18, // Reduced from 20 to 18
+                size: 16, // Further reduced from 18 to 16
               ),
-              padding: const EdgeInsets.all(8), // Reduced button padding
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36), // Smaller touch target
+              padding: const EdgeInsets.all(6), // Further reduced padding
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Even smaller
               onPressed: isReadOnly ? null : _handleNotesButtonTap,
               tooltip: 'Add notes',
               color: widget.set.notes != null && widget.set.notes!.isNotEmpty
@@ -187,9 +187,9 @@ class _SetRowState extends State<SetRow> {
 
             // Delete button
             IconButton(
-              icon: const Icon(Icons.delete, size: 18), // Reduced from 20 to 18
-              padding: const EdgeInsets.all(8), // Reduced button padding
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36), // Smaller touch target
+              icon: const Icon(Icons.delete, size: 16), // Further reduced from 18 to 16
+              padding: const EdgeInsets.all(6), // Further reduced padding
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Even smaller
               onPressed: widget.isLastSet || isReadOnly ? null : widget.onDelete,
               tooltip: widget.isLastSet
                   ? 'Cannot delete last set'
@@ -200,7 +200,7 @@ class _SetRowState extends State<SetRow> {
 
             // Completion checkbox
             Transform.scale(
-              scale: 0.9, // Slightly smaller checkbox
+              scale: 0.8, // Further reduced from 0.9 to 0.8
               child: Checkbox(
                 value: widget.set.checked,
                 onChanged: _handleCheckboxChange,
