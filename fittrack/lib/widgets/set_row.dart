@@ -141,7 +141,7 @@ class _SetRowState extends State<SetRow> {
     final isReadOnly = widget.set.checked;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8, right: 12), // Match left padding of exercise card (12px)
+      margin: const EdgeInsets.only(bottom: 8), // Only bottom margin, right spacing handled by parent
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), // Further reduced padding
         child: Row(
