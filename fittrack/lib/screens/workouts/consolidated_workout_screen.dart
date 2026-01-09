@@ -1,3 +1,4 @@
+import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
@@ -190,6 +191,23 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: exercises.length,
+      buildDefaultDragHandles: true, // Let ReorderableListView handle drag handles
+      proxyDecorator: (child, index, animation) {
+        // Animate the dragged item
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            final t = Curves.easeInOut.transform(animation.value);
+            final elevation = lerpDouble(0, 6, t)!;
+            return Material(
+              elevation: elevation,
+              borderRadius: BorderRadius.circular(8),
+              child: child,
+            );
+          },
+          child: child,
+        );
+      },
       onReorder: (oldIndex, newIndex) => _reorderExercises(context, oldIndex, newIndex),
       itemBuilder: (context, index) {
         final exercise = exercises[index];
@@ -199,6 +217,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
           key: ValueKey(exercise.id),
           exercise: exercise,
           sets: sets,
+          isReorderEnabled: true, // Keep showing that reordering is possible
           onAddSet: () => _addSet(context, exercise),
           onEditName: () => _editExerciseName(context, exercise),
           onDelete: () => _deleteExercise(context, exercise),

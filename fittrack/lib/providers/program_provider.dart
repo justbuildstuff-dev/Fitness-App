@@ -1109,9 +1109,27 @@ class ProgramProvider extends ChangeNotifier {
       // Calculate next set number from the correct source
       // Use _allWorkoutSets[exerciseId] if available, otherwise fall back to _sets
       final existingSets = _allWorkoutSets[exerciseId] ?? _sets.where((s) => s.exerciseId == exerciseId).toList();
-      final nextSetNumber = existingSets.isEmpty
-          ? 1
-          : existingSets.map((s) => s.setNumber).reduce((a, b) => a > b ? a : b) + 1;
+
+      // Find the first available set number (to fill gaps after deletions)
+      // This also handles rapid additions by always using the current count + 1
+      int nextSetNumber = 1;
+      if (existingSets.isNotEmpty) {
+        // Sort existing set numbers
+        final sortedSetNumbers = existingSets.map((s) => s.setNumber).toList()..sort();
+
+        // Find first gap in sequence, or use max + 1
+        for (int i = 0; i < sortedSetNumbers.length; i++) {
+          if (sortedSetNumbers[i] != i + 1) {
+            nextSetNumber = i + 1;
+            break;
+          }
+        }
+
+        // If no gaps found, use max + 1
+        if (nextSetNumber == 1) {
+          nextSetNumber = sortedSetNumbers.last + 1;
+        }
+      }
 
       // Set default metric values based on exercise type to satisfy Firestore validation
       // Firestore rules require at least one metric (reps, duration, or distance) to be non-null

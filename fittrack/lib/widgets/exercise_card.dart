@@ -51,15 +51,6 @@ class _ExerciseCardState extends State<ExerciseCard> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  // Drag handle (if reordering enabled)
-                  if (widget.isReorderEnabled) ...[
-                    Icon(
-                      Icons.drag_handle,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-
                   // Exercise type icon
                   Icon(
                     _getExerciseTypeIcon(widget.exercise.exerciseType),
