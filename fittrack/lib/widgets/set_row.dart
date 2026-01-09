@@ -141,14 +141,14 @@ class _SetRowState extends State<SetRow> {
     final isReadOnly = widget.set.checked;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 8, right: 8), // Add right margin to prevent overlap with drag handle
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), // Reduced horizontal padding from 12 to 8
         child: Row(
           children: [
             // Set number
             SizedBox(
-              width: 40,
+              width: 32, // Reduced from 40 to 32
               child: Text(
                 '${widget.set.setNumber}',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -159,14 +159,14 @@ class _SetRowState extends State<SetRow> {
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 6), // Reduced from 8 to 6
 
             // Fields based on exercise type
             Expanded(
               child: _buildFieldsForExerciseType(isReadOnly),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 4), // Reduced from 8 to 4
 
             // Notes button
             IconButton(
@@ -174,8 +174,10 @@ class _SetRowState extends State<SetRow> {
                 widget.set.notes != null && widget.set.notes!.isNotEmpty
                     ? Icons.note_alt
                     : Icons.note_add,
-                size: 20,
+                size: 18, // Reduced from 20 to 18
               ),
+              padding: const EdgeInsets.all(8), // Reduced button padding
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36), // Smaller touch target
               onPressed: isReadOnly ? null : _handleNotesButtonTap,
               tooltip: 'Add notes',
               color: widget.set.notes != null && widget.set.notes!.isNotEmpty
@@ -185,7 +187,9 @@ class _SetRowState extends State<SetRow> {
 
             // Delete button
             IconButton(
-              icon: const Icon(Icons.delete, size: 20),
+              icon: const Icon(Icons.delete, size: 18), // Reduced from 20 to 18
+              padding: const EdgeInsets.all(8), // Reduced button padding
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36), // Smaller touch target
               onPressed: widget.isLastSet || isReadOnly ? null : widget.onDelete,
               tooltip: widget.isLastSet
                   ? 'Cannot delete last set'
@@ -195,9 +199,12 @@ class _SetRowState extends State<SetRow> {
             ),
 
             // Completion checkbox
-            Checkbox(
-              value: widget.set.checked,
-              onChanged: _handleCheckboxChange,
+            Transform.scale(
+              scale: 0.9, // Slightly smaller checkbox
+              child: Checkbox(
+                value: widget.set.checked,
+                onChanged: _handleCheckboxChange,
+              ),
             ),
           ],
         ),
