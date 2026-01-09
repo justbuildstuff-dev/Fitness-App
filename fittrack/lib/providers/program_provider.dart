@@ -1110,26 +1110,9 @@ class ProgramProvider extends ChangeNotifier {
       // Use _allWorkoutSets[exerciseId] if available, otherwise fall back to _sets
       final existingSets = _allWorkoutSets[exerciseId] ?? _sets.where((s) => s.exerciseId == exerciseId).toList();
 
-      // Find the first available set number (to fill gaps after deletions)
-      // This also handles rapid additions by always using the current count + 1
-      int nextSetNumber = 1;
-      if (existingSets.isNotEmpty) {
-        // Sort existing set numbers
-        final sortedSetNumbers = existingSets.map((s) => s.setNumber).toList()..sort();
-
-        // Find first gap in sequence, or use max + 1
-        for (int i = 0; i < sortedSetNumbers.length; i++) {
-          if (sortedSetNumbers[i] != i + 1) {
-            nextSetNumber = i + 1;
-            break;
-          }
-        }
-
-        // If no gaps found, use max + 1
-        if (nextSetNumber == 1) {
-          nextSetNumber = sortedSetNumbers.last + 1;
-        }
-      }
+      // Always use count + 1 for next set number (sequential numbering)
+      // Sets will be automatically renumbered after deletion to maintain sequential order
+      final nextSetNumber = existingSets.length + 1;
 
       // Set default metric values based on exercise type to satisfy Firestore validation
       // Firestore rules require at least one metric (reps, duration, or distance) to be non-null
@@ -1276,13 +1259,54 @@ class ProgramProvider extends ChangeNotifier {
       // Update local state immediately for responsive UI
       // Remove from _allWorkoutSets if it contains this exercise
       if (_allWorkoutSets.containsKey(exerciseId)) {
-        _allWorkoutSets[exerciseId] = _allWorkoutSets[exerciseId]!
+        final remainingSets = _allWorkoutSets[exerciseId]!
             .where((s) => s.id != setId)
             .toList();
+
+        // Renumber remaining sets to maintain sequential order
+        final renumberedSets = <ExerciseSet>[];
+        for (int i = 0; i < remainingSets.length; i++) {
+          final set = remainingSets[i];
+          if (set.setNumber != i + 1) {
+            // Update set number in Firestore
+            final updatedSet = set.copyWith(
+              setNumber: i + 1,
+              updatedAt: DateTime.now(),
+            );
+            await _firestoreService.updateSet(updatedSet);
+            renumberedSets.add(updatedSet);
+          } else {
+            renumberedSets.add(set);
+          }
+        }
+
+        _allWorkoutSets[exerciseId] = renumberedSets;
       }
 
-      // Remove from _sets if it contains this set
-      _sets = _sets.where((s) => s.id != setId).toList();
+      // Remove from _sets and renumber if it contains this set
+      final remainingSetsInList = _sets.where((s) => s.id != setId).toList();
+      final exerciseSetsInList = remainingSetsInList.where((s) => s.exerciseId == exerciseId).toList();
+
+      if (exerciseSetsInList.isNotEmpty) {
+        // Renumber exercise sets in _sets
+        final renumberedExerciseSets = <ExerciseSet>[];
+        for (int i = 0; i < exerciseSetsInList.length; i++) {
+          final set = exerciseSetsInList[i];
+          if (set.setNumber != i + 1) {
+            renumberedExerciseSets.add(set.copyWith(setNumber: i + 1));
+          } else {
+            renumberedExerciseSets.add(set);
+          }
+        }
+
+        // Replace in _sets list
+        _sets = [
+          ...remainingSetsInList.where((s) => s.exerciseId != exerciseId),
+          ...renumberedExerciseSets,
+        ];
+      } else {
+        _sets = remainingSetsInList;
+      }
 
       notifyListeners();
       return true;

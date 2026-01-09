@@ -1,0 +1,835 @@
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	﻿2026-01-03T04:13:47.9962279Z ##[group]Run cd fittrack
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9962558Z [36;1mcd fittrack[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9962848Z [36;1m# IMPORTANT: These tests MUST connect to Firebase emulators[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9963242Z [36;1m# IMPORTANT: These tests MUST create real data in Firestore[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9963639Z [36;1m# IMPORTANT: These tests MUST validate actual Firebase operations[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9964082Z [36;1mflutter test test/screens/enhanced_create_program_screen_test.dart \[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9964440Z [36;1m  --timeout=120s \[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9964681Z [36;1m  --reporter=github[0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9964905Z [36;1m  [0m
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9983432Z shell: /usr/bin/bash -e {0}
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9983681Z env:
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9983946Z   FLUTTER_ROOT: /opt/hostedtoolcache/flutter/stable-3.35.1-x64
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9984401Z   PUB_CACHE: /home/runner/.pub-cache
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:47.9984642Z ##[endgroup]
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.2376068Z Resolving dependencies...
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.7771019Z Downloading packages...
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9279334Z   _fe_analyzer_shared 85.0.0 (92.0.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9281422Z   _flutterfire_internals 1.3.61 (1.3.65 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9281903Z   analyzer 7.7.1 (9.0.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9282331Z   build 3.0.2 (4.0.3 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9282708Z   build_daemon 4.0.4 (4.1.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9283157Z   build_resolvers 3.0.2 (3.0.4 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9283626Z   build_runner 2.7.0 (2.10.4 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9284107Z   build_runner_core 9.3.0 (9.3.2 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9284603Z   built_value 8.11.1 (8.12.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9285067Z   characters 1.4.0 (1.4.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9285541Z   cloud_firestore 6.0.1 (6.1.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9286143Z   cloud_firestore_platform_interface 7.0.1 (7.0.5 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9286763Z   cloud_firestore_web 5.0.1 (5.1.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9287250Z   code_builder 4.10.1 (4.11.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9287748Z   cross_file 0.3.4+2 (0.3.5+1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9288213Z   crypto 3.0.6 (3.0.7 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9288645Z   dart_style 3.1.1 (3.1.3 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9289040Z   firebase_auth 6.0.2 (6.1.3 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9289366Z   firebase_auth_platform_interface 8.1.1 (8.1.5 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9289872Z   firebase_auth_web 6.0.2 (6.1.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9290145Z   firebase_core 4.1.0 (4.3.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9290464Z   firebase_core_platform_interface 6.0.0 (6.0.2 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9290788Z   firebase_core_web 3.1.0 (3.3.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9291076Z   firebase_storage 13.0.1 (13.0.5 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9291423Z   firebase_storage_platform_interface 5.2.12 (5.2.16 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9291790Z   firebase_storage_web 3.10.19 (3.11.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9292082Z   flutter_lints 3.0.2 (6.0.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9292394Z   flutter_local_notifications 19.4.1 (19.5.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9292771Z   flutter_local_notifications_windows 1.0.2 (1.0.3 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9293080Z   http 1.5.0 (1.6.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9293342Z   leak_tracker 11.0.1 (11.0.2 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9293608Z   lints 3.0.0 (6.0.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9293866Z   matcher 0.12.17 (0.12.18 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9294170Z   material_color_utilities 0.11.1 (0.13.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9294452Z   meta 1.16.0 (1.17.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9294703Z   mime 1.0.6 (2.0.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9294943Z   mockito 5.5.0 (5.6.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9295229Z   path_provider_android 2.2.17 (2.2.22 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9295538Z   path_provider_foundation 2.4.2 (2.5.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9295831Z   pool 1.5.1 (1.5.2 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9296077Z   share_plus 11.1.0 (12.0.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9296359Z   shared_preferences 2.5.3 (2.5.4 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9296963Z   shared_preferences_android 2.4.14 (2.4.18 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9297311Z   shared_preferences_foundation 2.5.4 (2.5.6 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9297611Z   source_gen 3.1.0 (4.1.1 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9297873Z   test 1.26.2 (1.28.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9298125Z   test_api 0.7.6 (0.7.8 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9298371Z   test_core 0.6.11 (0.6.14 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9298645Z   url_launcher_linux 3.2.1 (3.2.2 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9298932Z   url_launcher_windows 3.1.4 (3.1.5 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9299203Z   uuid 4.5.1 (4.5.2 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9299439Z   watcher 1.1.2 (1.2.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9299836Z   win32 5.14.0 (5.15.0 available)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9301354Z Got dependencies!
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9333472Z 53 packages have newer versions incompatible with dependency constraints.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:48.9334483Z Try `flutter pub outdated` for more information.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:49.5093365Z 
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6659395Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6661173Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6662495Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6663342Z     _error = null;
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6663752Z     ^^^^^^
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6664754Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6666195Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6667529Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6668052Z       _error = null;
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6668300Z       ^^^^^^
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6668821Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6669692Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6670470Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6670972Z       _error = 'Failed to load workout sets: $e';
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.6671286Z       ^^^^^^
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9235892Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/enhanced_create_program_screen_test.dart (failed)
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9251480Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/enhanced_create_program_screen_test.dart":
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9253138Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/enhanced_create_program_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9254527Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9255591Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9256157Z     _error = null;
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9256533Z     ^^^^^^
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9257357Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9258363Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9259349Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9260055Z       _error = null;
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9260472Z       ^^^^^^
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9261570Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9262456Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9263318Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9263903Z       _error = 'Failed to load workout sets: $e';
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9264324Z       ^^^^^^
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9264620Z .
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9264903Z 
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9265324Z ##[endgroup]
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9298956Z 
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9329414Z ##[error]0 tests passed, 1 failed.
+Integration Tests (Firebase Emulators)	Run enhanced integration tests	2026-01-03T04:13:50.9543375Z ##[error]Process completed with exit code 1.
+Unit Tests (Business Logic)	Run static analysis	﻿2026-01-03T04:13:09.1435114Z ##[group]Run cd fittrack
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1435396Z [36;1mcd fittrack[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1435706Z [36;1mflutter analyze lib/ --no-fatal-warnings | tee analyze_output.txt[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1436121Z [36;1m# Check if there are any actual ERROR level issues[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1436467Z [36;1mif grep -q "error •" analyze_output.txt; then[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1436790Z [36;1m  echo "ERROR level issues found - failing build"[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1437056Z [36;1m  exit 1[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1437227Z [36;1melse[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1437488Z [36;1m  echo "Only INFO/WARNING level issues found - continuing build"[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1437795Z [36;1m  exit 0[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1437963Z [36;1mfi[0m
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1468604Z shell: /usr/bin/bash -e {0}
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1468831Z env:
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1469082Z   FLUTTER_ROOT: /opt/hostedtoolcache/flutter/stable-3.35.1-x64
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1469415Z   PUB_CACHE: /home/runner/.pub-cache
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.1469660Z ##[endgroup]
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:09.4320052Z Resolving dependencies...
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.0489611Z Downloading packages...
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2652999Z   _fe_analyzer_shared 85.0.0 (92.0.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2653899Z   _flutterfire_internals 1.3.61 (1.3.65 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2654505Z   analyzer 7.7.1 (9.0.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2654913Z   build 3.0.2 (4.0.3 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2655338Z   build_daemon 4.0.4 (4.1.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2655820Z   build_resolvers 3.0.2 (3.0.4 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2656268Z   build_runner 2.7.0 (2.10.4 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2656711Z   build_runner_core 9.3.0 (9.3.2 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2657168Z   built_value 8.11.1 (8.12.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2657599Z   characters 1.4.0 (1.4.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2658026Z   cloud_firestore 6.0.1 (6.1.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2658581Z   cloud_firestore_platform_interface 7.0.1 (7.0.5 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2659166Z   cloud_firestore_web 5.0.1 (5.1.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2659647Z   code_builder 4.10.1 (4.11.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2660088Z   cross_file 0.3.4+2 (0.3.5+1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2660514Z   crypto 3.0.6 (3.0.7 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2661130Z   dart_style 3.1.1 (3.1.3 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2661572Z   firebase_auth 6.0.2 (6.1.3 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2662096Z   firebase_auth_platform_interface 8.1.1 (8.1.5 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2662634Z   firebase_auth_web 6.0.2 (6.1.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2663074Z   firebase_core 4.1.0 (4.3.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2663597Z   firebase_core_platform_interface 6.0.0 (6.0.2 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2664142Z   firebase_core_web 3.1.0 (3.3.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2664622Z   firebase_storage 13.0.1 (13.0.5 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2665198Z   firebase_storage_platform_interface 5.2.12 (5.2.16 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2665791Z   firebase_storage_web 3.10.19 (3.11.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2666264Z   flutter_lints 3.0.2 (6.0.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2666756Z   flutter_local_notifications 19.4.1 (19.5.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2667364Z   flutter_local_notifications_windows 1.0.2 (1.0.3 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2668423Z   http 1.5.0 (1.6.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2668802Z   leak_tracker 11.0.1 (11.0.2 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2669200Z   lints 3.0.0 (6.0.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2669558Z   matcher 0.12.17 (0.12.18 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2670002Z   material_color_utilities 0.11.1 (0.13.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2670409Z   meta 1.16.0 (1.17.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2670726Z   mime 1.0.6 (2.0.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2671286Z   mockito 5.5.0 (5.6.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2671691Z   path_provider_android 2.2.17 (2.2.22 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2672163Z   path_provider_foundation 2.4.2 (2.5.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2672597Z   pool 1.5.1 (1.5.2 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2672940Z   share_plus 11.1.0 (12.0.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2673664Z   shared_preferences 2.5.3 (2.5.4 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2674139Z   shared_preferences_android 2.4.14 (2.4.18 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2674638Z   shared_preferences_foundation 2.5.4 (2.5.6 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2675093Z   source_gen 3.1.0 (4.1.1 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2675445Z   test 1.26.2 (1.28.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2675876Z   test_api 0.7.6 (0.7.8 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2676134Z   test_core 0.6.11 (0.6.14 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2676398Z   url_launcher_linux 3.2.1 (3.2.2 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2676666Z   url_launcher_windows 3.1.4 (3.1.5 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2676904Z   uuid 4.5.1 (4.5.2 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2677112Z   watcher 1.1.2 (1.2.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2677325Z   win32 5.14.0 (5.15.0 available)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2681759Z Got dependencies!
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2712648Z 53 packages have newer versions incompatible with dependency constraints.
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:10.2713347Z Try `flutter pub outdated` for more information.
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0465152Z Analyzing lib...                                                
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0470611Z 
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0489067Z    info • The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/main.dart:1:8 • unnecessary_import
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0491990Z warning • Unused import: 'package:firebase_auth/firebase_auth.dart' • lib/main.dart:4:8 • unused_import
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0493282Z warning • Unused import: 'package:cloud_firestore/cloud_firestore.dart' • lib/main.dart:5:8 • unused_import
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0494531Z   error • Undefined name '_error' • lib/providers/program_provider.dart:1039:5 • undefined_identifier
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0495811Z   error • Undefined name '_error' • lib/providers/program_provider.dart:1067:7 • undefined_identifier
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0496968Z   error • Undefined name '_error' • lib/providers/program_provider.dart:1070:7 • undefined_identifier
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0498855Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/analytics_screen.dart:86:68 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0501158Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:50:64 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0503324Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:96:51 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0505535Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:100:55 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0507730Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:102:51 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0509960Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:154:70 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0512578Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:156:29 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0514756Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:158:29 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0516993Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_calendar_view.dart:160:29 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0519448Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:363:88 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0521852Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:364:47 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0524198Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:365:47 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0526603Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:366:47 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0529027Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:405:59 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0531683Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:441:70 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0534111Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/analytics/components/monthly_heatmap_section.dart:444:56 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0536370Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/email_verification_screen.dart:110:39 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0538511Z    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/email_verification_screen.dart:132:37 • deprecated_member_use
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0541092Z    info • 'ExerciseDetailScreen' is deprecated and shouldn't be used. Use ConsolidatedWorkoutScreen instead • lib/screens/exercises/exercise_detail_screen.dart:35:48 • deprecated_member_use_from_same_package
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0542988Z warning • Unused import: 'package:provider/provider.dart' • lib/screens/home/home_screen.dart:2:8 • unused_import
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0544353Z warning • Unused import: '../../providers/program_provider.dart' • lib/screens/home/home_screen.dart:3:8 • unused_import
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0546205Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:244:39 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0548402Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:259:30 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0550554Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:262:39 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0553335Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:326:41 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0555778Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:387:41 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0557953Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:426:30 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0560133Z    info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/screens/workouts/consolidated_workout_screen.dart:429:39 • use_build_context_synchronously
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0562775Z    info • 'WorkoutDetailScreen' is deprecated and shouldn't be used. Use ConsolidatedWorkoutScreen instead • lib/screens/workouts/workout_detail_screen.dart:33:47 • deprecated_member_use_from_same_package
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0565248Z    info • 'ExerciseDetailScreen' is deprecated and shouldn't be used. Use ConsolidatedWorkoutScreen instead • lib/screens/workouts/workout_detail_screen.dart:488:31 • deprecated_member_use_from_same_package
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0567116Z warning • The declaration '_safeTimestamp' isn't referenced • lib/services/firestore_service.dart:465:14 • unused_element
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0567797Z 
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0667835Z 37 issues found. (ran in 11.0s)
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0765093Z ERROR level issues found - failing build
+Unit Tests (Business Logic)	Run static analysis	2026-01-03T04:13:22.0778612Z ##[error]Process completed with exit code 1.
+Widget Tests (UI Components)	Run widget tests	﻿2026-01-03T04:13:08.9421904Z ##[group]Run cd fittrack
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9422185Z [36;1mcd fittrack[0m
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9422708Z [36;1m# Run widget tests with better error handling[0m
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9423026Z [36;1mflutter test test/widgets/ test/screens/ \[0m
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9423306Z [36;1m  --timeout=60s \[0m
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9423521Z [36;1m  --reporter=github[0m
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9423722Z [36;1m  [0m
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9455377Z shell: /usr/bin/bash -e {0}
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9455604Z env:
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9455860Z   FLUTTER_ROOT: /opt/hostedtoolcache/flutter/stable-3.35.1-x64
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9456192Z   PUB_CACHE: /home/runner/.pub-cache
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:08.9456419Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:09.2288278Z Resolving dependencies...
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:09.8649014Z Downloading packages...
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0808701Z   _fe_analyzer_shared 85.0.0 (92.0.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0809924Z   _flutterfire_internals 1.3.61 (1.3.65 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0810452Z   analyzer 7.7.1 (9.0.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0810950Z   build 3.0.2 (4.0.3 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0811348Z   build_daemon 4.0.4 (4.1.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0811781Z   build_resolvers 3.0.2 (3.0.4 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0812445Z   build_runner 2.7.0 (2.10.4 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0812910Z   build_runner_core 9.3.0 (9.3.2 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0813366Z   built_value 8.11.1 (8.12.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0813795Z   characters 1.4.0 (1.4.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0814226Z   cloud_firestore 6.0.1 (6.1.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0814758Z   cloud_firestore_platform_interface 7.0.1 (7.0.5 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0815277Z   cloud_firestore_web 5.0.1 (5.1.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0815721Z   code_builder 4.10.1 (4.11.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0816142Z   cross_file 0.3.4+2 (0.3.5+1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0816563Z   crypto 3.0.6 (3.0.7 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0816948Z   dart_style 3.1.1 (3.1.3 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0817353Z   firebase_auth 6.0.2 (6.1.3 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0817863Z   firebase_auth_platform_interface 8.1.1 (8.1.5 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0818381Z   firebase_auth_web 6.0.2 (6.1.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0818813Z   firebase_core 4.1.0 (4.3.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0819315Z   firebase_core_platform_interface 6.0.0 (6.0.2 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0819828Z   firebase_core_web 3.1.0 (3.3.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0820278Z   firebase_storage 13.0.1 (13.0.5 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0820828Z   firebase_storage_platform_interface 5.2.12 (5.2.16 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0821404Z   firebase_storage_web 3.10.19 (3.11.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0821867Z   flutter_lints 3.0.2 (6.0.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0822565Z   flutter_local_notifications 19.4.1 (19.5.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0823163Z   flutter_local_notifications_windows 1.0.2 (1.0.3 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0823709Z   http 1.5.0 (1.6.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0824111Z   leak_tracker 11.0.1 (11.0.2 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0824534Z   lints 3.0.0 (6.0.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0824896Z   matcher 0.12.17 (0.12.18 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0825329Z   material_color_utilities 0.11.1 (0.13.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0825756Z   meta 1.16.0 (1.17.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0826089Z   mime 1.0.6 (2.0.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0826438Z   mockito 5.5.0 (5.6.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0826839Z   path_provider_android 2.2.17 (2.2.22 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0827305Z   path_provider_foundation 2.4.2 (2.5.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0827714Z   pool 1.5.1 (1.5.2 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0828084Z   share_plus 11.1.0 (12.0.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0828529Z   shared_preferences 2.5.3 (2.5.4 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0829022Z   shared_preferences_android 2.4.14 (2.4.18 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0829583Z   shared_preferences_foundation 2.5.4 (2.5.6 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0830071Z   source_gen 3.1.0 (4.1.1 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0830780Z   test 1.26.2 (1.28.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0831161Z   test_api 0.7.6 (0.7.8 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0831557Z   test_core 0.6.11 (0.6.14 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0831948Z   url_launcher_linux 3.2.1 (3.2.2 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0832548Z   url_launcher_windows 3.1.4 (3.1.5 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0832946Z   uuid 4.5.1 (4.5.2 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0833281Z   watcher 1.1.2 (1.2.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0833619Z   win32 5.14.0 (5.15.0 available)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0834026Z Got dependencies!
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0856985Z 53 packages have newer versions incompatible with dependency constraints.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:10.0857971Z Try `flutter pub outdated` for more information.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:11.2074901Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.5523825Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/error_display_test.dart: ErrorDisplay Widget displays error message and retry button
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.5866484Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/error_display_test.dart: ErrorDisplay Widget displays custom title when provided
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.6183403Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/error_display_test.dart: ErrorDisplay Widget displays custom icon when provided
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.6479662Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/error_display_test.dart: ErrorDisplay Widget uses theme colors correctly
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.6831027Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/error_display_test.dart: ErrorDisplay Widget centers content on screen
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.7188593Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/error_display_test.dart: ErrorDisplay Widget handles technical error parameter
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.8310610Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests displays basic dialog without cascade counts
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.9040937Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests displays dialog with item name highlight
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:19.9808297Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests displays cascade counts for week deletion
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0471773Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests displays cascade counts for workout deletion (no workouts)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0617552Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0620662Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0621955Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0623701Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0624687Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0627095Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0633242Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0635421Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0636124Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0636433Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0637129Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0638414Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0639613Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0640823Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.0641237Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.1077057Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests displays cascade counts for exercise deletion (only sets)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.1557004Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests does not display cascade section when counts are zero
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.2017658Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests does not display cascade section when cascadeCounts is null
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.2479785Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests uses correct singular/plural forms for counts
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.3135666Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Cancel button dismisses dialog returning false
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.3745578Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Delete button dismisses dialog returning true
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4093742Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/set_row_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4104500Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/set_row_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4107056Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/set_row_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4109583Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4112510Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4113823Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4114281Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4115150Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4119953Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4121457Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4122690Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4123278Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4124144Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4125589Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4129736Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4131664Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4132100Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4132577Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4132711Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4133365Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4205993Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests uses custom delete button text
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:20.4834132Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests displays all elements in correct visual hierarchy
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5514348Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5516346Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5519207Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5520166Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5520524Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5521395Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5523028Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5524295Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5525345Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5525662Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5526408Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5527790Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5529051Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5529869Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.5530317Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8125653Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/exercise_card_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8126985Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/exercise_card_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8128920Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/exercise_card_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8131055Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8132374Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8133092Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8133380Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8134064Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8135341Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8136494Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8137187Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8137481Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8138163Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8139426Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8140574Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8141314Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8141727Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8141994Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8142132Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:21.8142657Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1117898Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1119807Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1121512Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1122981Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1125536Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1126280Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1127606Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1128834Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1129596Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1129925Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1130669Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1132054Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1133818Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1134634Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.1135096Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4495950Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/consolidated_workout_screen_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4497829Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/consolidated_workout_screen_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4500147Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/consolidated_workout_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4502597Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4504933Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4505709Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4506019Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4514860Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4516225Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4517422Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4518184Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4518488Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4519216Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4520509Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4521710Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4522684Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4523142Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4523425Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4523571Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:23.4524020Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.1472826Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Dialog Rendering and Layout renders delete confirmation dialog with all elements
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.3414157Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Dialog Rendering and Layout displays different content for different item types
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.4286936Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Dialog Rendering and Layout handles long item names and content gracefully
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.5223844Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests User Interaction Handling cancel button returns false
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.5846766Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests User Interaction Handling delete button returns true
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.6684722Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests User Interaction Handling handles back button/gesture correctly
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7297654Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7308348Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7310631Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7311640Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7312030Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7313065Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7314421Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7315662Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7316420Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7316718Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7317365Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7318615Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7319767Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7320560Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7321002Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.7837021Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests User Interaction Handling prevents accidental deletion with double-confirmation
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.8496288Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Accessibility and Keyboard Navigation provides proper semantic labels for screen readers
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.9176745Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Accessibility and Keyboard Navigation supports keyboard navigation between buttons
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:24.9735218Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Accessibility and Keyboard Navigation handles escape key to cancel dialog
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0322918Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Visual Design and Theme Integration adapts to light theme correctly
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0878190Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Visual Design and Theme Integration adapts to dark theme correctly
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0949830Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/enhanced_create_program_screen_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0952735Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/enhanced_create_program_screen_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0955315Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/enhanced_create_program_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0957380Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0958459Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0959167Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0959456Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0960148Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0961428Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0962992Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0963654Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0963926Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0964540Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0965735Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0966763Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0967490Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0967871Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0968116Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0968256Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.0968781Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.1465644Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Visual Design and Theme Integration displays appropriate warning styling
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.2031005Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Different Dialog Contexts handles program deletion context
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.2575224Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Different Dialog Contexts handles exercise deletion context
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.3057587Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Different Dialog Contexts handles set deletion context
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.3697183Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Dialog Behavior and State dialog is modal and blocks interaction with background
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.4456057Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Dialog Behavior and State maintains dialog state during rebuild
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.5045620Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Performance and Memory dialog creation and disposal performance
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.7269596Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Performance and Memory properly disposes resources when dismissed
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.7746830Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Edge Cases and Error Conditions handles empty or null parameters gracefully
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.8248990Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Edge Cases and Error Conditions handles very long item names correctly
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:25.9738177Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/widgets/enhanced_delete_confirmation_dialog_test.dart: DeleteConfirmationDialog Widget Tests Edge Cases and Error Conditions maintains functionality with rapid open/close cycles
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3163793Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3165295Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3166525Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3168024Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3168399Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3169150Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3170515Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3171728Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3172691Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3173024Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3173735Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3175009Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3176218Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3177039Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.3177497Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6189307Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_exercise_screen_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6204016Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_exercise_screen_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6206766Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_exercise_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6209335Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6210940Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6211934Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6214395Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6221334Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6223359Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6225456Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6226148Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6226437Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6227118Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6228345Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6229453Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6230195Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6230601Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6230862Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6231273Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:26.6231693Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5790782Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5792720Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5794219Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5795177Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5795563Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5796421Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5797807Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5799580Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5800370Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5800692Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5801434Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5803001Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5804273Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5805080Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.5805543Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9020474Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/edit_delete_screens_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9021877Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/edit_delete_screens_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9024147Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/edit_delete_screens_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9026254Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9027433Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9028134Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9028412Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9029094Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9030349Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9031529Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9032350Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9032656Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9033343Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9034586Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9035725Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9036454Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9036868Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9037119Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9037262Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:27.9037609Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4825045Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4826635Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4827885Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4829082Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4829400Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4830144Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4844107Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4845424Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4846212Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4846545Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4847274Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4848866Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4850255Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4851034Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.4851455Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8009623Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/auth_wrapper_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8011393Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/auth_wrapper_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8018678Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/auth_wrapper_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8022014Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8023520Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8024297Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8024617Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8025316Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8026607Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8027756Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8028456Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8028772Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8029490Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8030770Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8032033Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8033016Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8033454Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8033723Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8033861Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:29.8034293Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:30.5945285Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests renders with correct title and instructions
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:30.6652075Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays user email address
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:30.7431717Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays email icon
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:30.8138303Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests shows sign out button in app bar
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:30.9674514Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests sign out button calls authProvider.signOut
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.0239593Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays resend countdown message initially
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.0792799Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests shows resend button after cooldown period
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.1687764Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests resend button calls sendEmailVerification
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.2468371Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests resend button resets cooldown after click
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.3126661Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays success message when set
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.3585459Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays error message when set
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.4111765Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests success message has green styling
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.4611945Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests error message has red styling
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.5089012Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays spam folder tip
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.5656727Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests auto-check timer reloads user periodically
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.6099402Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests auto-check timer stops when widget disposed
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.6518768Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests handles null user email gracefully
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.6956502Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests handles null user gracefully
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.7369784Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests resend button has refresh icon
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.7804087Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/auth/email_verification_screen_test.dart: EmailVerificationScreen Widget Tests displays all UI elements in correct hierarchy
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9107515Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9109583Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9111294Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9112772Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9115461Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9116520Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9118335Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9119538Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9120274Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9120594Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9121313Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9122772Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9123916Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9124941Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:31.9125346Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0399469Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_workout_screen_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0400988Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_workout_screen_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0405928Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_workout_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0408108Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0409272Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0409972Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0410278Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0410955Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0412354Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0413515Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0414220Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0414501Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0415179Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0416418Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0417556Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0418287Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0418715Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0418975Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0419116Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.0419490Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.3190031Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen UI Rendering renders settings screen with compact theme selector
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.3779849Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen UI Rendering shows system theme button as selected when current theme is system
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.4266633Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen UI Rendering shows light theme button as selected when current theme is light
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.4740289Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen UI Rendering shows dark theme button as selected when current theme is dark
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.5228769Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen UI Rendering theme icon buttons meet minimum size requirements
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.6645858Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Theme Selection tapping system button calls setThemeMode with ThemeMode.system
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.7048318Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Theme Selection tapping light button calls setThemeMode with ThemeMode.light
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.7608750Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Theme Selection tapping dark button calls setThemeMode with ThemeMode.dark
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.8516196Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Theme Selection theme changes immediately when button is tapped
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.8914401Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Accessibility theme buttons have proper semantic labels
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:32.9236484Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Accessibility theme buttons announce selected state to screen readers
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2487823Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/profile/settings_screen_test.dart: SettingsScreen Navigation back button pops route
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2832799Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2834309Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2835572Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2836398Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2836756Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2837850Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2839236Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2840494Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2841249Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2841576Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2842569Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2843948Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2845197Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2846053Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.2846539Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6000356Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/weeks_screen_workout_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6006750Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/weeks_screen_workout_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6008790Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/weeks_screen_workout_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6010839Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6011986Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6012914Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6013199Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6014167Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6015417Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6016567Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6017263Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6017689Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6018376Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6019623Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6020774Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6021711Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6022138Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6022553Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6022703Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:33.6023064Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6273612Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6275086Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6276339Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6277120Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6277446Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6278185Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6279521Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6280850Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6281615Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6281929Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6282975Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6284325Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6285572Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6286375Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.6286843Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8924866Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_set_screen_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8926265Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_set_screen_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8928253Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/create_set_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8930299Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8931456Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8932154Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8932626Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8933310Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8934530Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8935728Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8936716Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8937008Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8937708Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8938607Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8939264Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8939698Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8939952Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8940114Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8940222Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:34.8940466Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8971862Z lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8974082Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8975392Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8976160Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8976483Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8977232Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8978835Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8980086Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8980839Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8981176Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8981905Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8983532Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8984809Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8985614Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:35.8986078Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1664708Z ##[group]❌ loading /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/analytics_screen_test.dart (failed)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1666220Z Failed to load "/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/analytics_screen_test.dart":
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1668376Z Compilation failed for testPath=/home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/analytics_screen_test.dart: lib/providers/program_provider.dart:1039:5: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1670410Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1671597Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1672466Z     _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1672757Z     ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1673427Z lib/providers/program_provider.dart:1067:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1674672Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1675815Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1676502Z       _error = null;
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1676786Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1677469Z lib/providers/program_provider.dart:1070:7: Error: The setter '_error' isn't defined for the type 'ProgramProvider'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1678733Z  - 'ProgramProvider' is from 'package:fittrack/providers/program_provider.dart' ('lib/providers/program_provider.dart').
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1680133Z Try correcting the name to the name of an existing setter, or defining a setter or field named '_error'.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1680923Z       _error = 'Failed to load workout sets: $e';
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1681343Z       ^^^^^^
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1681609Z .
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1681745Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:36.1682089Z ##[endgroup]
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.3460724Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests renders day labels (Mon-Sun)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.4308807Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests renders calendar grid with correct number of weeks
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.5357452Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests displays current month days with heatmap colors
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.6166615Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests displays adjacent month days in gray
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.6778154Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests highlights current day with border
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.7704795Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests calls onDayTapped when tapping a day with sets
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.8301765Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests does not call onDayTapped for days with 0 sets
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.8750628Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests does not call onDayTapped for adjacent month days
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.9137071Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests renders 5 weeks for months that fit in 5 weeks
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:38.9530969Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests renders 6 weeks for months that need 6 weeks
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.0017748Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests applies correct heatmap intensity colors
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.0129317Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests renders header with title and total sets
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.0515605Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests calculates cell size within 40-60px range
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.0934130Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests handles empty month data (no sets)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.1211415Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests renders month/year header with current month
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.1434774Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests handles month with all days having sets
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.1850387Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests displays correct day numbers for first week of December 2024
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.2251593Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests displays correct day numbers for last week of December 2024
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.2611536Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests handles leap year (February 2024)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.2944054Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests handles non-leap year (February 2023)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.3377629Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests renders without onDayTapped callback
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.3759544Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests handles year boundary (December to January)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.4221040Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_calendar_view_test.dart: MonthlyCalendarView Widget Tests week starts on Monday (ISO 8601)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.5465145Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests month/year header is tappable
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.6140986Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests Today button is hidden when on current month
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.6756073Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests Today button appears when not on current month
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.8263878Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests PageView allows swipe navigation
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.8927856Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests renders MonthlyCalendarView inside PageView
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:39.9503873Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests renders legend with intensity levels
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.0069106Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests renders streak cards
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.0720574Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests shows loading indicator while fetching data
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.1027380Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests shows error message when data loading fails
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.1845682Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests tapping day shows popup with set count
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.2445244Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests pre-fetches adjacent months on init
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.4107680Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests caches month data to avoid redundant fetches
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.5271343Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests handles year boundary navigation (Dec to Jan)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.6281399Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests handles year boundary navigation (Jan to Dec)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.7170906Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests Today button navigates to current month
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.8260737Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests month picker allows selecting specific month
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.8753462Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests handles empty month data (no sets)
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.9200793Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests renders within Card widget
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:40.9919789Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests legend boxes have correct colors
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:41.0357415Z ✅ /home/runner/work/Fitness-App/Fitness-App/fittrack/test/screens/analytics/components/monthly_heatmap_section_test.dart: MonthlyHeatmapSection Widget Tests PageView has fixed height
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:41.0608991Z 
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:41.0631406Z ##[error]116 tests passed, 11 failed.
+Widget Tests (UI Components)	Run widget tests	2026-01-03T04:13:41.1134675Z ##[error]Process completed with exit code 1.
+All Tests Status	Check all test results	﻿2026-01-03T04:22:59.5840090Z ##[group]Run echo "Unit Tests: failure"
+All Tests Status	Check all test results	2026-01-03T04:22:59.5841312Z [36;1mecho "Unit Tests: failure"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5842448Z [36;1mecho "Widget Tests: failure"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5843659Z [36;1mecho "Integration Tests: success"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5844846Z [36;1mecho "Performance Tests: success"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5846337Z [36;1mecho "Enhanced Tests: failure"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5847377Z [36;1mecho "Security Checks: success"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5848389Z [36;1m[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5849373Z [36;1m# Fail if any critical test failed[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5850472Z [36;1mif [[ "failure" != "success" ]] || \[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5851593Z [36;1m   [[ "success" != "success" ]]; then[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5852769Z [36;1m  echo "❌ Critical tests failed"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5853899Z [36;1m  exit 1[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5854783Z [36;1mfi[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5855954Z [36;1m[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5857013Z [36;1m# Warn but don't fail on integration/widget test failures[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5858567Z [36;1mif [[ "success" != "success" ]] || \[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5859649Z [36;1m   [[ "failure" != "success" ]]; then[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5860791Z [36;1m  echo "⚠️  Some tests failed but not blocking"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5862049Z [36;1mfi[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5862766Z [36;1m[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.5863558Z [36;1mecho "✅ All critical tests passed"[0m
+All Tests Status	Check all test results	2026-01-03T04:22:59.6515476Z shell: /usr/bin/bash -e {0}
+All Tests Status	Check all test results	2026-01-03T04:22:59.6516945Z ##[endgroup]
+All Tests Status	Check all test results	2026-01-03T04:22:59.6768647Z Unit Tests: failure
+All Tests Status	Check all test results	2026-01-03T04:22:59.6769794Z Widget Tests: failure
+All Tests Status	Check all test results	2026-01-03T04:22:59.6770646Z Integration Tests: success
+All Tests Status	Check all test results	2026-01-03T04:22:59.6771521Z Performance Tests: success
+All Tests Status	Check all test results	2026-01-03T04:22:59.6772440Z Enhanced Tests: failure
+All Tests Status	Check all test results	2026-01-03T04:22:59.6773315Z Security Checks: success
+All Tests Status	Check all test results	2026-01-03T04:22:59.6916355Z ❌ Critical tests failed
+All Tests Status	Check all test results	2026-01-03T04:22:59.6942455Z ##[error]Process completed with exit code 1.

@@ -335,7 +335,7 @@ class _CreateExerciseScreenState extends State<CreateExerciseScreen> {
 
                 // Set count display
                 Container(
-                  width: 60,
+                  constraints: const BoxConstraints(minWidth: 60),
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,

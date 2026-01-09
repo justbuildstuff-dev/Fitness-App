@@ -30,6 +30,9 @@ class ConsolidatedWorkoutScreen extends StatefulWidget {
 }
 
 class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
+  // Track which exercises are currently adding sets (for debouncing)
+  final Set<String> _addingSetForExercise = {};
+
   @override
   void initState() {
     super.initState();
@@ -192,6 +195,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
       padding: const EdgeInsets.all(16),
       itemCount: exercises.length,
       buildDefaultDragHandles: true, // Let ReorderableListView handle drag handles
+      physics: const AlwaysScrollableScrollPhysics(), // Improve scroll performance
       proxyDecorator: (child, index, animation) {
         // Animate the dragged item
         return AnimatedBuilder(
@@ -212,13 +216,14 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
       itemBuilder: (context, index) {
         final exercise = exercises[index];
         final sets = provider.getSetsForExercise(exercise.id);
+        final isAddingSet = _addingSetForExercise.contains(exercise.id);
 
         return ExerciseCard(
           key: ValueKey(exercise.id),
           exercise: exercise,
           sets: sets,
           isReorderEnabled: true, // Keep showing that reordering is possible
-          onAddSet: () => _addSet(context, exercise),
+          onAddSet: isAddingSet || sets.length >= 10 ? null : () => _addSet(context, exercise),
           onEditName: () => _editExerciseName(context, exercise),
           onDelete: () => _deleteExercise(context, exercise),
           onUpdateSet: (updatedSet) => _updateSet(context, updatedSet),
@@ -229,6 +234,15 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
   }
 
   Future<void> _addSet(BuildContext context, Exercise exercise) async {
+    // Prevent rapid successive additions
+    if (_addingSetForExercise.contains(exercise.id)) {
+      return;
+    }
+
+    setState(() {
+      _addingSetForExercise.add(exercise.id);
+    });
+
     final provider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -240,24 +254,34 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
         exerciseId: exercise.id,
       );
 
-      if (mounted && setId != null) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Set added successfully'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      } else if (mounted && setId == null) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Failed to add set: ${provider.error ?? "Unknown error"}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+      if (mounted) {
+        setState(() {
+          _addingSetForExercise.remove(exercise.id);
+        });
+
+        if (setId != null) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Set added successfully'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to add set: ${provider.error ?? "Unknown error"}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _addingSetForExercise.remove(exercise.id);
+        });
+
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text('Failed to add set: $e'),
