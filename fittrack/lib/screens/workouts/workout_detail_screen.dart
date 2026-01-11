@@ -9,6 +9,11 @@ import '../../widgets/delete_confirmation_dialog.dart';
 import '../exercises/create_exercise_screen.dart';
 import '../exercises/exercise_detail_screen.dart';
 
+/// DEPRECATED: Use ConsolidatedWorkoutScreen instead.
+/// This screen will be removed in a future version.
+/// ConsolidatedWorkoutScreen provides an improved UX with inline set editing
+/// and eliminates the need for separate exercise detail screens.
+@Deprecated('Use ConsolidatedWorkoutScreen instead')
 class WorkoutDetailScreen extends StatefulWidget {
   final Program program;
   final Week week;

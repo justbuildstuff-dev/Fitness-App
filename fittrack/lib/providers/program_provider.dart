@@ -124,6 +124,11 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> _sets = [];
   bool _isLoadingSets = false;
 
+  // All sets for all exercises in a workout (for ConsolidatedWorkoutScreen)
+  // Map of exerciseId to List of ExerciseSet
+  Map<String, List<ExerciseSet>> _allWorkoutSets = {};
+  bool _isLoadingAllWorkoutSets = false;
+
   // Analytics
   WorkoutAnalytics? _currentAnalytics;
   ActivityHeatmapData? _heatmapData;
@@ -171,6 +176,15 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> get sets => _sets;
   bool get isLoadingSets => _isLoadingSets;
 
+  // All workout sets getters
+  Map<String, List<ExerciseSet>> get allWorkoutSets => _allWorkoutSets;
+  bool get isLoadingAllWorkoutSets => _isLoadingAllWorkoutSets;
+
+  /// Get sets for a specific exercise from the all workout sets cache
+  List<ExerciseSet> getSetsForExercise(String exerciseId) {
+    return _allWorkoutSets[exerciseId] ?? [];
+  }
+
   // Analytics getters
   WorkoutAnalytics? get currentAnalytics => _currentAnalytics;
   ActivityHeatmapData? get heatmapData => _heatmapData;
@@ -183,7 +197,7 @@ class ProgramProvider extends ChangeNotifier {
   List<ExerciseSet> getCurrentSets() => _sets;
 
   /// General loading state (true if any operation is loading)
-  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets || _isLoadingAnalytics;
+  bool get isLoading => _isLoadingPrograms || _isLoadingWeeks || _isLoadingWorkouts || _isLoadingExercises || _isLoadingSets || _isLoadingAllWorkoutSets || _isLoadingAnalytics;
   
   /// Get the userId
   String? get userId => _userId;
@@ -774,6 +788,7 @@ class ProgramProvider extends ChangeNotifier {
     required String name,
     required ExerciseType exerciseType,
     String? notes,
+    int setCount = 1, // Default to 1 set if not specified
   }) async {
     if (_userId == null) return null;
 
@@ -782,8 +797,8 @@ class ProgramProvider extends ChangeNotifier {
       notifyListeners();
 
       // Calculate next order index
-      final nextOrderIndex = _exercises.isEmpty 
-          ? 0 
+      final nextOrderIndex = _exercises.isEmpty
+          ? 0
           : _exercises.map((e) => e.orderIndex).reduce((a, b) => a > b ? a : b) + 1;
 
       final exercise = Exercise(
@@ -800,7 +815,11 @@ class ProgramProvider extends ChangeNotifier {
         programId: programId,
       );
 
-      final exerciseId = await _firestoreService.createExercise(exercise);
+      // Create exercise and sets in a batched write
+      final exerciseId = await _firestoreService.createExerciseWithSets(
+        exercise,
+        setCount,
+      );
       return exerciseId;
     } catch (e) {
       _programsError = 'Failed to create exercise: $e';
@@ -925,45 +944,50 @@ class ProgramProvider extends ChangeNotifier {
   ///
   /// Returns zero counts if required context (_selectedProgram, etc.) is missing.
   Future<CascadeDeleteCounts> getCascadeDeleteCounts({
+    String? programId,
     String? weekId,
     String? workoutId,
     String? exerciseId,
   }) async {
     if (_userId == null) return const CascadeDeleteCounts();
 
-    String? programId;
+    String? resolvedProgramId = programId;
     String? resolvedWeekId = weekId;
     String? resolvedWorkoutId = workoutId;
 
     // Determine programId and resolve IDs based on context
+    // Use provided IDs first, fall back to selected state if not provided
     if (exerciseId != null) {
       // Deleting exercise - need program, week, workout, exercise IDs
-      if (_selectedProgram == null || _selectedWeek == null || _selectedWorkout == null) {
+      resolvedProgramId ??= _selectedProgram?.id;
+      resolvedWeekId ??= _selectedWeek?.id;
+      resolvedWorkoutId ??= _selectedWorkout?.id;
+
+      if (resolvedProgramId == null || resolvedWeekId == null || resolvedWorkoutId == null) {
         return const CascadeDeleteCounts();
       }
-      programId = _selectedProgram!.id;
-      resolvedWeekId = _selectedWeek!.id;
-      resolvedWorkoutId = _selectedWorkout!.id;
     } else if (workoutId != null) {
       // Deleting workout - need program, week, workout IDs
-      if (_selectedProgram == null || _selectedWeek == null) {
+      resolvedProgramId ??= _selectedProgram?.id;
+      resolvedWeekId ??= _selectedWeek?.id;
+
+      if (resolvedProgramId == null || resolvedWeekId == null) {
         return const CascadeDeleteCounts();
       }
-      programId = _selectedProgram!.id;
-      resolvedWeekId = _selectedWeek!.id;
     } else if (weekId != null) {
       // Deleting week - need program, week IDs
-      if (_selectedProgram == null) {
+      resolvedProgramId ??= _selectedProgram?.id;
+
+      if (resolvedProgramId == null) {
         return const CascadeDeleteCounts();
       }
-      programId = _selectedProgram!.id;
     } else {
       return const CascadeDeleteCounts();
     }
 
     return await _firestoreService.getCascadeDeleteCounts(
       userId: _userId!,
-      programId: programId,
+      programId: resolvedProgramId,
       weekId: resolvedWeekId,
       workoutId: resolvedWorkoutId,
       exerciseId: exerciseId,
@@ -1006,6 +1030,57 @@ class ProgramProvider extends ChangeNotifier {
     );
   }
 
+  /// Load all sets for all exercises in a workout
+  /// This is an optimized method for the ConsolidatedWorkoutScreen that loads
+  /// all sets for all exercises in a single operation to minimize queries.
+  /// Uses _programsError for error state management.
+  Future<void> loadAllSetsForWorkout({
+    required String programId,
+    required String weekId,
+    required String workoutId,
+  }) async {
+    if (_userId == null) return;
+
+    _isLoadingAllWorkoutSets = true;
+    _programsError = null;
+    notifyListeners();
+
+    try {
+      // Always reload exercises to ensure we have the latest data
+      // This is critical after creating/deleting exercises or sets
+      final exercises = await _firestoreService.getExercises(_userId!, programId, weekId, workoutId).first;
+
+      // Update the exercises list
+      _exercises = exercises;
+
+      // Load sets for all exercises in parallel
+      final setsFutures = _exercises.map((exercise) {
+        return _firestoreService
+            .getSets(_userId!, programId, weekId, workoutId, exercise.id)
+            .first;
+      }).toList();
+
+      // Wait for all sets to load
+      final allSetLists = await Future.wait(setsFutures);
+
+      // Build map of exerciseId -> List<ExerciseSet>
+      final setsMap = <String, List<ExerciseSet>>{};
+      for (var i = 0; i < _exercises.length; i++) {
+        setsMap[_exercises[i].id] = allSetLists[i];
+      }
+
+      _allWorkoutSets = setsMap;
+      _isLoadingAllWorkoutSets = false;
+      _programsError = null;
+      notifyListeners();
+    } catch (e) {
+      _programsError = 'Failed to load workout sets: $e';
+      _isLoadingAllWorkoutSets = false;
+      _allWorkoutSets = {};
+      notifyListeners();
+    }
+  }
+
   /// Create a new set
   Future<String?> createSet({
     required String programId,
@@ -1025,17 +1100,48 @@ class ProgramProvider extends ChangeNotifier {
       _programsError = null;
       notifyListeners();
 
-      // Calculate next set number
-      final nextSetNumber = _sets.isEmpty 
-          ? 1 
-          : _sets.map((s) => s.setNumber).reduce((a, b) => a > b ? a : b) + 1;
+      // Find the exercise to get its type for default values
+      final exercise = _exercises.firstWhere(
+        (e) => e.id == exerciseId,
+        orElse: () => throw Exception('Exercise not found'),
+      );
+
+      // Calculate next set number from the correct source
+      // Use _allWorkoutSets[exerciseId] if available, otherwise fall back to _sets
+      final existingSets = _allWorkoutSets[exerciseId] ?? _sets.where((s) => s.exerciseId == exerciseId).toList();
+
+      // Always use count + 1 for next set number (sequential numbering)
+      // Sets will be automatically renumbered after deletion to maintain sequential order
+      final nextSetNumber = existingSets.length + 1;
+
+      // Set default metric values based on exercise type to satisfy Firestore validation
+      // Firestore rules require at least one metric (reps, duration, or distance) to be non-null
+      int? defaultReps = reps;
+      int? defaultDuration = duration;
+
+      if (defaultReps == null && defaultDuration == null && distance == null) {
+        // No metrics provided, set defaults based on exercise type
+        switch (exercise.exerciseType) {
+          case ExerciseType.strength:
+          case ExerciseType.bodyweight:
+            defaultReps = 0; // Default to 0 reps for strength/bodyweight exercises
+            break;
+          case ExerciseType.cardio:
+          case ExerciseType.timeBased:
+            defaultDuration = 0; // Default to 0 seconds for cardio/time-based exercises
+            break;
+          case ExerciseType.custom:
+            defaultReps = 0; // Default to reps for custom exercises
+            break;
+        }
+      }
 
       final set = ExerciseSet(
         id: '',
         setNumber: nextSetNumber,
-        reps: reps,
+        reps: defaultReps,
         weight: weight,
-        duration: duration,
+        duration: defaultDuration,
         distance: distance,
         restTime: restTime,
         notes: notes?.trim(),
@@ -1049,6 +1155,42 @@ class ProgramProvider extends ChangeNotifier {
       );
 
       final setId = await _firestoreService.createSet(set);
+
+      // Update local state immediately for responsive UI
+      if (setId != null) {
+        // Create a new ExerciseSet with the returned ID
+        final createdSet = ExerciseSet(
+          id: setId,
+          setNumber: set.setNumber,
+          reps: set.reps,
+          weight: set.weight,
+          duration: set.duration,
+          distance: set.distance,
+          restTime: set.restTime,
+          checked: set.checked,
+          notes: set.notes,
+          createdAt: set.createdAt,
+          updatedAt: set.updatedAt,
+          userId: set.userId,
+          exerciseId: set.exerciseId,
+          workoutId: set.workoutId,
+          weekId: set.weekId,
+          programId: set.programId,
+        );
+
+        // Update _allWorkoutSets if it's being used
+        if (_allWorkoutSets.containsKey(exerciseId)) {
+          _allWorkoutSets[exerciseId] = [..._allWorkoutSets[exerciseId]!, createdSet];
+        }
+
+        // Update _sets if it's being used
+        if (_sets.any((s) => s.exerciseId == exerciseId)) {
+          _sets = [..._sets, createdSet];
+        }
+
+        notifyListeners();
+      }
+
       return setId;
     } catch (e) {
       _programsError = 'Failed to create set: $e';
@@ -1068,6 +1210,27 @@ class ProgramProvider extends ChangeNotifier {
       );
 
       await _firestoreService.updateSet(updatedSet);
+
+      // Update local state immediately for responsive UI
+      // Update _allWorkoutSets if it contains this exercise
+      if (_allWorkoutSets.containsKey(updatedSet.exerciseId)) {
+        final sets = _allWorkoutSets[updatedSet.exerciseId]!;
+        final index = sets.indexWhere((s) => s.id == updatedSet.id);
+        if (index != -1) {
+          final updatedSets = [...sets];
+          updatedSets[index] = updatedSet;
+          _allWorkoutSets[updatedSet.exerciseId] = updatedSets;
+        }
+      }
+
+      // Update _sets if it contains this set
+      final setsIndex = _sets.indexWhere((s) => s.id == updatedSet.id);
+      if (setsIndex != -1) {
+        _sets = [..._sets];
+        _sets[setsIndex] = updatedSet;
+      }
+
+      notifyListeners();
       return true;
     } catch (e) {
       _programsError = 'Failed to update set: $e';
@@ -1092,6 +1255,60 @@ class ProgramProvider extends ChangeNotifier {
 
       await _firestoreService.deleteSet(
           _userId!, programId, weekId, workoutId, exerciseId, setId);
+
+      // Update local state immediately for responsive UI
+      // Remove from _allWorkoutSets if it contains this exercise
+      if (_allWorkoutSets.containsKey(exerciseId)) {
+        final remainingSets = _allWorkoutSets[exerciseId]!
+            .where((s) => s.id != setId)
+            .toList();
+
+        // Renumber remaining sets to maintain sequential order
+        final renumberedSets = <ExerciseSet>[];
+        for (int i = 0; i < remainingSets.length; i++) {
+          final set = remainingSets[i];
+          if (set.setNumber != i + 1) {
+            // Update set number in Firestore
+            final updatedSet = set.copyWith(
+              setNumber: i + 1,
+              updatedAt: DateTime.now(),
+            );
+            await _firestoreService.updateSet(updatedSet);
+            renumberedSets.add(updatedSet);
+          } else {
+            renumberedSets.add(set);
+          }
+        }
+
+        _allWorkoutSets[exerciseId] = renumberedSets;
+      }
+
+      // Remove from _sets and renumber if it contains this set
+      final remainingSetsInList = _sets.where((s) => s.id != setId).toList();
+      final exerciseSetsInList = remainingSetsInList.where((s) => s.exerciseId == exerciseId).toList();
+
+      if (exerciseSetsInList.isNotEmpty) {
+        // Renumber exercise sets in _sets
+        final renumberedExerciseSets = <ExerciseSet>[];
+        for (int i = 0; i < exerciseSetsInList.length; i++) {
+          final set = exerciseSetsInList[i];
+          if (set.setNumber != i + 1) {
+            renumberedExerciseSets.add(set.copyWith(setNumber: i + 1));
+          } else {
+            renumberedExerciseSets.add(set);
+          }
+        }
+
+        // Replace in _sets list
+        _sets = [
+          ...remainingSetsInList.where((s) => s.exerciseId != exerciseId),
+          ...renumberedExerciseSets,
+        ];
+      } else {
+        _sets = remainingSetsInList;
+      }
+
+      notifyListeners();
       return true;
     } catch (e) {
       _programsError = 'Failed to delete set: $e';
