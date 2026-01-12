@@ -7,8 +7,10 @@ import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
+import '../../models/navigation_section.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/exercise_card.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import '../exercises/create_exercise_screen.dart';
 
 /// Consolidated workout screen that displays all exercises and their sets inline
@@ -148,6 +150,9 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
         onPressed: () => _addExercise(context),
         tooltip: 'Add Exercise',
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.programs,
       ),
     );
   }
