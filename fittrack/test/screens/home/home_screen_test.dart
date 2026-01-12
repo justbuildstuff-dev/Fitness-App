@@ -1,41 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/screens/home/home_screen.dart';
 import 'package:fittrack/screens/programs/programs_screen.dart';
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/screens/profile/profile_screen.dart';
-import 'package:fittrack/providers/auth_provider.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/providers/program_provider.dart';
 
+import 'home_screen_test.mocks.dart';
+
+/// Unit tests for HomeScreen widget
+///
+/// Tests the following aspects:
+/// - Renders correctly with different initialIndex values
+/// - Bottom navigation displays all three sections
+/// - Tab switching works correctly
+/// - IndexedStack maintains state across tab switches
+/// - Backward compatibility when initialIndex is not provided
+///
+/// Widget tests focus on UI behavior and user interactions
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 void main() {
   group('HomeScreen', () {
-    late MockFirebaseAuth mockAuth;
-    late FakeFirebaseFirestore mockFirestore;
-    late MockUser mockUser;
+    late MockProgramProvider mockProgramProvider;
+    late MockAuthProvider mockAuthProvider;
 
     setUp(() {
-      mockUser = MockUser(
-        isAnonymous: false,
-        uid: 'test-user-id',
-        email: 'test@example.com',
-        displayName: 'Test User',
-      );
-      mockAuth = MockFirebaseAuth(mockUser: mockUser, signedIn: true);
-      mockFirestore = FakeFirebaseFirestore();
+      mockProgramProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
+
+      // Set up default mock behavior
+      when(mockProgramProvider.programs).thenReturn([]);
+      when(mockProgramProvider.isLoading).thenReturn(false);
+      when(mockProgramProvider.error).thenReturn(null);
+
+      when(mockAuthProvider.isAuthenticated).thenReturn(true);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
     });
 
     Widget createTestWidget({int? initialIndex}) {
       return MultiProvider(
         providers: [
-          ChangeNotifierProvider(
-            create: (_) => AuthProvider(mockAuth),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => ProgramProvider(mockFirestore, 'test-user-id'),
-          ),
+          ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+          ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
         ],
         child: MaterialApp(
           home: HomeScreen(
@@ -52,8 +63,8 @@ void main() {
 
       // Assert - Programs screen should be visible
       expect(find.byType(ProgramsScreen), findsOneWidget);
-      expect(find.byType(AnalyticsScreen), findsNothing);
-      expect(find.byType(ProfileScreen), findsNothing);
+      expect(find.byType(AnalyticsScreen), findsOneWidget); // In IndexedStack
+      expect(find.byType(ProfileScreen), findsOneWidget); // In IndexedStack
     });
 
     testWidgets('displays Programs screen when initialIndex is 0', (tester) async {
@@ -61,10 +72,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(initialIndex: 0));
       await tester.pumpAndSettle();
 
-      // Assert
-      expect(find.byType(ProgramsScreen), findsOneWidget);
-
-      // Verify bottom nav highlights Programs
+      // Assert - Verify bottom nav highlights Programs
       final bottomNav = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
@@ -77,7 +85,6 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - AnalyticsScreen should be visible (via IndexedStack)
-      // Note: IndexedStack keeps all children in widget tree, so we check the index
       final bottomNav = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
@@ -162,12 +169,8 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider(
-              create: (_) => AuthProvider(mockAuth),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => ProgramProvider(mockFirestore, 'test-user-id'),
-            ),
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
           ],
           child: MaterialApp(
             home: HomeScreen(), // No initialIndex parameter
