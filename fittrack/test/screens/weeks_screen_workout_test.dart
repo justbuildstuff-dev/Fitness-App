@@ -875,6 +875,14 @@ void main() {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
+        // Scroll to make third workout visible
+        await tester.scrollUntilVisible(
+          find.text('Leg Day'),
+          100,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
         // Tap delete button on third workout
         final deleteButtons = find.byIcon(Icons.delete);
         await tester.tap(deleteButtons.at(2));

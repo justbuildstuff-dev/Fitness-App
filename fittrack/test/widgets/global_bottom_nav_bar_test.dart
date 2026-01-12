@@ -115,7 +115,7 @@ void main() {
       expect(bottomNav.currentIndex, 2); // Profile index
     });
 
-    testWidgets('uses BottomNavigationBarType.fixed', (tester) async {
+    testWidgets('uses fixed type for bottom navigation bar', (tester) async {
       // Act
       await tester.pumpWidget(
         MaterialApp(
