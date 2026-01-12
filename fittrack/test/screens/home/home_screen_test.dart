@@ -38,12 +38,14 @@ void main() {
       when(mockProgramProvider.isLoadingPrograms).thenReturn(false);
       when(mockProgramProvider.isLoadingAnalytics).thenReturn(false);
       when(mockProgramProvider.error).thenReturn(null);
+      when(mockProgramProvider.monthHeatmapData).thenReturn(null);
 
       // Set up default mock behavior for AuthProvider
       when(mockAuthProvider.isAuthenticated).thenReturn(true);
       when(mockAuthProvider.isLoading).thenReturn(false);
       when(mockAuthProvider.error).thenReturn(null);
       when(mockAuthProvider.user).thenReturn(null);
+      when(mockAuthProvider.userProfile).thenReturn(null);
     });
 
     Widget createTestWidget({int? initialIndex}) {
