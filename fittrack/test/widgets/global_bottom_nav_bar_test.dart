@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+import 'package:provider/provider.dart';
 import 'package:fittrack/widgets/global_bottom_nav_bar.dart';
 import 'package:fittrack/models/navigation_section.dart';
 import 'package:fittrack/screens/home/home_screen.dart';
+import 'package:fittrack/providers/auth_provider.dart' as app_auth;
+import 'package:fittrack/providers/program_provider.dart';
 
+import 'global_bottom_nav_bar_test.mocks.dart';
+
+@GenerateMocks([ProgramProvider, app_auth.AuthProvider])
 void main() {
   group('GlobalBottomNavBar Widget', () {
+    late MockProgramProvider mockProgramProvider;
+    late MockAuthProvider mockAuthProvider;
+
+    setUp(() {
+      mockProgramProvider = MockProgramProvider();
+      mockAuthProvider = MockAuthProvider();
+
+      // Set up default mock behavior
+      when(mockProgramProvider.programs).thenReturn([]);
+      when(mockProgramProvider.isLoading).thenReturn(false);
+      when(mockProgramProvider.error).thenReturn(null);
+
+      when(mockAuthProvider.isAuthenticated).thenReturn(true);
+      when(mockAuthProvider.isLoading).thenReturn(false);
+      when(mockAuthProvider.error).thenReturn(null);
+    });
+
     testWidgets('displays all three navigation items', (tester) async {
       // Act
       await tester.pumpWidget(
@@ -106,11 +131,17 @@ void main() {
     testWidgets('navigates to Analytics when Analytics tab is tapped from Programs', (tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: Text('Programs Screen')),
-            bottomNavigationBar: GlobalBottomNavBar(
-              currentSection: NavigationSection.programs,
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Center(child: Text('Programs Screen')),
+              bottomNavigationBar: GlobalBottomNavBar(
+                currentSection: NavigationSection.programs,
+              ),
             ),
           ),
         ),
@@ -127,11 +158,17 @@ void main() {
     testWidgets('navigates to Programs when Programs tab is tapped from Analytics', (tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: Text('Analytics Screen')),
-            bottomNavigationBar: GlobalBottomNavBar(
-              currentSection: NavigationSection.analytics,
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Center(child: Text('Analytics Screen')),
+              bottomNavigationBar: GlobalBottomNavBar(
+                currentSection: NavigationSection.analytics,
+              ),
             ),
           ),
         ),
@@ -148,11 +185,17 @@ void main() {
     testWidgets('navigates to Profile when Profile tab is tapped from Programs', (tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: Text('Programs Screen')),
-            bottomNavigationBar: GlobalBottomNavBar(
-              currentSection: NavigationSection.programs,
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Center(child: Text('Programs Screen')),
+              bottomNavigationBar: GlobalBottomNavBar(
+                currentSection: NavigationSection.programs,
+              ),
             ),
           ),
         ),
@@ -199,30 +242,36 @@ void main() {
     testWidgets('clears navigation stack when navigating to different section', (tester) async {
       // Arrange - Start with a navigation stack
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) {
-              return Scaffold(
-                appBar: AppBar(title: Text('Screen 1')),
-                body: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => Scaffold(
-                          appBar: AppBar(title: Text('Screen 2')),
-                          body: Center(child: Text('Deep Screen')),
-                          bottomNavigationBar: GlobalBottomNavBar(
-                            currentSection: NavigationSection.programs,
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<app_auth.AuthProvider>.value(value: mockAuthProvider),
+            ChangeNotifierProvider<ProgramProvider>.value(value: mockProgramProvider),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) {
+                return Scaffold(
+                  appBar: AppBar(title: Text('Screen 1')),
+                  body: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            appBar: AppBar(title: Text('Screen 2')),
+                            body: Center(child: Text('Deep Screen')),
+                            bottomNavigationBar: GlobalBottomNavBar(
+                              currentSection: NavigationSection.programs,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Text('Go to Screen 2'),
-                ),
-              );
-            },
+                      );
+                    },
+                    child: Text('Go to Screen 2'),
+                  ),
+                );
+              },
+            ),
           ),
         ),
       );

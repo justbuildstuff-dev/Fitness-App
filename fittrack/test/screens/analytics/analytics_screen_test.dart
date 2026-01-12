@@ -378,7 +378,12 @@ void main() {
     testWidgets('displays correct title', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
 
-      expect(find.text('Analytics'), findsOneWidget);
+      // Find Analytics title specifically in AppBar (not bottom nav)
+      final appBarTitle = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Analytics'),
+      );
+      expect(appBarTitle, findsOneWidget);
     });
 
     testWidgets('has refresh button in app bar', (WidgetTester tester) async {
