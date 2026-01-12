@@ -21,14 +21,18 @@ void main() {
       mockProgramProvider = MockProgramProvider();
       mockAuthProvider = MockAuthProvider();
 
-      // Set up default mock behavior
+      // Set up default mock behavior for ProgramProvider
       when(mockProgramProvider.programs).thenReturn([]);
       when(mockProgramProvider.isLoading).thenReturn(false);
+      when(mockProgramProvider.isLoadingPrograms).thenReturn(false);
+      when(mockProgramProvider.isLoadingAnalytics).thenReturn(false);
       when(mockProgramProvider.error).thenReturn(null);
 
+      // Set up default mock behavior for AuthProvider
       when(mockAuthProvider.isAuthenticated).thenReturn(true);
       when(mockAuthProvider.isLoading).thenReturn(false);
       when(mockAuthProvider.error).thenReturn(null);
+      when(mockAuthProvider.user).thenReturn(null);
     });
 
     testWidgets('displays all three navigation items', (tester) async {
