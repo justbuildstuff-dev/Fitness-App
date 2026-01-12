@@ -2,18 +2,18 @@
 ///
 /// Used by [GlobalBottomNavBar] to determine which section is currently active
 /// and to handle navigation between sections.
+///
+/// Each enum value has a built-in [index] property:
+/// - [NavigationSection.programs.index] = 0
+/// - [NavigationSection.analytics.index] = 1
+/// - [NavigationSection.profile.index] = 2
 enum NavigationSection {
   /// Programs section - includes Programs, Program Details, Weeks, and Workouts
-  programs(0),
+  programs,
 
   /// Analytics section - workout analytics and statistics
-  analytics(1),
+  analytics,
 
   /// Profile section - user settings and preferences
-  profile(2);
-
-  /// The index position in the bottom navigation bar
-  final int index;
-
-  const NavigationSection(this.index);
+  profile,
 }
