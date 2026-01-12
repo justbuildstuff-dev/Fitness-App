@@ -42,16 +42,17 @@ void main() {
         exerciseTypeBreakdown: {},
         completedWorkoutIds: [],
       ));
-      when(mockAnalyticsService.generateHeatmapData(
+      when(mockAnalyticsService.generateSetBasedHeatmapData(
         userId: anyNamed('userId'),
-        year: anyNamed('year'),
+        dateRange: anyNamed('dateRange'),
+        programId: anyNamed('programId'),
       )).thenAnswer((_) async => ActivityHeatmapData(
         userId: 'test_user',
         year: DateTime.now().year,
-        dailyWorkoutCounts: {},
+        dailySetCounts: {},
         currentStreak: 0,
         longestStreak: 0,
-        totalWorkouts: 0,
+        totalSets: 0,
       ));
       when(mockAnalyticsService.getPersonalRecords(
         userId: anyNamed('userId'),
@@ -61,6 +62,26 @@ void main() {
         userId: anyNamed('userId'),
         dateRange: anyNamed('dateRange'),
       )).thenAnswer((_) async => {});
+
+      // Add stubs for monthly heatmap methods with CONCRETE values (required for non-nullable params)
+      final now = DateTime.now();
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'test_user',
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async => MonthHeatmapData(
+        year: now.year,
+        month: now.month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: now,
+      ));
+
+      when(mockAnalyticsService.prefetchAdjacentMonths(
+        userId: 'test_user',
+        year: now.year,
+        month: now.month,
+      )).thenAnswer((_) async {});
 
       provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
     });
@@ -83,10 +104,10 @@ void main() {
         final mockHeatmapData = ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailyWorkoutCounts: {DateTime(2024, 1, 1): 1},
+          dailySetCounts: {DateTime(2024, 1, 1): 3},
           currentStreak: 5,
           longestStreak: 10,
-          totalWorkouts: 10,
+          totalSets: 30,
         );
 
         final mockPRs = [
@@ -124,9 +145,10 @@ void main() {
           dateRange: anyNamed('dateRange'),
         )).thenAnswer((_) async => mockAnalytics);
 
-        when(mockAnalyticsService.generateHeatmapData(
+        when(mockAnalyticsService.generateSetBasedHeatmapData(
           userId: anyNamed('userId'),
-          year: anyNamed('year'),
+          dateRange: anyNamed('dateRange'),
+          programId: anyNamed('programId'),
         )).thenAnswer((_) async => mockHeatmapData);
 
         when(mockAnalyticsService.getPersonalRecords(
@@ -145,7 +167,7 @@ void main() {
         // Assert - These would test actual provider state
         // In real implementation, you'd check provider.currentAnalytics, etc.
         expect(provider.isLoadingAnalytics, isFalse);
-        expect(provider.error, isNull);
+        expect(provider.analyticsError, isNull);
       });
 
       test('handles analytics loading errors gracefully', () async {
@@ -162,8 +184,8 @@ void main() {
 
         // Assert
         expect(provider.isLoadingAnalytics, isFalse);
-        expect(provider.error, isNotNull);
-        expect(provider.error, contains('Failed to load analytics'));
+        expect(provider.analyticsError, isNotNull);
+        expect(provider.analyticsError, contains('Failed to load analytics'));
       });
 
       test('sets loading state correctly during analytics loading', () async {
@@ -188,18 +210,19 @@ void main() {
           );
         });
 
-        when(mockAnalyticsService.generateHeatmapData(
+        when(mockAnalyticsService.generateSetBasedHeatmapData(
           userId: anyNamed('userId'),
-          year: anyNamed('year'),
+          dateRange: anyNamed('dateRange'),
+          programId: anyNamed('programId'),
         )).thenAnswer((_) async {
           await Future.delayed(const Duration(milliseconds: 50));
           return ActivityHeatmapData(
             userId: 'test_user',
             year: DateTime.now().year,
-            dailyWorkoutCounts: {},
+            dailySetCounts: {},
             currentStreak: 0,
             longestStreak: 0,
-            totalWorkouts: 0,
+            totalSets: 0,
           );
         });
 
@@ -256,16 +279,17 @@ void main() {
           completedWorkoutIds: ['w1', 'w2'],
         ));
 
-        when(mockAnalyticsService.generateHeatmapData(
+        when(mockAnalyticsService.generateSetBasedHeatmapData(
           userId: anyNamed('userId'),
-          year: anyNamed('year'),
+          dateRange: anyNamed('dateRange'),
+          programId: anyNamed('programId'),
         )).thenAnswer((_) async => ActivityHeatmapData(
           userId: 'test_user',
           year: DateTime.now().year,
-          dailyWorkoutCounts: {},
+          dailySetCounts: {},
           currentStreak: 0,
           longestStreak: 0,
-          totalWorkouts: 0,
+          totalSets: 0,
         ));
 
         when(mockAnalyticsService.getPersonalRecords(

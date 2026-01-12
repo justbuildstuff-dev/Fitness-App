@@ -33,6 +33,20 @@
       ]
     },
     {
+      "collectionGroup": "programs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "weeks",
       "queryScope": "COLLECTION",
       "fields": [

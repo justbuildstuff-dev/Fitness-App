@@ -401,35 +401,42 @@ void main() {
       /// Users should see visual feedback while set is being created
       
       // Make createSet return a delayed future to see loading state
+      // Use argument matchers to accept any values instead of hardcoded ones
       when(mockProvider.createSet(
-        programId: 'program-1',
-        weekId: 'week-1', 
-        workoutId: 'workout-1',
-        exerciseId: 'exercise-1',
-        reps: 10,
-        weight: 50,
-        duration: null,
-        distance: null,
-        restTime: 60,
-        notes: null,
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+        reps: anyNamed('reps'),
+        weight: anyNamed('weight'),
+        duration: anyNamed('duration'),
+        distance: anyNamed('distance'),
+        restTime: anyNamed('restTime'),
+        notes: anyNamed('notes'),
       )).thenAnswer((_) async {
         await Future.delayed(const Duration(milliseconds: 200));
         return 'new-set-id';
       });
       
       await tester.pumpWidget(createTestWidget(strengthExercise));
-      
+
       // Enter valid data
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '10');
-      
-      // Tap save
-      await tester.tap(find.text('ADD'));
+
+      // Find and tap save button in AppBar
+      final addButton = find.ancestor(
+        of: find.text('ADD'),
+        matching: find.byType(TextButton),
+      );
+      await tester.tap(addButton);
       await tester.pump(); // Start async operation
-      
-      // Should show loading indicator
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('ADD'), findsNothing);
-      
+
+      // Should show loading indicator (inside SizedBox inside TextButton)
+      expect(find.byType(CircularProgressIndicator), findsOneWidget,
+        reason: 'Should show loading indicator during save');
+      expect(find.text('ADD'), findsNothing,
+        reason: 'Button text should be replaced by loading indicator');
+
       // Complete the async operation
       await tester.pumpAndSettle();
     });
@@ -439,33 +446,39 @@ void main() {
       /// Users should see appropriate error messages
       
       // Mock creation failure
+      // Use argument matchers to accept any values
       when(mockProvider.createSet(
-        programId: 'program-1',
-        weekId: 'week-1', 
-        workoutId: 'workout-1',
-        exerciseId: 'exercise-1',
-        reps: 10,
-        weight: 50,
-        duration: null,
-        distance: null,
-        restTime: 60,
-        notes: null,
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+        reps: anyNamed('reps'),
+        weight: anyNamed('weight'),
+        duration: anyNamed('duration'),
+        distance: anyNamed('distance'),
+        restTime: anyNamed('restTime'),
+        notes: anyNamed('notes'),
       )).thenAnswer((_) async => null);
       
       when(mockProvider.error).thenReturn('Failed to create set');
-      
+
       await tester.pumpWidget(createTestWidget(strengthExercise));
-      
+
       // Enter valid data
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '10');
-      
-      // Save the set
-      await tester.tap(find.text('ADD'));
-      await tester.pump();
-      await tester.pumpAndSettle();
-      
-      // Should show error message
-      expect(find.text('Failed to create set'), findsOneWidget);
+
+      // Find and tap save button in AppBar
+      final addButton = find.ancestor(
+        of: find.text('ADD'),
+        matching: find.byType(TextButton),
+      );
+      await tester.tap(addButton);
+      await tester.pump(); // Start async operation
+      await tester.pumpAndSettle(); // Wait for error SnackBar to appear
+
+      // Should show error message in SnackBar
+      expect(find.text('Failed to create set'), findsOneWidget,
+        reason: 'Should display error message from provider');
     });
 
     testWidgets('shows exercise type description and field requirements', (tester) async {

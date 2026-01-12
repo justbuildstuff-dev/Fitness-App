@@ -535,7 +535,11 @@ Future<void> _cleanupTestData(String userId) async {
       await FirestoreService.instance.deleteProgram(userId, program.id);
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+    // Note: Not deleting user profile document because:
+    // 1. Requires admin permissions (firestore.rules line 48: allow delete: if isAdmin())
+    // 2. Each test creates unique user (timestamp-based email)
+    // 3. Emulators are destroyed after test run anyway
+    // 4. This is cleanup code, not part of test validation
   } catch (e) {
     print('Cleanup error: $e');
   }

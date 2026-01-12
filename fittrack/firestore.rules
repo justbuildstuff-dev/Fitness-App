@@ -58,8 +58,11 @@ service cloud.firestore {
                       && validProgram(request.resource.data);
 
         // Updates & deletes allowed for owner/admin
-        allow update, delete: if (isOwner(userId) || isAdmin())
-                              && validProgram(request.resource.data);
+        allow update: if (isOwner(userId) || isAdmin())
+                      && validProgram(request.resource.data);
+        // Delete: verify the existing document belongs to the authenticated user
+        allow delete: if (isOwner(userId) || isAdmin())
+                      && resource.data.userId == request.auth.uid;
 
         // Weeks under programs
         match /weeks/{weekId} {
@@ -69,8 +72,11 @@ service cloud.firestore {
                         && request.resource.data.userId == request.auth.uid
                         && validWeek(request.resource.data);
 
-          allow update, delete: if (isOwner(userId) || isAdmin())
-                                && validWeek(request.resource.data);
+          allow update: if (isOwner(userId) || isAdmin())
+                        && validWeek(request.resource.data);
+          // Delete: verify the existing document belongs to the authenticated user
+          allow delete: if (isOwner(userId) || isAdmin())
+                        && resource.data.userId == request.auth.uid;
 
           // Workouts under weeks
           match /workouts/{workoutId} {
@@ -80,8 +86,11 @@ service cloud.firestore {
                           && request.resource.data.userId == request.auth.uid
                           && validWorkout(request.resource.data);
 
-            allow update, delete: if (isOwner(userId) || isAdmin())
-                                  && validWorkout(request.resource.data);
+            allow update: if (isOwner(userId) || isAdmin())
+                          && validWorkout(request.resource.data);
+            // Delete: verify the existing document belongs to the authenticated user
+            allow delete: if (isOwner(userId) || isAdmin())
+                          && resource.data.userId == request.auth.uid;
 
             // Exercises under workouts
             match /exercises/{exerciseId} {
@@ -91,8 +100,11 @@ service cloud.firestore {
                             && request.resource.data.userId == request.auth.uid
                             && validExercise(request.resource.data);
 
-              allow update, delete: if (isOwner(userId) || isAdmin())
-                                    && validExercise(request.resource.data);
+              allow update: if (isOwner(userId) || isAdmin())
+                            && validExercise(request.resource.data);
+              // Delete: verify the existing document belongs to the authenticated user
+              allow delete: if (isOwner(userId) || isAdmin())
+                            && resource.data.userId == request.auth.uid;
 
               // Sets under exercises
               match /sets/{setId} {
@@ -102,8 +114,11 @@ service cloud.firestore {
                               && request.resource.data.userId == request.auth.uid
                               && validSet(request.resource.data);
 
-                allow update, delete: if (isOwner(userId) || isAdmin())
-                                      && validSet(request.resource.data);
+                allow update: if (isOwner(userId) || isAdmin())
+                              && validSet(request.resource.data);
+                // Delete: verify the existing document belongs to the authenticated user
+                allow delete: if (isOwner(userId) || isAdmin())
+                              && resource.data.userId == request.auth.uid;
               } // sets
             } // exercises
           } // workouts

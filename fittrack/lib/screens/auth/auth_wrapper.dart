@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'sign_in_screen.dart';
+import 'email_verification_screen.dart';
 import '../home/home_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -19,9 +20,13 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         }
-        
+
         // Show appropriate screen based on authentication state
         if (authProvider.isAuthenticated) {
+          // Check email verification
+          if (!authProvider.isEmailVerified) {
+            return const EmailVerificationScreen();
+          }
           return const HomeScreen();
         } else {
           return const SignInScreen();

@@ -11,6 +11,7 @@ import '../converters/week_converter.dart';
 import '../converters/workout_converter.dart';
 import '../converters/exercise_converter.dart';
 import '../converters/exercise_set_converter.dart';
+import '../utils/smart_copy_naming.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -110,10 +111,19 @@ class FirestoreService {
         .collection('programs')
         .where('isArchived', isEqualTo: false)
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ProgramConverter.fromFirestore(doc))
-            .toList());
+        .snapshots(includeMetadataChanges: true)
+        .map((snapshot) {
+          // Convert all documents to Program objects and filter archived programs
+          // Client-side filtering is critical because:
+          // 1. Pending writes may include documents before server applies the query filter
+          // 2. Archive updates may not be reflected in the query immediately
+          final programs = snapshot.docs
+              .map((doc) => ProgramConverter.fromFirestore(doc))
+              .where((program) => !program.isArchived)
+              .toList();
+
+          return programs;
+        });
   }
 
   /// Get a specific program
@@ -290,7 +300,7 @@ class FirestoreService {
         .doc(programId)
         .collection('weeks')
         .orderBy('order')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => WeekConverter.fromFirestore(doc, programId: programId))
             .toList());
@@ -448,6 +458,17 @@ class FirestoreService {
     }
   }
 
+  /// Helper function to safely handle Timestamp fields that may be null
+  ///
+  /// Returns null if the timestamp is null, otherwise returns the timestamp.
+  /// This prevents errors when copying documents with null Timestamp fields.
+  Timestamp? _safeTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value;
+    // If it's a FieldValue.serverTimestamp(), we can't access it here
+    return null;
+  }
+
   /// Duplicate a week using client-side batched writes
   Future<Map<String, dynamic>> duplicateWeek({
     required String userId,
@@ -502,7 +523,26 @@ class FirestoreService {
         throw Exception('You do not own this week');
       }
 
-      // 2) Create new Week document
+      // 2) Query all existing week names for smart copy naming
+      final existingWeeksSnap = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .get();
+
+      final existingWeekNames = existingWeeksSnap.docs
+          .map((doc) => doc.data()['name'] as String?)
+          .where((name) => name != null)
+          .cast<String>()
+          .toList();
+
+      // Generate smart copy name
+      final sourceName = srcWeekData['name'] as String? ?? 'Week';
+      final smartCopyName = SmartCopyNaming.generateCopyName(sourceName, existingWeekNames);
+
+      // 3) Create new Week document
       final newWeekRef = _firestore
           .collection('users')
           .doc(userId)
@@ -512,9 +552,11 @@ class FirestoreService {
           .doc();
 
       final newWeekData = {
-        'name': srcWeekData['name'] != null ? '${srcWeekData['name']} (Copy)' : 'Week (Copy)',
+        'name': smartCopyName,
         'order': srcWeekData['order'],
         'notes': srcWeekData['notes'],
+        // Always set fresh timestamps for duplicated week
+        // Don't copy completedAt - duplicated week should start fresh
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'userId': userId,
@@ -530,7 +572,7 @@ class FirestoreService {
         'workouts': <Map<String, dynamic>>[],
       };
 
-      // 3) Duplicate workouts -> exercises -> sets
+      // 4) Duplicate workouts -> exercises -> sets
       final srcWorkoutsSnap = await srcWeekRef
           .collection('workouts')
           .orderBy('orderIndex')
@@ -546,6 +588,7 @@ class FirestoreService {
           'dayOfWeek': workoutData['dayOfWeek'],
           'orderIndex': workoutData['orderIndex'],
           'notes': workoutData['notes'],
+          // Fresh timestamps for duplicated workout
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           'userId': userId,
@@ -577,6 +620,7 @@ class FirestoreService {
             'exerciseType': exerciseData['exerciseType'] ?? 'custom',
             'orderIndex': exerciseData['orderIndex'],
             'notes': exerciseData['notes'],
+            // Fresh timestamps for duplicated exercise
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
             'userId': userId,
@@ -626,9 +670,12 @@ class FirestoreService {
 
             // Convert to Firestore format and add to batch
             final newSetPayload = ExerciseSetConverter.toFirestore(duplicatedSet);
-            // Use server timestamp instead of client timestamp for consistency
+            // Always use server timestamps for duplicated sets (fresh timestamps)
+            // Don't copy completedAt - duplicated sets should start unchecked
             newSetPayload['createdAt'] = FieldValue.serverTimestamp();
             newSetPayload['updatedAt'] = FieldValue.serverTimestamp();
+            // Ensure completedAt is not copied from source (sets should start fresh)
+            newSetPayload.remove('completedAt');
             
             await addToBatch(newSetRef, newSetPayload);
 
@@ -671,7 +718,7 @@ class FirestoreService {
         .doc(weekId)
         .collection('workouts')
         .orderBy('orderIndex')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => WorkoutConverter.fromFirestore(doc, weekId, programId))
             .toList());
@@ -874,7 +921,7 @@ class FirestoreService {
         .doc(workoutId)
         .collection('exercises')
         .orderBy('orderIndex')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => ExerciseConverter.fromFirestore(doc, workoutId, weekId, programId))
             .toList());
@@ -919,6 +966,89 @@ class FirestoreService {
         .collection('exercises')
         .add(ExerciseConverter.toFirestore(exercise));
     return docRef.id;
+  }
+
+  /// Create an exercise with a specified number of sets in a batched write
+  Future<String> createExerciseWithSets(Exercise exercise, int setCount) async {
+    final batch = _firestore.batch();
+
+    // Create exercise document reference
+    final exerciseRef = _firestore
+        .collection('users')
+        .doc(exercise.userId)
+        .collection('programs')
+        .doc(exercise.programId)
+        .collection('weeks')
+        .doc(exercise.weekId)
+        .collection('workouts')
+        .doc(exercise.workoutId)
+        .collection('exercises')
+        .doc();
+
+    // Add exercise to batch with the generated ID
+    final exerciseWithId = Exercise(
+      id: exerciseRef.id,
+      name: exercise.name,
+      exerciseType: exercise.exerciseType,
+      orderIndex: exercise.orderIndex,
+      notes: exercise.notes,
+      createdAt: exercise.createdAt,
+      updatedAt: exercise.updatedAt,
+      userId: exercise.userId,
+      workoutId: exercise.workoutId,
+      weekId: exercise.weekId,
+      programId: exercise.programId,
+    );
+    batch.set(exerciseRef, ExerciseConverter.toFirestore(exerciseWithId));
+
+    // Create N sets with default values based on exercise type
+    // Firestore rules require at least one metric (reps, duration, or distance) to be non-null
+    for (int i = 0; i < setCount; i++) {
+      final setRef = exerciseRef.collection('sets').doc();
+
+      // Set default metric values based on exercise type to satisfy Firestore validation
+      int? defaultReps;
+      int? defaultDuration;
+      switch (exercise.exerciseType) {
+        case ExerciseType.strength:
+        case ExerciseType.bodyweight:
+          defaultReps = 0; // Default to 0 reps for strength/bodyweight exercises
+          break;
+        case ExerciseType.cardio:
+        case ExerciseType.timeBased:
+          defaultDuration = 0; // Default to 0 seconds for cardio/time-based exercises
+          break;
+        case ExerciseType.custom:
+          defaultReps = 0; // Default to reps for custom exercises
+          break;
+      }
+
+      final set = ExerciseSet(
+        id: setRef.id,
+        setNumber: i + 1,
+        checked: false,
+        // Default values based on exercise type
+        weight: null,
+        reps: defaultReps,
+        duration: defaultDuration,
+        distance: null,
+        notes: null,
+        restTime: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: exercise.userId,
+        exerciseId: exerciseRef.id,
+        workoutId: exercise.workoutId,
+        weekId: exercise.weekId,
+        programId: exercise.programId,
+      );
+
+      batch.set(setRef, ExerciseSetConverter.toFirestore(set));
+    }
+
+    // Commit the batched write
+    await batch.commit();
+    return exerciseRef.id;
   }
 
   /// Update an exercise
@@ -1279,7 +1409,7 @@ class FirestoreService {
         .doc(exerciseId)
         .collection('sets')
         .orderBy('setNumber')
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
             .map((doc) => ExerciseSetConverter.fromFirestore(
                 doc, exerciseId, workoutId, weekId, programId))

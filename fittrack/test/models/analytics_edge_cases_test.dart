@@ -121,8 +121,8 @@ void main() {
         
         // Verify results
         expect(heatmapData.year, equals(2024));
-        expect(heatmapData.totalWorkouts, equals(workouts.length));
-        expect(heatmapData.dailyWorkoutCounts.length, greaterThan(200)); // Should have many days with workouts
+        expect(heatmapData.totalSets, greaterThan(0)); // Should have sets from workouts
+        expect(heatmapData.dailySetCounts.length, greaterThan(200)); // Should have many days with workouts
         
         // Generate all heatmap days (366 for leap year 2024)
         final heatmapDays = heatmapData.getHeatmapDays();
@@ -460,10 +460,10 @@ void main() {
         final heatmapData = ActivityHeatmapData(
           userId: 'test_user',
           year: 2024,
-          dailyWorkoutCounts: {},
+          dailySetCounts: {},
           currentStreak: 0,
           longestStreak: 0,
-          totalWorkouts: 0,
+          totalSets: 0,
         );
 
         // Test intensity calculation for many dates

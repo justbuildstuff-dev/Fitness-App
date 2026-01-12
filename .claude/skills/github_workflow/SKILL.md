@@ -9,6 +9,73 @@ This skill provides standardized patterns for creating issues, managing pull req
 
 **See [Docs/Documentation_Lifecycle.md](../../Docs/Documentation_Lifecycle.md) for complete documentation lifecycle and when each type of issue/document is created.**
 
+## Security Best Practices
+
+**CRITICAL: Before committing ANY code, verify no sensitive data is included.**
+
+### Pre-Commit Security Checklist
+
+Before creating commits or PRs, **ALL agents MUST verify:**
+
+1. **No API Keys or Tokens**
+   - ❌ GitHub Personal Access Tokens (`github_pat_`, `ghp_`, `gho_`)
+   - ❌ Notion Integration Tokens (`ntn_`)
+   - ❌ Firebase Admin SDK keys
+   - ❌ Third-party API keys (Stripe, SendGrid, etc.)
+   - ✅ Firebase client API keys are OK (protected by Firestore rules)
+
+2. **No Credentials**
+   - ❌ Passwords (except test fixtures)
+   - ❌ Private keys (`.pem`, `.p12`, `.key`)
+   - ❌ Keystores (`.jks`, `.keystore`)
+   - ❌ OAuth secrets
+
+3. **No Sensitive Configuration**
+   - ❌ `.env` files with real values
+   - ❌ `settings.json` with actual tokens
+   - ✅ `.env.example` or `.template` files are OK
+   - ✅ Configuration with placeholder values is OK
+
+4. **Verify .gitignore**
+   - ✅ Sensitive files are ignored
+   - ✅ Templates are tracked
+   - ✅ Documentation is tracked
+
+### Security Verification Commands
+
+**Before committing, run:**
+```bash
+# Check for tokens in staged files
+git diff --cached | grep -E "(github_pat_|ghp_|gho_|ntn_|sk_live_|pk_live_)"
+
+# Verify sensitive files are ignored
+git status | grep -E "(\.env$|settings\.json|\.key|\.pem)"
+
+# Check what's being committed
+git diff --cached --name-only
+```
+
+### If Sensitive Data is Found
+
+**STOP immediately and:**
+
+1. **Do NOT commit**
+2. Remove sensitive data from files
+3. Add files to `.gitignore` if needed
+4. Use environment variables or templates instead
+5. Verify with security commands above
+6. Then proceed with commit
+
+### Repository is Public
+
+**Remember:** This repository is **PUBLIC**. Any sensitive data committed will be visible to anyone on the internet. Even if removed later, it remains in git history.
+
+**When in doubt:**
+- Ask the user
+- Use a template file instead
+- Store in environment variables
+- Reference documentation for secrets management
+
 ## Issue Creation Standards
 
 ### Feature Issues (created by BA Agent)

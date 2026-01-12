@@ -66,6 +66,7 @@ Testing framework and standards:
 
 Development process and workflow documentation:
 
+- **[CI_Integration_Tests_Guide.md](Process/CI_Integration_Tests_Guide.md)** - CI/CD integration tests guide
 - **[Skills_Migration_Summary.md](Process/Skills_Migration_Summary.md)** - Skills extraction from agents
 - **[Documentation_Lifecycle.md](../Documentation_Lifecycle.md)** - This documentation system (parent level)
 

@@ -144,6 +144,22 @@ Only create a branch for the task you're currently implementing.
 - Mocking strategies
 - Coverage requirements (80%+ overall)
 
+**CRITICAL: Integration Test Requirement for Service Changes**
+
+**If you modify ANY file in `lib/services/`:**
+1. ✅ **REQUIRED:** Write a corresponding `*_integration_test.dart` file in `test/services/`
+2. ✅ Use the template: `fittrack/test/services/INTEGRATION_TEST_TEMPLATE.dart`
+3. ✅ Use the helper: `FirebaseIntegrationTestHelper` from `test/helpers/`
+4. ✅ Tests MUST connect to Firebase emulators (localhost:8080, localhost:9099)
+5. ✅ Tests MUST create real data in Firestore
+6. ✅ Tests MUST validate actual Firebase operations (NOT mocks)
+
+**Why:** Integration tests prevent false passes in CI by validating real Firebase behavior.
+
+**Example:** If you modify `firestore_service.dart`, create `firestore_service_integration_test.dart`
+
+**See:** `Docs/Testing/TestClassification.md` for complete integration test guidelines
+
 4. **Run tests locally** (Note: Windows permission issues - rely on CI)
    ```bash
    flutter analyze  # Check for issues

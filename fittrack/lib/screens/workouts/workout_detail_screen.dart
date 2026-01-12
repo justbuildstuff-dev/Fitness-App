@@ -11,6 +11,11 @@ import '../../widgets/global_bottom_nav_bar.dart';
 import '../exercises/create_exercise_screen.dart';
 import '../exercises/exercise_detail_screen.dart';
 
+/// DEPRECATED: Use ConsolidatedWorkoutScreen instead.
+/// This screen will be removed in a future version.
+/// ConsolidatedWorkoutScreen provides an improved UX with inline set editing
+/// and eliminates the need for separate exercise detail screens.
+@Deprecated('Use ConsolidatedWorkoutScreen instead')
 class WorkoutDetailScreen extends StatefulWidget {
   final Program program;
   final Week week;
@@ -383,9 +388,14 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        
-        await programProvider.deleteExerciseById(exercise.id);
-        
+        // Use full delete method with explicit IDs (not deleteExerciseById)
+        await programProvider.deleteExercise(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+          exercise.id,
+        );
+
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
@@ -524,7 +534,12 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
     if (confirmed == true) {
       try {
-        await provider.deleteWorkoutById(widget.workout.id);
+        // Use full delete method with explicit IDs (not deleteWorkoutById)
+        await provider.deleteWorkout(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+        );
 
         if (context.mounted) {
           scaffoldMessenger.showSnackBar(

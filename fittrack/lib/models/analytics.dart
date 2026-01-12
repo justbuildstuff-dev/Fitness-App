@@ -277,18 +277,20 @@ enum PRType {
 class ActivityHeatmapData {
   final String userId;
   final int year;
-  final Map<DateTime, int> dailyWorkoutCounts; // Date -> workout count
+  final Map<DateTime, int> dailySetCounts; // Date -> set count (changed from workouts)
   final int currentStreak;
   final int longestStreak;
-  final int totalWorkouts;
+  final int totalSets; // Changed from totalWorkouts
+  final String? programId; // NEW: Optional program filter
 
   ActivityHeatmapData({
     required this.userId,
     required this.year,
-    required this.dailyWorkoutCounts,
+    required this.dailySetCounts,
     required this.currentStreak,
     required this.longestStreak,
-    required this.totalWorkouts,
+    required this.totalSets,
+    this.programId,
   });
 
   /// Factory constructor to compute heatmap from workout data
@@ -322,10 +324,11 @@ class ActivityHeatmapData {
     return ActivityHeatmapData(
       userId: userId,
       year: year,
-      dailyWorkoutCounts: dailyCounts,
+      dailySetCounts: dailyCounts,
       currentStreak: streaks.current,
       longestStreak: streaks.longest,
-      totalWorkouts: yearWorkouts.length,
+      totalSets: yearWorkouts.length,
+      programId: null,
     );
   }
 
@@ -335,14 +338,14 @@ class ActivityHeatmapData {
     final startDate = DateTime(year, 1, 1);
     final endDate = DateTime(year, 12, 31);
 
-    for (var date = startDate; date.isBefore(endDate.add(const Duration(days: 1))); 
+    for (var date = startDate; date.isBefore(endDate.add(const Duration(days: 1)));
          date = date.add(const Duration(days: 1))) {
-      final workoutCount = getWorkoutCountForDate(date);
+      final setCount = getSetCountForDate(date);
       final intensity = getIntensityForDate(date);
-      
+
       days.add(HeatmapDay(
         date: date,
-        workoutCount: workoutCount,
+        workoutCount: setCount,
         intensity: intensity,
       ));
     }
@@ -350,19 +353,16 @@ class ActivityHeatmapData {
     return days;
   }
 
-  /// Get workout count for a specific date
-  int getWorkoutCountForDate(DateTime date) {
+  /// Get set count for a specific date
+  int getSetCountForDate(DateTime date) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
-    return dailyWorkoutCounts[normalizedDate] ?? 0;
+    return dailySetCounts[normalizedDate] ?? 0;
   }
 
-  /// Get intensity for a specific date
+  /// Get intensity for a specific date based on set count
   HeatmapIntensity getIntensityForDate(DateTime date) {
-    final count = getWorkoutCountForDate(date);
-    if (count == 0) return HeatmapIntensity.none;
-    if (count == 1) return HeatmapIntensity.low;
-    if (count <= 3) return HeatmapIntensity.medium;
-    return HeatmapIntensity.high;
+    final count = getSetCountForDate(date);
+    return HeatmapIntensity.fromSetCount(count);
   }
 
   /// Calculate current and longest streaks
@@ -420,26 +420,183 @@ class HeatmapDay {
 
 /// Intensity levels for heatmap visualization
 enum HeatmapIntensity {
-  none,   // 0 workouts - light gray
-  low,    // 1 workout - light green  
-  medium, // 2-3 workouts - medium green
-  high;   // 4+ workouts - dark green
+  none,     // 0 sets - background color
+  low,      // 1-5 sets - lightest shade
+  medium,   // 6-15 sets - light-medium shade
+  high,     // 16-25 sets - medium-dark shade
+  veryHigh; // 26+ sets - darkest shade
 
   String get displayName {
     switch (this) {
       case HeatmapIntensity.none:
-        return 'No workouts';
+        return 'No activity';
       case HeatmapIntensity.low:
         return 'Light activity';
       case HeatmapIntensity.medium:
         return 'Moderate activity';
       case HeatmapIntensity.high:
         return 'High activity';
+      case HeatmapIntensity.veryHigh:
+        return 'Very high activity';
     }
+  }
+
+  /// Get intensity level from set count
+  ///
+  /// Intensity levels are determined by set count thresholds:
+  /// - none: 0 sets
+  /// - low: 1-5 sets
+  /// - medium: 6-15 sets
+  /// - high: 16-25 sets
+  /// - veryHigh: 26+ sets
+  ///
+  /// These thresholds are designed to provide visual distinction in the
+  /// GitHub-style heatmap calendar, where different colors represent
+  /// different activity levels.
+  static HeatmapIntensity fromSetCount(int setCount) {
+    if (setCount == 0) return HeatmapIntensity.none;
+    if (setCount <= 5) return HeatmapIntensity.low;
+    if (setCount <= 15) return HeatmapIntensity.medium;
+    if (setCount <= 25) return HeatmapIntensity.high;
+    return HeatmapIntensity.veryHigh;
   }
 }
 
-/// Date range utility class
+/// Heatmap data for a single month
+///
+/// Represents activity data for one calendar month with daily set counts.
+/// This model is used by the monthly calendar view to display workout activity
+/// intensity across the days of the month.
+///
+/// The [dailySetCounts] map uses day of month (1-31) as keys and total
+/// checked sets as values. Days with no activity are not included in the map.
+///
+/// Example:
+/// ```dart
+/// final monthData = MonthHeatmapData(
+///   year: 2024,
+///   month: 12,
+///   dailySetCounts: {
+///     1: 8,   // December 1st: 8 sets
+///     2: 12,  // December 2nd: 12 sets
+///     5: 6,   // December 5th: 6 sets
+///   },
+///   totalSets: 26,
+///   fetchedAt: DateTime.now(),
+/// );
+///
+/// // Get set count for a specific day
+/// final day5Count = monthData.getSetCountForDay(5); // Returns 6
+/// final day3Count = monthData.getSetCountForDay(3); // Returns 0 (no data)
+///
+/// // Get heatmap intensity for visualization
+/// final day5Intensity = monthData.getIntensityForDay(5); // Returns HeatmapIntensity.medium
+/// ```
+class MonthHeatmapData {
+  /// Year (e.g., 2024)
+  final int year;
+
+  /// Month (1-12)
+  final int month;
+
+  /// Map of day of month (1-31) to total checked sets for that day
+  ///
+  /// Only days with activity are included. Days with no sets are absent from the map.
+  /// Values represent the total count of sets where `checked: true`.
+  final Map<int, int> dailySetCounts;
+
+  /// Total sets completed in the month (sum of all dailySetCounts values)
+  final int totalSets;
+
+  /// Timestamp when this data was fetched from Firestore
+  ///
+  /// Used for cache validation. Data is considered stale after 5 minutes.
+  final DateTime fetchedAt;
+
+  const MonthHeatmapData({
+    required this.year,
+    required this.month,
+    required this.dailySetCounts,
+    required this.totalSets,
+    required this.fetchedAt,
+  });
+
+  /// Get set count for a specific day of the month
+  ///
+  /// Returns 0 if no data exists for the day.
+  ///
+  /// Parameters:
+  /// - [day]: Day of month (1-31)
+  ///
+  /// Returns:
+  /// Total checked sets for the day, or 0 if no data.
+  ///
+  /// Example:
+  /// ```dart
+  /// final count = monthData.getSetCountForDay(15);
+  /// if (count > 0) {
+  ///   print('December 15: $count sets');
+  /// }
+  /// ```
+  int getSetCountForDay(int day) {
+    return dailySetCounts[day] ?? 0;
+  }
+
+  /// Get heatmap intensity for a specific day
+  ///
+  /// Intensity levels are based on set count thresholds:
+  /// - none: 0 sets
+  /// - low: 1-5 sets
+  /// - medium: 6-15 sets
+  /// - high: 16-25 sets
+  /// - veryHigh: 26+ sets
+  ///
+  /// Parameters:
+  /// - [day]: Day of month (1-31)
+  ///
+  /// Returns:
+  /// HeatmapIntensity enum value for the day's activity level.
+  ///
+  /// Example:
+  /// ```dart
+  /// final intensity = monthData.getIntensityForDay(10);
+  /// final color = _getColorForIntensity(intensity);
+  /// ```
+  HeatmapIntensity getIntensityForDay(int day) {
+    final count = getSetCountForDay(day);
+    return HeatmapIntensity.fromSetCount(count);
+  }
+
+  /// Check if cache is still valid (within 5 minutes)
+  ///
+  /// Returns true if less than 5 minutes have passed since [fetchedAt],
+  /// false otherwise. Used to determine if cached data can be reused or
+  /// if a fresh Firestore query is needed.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (cachedData.isCacheValid) {
+  ///   return cachedData;
+  /// } else {
+  ///   return await fetchFreshData();
+  /// }
+  /// ```
+  bool get isCacheValid {
+    final now = DateTime.now();
+    return now.difference(fetchedAt).inMinutes < 5;
+  }
+}
+
+/// Date range utility class for heatmap timeframe calculations
+///
+/// Provides factory methods for common timeframe selections:
+/// - thisWeek: Monday to Sunday of the current week
+/// - thisMonth: First to last day of the current month
+/// - thisYear: January 1 to December 31 of the current year
+/// - last30Days: Rolling 30-day window from today
+///
+/// All date ranges are normalized to start at 00:00:00 and end at 23:59:59
+/// to ensure consistent day-level grouping in analytics.
 class DateRange {
   final DateTime start;
   final DateTime end;
@@ -449,6 +606,10 @@ class DateRange {
     required this.end,
   });
 
+  /// Creates a date range for the current week (Monday to Sunday)
+  ///
+  /// The week always starts on Monday (ISO 8601 standard) and includes
+  /// 7 consecutive days ending on Sunday.
   factory DateRange.thisWeek() {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
@@ -459,6 +620,10 @@ class DateRange {
     );
   }
 
+  /// Creates a date range for the current month
+  ///
+  /// Includes all days from the 1st to the last day of the current month.
+  /// Automatically handles months with different lengths (28-31 days).
   factory DateRange.thisMonth() {
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
@@ -467,6 +632,9 @@ class DateRange {
     return DateRange(start: monthStart, end: monthEnd);
   }
 
+  /// Creates a date range for the current calendar year
+  ///
+  /// Includes all days from January 1 to December 31 of the current year.
   factory DateRange.thisYear() {
     final now = DateTime.now();
     final yearStart = DateTime(now.year, 1, 1);
@@ -474,6 +642,10 @@ class DateRange {
     return DateRange(start: yearStart, end: yearEnd);
   }
 
+  /// Creates a rolling 30-day date range ending today
+  ///
+  /// The range includes the last 30 days (including today), which provides
+  /// a consistent time window regardless of month boundaries.
   factory DateRange.last30Days() {
     final now = DateTime.now();
     final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
@@ -490,3 +662,4 @@ class DateRange {
   /// Duration of the range in days
   int get durationInDays => end.difference(start).inDays + 1;
 }
+
