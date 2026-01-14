@@ -46,34 +46,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: 'Programs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+    // HomeScreen acts as a container that displays one of the three main screens.
+    // Each child screen (Programs, Analytics, Profile) has its own GlobalBottomNavBar
+    // for navigation, so HomeScreen itself doesn't need a bottom nav.
+    // IndexedStack keeps all children built and preserves their state.
+    return IndexedStack(
+      index: _currentIndex,
+      children: _screens,
     );
   }
 }
