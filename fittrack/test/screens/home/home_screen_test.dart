@@ -39,6 +39,10 @@ void main() {
       when(mockProgramProvider.isLoadingAnalytics).thenReturn(false);
       when(mockProgramProvider.error).thenReturn(null);
       when(mockProgramProvider.monthHeatmapData).thenReturn(null);
+      when(mockProgramProvider.currentAnalytics).thenReturn(null);
+      when(mockProgramProvider.keyStatistics).thenReturn(null);
+      when(mockProgramProvider.recentPRs).thenReturn(null);
+      when(mockProgramProvider.userId).thenReturn('test-user-id');
 
       // Set up default mock behavior for AuthProvider
       when(mockAuthProvider.isAuthenticated).thenReturn(true);
