@@ -71,17 +71,16 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Assert - All screens are built in IndexedStack
+      // Assert - Only ProgramsScreen should be displayed
       expect(find.byType(ProgramsScreen), findsOneWidget);
-      expect(find.byType(AnalyticsScreen), findsOneWidget);
-      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.byType(AnalyticsScreen), findsNothing); // Not built when Programs is active
+      expect(find.byType(ProfileScreen), findsNothing); // Not built when Programs is active
 
       // Assert - Programs bottom nav should show Programs as active (index 0)
-      final bottomNavs = find.byType(BottomNavigationBar);
-      expect(bottomNavs, findsWidgets); // Multiple navs from child screens
+      final bottomNav = find.byType(BottomNavigationBar);
+      expect(bottomNav, findsOneWidget); // Only Programs screen's nav
 
-      // Find the visible bottom nav (from ProgramsScreen)
-      final programsNav = tester.widget<BottomNavigationBar>(bottomNavs.first);
+      final programsNav = tester.widget<BottomNavigationBar>(bottomNav);
       expect(programsNav.currentIndex, 0); // Programs index
     });
 
@@ -90,9 +89,10 @@ void main() {
       await tester.pumpWidget(createTestWidget(initialIndex: 0));
       await tester.pumpAndSettle();
 
-      // Assert - Verify ProgramsScreen's bottom nav highlights Programs
-      final bottomNavs = find.byType(BottomNavigationBar);
-      final programsNav = tester.widget<BottomNavigationBar>(bottomNavs.first);
+      // Assert - Verify ProgramsScreen is displayed and its bottom nav highlights Programs
+      expect(find.byType(ProgramsScreen), findsOneWidget);
+      final bottomNav = find.byType(BottomNavigationBar);
+      final programsNav = tester.widget<BottomNavigationBar>(bottomNav);
       expect(programsNav.currentIndex, 0);
     });
 
@@ -101,10 +101,14 @@ void main() {
       await tester.pumpWidget(createTestWidget(initialIndex: 1));
       await tester.pumpAndSettle();
 
-      // Assert - AnalyticsScreen should be active, verify its bottom nav highlights Analytics
-      final bottomNavs = find.byType(BottomNavigationBar);
-      // The second bottom nav should be from AnalyticsScreen (the active screen)
-      final analyticsNav = tester.widget<BottomNavigationBar>(bottomNavs.at(1));
+      // Assert - AnalyticsScreen should be displayed
+      expect(find.byType(AnalyticsScreen), findsOneWidget);
+      expect(find.byType(ProgramsScreen), findsNothing);
+      expect(find.byType(ProfileScreen), findsNothing);
+
+      // Verify AnalyticsScreen's bottom nav highlights Analytics
+      final bottomNav = find.byType(BottomNavigationBar);
+      final analyticsNav = tester.widget<BottomNavigationBar>(bottomNav);
       expect(analyticsNav.currentIndex, 1);
     });
 
@@ -113,10 +117,14 @@ void main() {
       await tester.pumpWidget(createTestWidget(initialIndex: 2));
       await tester.pumpAndSettle();
 
-      // Assert - ProfileScreen should be active, verify its bottom nav highlights Profile
-      final bottomNavs = find.byType(BottomNavigationBar);
-      // The third bottom nav should be from ProfileScreen (the active screen)
-      final profileNav = tester.widget<BottomNavigationBar>(bottomNavs.at(2));
+      // Assert - ProfileScreen should be displayed
+      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.byType(ProgramsScreen), findsNothing);
+      expect(find.byType(AnalyticsScreen), findsNothing);
+
+      // Verify ProfileScreen's bottom nav highlights Profile
+      final bottomNav = find.byType(BottomNavigationBar);
+      final profileNav = tester.widget<BottomNavigationBar>(bottomNav);
       expect(profileNav.currentIndex, 2);
     });
 
@@ -125,52 +133,48 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Assert - Each child screen has GlobalBottomNavBar with all 3 items
-      // We should find the nav items (though there will be 3 copies, one per screen)
-      expect(find.text('Programs'), findsWidgets);
-      expect(find.text('Analytics'), findsWidgets);
-      expect(find.text('Profile'), findsWidgets);
-      expect(find.byIcon(Icons.fitness_center), findsWidgets);
-      expect(find.byIcon(Icons.analytics), findsWidgets);
-      expect(find.byIcon(Icons.person), findsWidgets);
+      // Assert - ProgramsScreen's GlobalBottomNavBar has all 3 items
+      expect(find.text('Programs'), findsOneWidget);
+      expect(find.text('Analytics'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
+      expect(find.byIcon(Icons.fitness_center), findsOneWidget);
+      expect(find.byIcon(Icons.analytics), findsOneWidget);
+      expect(find.byIcon(Icons.person), findsOneWidget);
     });
 
-    testWidgets('child screens have GlobalBottomNavBar that navigates to HomeScreen', (tester) async {
+    testWidgets('GlobalBottomNavBar navigates between sections via HomeScreen', (tester) async {
       // Arrange - Start with Programs screen
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
       // Initial state - Programs screen is active
-      final initialBottomNavs = find.byType(BottomNavigationBar);
-      final initialProgramsNav = tester.widget<BottomNavigationBar>(initialBottomNavs.first);
+      expect(find.byType(ProgramsScreen), findsOneWidget);
+      final initialBottomNav = find.byType(BottomNavigationBar);
+      final initialProgramsNav = tester.widget<BottomNavigationBar>(initialBottomNav);
       expect(initialProgramsNav.currentIndex, 0); // Programs active
 
-      // Act - Tap Analytics on GlobalBottomNavBar (this navigates to HomeScreen with Analytics)
-      // Find Analytics text that's not in an AppBar
-      final analyticsTexts = find.text('Analytics');
-      await tester.tap(analyticsTexts.first);
+      // Act - Tap Analytics on GlobalBottomNavBar
+      await tester.tap(find.text('Analytics'));
       await tester.pumpAndSettle();
 
-      // Assert - Now we should see HomeScreen with Analytics active (index 1)
-      final afterBottomNavs = find.byType(BottomNavigationBar);
-      // Analytics nav should be at index 1 since IndexedStack shows Analytics
-      final analyticsNav = tester.widget<BottomNavigationBar>(afterBottomNavs.at(1));
+      // Assert - Now HomeScreen shows AnalyticsScreen
+      expect(find.byType(AnalyticsScreen), findsOneWidget);
+      expect(find.byType(ProgramsScreen), findsNothing); // Programs not shown anymore
+
+      final afterBottomNav = find.byType(BottomNavigationBar);
+      final analyticsNav = tester.widget<BottomNavigationBar>(afterBottomNav);
       expect(analyticsNav.currentIndex, 1); // Analytics active
     });
 
-    testWidgets('uses IndexedStack to maintain state across tab switches', (tester) async {
+    testWidgets('displays only the active screen based on initialIndex', (tester) async {
       // Act
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Assert - IndexedStack should be present
-      expect(find.byType(IndexedStack), findsOneWidget);
-
-      // Verify all three screens are children of IndexedStack
-      final indexedStack = tester.widget<IndexedStack>(
-        find.byType(IndexedStack),
-      );
-      expect(indexedStack.children.length, 3);
+      // Assert - Only ProgramsScreen is built and displayed
+      expect(find.byType(ProgramsScreen), findsOneWidget);
+      expect(find.byType(AnalyticsScreen), findsNothing);
+      expect(find.byType(ProfileScreen), findsNothing);
     });
 
     testWidgets('backward compatible when initialIndex is not provided', (tester) async {
@@ -189,8 +193,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - Should default to Programs screen (index 0)
-      final bottomNavs = find.byType(BottomNavigationBar);
-      final programsNav = tester.widget<BottomNavigationBar>(bottomNavs.first);
+      expect(find.byType(ProgramsScreen), findsOneWidget);
+      final bottomNav = find.byType(BottomNavigationBar);
+      final programsNav = tester.widget<BottomNavigationBar>(bottomNav);
       expect(programsNav.currentIndex, 0);
     });
   });

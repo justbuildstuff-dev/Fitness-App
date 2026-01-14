@@ -49,10 +49,26 @@ class _HomeScreenState extends State<HomeScreen> {
     // HomeScreen acts as a container that displays one of the three main screens.
     // Each child screen (Programs, Analytics, Profile) has its own GlobalBottomNavBar
     // for navigation, so HomeScreen itself doesn't need a bottom nav.
-    // IndexedStack keeps all children built and preserves their state.
-    return IndexedStack(
-      index: _currentIndex,
-      children: _screens,
-    );
+    //
+    // We use a simple conditional to show the current screen based on _currentIndex.
+    // This is simpler than IndexedStack and avoids layout issues with nested Scaffolds.
+    // State preservation isn't critical here since navigating between sections is rare
+    // and each screen loads its own data from providers.
+    Widget currentScreen;
+    switch (_currentIndex) {
+      case 0:
+        currentScreen = _screens[0]; // ProgramsScreen
+        break;
+      case 1:
+        currentScreen = _screens[1]; // AnalyticsScreen
+        break;
+      case 2:
+        currentScreen = _screens[2]; // ProfileScreen
+        break;
+      default:
+        currentScreen = _screens[0]; // Default to Programs
+    }
+
+    return currentScreen;
   }
 }
