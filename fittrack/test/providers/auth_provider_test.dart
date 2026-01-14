@@ -72,6 +72,7 @@ void main() {
         when(mockVerifiedUser.emailVerified).thenReturn(true);
         when(mockVerifiedUser.uid).thenReturn('test-user-123');
         when(mockVerifiedUser.email).thenReturn('test@example.com');
+        when(mockVerifiedUser.displayName).thenReturn('Test User');
         when(mockVerifiedUser.reload()).thenAnswer((_) async {});
 
         when(mockAuth.currentUser).thenReturn(mockVerifiedUser);
@@ -95,6 +96,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
 
         when(mockAuth.currentUser).thenReturn(mockUnverifiedUser);
@@ -134,6 +136,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
         when(mockUnverifiedUser.sendEmailVerification()).thenAnswer((_) async {});
 
@@ -163,6 +166,7 @@ void main() {
         when(mockVerifiedUser.emailVerified).thenReturn(true);
         when(mockVerifiedUser.uid).thenReturn('test-user-123');
         when(mockVerifiedUser.email).thenReturn('test@example.com');
+        when(mockVerifiedUser.displayName).thenReturn('Test User');
         when(mockVerifiedUser.reload()).thenAnswer((_) async {});
 
         when(mockAuth.currentUser).thenReturn(mockVerifiedUser);
@@ -206,6 +210,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
         when(mockUnverifiedUser.sendEmailVerification())
             .thenThrow(FirebaseAuthException(code: 'too-many-requests'));
@@ -235,6 +240,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
         when(mockUnverifiedUser.sendEmailVerification()).thenAnswer((_) async {});
 
@@ -401,6 +407,7 @@ void main() {
         final mockUnverifiedUser = MockUser();
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
 
@@ -455,12 +462,14 @@ void main() {
         final mockUser1 = MockUser();
         when(mockUser1.uid).thenReturn('test-user-123');
         when(mockUser1.email).thenReturn('test@example.com');
+        when(mockUser1.displayName).thenReturn('Test User');
         when(mockUser1.emailVerified).thenReturn(false);
         when(mockUser1.reload()).thenAnswer((_) async {});
 
         final mockUser2 = MockUser();
         when(mockUser2.uid).thenReturn('test-user-123');
         when(mockUser2.email).thenReturn('test@example.com');
+        when(mockUser2.displayName).thenReturn('Test User');
         when(mockUser2.emailVerified).thenReturn(true);
         when(mockUser2.reload()).thenAnswer((_) async {});
 
