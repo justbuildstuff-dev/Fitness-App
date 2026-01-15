@@ -241,6 +241,9 @@ void main() {
         ),
       );
 
+      // Reset counter after initial widget setup (initial route push triggers observer)
+      navigationCount = 0;
+
       // Act - tap the already active Programs tab
       await tester.tap(find.text('Programs'));
       await tester.pumpAndSettle();
