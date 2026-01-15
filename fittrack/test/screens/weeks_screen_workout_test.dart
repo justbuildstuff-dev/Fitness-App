@@ -875,17 +875,29 @@ void main() {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Scroll to make third workout visible
+        // Find the Card containing "Leg Day" workout and its delete button
+        // The delete button is within the same ListTile as the workout name
+        final legDayCard = find.ancestor(
+          of: find.text('Leg Day'),
+          matching: find.byType(Card),
+        );
+
+        // Scroll until the Leg Day card is visible
         await tester.scrollUntilVisible(
-          find.text('Leg Day'),
+          legDayCard,
           100,
           scrollable: find.byType(Scrollable).first,
         );
         await tester.pumpAndSettle();
 
-        // Tap delete button on third workout
-        final deleteButtons = find.byIcon(Icons.delete);
-        await tester.tap(deleteButtons.at(2));
+        // Find and tap the delete button within the Leg Day card
+        final deleteButtonInCard = find.descendant(
+          of: legDayCard,
+          matching: find.byIcon(Icons.delete),
+        );
+        await tester.ensureVisible(deleteButtonInCard);
+        await tester.pumpAndSettle();
+        await tester.tap(deleteButtonInCard);
         await tester.pumpAndSettle();
 
         // Confirm deletion
