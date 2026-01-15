@@ -867,37 +867,31 @@ void main() {
         const errorMessage = 'Network timeout';
 
         when(mockProvider.workouts).thenReturn(mockWorkouts);
-        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-3'))
+        // Use first workout (Push Day) for error handling test - no scrolling needed
+        when(mockProvider.getCascadeDeleteCounts(workoutId: 'workout-1'))
             .thenAnswer((_) async => cascadeCounts);
-        when(mockProvider.deleteWorkout(testProgram.id, testWeek.id, 'workout-3'))
+        when(mockProvider.deleteWorkout(testProgram.id, testWeek.id, 'workout-1'))
             .thenThrow(Exception(errorMessage));
 
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Find the Card containing "Leg Day" workout and its delete button
-        // The delete button is within the same ListTile as the workout name
-        final legDayCard = find.ancestor(
-          of: find.text('Leg Day'),
+        // Find delete button specifically within Push Day's card for reliable targeting
+        final pushDayCard = find.ancestor(
+          of: find.text('Push Day'),
           matching: find.byType(Card),
         );
+        expect(pushDayCard, findsOneWidget,
+            reason: 'Should find Push Day workout card');
 
-        // Scroll until the Leg Day card is visible
-        await tester.scrollUntilVisible(
-          legDayCard,
-          100,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.pumpAndSettle();
-
-        // Find and tap the delete button within the Leg Day card
-        final deleteButtonInCard = find.descendant(
-          of: legDayCard,
+        final pushDayDeleteButton = find.descendant(
+          of: pushDayCard,
           matching: find.byIcon(Icons.delete),
         );
-        await tester.ensureVisible(deleteButtonInCard);
-        await tester.pumpAndSettle();
-        await tester.tap(deleteButtonInCard);
+        expect(pushDayDeleteButton, findsOneWidget,
+            reason: 'Should find delete button on Push Day card');
+
+        await tester.tap(pushDayDeleteButton);
         await tester.pumpAndSettle();
 
         // Confirm deletion
