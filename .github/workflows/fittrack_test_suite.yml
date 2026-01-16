@@ -82,21 +82,16 @@ jobs:
           exit 0
         fi
 
-    - name: Run unit tests with coverage
+    - name: Run unit tests
       run: |
         cd fittrack
         # Run tests with concurrency for faster execution
+        # Note: Coverage generation removed - it was taking 18+ minutes with no output,
+        # causing GitHub runner to think the job was stuck and terminate it.
+        # Coverage is collected in a separate optional workflow if needed.
         flutter test test/models/ test/services/ test/providers/ \
-          --coverage \
           --concurrency=4 \
           --reporter=github
-          
-    - name: Upload unit test coverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: fittrack/coverage/lcov.info
-        flags: unit-tests
-        name: unit-test-coverage
 
   widget-tests:
     name: Widget Tests (UI Components)
