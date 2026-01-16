@@ -83,21 +83,21 @@ jobs:
         fi
 
     - name: Run unit tests
-      timeout-minutes: 20
+      timeout-minutes: 25
       shell: bash
       run: |
         cd fittrack
-        # Run tests with concurrency for faster execution
-        # Note: Coverage generation removed - it was taking 18+ minutes with no output
-        # Run each test directory separately to help with clean process termination
-        # Using script to force PTY allocation and proper signal handling
+        # Run tests with expanded reporter to ensure output is visible
+        # This prevents GitHub Actions from thinking the job is stuck
+        # Provider tests take ~17 minutes with concurrency=4, so we use concurrency=1
+        # to ensure continuous output
         set -e
         echo "Starting model tests..."
-        flutter test test/models/ --concurrency=4 --no-pub && echo "✅ Model tests passed"
+        flutter test test/models/ --concurrency=4 --no-pub --reporter=expanded && echo "✅ Model tests passed"
         echo "Starting service tests..."
-        flutter test test/services/ --concurrency=4 --no-pub && echo "✅ Service tests passed"
-        echo "Starting provider tests..."
-        flutter test test/providers/ --concurrency=4 --no-pub && echo "✅ Provider tests passed"
+        flutter test test/services/ --concurrency=4 --no-pub --reporter=expanded && echo "✅ Service tests passed"
+        echo "Starting provider tests (this may take ~15-20 minutes)..."
+        flutter test test/providers/ --concurrency=1 --no-pub --reporter=expanded && echo "✅ Provider tests passed"
         echo "🎉 All unit tests completed successfully"
 
   widget-tests:
