@@ -88,10 +88,11 @@ jobs:
         # Run tests with concurrency for faster execution
         # Note: Coverage generation removed - it was taking 18+ minutes with no output,
         # causing GitHub runner to think the job was stuck and terminate it.
-        # Coverage is collected in a separate optional workflow if needed.
+        # Using default compact reporter (not --reporter=github) to avoid process hang issues
         flutter test test/models/ test/services/ test/providers/ \
           --concurrency=4 \
-          --reporter=github
+          --no-pub
+        echo "Unit tests completed successfully"
 
   widget-tests:
     name: Widget Tests (UI Components)
@@ -281,7 +282,8 @@ jobs:
         
     - name: Run Android Integration Test
       id: integration_test
-      continue-on-error: true
+      # Note: We don't use continue-on-error here because we need accurate failure detection
+      # The all-tests-passed job already treats integration-tests as non-blocking (known flaky)
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 29
