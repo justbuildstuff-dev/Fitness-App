@@ -84,21 +84,16 @@ jobs:
 
     - name: Run unit tests
       timeout-minutes: 25
-      shell: bash
       run: |
         cd fittrack
-        # Run tests with expanded reporter to ensure output is visible
-        # This prevents GitHub Actions from thinking the job is stuck
-        # Provider tests take ~17 minutes with concurrency=4, so we use concurrency=1
-        # to ensure continuous output
-        set -e
-        echo "Starting model tests..."
-        flutter test test/models/ --concurrency=4 --no-pub --reporter=expanded && echo "✅ Model tests passed"
-        echo "Starting service tests..."
-        flutter test test/services/ --concurrency=4 --no-pub --reporter=expanded && echo "✅ Service tests passed"
-        echo "Starting provider tests (this may take ~15-20 minutes)..."
-        flutter test test/providers/ --concurrency=1 --no-pub --reporter=expanded && echo "✅ Provider tests passed"
-        echo "🎉 All unit tests completed successfully"
+        # Run all unit tests in a single command with github reporter
+        # The github reporter outputs annotations for each test, providing:
+        # 1. Green ticks for passes, red crosses for failures (same as widget tests)
+        # 2. Continuous output that prevents GitHub from killing the job
+        # Running as a single command avoids temp directory race conditions (PathNotFoundException)
+        flutter test test/models/ test/services/ test/providers/ \
+          --reporter=github \
+          --timeout=60s
 
   widget-tests:
     name: Widget Tests (UI Components)
