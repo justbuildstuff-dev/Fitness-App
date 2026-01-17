@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
 import '../../models/program.dart';
+import '../../models/navigation_section.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/error_display.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import 'program_detail_screen.dart';
 import 'create_program_screen.dart';
 
@@ -102,6 +104,9 @@ class ProgramsScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateProgram(context),
         child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.programs,
       ),
     );
   }

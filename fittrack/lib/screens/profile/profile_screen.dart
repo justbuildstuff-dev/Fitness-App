@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/navigation_section.dart';
+import '../../widgets/global_bottom_nav_bar.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -124,6 +126,9 @@ class ProfileScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+      bottomNavigationBar: const GlobalBottomNavBar(
+        currentSection: NavigationSection.profile,
       ),
     );
   }

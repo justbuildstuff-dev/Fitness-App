@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Global Bottom Navigation Bar** - Persistent navigation across all screens (#52)
+  - One-tap access to Programs, Analytics, and Profile from anywhere in the app
+  - Bottom navigation appears on all full-page screens (Programs, Program Details, Weeks, Workouts, Analytics, Profile)
+  - Smart section highlighting based on current screen location
+  - Navigation stack clearing for clean section switching
+  - Modal screens (Create*) correctly excluded from bottom nav
 - **Consolidated Workout Screen** - Streamlined workout tracking interface (#53)
   - Reduced navigation clicks by 40% (from 5 screens → 3 screens)
   - All exercises and sets displayed inline on one screen
@@ -21,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Batched data loading for improved performance (~45% query reduction)
 
 ### Changed
+- HomeScreen now accepts `initialIndex` parameter for programmatic tab selection
+- Navigation behavior: Tapping bottom nav clears entire navigation stack
+- Back button after bottom nav navigation exits app instead of returning to previous screens
 - Updated WeeksScreen to navigate to ConsolidatedWorkoutScreen instead of separate detail screens
 - Enhanced CreateExerciseScreen with set count stepper (1-10 sets)
 - Improved ProgramProvider with batched set loading (loadAllSetsForWorkout)
@@ -41,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExerciseDetailScreen - Use inline editing in ConsolidatedWorkoutScreen instead
 
 ### Technical
+- Created `NavigationSection` enum for type-safe section management
+- Created `GlobalBottomNavBar` reusable widget component
+- Added 25+ tests for navigation functionality (unit + widget tests)
+- Follows standard mobile app navigation patterns (Instagram, Twitter, etc.)
 - Added FirestoreService.createExerciseWithSets() for atomic exercise + sets creation
 - Added ProgramProvider.loadAllSetsForWorkout() for batched set loading
 - Comprehensive test coverage for new screens (28+ tests)

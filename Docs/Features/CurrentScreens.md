@@ -41,10 +41,23 @@ This document provides a comprehensive overview of all currently implemented scr
 ### ✅ HomeScreen
 - **Location**: `lib/screens/home/home_screen.dart`
 - **Status**: Complete
-- **Features**: Bottom navigation (Programs, Analytics, Profile)
-- **Integration**: ProgramProvider initialization on load
-- **UI**: IndexedStack with bottom navigation bar
-- **Recent Update**: Analytics placeholder replaced with full implementation
+- **Features**: Container for main screens (Programs, Analytics, Profile)
+- **Integration**: ProgramProvider auto-loads when userId is set
+- **UI**: Simple switch-based screen selection (replaced IndexedStack)
+- **Navigation**: Supports `initialIndex` parameter for deep linking from GlobalBottomNavBar
+- **Recent Update**: Refactored to work with GlobalBottomNavBar (Feature #52)
+
+### ✅ GlobalBottomNavBar
+- **Location**: `lib/widgets/global_bottom_nav_bar.dart`
+- **Status**: Complete (Feature #52)
+- **Features**:
+  - **Persistent Navigation**: Appears on Programs, Analytics, and Profile screen hierarchies
+  - **Section Highlighting**: Current section highlighted based on navigation context
+  - **Stack Clearing**: Navigating sections clears stack and returns to root screen
+  - **Excluded Screens**: Modal/creation screens (CreateProgram, CreateWeek, etc.) don't show nav bar
+- **Integration**: Uses Navigator.pushAndRemoveUntil for section changes
+- **UI**: Material 3 BottomNavigationBar with Programs, Analytics, Profile tabs
+- **Technical Design**: See `Docs/Technical_Designs/Global_Bottom_Navigation_Bar_Technical_Design.md`
 
 ### ✅ AnalyticsScreen
 - **Location**: `lib/screens/analytics/analytics_screen.dart`
@@ -272,14 +285,19 @@ All core workout tracking functionality is now fully implemented:
 ```
 AuthWrapper → SignInScreen/SignUpScreen
     ↓ (authenticated)
-HomeScreen → ProgramsScreen → ProgramDetailScreen → WeeksScreen → WorkoutDetailScreen
-                                                         ↓
-                                            CreateWorkoutScreen
-
-WorkoutDetailScreen → ExerciseDetailScreen → CreateSetScreen
-         ↓                     ↓
-   CreateExerciseScreen    [Set Management]
+HomeScreen (with GlobalBottomNavBar)
+    ├── Programs Tab → ProgramsScreen → ProgramDetailScreen → WeeksScreen → ConsolidatedWorkoutScreen
+    │                                                              ↓
+    │                                               CreateWorkoutScreen/CreateExerciseScreen
+    ├── Analytics Tab → AnalyticsScreen
+    └── Profile Tab → ProfileScreen
 ```
+
+### ✅ GlobalBottomNavBar Integration (Feature #52)
+- **Persistent**: Bottom nav visible throughout Programs, Analytics, Profile hierarchies
+- **Section Switching**: Clears navigation stack, returns to section root
+- **Deep Navigation**: Program hierarchy preserves stack within section
+- **Excluded**: Create/Edit modal screens don't show bottom nav
 
 ### ✅ Full User Journey Complete
 ```

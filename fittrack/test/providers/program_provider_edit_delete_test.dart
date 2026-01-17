@@ -140,18 +140,45 @@ void main() {
         dateRange: anyNamed('dateRange'),
       )).thenAnswer((_) async => {});
 
-      // Add stubs for monthly heatmap methods with CONCRETE values (required for non-nullable params)
+      // Add stubs for monthly heatmap methods using concrete values that match what provider calls
+      // The provider calls getMonthHeatmapData with current year/month at the time of loadAnalytics
+      // Also need to stub adjacent months since prefetchAdjacentMonths calls getMonthHeatmapData internally
+
+      // Helper to create MonthHeatmapData for any year/month
+      MonthHeatmapData createMonthData(int year, int month) => MonthHeatmapData(
+        year: year,
+        month: month,
+        dailySetCounts: {},
+        totalSets: 0,
+        fetchedAt: now,
+      );
+
+      // Calculate previous and next months
+      final prevMonth = now.month == 1 ? 12 : now.month - 1;
+      final prevYear = now.month == 1 ? now.year - 1 : now.year;
+      final nextMonth = now.month == 12 ? 1 : now.month + 1;
+      final nextYear = now.month == 12 ? now.year + 1 : now.year;
+
+      // Stub current month
       when(mockAnalyticsService.getMonthHeatmapData(
         userId: 'user123',
         year: now.year,
         month: now.month,
-      )).thenAnswer((_) async => MonthHeatmapData(
-        year: now.year,
-        month: now.month,
-        dailySetCounts: {},
-        totalSets: 0,
-        fetchedAt: now,
-      ));
+      )).thenAnswer((_) async => createMonthData(now.year, now.month));
+
+      // Stub previous month (called by prefetchAdjacentMonths)
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'user123',
+        year: prevYear,
+        month: prevMonth,
+      )).thenAnswer((_) async => createMonthData(prevYear, prevMonth));
+
+      // Stub next month (called by prefetchAdjacentMonths)
+      when(mockAnalyticsService.getMonthHeatmapData(
+        userId: 'user123',
+        year: nextYear,
+        month: nextMonth,
+      )).thenAnswer((_) async => createMonthData(nextYear, nextMonth));
 
       when(mockAnalyticsService.prefetchAdjacentMonths(
         userId: 'user123',

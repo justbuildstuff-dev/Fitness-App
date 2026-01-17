@@ -48,10 +48,21 @@ void main() {
       when(mockAuth.currentUser).thenReturn(null);
 
       // Setup Firestore mocks
+      // IMPORTANT: Must return exists=true to prevent infinite recursion in _loadUserProfile()
+      // When exists=false, AuthProvider calls _createUserProfile() then _loadUserProfile() again
       when(mockFirestore.collection('users')).thenReturn(mockCollection);
       when(mockCollection.doc(any)).thenReturn(mockDocRef);
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
-      when(mockDocSnapshot.exists).thenReturn(false);
+      when(mockDocSnapshot.exists).thenReturn(true);
+      when(mockDocSnapshot.data()).thenReturn({
+        'id': 'test-user-123',
+        'displayName': 'Test User',
+        'email': 'test@example.com',
+        'createdAt': Timestamp.now(),
+        'lastLogin': Timestamp.now(),
+        'settings': {'unitPreference': 'metric', 'theme': 'system'},
+      });
+      when(mockDocSnapshot.id).thenReturn('test-user-123');
 
       // Create provider - note: This will trigger auth state listener
       // We'll need to inject mocks for real implementation
@@ -72,6 +83,7 @@ void main() {
         when(mockVerifiedUser.emailVerified).thenReturn(true);
         when(mockVerifiedUser.uid).thenReturn('test-user-123');
         when(mockVerifiedUser.email).thenReturn('test@example.com');
+        when(mockVerifiedUser.displayName).thenReturn('Test User');
         when(mockVerifiedUser.reload()).thenAnswer((_) async {});
 
         when(mockAuth.currentUser).thenReturn(mockVerifiedUser);
@@ -95,6 +107,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
 
         when(mockAuth.currentUser).thenReturn(mockUnverifiedUser);
@@ -134,6 +147,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
         when(mockUnverifiedUser.sendEmailVerification()).thenAnswer((_) async {});
 
@@ -163,6 +177,7 @@ void main() {
         when(mockVerifiedUser.emailVerified).thenReturn(true);
         when(mockVerifiedUser.uid).thenReturn('test-user-123');
         when(mockVerifiedUser.email).thenReturn('test@example.com');
+        when(mockVerifiedUser.displayName).thenReturn('Test User');
         when(mockVerifiedUser.reload()).thenAnswer((_) async {});
 
         when(mockAuth.currentUser).thenReturn(mockVerifiedUser);
@@ -206,6 +221,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
         when(mockUnverifiedUser.sendEmailVerification())
             .thenThrow(FirebaseAuthException(code: 'too-many-requests'));
@@ -235,6 +251,7 @@ void main() {
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
         when(mockUnverifiedUser.sendEmailVerification()).thenAnswer((_) async {});
 
@@ -401,6 +418,7 @@ void main() {
         final mockUnverifiedUser = MockUser();
         when(mockUnverifiedUser.uid).thenReturn('test-user-123');
         when(mockUnverifiedUser.email).thenReturn('test@example.com');
+        when(mockUnverifiedUser.displayName).thenReturn('Test User');
         when(mockUnverifiedUser.emailVerified).thenReturn(false);
         when(mockUnverifiedUser.reload()).thenAnswer((_) async {});
 
@@ -455,12 +473,14 @@ void main() {
         final mockUser1 = MockUser();
         when(mockUser1.uid).thenReturn('test-user-123');
         when(mockUser1.email).thenReturn('test@example.com');
+        when(mockUser1.displayName).thenReturn('Test User');
         when(mockUser1.emailVerified).thenReturn(false);
         when(mockUser1.reload()).thenAnswer((_) async {});
 
         final mockUser2 = MockUser();
         when(mockUser2.uid).thenReturn('test-user-123');
         when(mockUser2.email).thenReturn('test@example.com');
+        when(mockUser2.displayName).thenReturn('Test User');
         when(mockUser2.emailVerified).thenReturn(true);
         when(mockUser2.reload()).thenAnswer((_) async {});
 
