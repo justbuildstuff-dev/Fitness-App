@@ -86,14 +86,13 @@ jobs:
       timeout-minutes: 25
       run: |
         cd fittrack
-        # Run all unit tests in a single command with default compact reporter
-        # IMPORTANT: Do NOT use --reporter=github - it causes process hang issues
-        # The default compact reporter works reliably with concurrency=4
-        # --no-pub skips unnecessary pub get (already done in earlier step)
+        # Run all unit tests with github reporter for green tick annotations
+        # Note: --coverage was removed because coverage GENERATION (not tests) took 18+ min
+        # with no output, causing GitHub to kill the job. Tests themselves are fast.
+        # The --reporter=github flag produces the same green tick format without coverage overhead.
         flutter test test/models/ test/services/ test/providers/ \
           --concurrency=4 \
-          --no-pub
-        echo "Unit tests completed successfully"
+          --reporter=github
 
   widget-tests:
     name: Widget Tests (UI Components)
