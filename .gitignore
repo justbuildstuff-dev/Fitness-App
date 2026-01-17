@@ -13,6 +13,21 @@ pr_diff.txt
 *.diff
 *.patch
 
+# Debug and test output files
+$VAR
+e2e_*.txt
+test_*.txt
+*_logs.txt
+*_results.txt
+TEST_UPDATES_REQUIRED.md
+QA_*.md
+
+# Backup files
+*.backup
+
+# Local Claude settings
+**/.claude/settings.local.json
+
 # API keys and secrets
 *secret*
 *credential*
