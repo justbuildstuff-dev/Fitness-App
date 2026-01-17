@@ -87,11 +87,11 @@ jobs:
       run: |
         cd fittrack
         # Run all unit tests with github reporter for green tick annotations
-        # Note: --coverage was removed because coverage GENERATION (not tests) took 18+ min
-        # with no output, causing GitHub to kill the job. Tests themselves are fast.
-        # The --reporter=github flag produces the same green tick format without coverage overhead.
+        # IMPORTANT: Use --concurrency=1 to ensure immediate output for each test.
+        # With concurrency>1, output gets buffered and GitHub kills the job thinking it's hung.
+        # The provider tests especially can run for 15+ minutes with buffered output.
         flutter test test/models/ test/services/ test/providers/ \
-          --concurrency=4 \
+          --concurrency=1 \
           --reporter=github
 
   widget-tests:
