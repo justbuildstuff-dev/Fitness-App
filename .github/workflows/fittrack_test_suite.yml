@@ -86,14 +86,14 @@ jobs:
       timeout-minutes: 25
       run: |
         cd fittrack
-        # Run all unit tests in a single command with github reporter
-        # The github reporter outputs annotations for each test, providing:
-        # 1. Green ticks for passes, red crosses for failures (same as widget tests)
-        # 2. Continuous output that prevents GitHub from killing the job
-        # Running as a single command avoids temp directory race conditions (PathNotFoundException)
+        # Run all unit tests in a single command with default compact reporter
+        # IMPORTANT: Do NOT use --reporter=github - it causes process hang issues
+        # The default compact reporter works reliably with concurrency=4
+        # --no-pub skips unnecessary pub get (already done in earlier step)
         flutter test test/models/ test/services/ test/providers/ \
-          --reporter=github \
-          --timeout=60s
+          --concurrency=4 \
+          --no-pub
+        echo "Unit tests completed successfully"
 
   widget-tests:
     name: Widget Tests (UI Components)
