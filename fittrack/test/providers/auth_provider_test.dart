@@ -48,10 +48,21 @@ void main() {
       when(mockAuth.currentUser).thenReturn(null);
 
       // Setup Firestore mocks
+      // IMPORTANT: Must return exists=true to prevent infinite recursion in _loadUserProfile()
+      // When exists=false, AuthProvider calls _createUserProfile() then _loadUserProfile() again
       when(mockFirestore.collection('users')).thenReturn(mockCollection);
       when(mockCollection.doc(any)).thenReturn(mockDocRef);
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
-      when(mockDocSnapshot.exists).thenReturn(false);
+      when(mockDocSnapshot.exists).thenReturn(true);
+      when(mockDocSnapshot.data()).thenReturn({
+        'id': 'test-user-123',
+        'displayName': 'Test User',
+        'email': 'test@example.com',
+        'createdAt': Timestamp.now(),
+        'lastLogin': Timestamp.now(),
+        'settings': {'unitPreference': 'metric', 'theme': 'system'},
+      });
+      when(mockDocSnapshot.id).thenReturn('test-user-123');
 
       // Create provider - note: This will trigger auth state listener
       // We'll need to inject mocks for real implementation
