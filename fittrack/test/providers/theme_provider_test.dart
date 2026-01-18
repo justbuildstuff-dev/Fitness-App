@@ -25,6 +25,8 @@ void main() {
     setUp(() {
       // Set up clean test environment for each test
       mockPrefs = MockSharedPreferences();
+      // Mock color_scheme key - required because constructor calls _loadColorScheme()
+      when(mockPrefs.getString('color_scheme')).thenReturn(null);
     });
 
     group('Initialization', () {
