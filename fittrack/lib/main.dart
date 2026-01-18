@@ -91,7 +91,7 @@ class FitTrackApp extends StatelessWidget {
             themeMode: themeProvider.currentThemeMode,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF2196F3),
+                seedColor: themeProvider.seedColor,
                 brightness: Brightness.light,
               ),
               useMaterial3: true,
@@ -102,7 +102,7 @@ class FitTrackApp extends StatelessWidget {
             ),
             darkTheme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF2196F3),
+                seedColor: themeProvider.seedColor,
                 brightness: Brightness.dark,
               ),
               useMaterial3: true,
