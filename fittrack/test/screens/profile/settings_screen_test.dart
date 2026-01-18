@@ -25,7 +25,7 @@ void main() {
       when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
       when(mockThemeProvider.setThemeMode(any)).thenAnswer((_) async {});
 
-      // Default mock responses for color scheme (required by Settings screen)
+      // Default mock responses for color scheme
       when(mockThemeProvider.currentColorScheme).thenReturn(ColorSchemeType.classicBlue);
       when(mockThemeProvider.setColorScheme(any)).thenAnswer((_) async {});
     });
@@ -304,6 +304,177 @@ void main() {
         // Assert - should be back to previous screen
         expect(find.text('Settings'), findsNothing);
         expect(find.text('Open Settings'), findsOneWidget);
+      });
+    });
+
+    group('Color Scheme UI Rendering', () {
+      testWidgets('renders color scheme dropdown with label', (tester) async {
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Assert
+        expect(find.text('Color Scheme'), findsOneWidget);
+        expect(find.byType(DropdownButton<ColorSchemeType>), findsOneWidget);
+      });
+
+      testWidgets('shows all 4 color scheme options in dropdown', (tester) async {
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Tap to open dropdown
+        await tester.tap(find.byType(DropdownButton<ColorSchemeType>));
+        await tester.pumpAndSettle();
+
+        // Assert - All 4 options should be visible
+        expect(find.text('Classic Blue'), findsWidgets);
+        expect(find.text('Energetic Orange'), findsOneWidget);
+        expect(find.text('Electric Purple'), findsOneWidget);
+        expect(find.text('Crimson Power'), findsOneWidget);
+      });
+
+      testWidgets('displays current color scheme as selected', (tester) async {
+        // Arrange
+        when(mockThemeProvider.currentColorScheme).thenReturn(ColorSchemeType.electricPurple);
+
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Assert - Dropdown should show Electric Purple as selected
+        final dropdown = find.byType(DropdownButton<ColorSchemeType>);
+        expect(dropdown, findsOneWidget);
+
+        // The selected value text should be visible
+        expect(find.text('Electric Purple'), findsOneWidget);
+      });
+
+      testWidgets('each dropdown item has color preview circle', (tester) async {
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Tap to open dropdown
+        await tester.tap(find.byType(DropdownButton<ColorSchemeType>));
+        await tester.pumpAndSettle();
+
+        // Assert - Find color preview circles (16x16 containers with BoxShape.circle)
+        final colorCircles = find.byWidgetPredicate((widget) {
+          if (widget is Container) {
+            final decoration = widget.decoration;
+            if (decoration is BoxDecoration) {
+              return decoration.shape == BoxShape.circle &&
+                     widget.constraints?.maxWidth == 16 &&
+                     widget.constraints?.maxHeight == 16;
+            }
+          }
+          return false;
+        });
+
+        // Should have at least 4 color circles (one for each option)
+        expect(colorCircles, findsAtLeast(4));
+      });
+    });
+
+    group('Color Scheme Selection', () {
+      testWidgets('selecting energeticOrange calls setColorScheme', (tester) async {
+        // Arrange
+        when(mockThemeProvider.currentColorScheme).thenReturn(ColorSchemeType.classicBlue);
+
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Open dropdown
+        await tester.tap(find.byType(DropdownButton<ColorSchemeType>));
+        await tester.pumpAndSettle();
+
+        // Select Energetic Orange
+        await tester.tap(find.text('Energetic Orange').last);
+        await tester.pumpAndSettle();
+
+        // Assert
+        verify(mockThemeProvider.setColorScheme(ColorSchemeType.energeticOrange)).called(1);
+      });
+
+      testWidgets('selecting electricPurple calls setColorScheme', (tester) async {
+        // Arrange
+        when(mockThemeProvider.currentColorScheme).thenReturn(ColorSchemeType.classicBlue);
+
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Open dropdown
+        await tester.tap(find.byType(DropdownButton<ColorSchemeType>));
+        await tester.pumpAndSettle();
+
+        // Select Electric Purple
+        await tester.tap(find.text('Electric Purple').last);
+        await tester.pumpAndSettle();
+
+        // Assert
+        verify(mockThemeProvider.setColorScheme(ColorSchemeType.electricPurple)).called(1);
+      });
+
+      testWidgets('selecting crimsonPower calls setColorScheme', (tester) async {
+        // Arrange
+        when(mockThemeProvider.currentColorScheme).thenReturn(ColorSchemeType.classicBlue);
+
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Open dropdown
+        await tester.tap(find.byType(DropdownButton<ColorSchemeType>));
+        await tester.pumpAndSettle();
+
+        // Select Crimson Power
+        await tester.tap(find.text('Crimson Power').last);
+        await tester.pumpAndSettle();
+
+        // Assert
+        verify(mockThemeProvider.setColorScheme(ColorSchemeType.crimsonPower)).called(1);
+      });
+
+      testWidgets('color scheme changes immediately when selected', (tester) async {
+        // Arrange - Use real ThemeProvider with mock SharedPreferences
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final realThemeProvider = ThemeProvider(prefs);
+
+        // Act - Initial render
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ChangeNotifierProvider<ThemeProvider>.value(
+              value: realThemeProvider,
+              child: const SettingsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Verify initial state (Classic Blue by default)
+        expect(find.text('Classic Blue'), findsOneWidget);
+
+        // Open dropdown and select Electric Purple
+        await tester.tap(find.byType(DropdownButton<ColorSchemeType>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Electric Purple').last);
+        await tester.pumpAndSettle();
+
+        // Assert - Dropdown should now show Electric Purple
+        expect(find.text('Electric Purple'), findsOneWidget);
+        expect(realThemeProvider.currentColorScheme, equals(ColorSchemeType.electricPurple));
+      });
+    });
+
+    group('Color Scheme Accessibility', () {
+      testWidgets('color scheme dropdown has semantic label', (tester) async {
+        // Act
+        await tester.pumpWidget(createTestApp());
+
+        // Assert - Find semantics wrapper for color scheme selector
+        final colorSchemeSemantics = find.byWidgetPredicate(
+          (widget) => widget is Semantics &&
+                     widget.properties.label == 'Color scheme selector',
+        );
+
+        expect(colorSchemeSemantics, findsOneWidget);
       });
     });
   });
