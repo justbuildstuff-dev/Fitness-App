@@ -21,9 +21,13 @@ void main() {
     setUp(() {
       mockThemeProvider = MockThemeProvider();
 
-      // Default mock responses
+      // Default mock responses for theme mode
       when(mockThemeProvider.currentThemeMode).thenReturn(ThemeMode.system);
       when(mockThemeProvider.setThemeMode(any)).thenAnswer((_) async {});
+
+      // Default mock responses for color scheme (required by Settings screen)
+      when(mockThemeProvider.currentColorScheme).thenReturn(ColorSchemeType.classicBlue);
+      when(mockThemeProvider.setColorScheme(any)).thenAnswer((_) async {});
     });
 
     Widget createTestApp() {

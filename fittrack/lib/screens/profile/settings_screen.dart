@@ -88,11 +88,99 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              // Color Scheme Selector
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Color Scheme',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Semantics(
+                        label: 'Color scheme selector',
+                        child: DropdownButton<ColorSchemeType>(
+                          value: themeProvider.currentColorScheme,
+                          underline: const SizedBox.shrink(),
+                          borderRadius: BorderRadius.circular(12),
+                          onChanged: (ColorSchemeType? newScheme) {
+                            if (newScheme != null) {
+                              themeProvider.setColorScheme(newScheme);
+                            }
+                          },
+                          items: ColorSchemeType.values.map((scheme) {
+                            return DropdownMenuItem<ColorSchemeType>(
+                              value: scheme,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: BoxDecoration(
+                                      color: _getColorForScheme(scheme),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(context).colorScheme.outline,
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(_getDisplayNameForScheme(scheme)),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           );
         },
       ),
     );
+  }
+
+  Color _getColorForScheme(ColorSchemeType scheme) {
+    switch (scheme) {
+      case ColorSchemeType.classicBlue:
+        return const Color(0xFF2196F3);
+      case ColorSchemeType.energeticOrange:
+        return const Color(0xFFFF6B35);
+      case ColorSchemeType.electricPurple:
+        return const Color(0xFF7C3AED);
+      case ColorSchemeType.crimsonPower:
+        return const Color(0xFFDC143C);
+    }
+  }
+
+  String _getDisplayNameForScheme(ColorSchemeType scheme) {
+    switch (scheme) {
+      case ColorSchemeType.classicBlue:
+        return 'Classic Blue';
+      case ColorSchemeType.energeticOrange:
+        return 'Energetic Orange';
+      case ColorSchemeType.electricPurple:
+        return 'Electric Purple';
+      case ColorSchemeType.crimsonPower:
+        return 'Crimson Power';
+    }
   }
 }
 
