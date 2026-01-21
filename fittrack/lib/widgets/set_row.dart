@@ -141,17 +141,17 @@ class _SetRowState extends State<SetRow> {
     final isReadOnly = widget.set.checked;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8), // Only bottom margin, right spacing handled by parent
+      margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), // Further reduced padding
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           children: [
             // Set number
             SizedBox(
-              width: 24, // Further reduced from 32 to 24
+              width: 28,
               child: Text(
                 '${widget.set.setNumber}',
-                style: theme.textTheme.bodyLarge?.copyWith( // Changed from titleMedium
+                style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -159,52 +159,68 @@ class _SetRowState extends State<SetRow> {
               ),
             ),
 
-            const SizedBox(width: 4), // Further reduced from 6 to 4
+            const SizedBox(width: 6),
 
             // Fields based on exercise type
             Expanded(
               child: _buildFieldsForExerciseType(isReadOnly),
             ),
 
-            const SizedBox(width: 2), // Further reduced from 4 to 2
+            const SizedBox(width: 4),
 
-            // Notes button
-            IconButton(
-              icon: Icon(
-                widget.set.notes != null && widget.set.notes!.isNotEmpty
-                    ? Icons.note_alt
-                    : Icons.note_add,
-                size: 16, // Further reduced from 18 to 16
-              ),
-              padding: const EdgeInsets.all(6), // Further reduced padding
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Even smaller
-              onPressed: isReadOnly ? null : _handleNotesButtonTap,
-              tooltip: 'Add notes',
-              color: widget.set.notes != null && widget.set.notes!.isNotEmpty
-                  ? theme.colorScheme.primary
-                  : null,
-            ),
+            // Action buttons grouped tightly together
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Completion checkbox
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Transform.scale(
+                    scale: 0.9,
+                    child: Checkbox(
+                      value: widget.set.checked,
+                      onChanged: _handleCheckboxChange,
+                    ),
+                  ),
+                ),
 
-            // Delete button
-            IconButton(
-              icon: const Icon(Icons.delete, size: 16), // Further reduced from 18 to 16
-              padding: const EdgeInsets.all(6), // Further reduced padding
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Even smaller
-              onPressed: widget.isLastSet || isReadOnly ? null : widget.onDelete,
-              tooltip: widget.isLastSet
-                  ? 'Cannot delete last set'
-                  : 'Delete set',
-              color: Colors.red,
-              disabledColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-            ),
+                // Notes button
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: IconButton(
+                    icon: Icon(
+                      widget.set.notes != null && widget.set.notes!.isNotEmpty
+                          ? Icons.note_alt
+                          : Icons.note_add,
+                      size: 18,
+                    ),
+                    padding: EdgeInsets.zero,
+                    onPressed: isReadOnly ? null : _handleNotesButtonTap,
+                    tooltip: 'Add notes',
+                    color: widget.set.notes != null && widget.set.notes!.isNotEmpty
+                        ? theme.colorScheme.primary
+                        : null,
+                  ),
+                ),
 
-            // Completion checkbox
-            Transform.scale(
-              scale: 0.8, // Further reduced from 0.9 to 0.8
-              child: Checkbox(
-                value: widget.set.checked,
-                onChanged: _handleCheckboxChange,
-              ),
+                // Delete button
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: IconButton(
+                    icon: const Icon(Icons.delete, size: 18),
+                    padding: EdgeInsets.zero,
+                    onPressed: widget.isLastSet || isReadOnly ? null : widget.onDelete,
+                    tooltip: widget.isLastSet
+                        ? 'Cannot delete last set'
+                        : 'Delete set',
+                    color: Colors.red,
+                    disabledColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
