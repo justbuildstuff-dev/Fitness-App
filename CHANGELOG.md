@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-21
+
 ### Added
+- **Color Scheme Selector** - Personalize your app with 4 vibrant color palettes (#44)
+  - Classic Blue (default) - Material Blue, same as before
+  - Energetic Orange - High-energy, motivating palette for athletic performance
+  - Electric Purple - Modern, trendy palette with youthful energy
+  - Crimson Power - Intense, powerful palette for serious training
+  - Dropdown selector in Settings screen below Theme Mode
+  - Color scheme persists across app restarts (SharedPreferences)
+  - Works with all theme modes (Light, Dark, System) - 12 total combinations
+  - Instant switching without app restart
+  - WCAG AA accessibility compliance for all palettes
+  - Material 3 ColorScheme.fromSeed() for consistent color generation
 - **Global Bottom Navigation Bar** - Persistent navigation across all screens (#52)
   - One-tap access to Programs, Analytics, and Profile from anywhere in the app
   - Bottom navigation appears on all full-page screens (Programs, Program Details, Weeks, Workouts, Analytics, Profile)

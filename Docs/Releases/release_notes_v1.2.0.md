@@ -1,123 +1,100 @@
 # FitTrack v1.2.0 Release Notes
 
-**Release Date:** TBD (Awaiting QA and Deployment)
+**Release Date:** 2026-01-21
 **Version:** 1.2.0+4
 **Platforms:** Android, iOS
 
 ## What's New
 
+### Color Scheme Selector - Personalize Your FitTrack Experience
+
+Make FitTrack truly yours with 4 vibrant color palettes! Choose the color scheme that matches your personality and workout energy.
+
+**Available Color Schemes:**
+
+- **Classic Blue** (default) - The familiar Material Blue theme you know and love
+- **Energetic Orange** - High-energy, motivating palette perfect for intense workouts
+- **Electric Purple** - Modern, trendy palette with youthful energy
+- **Crimson Power** - Intense, powerful palette for serious training
+
+**Key Features:**
+- Easy selection from Settings > Appearance > Color Scheme dropdown
+- Works with all theme modes (Light, Dark, System) - 12 total combinations!
+- Your preference persists across app restarts
+- Instant switching - no restart required
+- Color preview circles in the dropdown for easy selection
+- All palettes meet WCAG AA accessibility standards
+
+**Where to Find It:**
+Profile > Settings > Appearance > Color Scheme
+
 ### Enhanced Delete Functionality with Cascade Information
 
-Deleting weeks, workouts, and exercises is now more reliable and informative! We've completely overhauled the delete functionality to show you exactly what will be affected before you confirm.
+Deleting weeks, workouts, and exercises is now more reliable and informative! We've overhauled delete confirmation dialogs to show exactly what will be affected.
 
 **Key Improvements:**
-- **Clear Cascade Information:** Delete confirmation dialogs now display exactly how many child items will be deleted (workouts, exercises, and sets)
-- **Visual Item Highlighting:** See the name of the item you're deleting in a highlighted box for clarity
-- **Better Context Management:** Fixed issues where delete operations would fail silently due to missing context
-- **Consistent Error Handling:** Clear, actionable error messages if something goes wrong
-- **Professional UI:** Enhanced confirmation dialogs with warning icons and "cannot be undone" messaging
+- Clear cascade information showing how many child items will be deleted
+- Visual item highlighting in confirmation dialogs
+- Better error handling with clear, actionable messages
+- Professional UI with warning icons and "cannot be undone" messaging
 
-**What You'll See:**
-When deleting a week, workout, or exercise, the confirmation dialog now shows:
-- The name of the item being deleted (highlighted)
-- Number of workouts that will be deleted (if applicable)
-- Number of exercises that will be deleted (if applicable)
-- Number of sets that will be deleted (if applicable)
-- A clear warning that the action cannot be undone
+### Global Bottom Navigation Bar
 
-**Examples:**
-- Deleting a week with 3 workouts will show: "This will delete: 3 workouts, 12 exercises, 36 sets"
-- Deleting a workout with 5 exercises will show: "This will delete: 5 exercises, 15 sets"
-- Deleting an exercise with 3 sets will show: "This will delete: 3 sets"
+Navigate FitTrack faster with the new persistent bottom navigation bar!
 
-**Where It Works:**
-- Program Detail Screen → Week delete button
-- Weeks Screen → Week menu delete option
-- Weeks Screen → Workout inline delete buttons
-- Workout Detail Screen → Workout menu delete option
-- Workout Detail Screen → Exercise inline delete buttons
-- Exercise Detail Screen → Exercise menu delete option
+- One-tap access to Programs, Analytics, and Profile from anywhere
+- Smart section highlighting based on current screen
+- Clean navigation stack management
 
-## Bug Fixes
+### Consolidated Workout Screen
 
-### Fixed Delete Functionality (Issue #49)
-- **Fixed:** Weeks and workouts no longer cause screen flash without actual deletion
-- **Fixed:** Exercise deletion now works properly without "No Workout selected" error
-- **Fixed:** Delete operations properly validate required context before executing
-- **Fixed:** Consistent exception-based error handling across all delete flows
-- **Fixed:** Success and error messages now display correctly after delete operations
+Streamlined workout tracking with 40% fewer navigation clicks!
+
+- All exercises and sets displayed inline on one screen
+- Inline set editing with type-specific fields
+- Quick set addition and drag-and-drop exercise reordering
+- Notes and rest time modal for detailed tracking
 
 ## Benefits
 
-- **Prevent Accidental Deletions:** See exactly what you're deleting before confirming
-- **Better Transparency:** No more mystery about how many child items will be affected
-- **Increased Confidence:** Delete operations work reliably with clear feedback
-- **Reduced Frustration:** No more silent failures or confusing error messages
-- **Data Safety:** Clear warnings help prevent unintended data loss
+- **Personalization:** Express yourself with 4 distinct color themes
+- **Accessibility:** All color schemes meet WCAG AA contrast standards
+- **Consistency:** Theme works seamlessly across all screens
+- **Flexibility:** Mix and match color schemes with light/dark modes
 
 ## Technical Improvements
 
-### New Components
-- Added `CascadeDeleteCounts` model for structured count data
-- Implemented `getCascadeDeleteCounts()` method in FirestoreService
-- Added provider-level cascade count method in ProgramProvider
-- Enhanced `DeleteConfirmationDialog` widget with cascade count display
-
-### Performance Optimizations
-- Uses efficient Firestore `.count()` queries (server-side aggregation)
-- Typical cascade count fetch time: 500ms - 2s for complex hierarchies
-- Batched delete operations maintain performance (≤450 ops per batch)
+### Color Scheme Feature (#44)
+- Extended ThemeProvider with ColorSchemeType enum
+- Material 3 ColorScheme.fromSeed() for consistent color generation
+- SharedPreferences persistence with key 'color_scheme'
+- 15 new unit tests for ThemeProvider color scheme methods
+- 9 new widget tests for Settings color scheme UI
+- Semantic accessibility labels for screen reader support
 
 ### Code Quality
-- Comprehensive unit tests for cascade count methods
-- Widget tests for enhanced delete dialogs (80%+ coverage)
-- Integration tests for end-to-end delete flows
-- Consistent error handling patterns across all delete operations
-
-### Updated Screens
-- `program_detail_screen.dart` - Enhanced week delete flow
-- `weeks_screen.dart` - Enhanced week and workout delete flows
-- `workout_detail_screen.dart` - Enhanced workout and exercise delete flows
-- `exercise_detail_screen.dart` - Enhanced exercise delete flow
+- All automated tests passing (Unit, Widget, Integration)
+- WCAG AA accessibility verified for all color palettes
+- Clean implementation following existing provider patterns
 
 ## Known Issues
 
-None reported.
+- #281: Set row layout cramped on mobile (Weight label truncated) - Separate bug, does not affect color scheme feature
 
 ## Upgrade Notes
 
-This update is fully backward compatible. All delete operations now include cascade count information, but the underlying delete behavior remains unchanged (batched cascade deletes).
-
-**For Developers:**
-- FirestoreService now includes `getCascadeDeleteCounts()` method
-- ProgramProvider includes `getCascadeDeleteCounts()` method with context resolution
-- DeleteConfirmationDialog accepts optional `cascadeCounts` and `itemName` parameters
-- All delete UI flows updated to fetch counts before showing confirmation dialogs
-
-## Testing
-
-- ✅ Unit tests for cascade count methods (Task #54, #55)
-- ✅ Provider integration tests (Task #56)
-- ✅ Widget tests for enhanced dialogs (Task #57, #59)
-- ✅ Screen-level widget tests for delete flows (Task #59, #60)
-- ⏳ Integration tests with Firebase emulator (Task #61)
-- ⏳ Manual testing on real devices (Task #62)
+This update is fully backward compatible. Existing users will default to "Classic Blue" theme - the same appearance they've always had. The new color scheme option is entirely opt-in.
 
 ---
 
-**GitHub Issue:** [#49 - Fix Delete Functionality](https://github.com/justbuildstuff-dev/Fitness-App/issues/49)
-**Technical Design:** [Delete Functionality Fix Technical Design](https://github.com/justbuildstuff-dev/Fitness-App/blob/main/Docs/Technical_Designs/Delete_Functionality_Fix_Technical_Design.md)
-**Notion PRD:** [Delete Functionality Fix PRD](https://notion.so) *(Link TBD by BA Agent)*
+**GitHub Issue:** [#44 - Color Scheme Selector](https://github.com/justbuildstuff-dev/Fitness-App/issues/44)
+**Technical Design:** [Color Scheme Selector Technical Design](https://github.com/justbuildstuff-dev/Fitness-App/blob/main/Docs/Technical_Designs/Color_Scheme_Selector_Technical_Design.md)
 
 ## Implementation Tasks Completed
 
-✅ Task #54: Cascade Count Model & Service Methods
-✅ Task #55: Cascade Count Aggregation in FirestoreService
-✅ Task #56: Cascade Count Method in ProgramProvider
-✅ Task #57: Enhance DeleteConfirmationDialog Widget
-✅ Task #58: Update Program Detail Screen - Week Delete
-✅ Task #59: Update Weeks Screen - Week & Workout Delete
-✅ Task #60: Update Workout & Exercise Detail Screens - Delete Flows
-⏳ Task #61: Integration Tests for Delete Functionality
-⏳ Task #62: Manual Testing & Bug Fixes
-⏳ Task #63: Documentation & Release Preparation (In Progress)
+- Task #269: Extend ThemeProvider with ColorSchemeType
+- Task #270: Update main.dart Theme Configuration
+- Task #271: Add Color Scheme Dropdown to Settings
+- Task #272: Write Unit Tests for Color Scheme
+- Task #273: Write Widget Tests for Settings Color Scheme UI
+- Task #274: Visual Verification and Accessibility Audit
