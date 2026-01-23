@@ -151,6 +151,25 @@ service cloud.firestore {
         allow list: if isAdmin();
         allow update, delete: if isAdmin();
       }
+
+      // ---- Custom Exercises subcollection ----
+      // User-created exercises that can be selected when adding exercises to workouts
+      match /customExercises/{exerciseId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+
+        // Create: owner only with validation
+        allow create: if isOwner(userId)
+                      && request.resource.data.userId == request.auth.uid
+                      && validCustomExercise(request.resource.data);
+
+        // Update: owner or admin with validation
+        allow update: if (isOwner(userId) || isAdmin())
+                      && validCustomExercise(request.resource.data);
+
+        // Delete: owner or admin (verify existing document ownership)
+        allow delete: if (isOwner(userId) || isAdmin())
+                      && resource.data.userId == request.auth.uid;
+      }
     } // end users
 
     // -----------------------
@@ -238,6 +257,26 @@ service cloud.firestore {
         && (data.programId == null || isString(data.programId))
         && (data.weekId == null || isString(data.weekId))
         && (data.entityType == null || (data.entityType in ['program', 'week', 'workout', 'exercise']));
+    }
+
+    // Allowed muscle groups for custom exercises
+    function allowedMuscleGroup(m) {
+      return m == 'chest' || m == 'back' || m == 'shoulders' || m == 'arms' || m == 'legs' || m == 'core';
+    }
+
+    // Validate muscle groups list
+    function validMuscleGroups(muscles) {
+      return muscles is list && muscles.size() > 0 && muscles.size() <= 6;
+    }
+
+    function validCustomExercise(data) {
+      return (data.name != null && isString(data.name) && data.name.size() > 0 && data.name.size() <= 50)
+        && (data.exerciseType != null && isString(data.exerciseType) && allowedExerciseType(data.exerciseType))
+        && (data.primaryMuscles != null && validMuscleGroups(data.primaryMuscles))
+        && (data.secondaryMuscles == null || data.secondaryMuscles is list)
+        && (data.userId != null && isString(data.userId))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.updatedAt != null && isTimestamp(data.updatedAt));
     }
 
   } // end match /databases
