@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:mockito/mockito.dart';
 import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/exercise_library_provider.dart';
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
@@ -37,6 +38,7 @@ class TestSetupHelper {
     required Widget child,
     app_auth.AuthProvider? authProvider,
     ProgramProvider? programProvider,
+    ExerciseLibraryProvider? exerciseLibraryProvider,
   }) {
     return MaterialApp(
       home: MultiProvider(
@@ -48,6 +50,10 @@ class TestSetupHelper {
           if (programProvider != null)
             ChangeNotifierProvider<ProgramProvider>.value(
               value: programProvider,
+            ),
+          if (exerciseLibraryProvider != null)
+            ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+              value: exerciseLibraryProvider,
             ),
         ],
         child: child,
