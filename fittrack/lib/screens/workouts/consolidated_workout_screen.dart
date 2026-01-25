@@ -11,7 +11,7 @@ import '../../models/navigation_section.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/exercise_card.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
-import '../exercises/create_exercise_screen.dart';
+import '../exercises/exercise_picker_screen.dart';
 
 /// Consolidated workout screen that displays all exercises and their sets inline
 /// Replaces the separate WorkoutDetailScreen and ExerciseDetailScreen with a single unified view
@@ -564,31 +564,59 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
   void _addExercise(BuildContext context) async {
     final navigator = Navigator.of(context);
     final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
 
-    final result = await navigator.push<bool>(
+    // Navigate to exercise picker and get selected exercise data
+    final result = await navigator.push<Map<String, dynamic>>(
       MaterialPageRoute(
-        builder: (context) => CreateExerciseScreen(
-          program: widget.program,
-          week: widget.week,
-          workout: widget.workout,
-        ),
+        builder: (context) => const ExercisePickerScreen(),
       ),
     );
 
-    if (result == true && mounted) {
-      // Refresh exercises list and load all sets for the workout
-      // This ensures newly created exercise sets appear immediately
-      provider.loadExercises(
-        widget.program.id,
-        widget.week.id,
-        widget.workout.id,
-      );
+    if (result != null && mounted) {
+      // Extract exercise data from picker result
+      final String name = result['name'] as String;
+      final ExerciseType exerciseType = result['exerciseType'] as ExerciseType;
 
-      await provider.loadAllSetsForWorkout(
+      // Create the exercise in the workout
+      final exerciseId = await provider.createExercise(
         programId: widget.program.id,
         weekId: widget.week.id,
         workoutId: widget.workout.id,
+        name: name,
+        exerciseType: exerciseType,
       );
+
+      if (exerciseId != null && mounted) {
+        // Refresh exercises list and load all sets for the workout
+        provider.loadExercises(
+          widget.program.id,
+          widget.week.id,
+          widget.workout.id,
+        );
+
+        await provider.loadAllSetsForWorkout(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          workoutId: widget.workout.id,
+        );
+
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Added "$name" to workout'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to add exercise: ${provider.error ?? "Unknown error"}'),
+            backgroundColor: errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
