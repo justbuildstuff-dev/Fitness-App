@@ -336,6 +336,13 @@ void main() {
       await tester.pumpWidget(createTestWidget(exercise: testExercise));
       await tester.pumpAndSettle();
 
+      // Scroll to delete button (it's at the bottom of the form)
+      await tester.scrollUntilVisible(
+        find.text('Delete Exercise'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+
       expect(find.text('Delete Exercise'), findsOneWidget);
     });
 
