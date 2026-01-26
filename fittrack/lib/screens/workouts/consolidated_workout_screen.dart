@@ -578,14 +578,16 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
       // Extract exercise data from picker result
       final String name = result['name'] as String;
       final ExerciseType exerciseType = result['exerciseType'] as ExerciseType;
+      final int setCount = result['setCount'] as int? ?? 1;
 
-      // Create the exercise in the workout
+      // Create the exercise in the workout with specified number of sets
       final exerciseId = await provider.createExercise(
         programId: widget.program.id,
         weekId: widget.week.id,
         workoutId: widget.workout.id,
         name: name,
         exerciseType: exerciseType,
+        setCount: setCount,
       );
 
       if (exerciseId != null && mounted) {
@@ -604,7 +606,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
 
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Added "$name" to workout'),
+            content: Text('Added "$name" with $setCount set${setCount > 1 ? 's' : ''} to workout'),
             behavior: SnackBarBehavior.floating,
           ),
         );

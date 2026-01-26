@@ -5,6 +5,7 @@ import '../../models/library_exercise.dart';
 import '../../models/custom_exercise.dart';
 import '../../models/muscle_group.dart';
 import '../../models/exercise.dart';
+import 'custom_exercise_form_screen.dart';
 
 /// A screen for browsing and selecting exercises from the library or custom exercises.
 /// Returns the selected exercise data when the user taps "Add to Workout".
@@ -286,7 +287,7 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
     });
   }
 
-  void _showExerciseDetails(BuildContext context, dynamic exercise) {
+  void _showExerciseDetails(BuildContext context, dynamic exercise) async {
     final String name;
     final ExerciseType exerciseType;
     final List<MuscleGroup> primaryMuscles;
@@ -308,158 +309,48 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
       secondaryMuscles = customExercise.secondaryMuscles;
     }
 
-    showModalBottomSheet(
+    // Capture navigator before async gap
+    final navigator = Navigator.of(context);
+
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.8,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+      builder: (context) => _ExerciseDetailsSheet(
+        name: name,
+        exerciseType: exerciseType,
+        primaryMuscles: primaryMuscles,
+        secondaryMuscles: secondaryMuscles,
+        isLibrary: isLibrary,
+        exercise: exercise,
+      ),
+    );
 
-                // Exercise name and badge
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isLibrary
-                            ? Theme.of(context)
-                                .colorScheme
-                                .primaryContainer
-                            : Theme.of(context)
-                                .colorScheme
-                                .tertiaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isLibrary ? 'Library' : 'Custom',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: isLibrary
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onTertiaryContainer,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+    // If an exercise was selected, return it to the caller
+    if (result != null && mounted) {
+      navigator.pop(result);
+    }
+  }
 
-                // Exercise type
-                _DetailRow(
-                  icon: Icons.category,
-                  label: 'Type',
-                  value: exerciseType.displayName,
-                ),
-                const SizedBox(height: 12),
+  void _navigateToCreateCustom(BuildContext context) async {
+    // Capture navigator before async gap
+    final navigator = Navigator.of(context);
 
-                // Primary muscles
-                _DetailRow(
-                  icon: Icons.fitness_center,
-                  label: 'Primary Muscles',
-                  value: primaryMuscles.map((m) => m.displayName).join(', '),
-                ),
-                const SizedBox(height: 12),
-
-                // Secondary muscles
-                if (secondaryMuscles.isNotEmpty) ...[
-                  _DetailRow(
-                    icon: Icons.fitness_center_outlined,
-                    label: 'Secondary Muscles',
-                    value: secondaryMuscles.map((m) => m.displayName).join(', '),
-                  ),
-                  const SizedBox(height: 24),
-                ] else
-                  const SizedBox(height: 24),
-
-                // Add to workout button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _selectExercise(context, exercise),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add to Workout'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    // Navigate to custom exercise form with flag to return exercise data
+    final result = await navigator.push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (context) => const CustomExerciseFormScreen(
+          returnExerciseData: true,
         ),
       ),
     );
-  }
 
-  void _selectExercise(BuildContext context, dynamic exercise) {
-    // Close the bottom sheet
-    Navigator.of(context).pop();
-
-    // Return the exercise data to the calling screen
-    final Map<String, dynamic> result;
-    if (exercise is LibraryExercise) {
-      result = {
-        'name': exercise.name,
-        'exerciseType': exercise.exerciseType,
-        'isLibrary': true,
-        'sourceId': exercise.id,
-      };
-    } else {
-      final customExercise = exercise as CustomExercise;
-      result = {
-        'name': customExercise.name,
-        'exerciseType': customExercise.exerciseType,
-        'isLibrary': false,
-        'sourceId': customExercise.id,
-      };
+    // If custom exercise was created and returned, pass it back to the caller
+    if (result != null && mounted) {
+      navigator.pop(result);
     }
-
-    Navigator.of(context).pop(result);
-  }
-
-  void _navigateToCreateCustom(BuildContext context) {
-    // Navigate to custom exercise form
-    // For now, just pop with a flag to indicate create custom
-    Navigator.of(context).pop({'createCustom': true});
   }
 }
 
@@ -641,6 +532,232 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Stateful bottom sheet for exercise details with set count selector
+class _ExerciseDetailsSheet extends StatefulWidget {
+  final String name;
+  final ExerciseType exerciseType;
+  final List<MuscleGroup> primaryMuscles;
+  final List<MuscleGroup> secondaryMuscles;
+  final bool isLibrary;
+  final dynamic exercise;
+
+  const _ExerciseDetailsSheet({
+    required this.name,
+    required this.exerciseType,
+    required this.primaryMuscles,
+    required this.secondaryMuscles,
+    required this.isLibrary,
+    required this.exercise,
+  });
+
+  @override
+  State<_ExerciseDetailsSheet> createState() => _ExerciseDetailsSheetState();
+}
+
+class _ExerciseDetailsSheetState extends State<_ExerciseDetailsSheet> {
+  int _setCount = 1;
+
+  void _incrementSetCount() {
+    if (_setCount < 10) {
+      setState(() => _setCount++);
+    }
+  }
+
+  void _decrementSetCount() {
+    if (_setCount > 1) {
+      setState(() => _setCount--);
+    }
+  }
+
+  void _addToWorkout() {
+    // Close the bottom sheet
+    Navigator.of(context).pop();
+
+    // Return the exercise data with set count to the calling screen
+    final Map<String, dynamic> result;
+    if (widget.exercise is LibraryExercise) {
+      result = {
+        'name': widget.name,
+        'exerciseType': widget.exerciseType,
+        'isLibrary': true,
+        'sourceId': (widget.exercise as LibraryExercise).id,
+        'setCount': _setCount,
+      };
+    } else {
+      final customExercise = widget.exercise as CustomExercise;
+      result = {
+        'name': customExercise.name,
+        'exerciseType': customExercise.exerciseType,
+        'isLibrary': false,
+        'sourceId': customExercise.id,
+        'setCount': _setCount,
+      };
+    }
+
+    Navigator.of(context).pop(result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.3,
+      maxChildSize: 0.8,
+      expand: false,
+      builder: (context, scrollController) => SingleChildScrollView(
+        controller: scrollController,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Exercise name and badge
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.name,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.isLibrary
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : Theme.of(context).colorScheme.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      widget.isLibrary ? 'Library' : 'Custom',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: widget.isLibrary
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onTertiaryContainer,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Exercise type
+              _DetailRow(
+                icon: Icons.category,
+                label: 'Type',
+                value: widget.exerciseType.displayName,
+              ),
+              const SizedBox(height: 12),
+
+              // Primary muscles
+              _DetailRow(
+                icon: Icons.fitness_center,
+                label: 'Primary Muscles',
+                value: widget.primaryMuscles.map((m) => m.displayName).join(', '),
+              ),
+              const SizedBox(height: 12),
+
+              // Secondary muscles
+              if (widget.secondaryMuscles.isNotEmpty) ...[
+                _DetailRow(
+                  icon: Icons.fitness_center_outlined,
+                  label: 'Secondary Muscles',
+                  value:
+                      widget.secondaryMuscles.map((m) => m.displayName).join(', '),
+                ),
+                const SizedBox(height: 24),
+              ] else
+                const SizedBox(height: 24),
+
+              // Set count selector
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Number of Sets',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: _setCount > 1 ? _decrementSetCount : null,
+                          icon: const Icon(Icons.remove_circle_outline),
+                          iconSize: 28,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            '$_setCount',
+                            textAlign: TextAlign.center,
+                            style:
+                                Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _setCount < 10 ? _incrementSetCount : null,
+                          icon: const Icon(Icons.add_circle_outline),
+                          iconSize: 28,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Add to workout button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _addToWorkout,
+                  icon: const Icon(Icons.add),
+                  label: Text('Add $_setCount Set${_setCount > 1 ? 's' : ''} to Workout'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

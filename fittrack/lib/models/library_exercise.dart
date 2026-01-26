@@ -56,11 +56,11 @@ class LibraryExercise {
     return name.toLowerCase().contains(lowerQuery);
   }
 
-  /// Checks if the exercise matches a muscle group filter
+  /// Checks if the exercise matches a muscle group filter.
+  /// Only matches against primary muscles as per PRD requirements.
   bool matchesMuscleGroup(MuscleGroup? muscleGroup) {
     if (muscleGroup == null) return true;
-    return primaryMuscles.contains(muscleGroup) ||
-        secondaryMuscles.contains(muscleGroup);
+    return primaryMuscles.contains(muscleGroup);
   }
 
   /// Checks if the exercise matches an exercise type filter
