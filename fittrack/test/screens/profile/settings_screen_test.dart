@@ -6,8 +6,82 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/screens/profile/settings_screen.dart';
 import 'package:fittrack/providers/theme_provider.dart';
+import 'package:fittrack/providers/exercise_library_provider.dart';
+import 'package:fittrack/models/library_exercise.dart';
+import 'package:fittrack/models/custom_exercise.dart';
+import 'package:fittrack/models/muscle_group.dart';
+import 'package:fittrack/models/exercise.dart';
 
 import 'settings_screen_test.mocks.dart';
+
+/// Mock ExerciseLibraryProvider for settings screen tests
+class MockExerciseLibraryProvider extends ChangeNotifier
+    implements ExerciseLibraryProvider {
+  @override
+  List<LibraryExercise> get libraryExercises => [];
+
+  @override
+  List<CustomExercise> get customExercises => [];
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  bool get isLibraryLoaded => true;
+
+  @override
+  String? get error => null;
+
+  @override
+  int get customExerciseCount => 0;
+
+  @override
+  bool get canCreateCustomExercise => true;
+
+  @override
+  Future<void> loadLibrary() async {}
+
+  @override
+  List<dynamic> searchExercises({
+    String query = '',
+    MuscleGroup? muscleGroup,
+    ExerciseType? exerciseType,
+  }) =>
+      [];
+
+  @override
+  List<dynamic> getExercisesByMuscleGroup(MuscleGroup muscleGroup) => [];
+
+  @override
+  List<dynamic> getExercisesByType(ExerciseType exerciseType) => [];
+
+  @override
+  Future<String?> createCustomExercise({
+    required String name,
+    required ExerciseType exerciseType,
+    required List<MuscleGroup> primaryMuscles,
+    List<MuscleGroup> secondaryMuscles = const [],
+  }) async =>
+      'mock_id';
+
+  @override
+  Future<bool> updateCustomExercise(CustomExercise exercise) async => true;
+
+  @override
+  Future<bool> deleteCustomExercise(String exerciseId) async => true;
+
+  @override
+  bool isNameAvailable(String name, {String? excludeId}) => true;
+
+  @override
+  CustomExercise? getCustomExerciseById(String id) => null;
+
+  @override
+  LibraryExercise? getLibraryExerciseById(String id) => null;
+
+  @override
+  void cancelSubscriptions() {}
+}
 
 @GenerateMocks([ThemeProvider])
 void main() {
@@ -32,8 +106,15 @@ void main() {
 
     Widget createTestApp() {
       return MaterialApp(
-        home: ChangeNotifierProvider<ThemeProvider>.value(
-          value: mockThemeProvider,
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ThemeProvider>.value(
+              value: mockThemeProvider,
+            ),
+            ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+              value: MockExerciseLibraryProvider(),
+            ),
+          ],
           child: const SettingsScreen(),
         ),
       );
@@ -190,8 +271,15 @@ void main() {
         // Act - Initial render
         await tester.pumpWidget(
           MaterialApp(
-            home: ChangeNotifierProvider<ThemeProvider>.value(
-              value: realThemeProvider,
+            home: MultiProvider(
+              providers: [
+                ChangeNotifierProvider<ThemeProvider>.value(
+                  value: realThemeProvider,
+                ),
+                ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+                  value: MockExerciseLibraryProvider(),
+                ),
+              ],
               child: const SettingsScreen(),
             ),
           ),
@@ -276,8 +364,15 @@ void main() {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ChangeNotifierProvider<ThemeProvider>.value(
-                          value: mockThemeProvider,
+                        builder: (_) => MultiProvider(
+                          providers: [
+                            ChangeNotifierProvider<ThemeProvider>.value(
+                              value: mockThemeProvider,
+                            ),
+                            ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+                              value: MockExerciseLibraryProvider(),
+                            ),
+                          ],
                           child: const SettingsScreen(),
                         ),
                       ),
@@ -440,8 +535,15 @@ void main() {
         // Act - Initial render
         await tester.pumpWidget(
           MaterialApp(
-            home: ChangeNotifierProvider<ThemeProvider>.value(
-              value: realThemeProvider,
+            home: MultiProvider(
+              providers: [
+                ChangeNotifierProvider<ThemeProvider>.value(
+                  value: realThemeProvider,
+                ),
+                ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+                  value: MockExerciseLibraryProvider(),
+                ),
+              ],
               child: const SettingsScreen(),
             ),
           ),

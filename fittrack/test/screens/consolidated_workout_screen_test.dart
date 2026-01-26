@@ -4,15 +4,88 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:fittrack/screens/workouts/consolidated_workout_screen.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/exercise_library_provider.dart';
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
 import 'package:fittrack/models/cascade_delete_counts.dart';
+import 'package:fittrack/models/library_exercise.dart';
+import 'package:fittrack/models/custom_exercise.dart';
+import 'package:fittrack/models/muscle_group.dart';
 
 import 'create_exercise_screen_test.mocks.dart';
 import '../integration/test_setup_helper.dart';
+
+/// Mock ExerciseLibraryProvider for testing screens that navigate to ExercisePickerScreen
+class MockExerciseLibraryProvider extends ChangeNotifier
+    implements ExerciseLibraryProvider {
+  @override
+  List<LibraryExercise> get libraryExercises => [];
+
+  @override
+  List<CustomExercise> get customExercises => [];
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  bool get isLibraryLoaded => true;
+
+  @override
+  String? get error => null;
+
+  @override
+  int get customExerciseCount => 0;
+
+  @override
+  bool get canCreateCustomExercise => true;
+
+  @override
+  Future<void> loadLibrary() async {}
+
+  @override
+  List<dynamic> searchExercises({
+    String query = '',
+    MuscleGroup? muscleGroup,
+    ExerciseType? exerciseType,
+  }) =>
+      [];
+
+  @override
+  List<dynamic> getExercisesByMuscleGroup(MuscleGroup muscleGroup) => [];
+
+  @override
+  List<dynamic> getExercisesByType(ExerciseType exerciseType) => [];
+
+  @override
+  Future<String?> createCustomExercise({
+    required String name,
+    required ExerciseType exerciseType,
+    required List<MuscleGroup> primaryMuscles,
+    List<MuscleGroup> secondaryMuscles = const [],
+  }) async =>
+      'mock_id';
+
+  @override
+  Future<bool> updateCustomExercise(CustomExercise exercise) async => true;
+
+  @override
+  Future<bool> deleteCustomExercise(String exerciseId) async => true;
+
+  @override
+  bool isNameAvailable(String name, {String? excludeId}) => true;
+
+  @override
+  CustomExercise? getCustomExerciseById(String id) => null;
+
+  @override
+  LibraryExercise? getLibraryExerciseById(String id) => null;
+
+  @override
+  void cancelSubscriptions() {}
+}
 
 @GenerateMocks([ProgramProvider])
 void main() {
@@ -94,6 +167,7 @@ void main() {
     Widget createTestWidget() {
       return TestSetupHelper.createTestAppWithMockedProviders(
         programProvider: mockProvider,
+        exerciseLibraryProvider: MockExerciseLibraryProvider(),
         child: ConsolidatedWorkoutScreen(
           program: testProgram,
           week: testWeek,
@@ -211,8 +285,8 @@ void main() {
       expect(find.text('Squats'), findsOneWidget);
     });
 
-    testWidgets('FAB navigates to create exercise screen', (tester) async {
-      /// Test Purpose: Verify FAB triggers navigation
+    testWidgets('FAB navigates to exercise picker screen', (tester) async {
+      /// Test Purpose: Verify FAB triggers navigation to exercise library picker
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
@@ -223,8 +297,8 @@ void main() {
       await tester.tap(fab);
       await tester.pumpAndSettle();
 
-      // Verify navigation occurred (CreateExerciseScreen should be pushed)
-      expect(find.text('Create Exercise'), findsOneWidget);
+      // Verify navigation occurred (ExercisePickerScreen should be pushed)
+      expect(find.text('Exercise Library'), findsOneWidget);
     });
 
     // Note: Workout notes are not currently displayed in ConsolidatedWorkoutScreen

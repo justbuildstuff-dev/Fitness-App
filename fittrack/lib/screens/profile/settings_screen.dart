@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/exercise_library_provider.dart';
+import 'my_exercises_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -148,6 +150,64 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Exercise Library Section
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Exercise Library',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              // Divider below Exercise Library heading
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Divider(
+                  thickness: 1,
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // My Exercises Card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Consumer<ExerciseLibraryProvider>(
+                  builder: (context, provider, child) {
+                    return Card(
+                      margin: EdgeInsets.zero,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                          child: Icon(
+                            Icons.fitness_center,
+                            color: Theme.of(context).colorScheme.onTertiaryContainer,
+                          ),
+                        ),
+                        title: const Text('My Exercises'),
+                        subtitle: Text(
+                          '${provider.customExerciseCount}/$maxCustomExercises custom exercises',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MyExercisesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
