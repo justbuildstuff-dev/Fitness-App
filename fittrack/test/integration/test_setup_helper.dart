@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 import 'package:mockito/mockito.dart';
 import 'package:fittrack/providers/auth_provider.dart' as app_auth;
 import 'package:fittrack/providers/program_provider.dart';
@@ -34,30 +35,39 @@ class TestSetupHelper {
 
   /// Create a test app wrapper with mocked providers
   /// This prevents real Firebase operations during widget testing
+  ///
+  /// Note: Providers are wrapped around MaterialApp (not inside home)
+  /// so they are available to all routes pushed via Navigator
   static Widget createTestAppWithMockedProviders({
     required Widget child,
     app_auth.AuthProvider? authProvider,
     ProgramProvider? programProvider,
     ExerciseLibraryProvider? exerciseLibraryProvider,
   }) {
-    return MaterialApp(
-      home: MultiProvider(
-        providers: [
-          if (authProvider != null)
-            ChangeNotifierProvider<app_auth.AuthProvider>.value(
-              value: authProvider,
-            ),
-          if (programProvider != null)
-            ChangeNotifierProvider<ProgramProvider>.value(
-              value: programProvider,
-            ),
-          if (exerciseLibraryProvider != null)
-            ChangeNotifierProvider<ExerciseLibraryProvider>.value(
-              value: exerciseLibraryProvider,
-            ),
-        ],
-        child: child,
-      ),
+    final providers = <SingleChildWidget>[
+      if (authProvider != null)
+        ChangeNotifierProvider<app_auth.AuthProvider>.value(
+          value: authProvider,
+        ),
+      if (programProvider != null)
+        ChangeNotifierProvider<ProgramProvider>.value(
+          value: programProvider,
+        ),
+      if (exerciseLibraryProvider != null)
+        ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+          value: exerciseLibraryProvider,
+        ),
+    ];
+
+    // If no providers, just return MaterialApp with child
+    if (providers.isEmpty) {
+      return MaterialApp(home: child);
+    }
+
+    // Wrap MaterialApp with providers so they're available to all routes
+    return MultiProvider(
+      providers: providers,
+      child: MaterialApp(home: child),
     );
   }
 
