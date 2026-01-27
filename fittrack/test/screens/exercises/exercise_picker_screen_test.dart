@@ -348,10 +348,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Bottom sheet should appear with exercise details
-      expect(find.text('Add to Workout'), findsOneWidget);
+      // The button now shows "Add 1 Set to Workout" with set count selector
+      expect(find.text('Add 1 Set to Workout'), findsOneWidget);
       expect(find.text('Library'), findsOneWidget);
       expect(find.text('Strength'), findsOneWidget);
       expect(find.text('Chest'), findsOneWidget);
+      // Check for set count selector
+      expect(find.text('Number of Sets'), findsOneWidget);
     });
   });
 }

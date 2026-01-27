@@ -84,9 +84,10 @@ void main() {
         expect(squat.matchesMuscleGroup(MuscleGroup.legs), true);
       });
 
-      test('should match secondary muscle', () {
-        expect(benchPress.matchesMuscleGroup(MuscleGroup.shoulders), true);
-        expect(benchPress.matchesMuscleGroup(MuscleGroup.arms), true);
+      test('should NOT match secondary muscle (per PRD: primary only)', () {
+        // Per PRD requirements, muscle filter should only match primary muscles
+        expect(benchPress.matchesMuscleGroup(MuscleGroup.shoulders), false);
+        expect(benchPress.matchesMuscleGroup(MuscleGroup.arms), false);
       });
 
       test('should not match unrelated muscle', () {
@@ -155,8 +156,9 @@ void main() {
         expect(customExercise.matchesMuscleGroup(MuscleGroup.chest), true);
       });
 
-      test('should match secondary muscle', () {
-        expect(customExercise.matchesMuscleGroup(MuscleGroup.shoulders), true);
+      test('should NOT match secondary muscle (per PRD: primary only)', () {
+        // Per PRD requirements, muscle filter should only match primary muscles
+        expect(customExercise.matchesMuscleGroup(MuscleGroup.shoulders), false);
       });
     });
 

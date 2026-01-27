@@ -295,8 +295,9 @@ void main() {
         expect(sampleExercise.matchesMuscleGroup(MuscleGroup.chest), true);
       });
 
-      test('should match secondary muscle group', () {
-        expect(sampleExercise.matchesMuscleGroup(MuscleGroup.shoulders), true);
+      test('should NOT match secondary muscle group (per PRD: primary only)', () {
+        // Per PRD requirements, muscle filter should only match primary muscles
+        expect(sampleExercise.matchesMuscleGroup(MuscleGroup.shoulders), false);
       });
 
       test('should return true for null filter', () {

@@ -12,9 +12,14 @@ class CustomExerciseFormScreen extends StatefulWidget {
   /// The exercise to edit, or null if creating a new exercise
   final CustomExercise? exercise;
 
+  /// If true, return exercise data (name, type) when created instead of just success bool.
+  /// Used when called from exercise picker to add the exercise to a workout.
+  final bool returnExerciseData;
+
   const CustomExerciseFormScreen({
     super.key,
     this.exercise,
+    this.returnExerciseData = false,
   });
 
   @override
@@ -414,7 +419,17 @@ class _CustomExerciseFormScreenState extends State<CustomExerciseFormScreen> {
               behavior: SnackBarBehavior.floating,
             ),
           );
-          Navigator.of(context).pop(true); // Return success
+          // Return exercise data if requested (for adding to workout)
+          if (widget.returnExerciseData && !_isEditing) {
+            Navigator.of(context).pop(<String, dynamic>{
+              'name': _nameController.text.trim(),
+              'exerciseType': _selectedType,
+              'isLibrary': false,
+              'sourceId': null, // Custom exercise was just created
+            });
+          } else {
+            Navigator.of(context).pop(true); // Return success
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
