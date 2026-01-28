@@ -9,6 +9,8 @@ class ExerciseCard extends StatefulWidget {
   final Exercise exercise;
   final List<ExerciseSet> sets;
   final bool isReorderEnabled;
+  /// The index of this card in the list - required for ReorderableDragStartListener
+  final int index;
   final VoidCallback? onAddSet;
   final VoidCallback? onEditName;
   final VoidCallback? onDelete;
@@ -20,6 +22,7 @@ class ExerciseCard extends StatefulWidget {
     required this.exercise,
     required this.sets,
     this.isReorderEnabled = true,
+    this.index = 0,
     this.onAddSet,
     this.onEditName,
     this.onDelete,
@@ -51,6 +54,20 @@ class _ExerciseCardState extends State<ExerciseCard> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
+                  // Drag handle (visible when reordering is enabled)
+                  if (widget.isReorderEnabled)
+                    ReorderableDragStartListener(
+                      index: widget.index,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Icon(
+                          Icons.drag_handle,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                          size: 24,
+                        ),
+                      ),
+                    ),
+
                   // Exercise type icon
                   Icon(
                     _getExerciseTypeIcon(widget.exercise.exerciseType),

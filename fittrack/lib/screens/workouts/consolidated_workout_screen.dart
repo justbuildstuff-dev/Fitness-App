@@ -199,7 +199,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: exercises.length,
-      buildDefaultDragHandles: true, // Let ReorderableListView handle drag handles
+      buildDefaultDragHandles: false, // We use custom visible drag handles in ExerciseCard
       physics: const AlwaysScrollableScrollPhysics(), // Improve scroll performance
       proxyDecorator: (child, index, animation) {
         // Animate the dragged item
@@ -227,7 +227,8 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
           key: ValueKey(exercise.id),
           exercise: exercise,
           sets: sets,
-          isReorderEnabled: true, // Keep showing that reordering is possible
+          isReorderEnabled: true, // Show visible drag handle
+          index: index, // Pass index for ReorderableDragStartListener
           onAddSet: isAddingSet || sets.length >= 10 ? null : () => _addSet(context, exercise),
           onEditName: () => _editExerciseName(context, exercise),
           onDelete: () => _deleteExercise(context, exercise),

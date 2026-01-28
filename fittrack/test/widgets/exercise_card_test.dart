@@ -245,10 +245,35 @@ void main() {
       expect(find.byIcon(Icons.delete), findsAtLeastNWidgets(1));
     });
 
-    // NOTE: Drag handle tests removed
-    // Drag handles are now managed by ReorderableListView.buildDefaultDragHandles
-    // in the parent screen (ConsolidatedWorkoutScreen), not by ExerciseCard itself.
-    // ExerciseCard no longer controls drag handle visibility.
+    testWidgets('shows drag handle when isReorderEnabled is true', (tester) async {
+      /// Test Purpose: Verify drag handle is visible for reordering
+      /// Drag handle should be visible when isReorderEnabled is true
+
+      await tester.pumpWidget(createTestWidget(
+        exercise: testExercise,
+        sets: testSets,
+        isReorderEnabled: true,
+        onUpdateSet: (_) {},
+        onDeleteSet: (_, __) {},
+      ));
+
+      expect(find.byIcon(Icons.drag_handle), findsOneWidget);
+    });
+
+    testWidgets('hides drag handle when isReorderEnabled is false', (tester) async {
+      /// Test Purpose: Verify drag handle is hidden when disabled
+      /// Drag handle should not be visible when isReorderEnabled is false
+
+      await tester.pumpWidget(createTestWidget(
+        exercise: testExercise,
+        sets: testSets,
+        isReorderEnabled: false,
+        onUpdateSet: (_) {},
+        onDeleteSet: (_, __) {},
+      ));
+
+      expect(find.byIcon(Icons.drag_handle), findsNothing);
+    });
 
     testWidgets('calls onAddSet when Add button tapped', (tester) async {
       /// Test Purpose: Verify onAddSet callback is triggered
