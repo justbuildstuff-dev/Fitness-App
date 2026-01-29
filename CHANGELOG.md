@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-30
+
+### Added
+- **Exercise Library** - Pre-built library of 128 exercises organized by muscle group (#259)
+  - Browse exercises by muscle group (Chest, Back, Shoulders, Arms, Legs, Core)
+  - Filter by exercise type (Strength, Bodyweight)
+  - Filter by source (All, Library, My Exercises)
+  - Search exercises by name with real-time filtering
+  - View exercise details including primary and secondary muscle groups
+  - One-tap add exercises to workouts with set count selector (1-10 sets)
+  - Bundled JSON data for offline-first experience
+- **Custom Exercises** - Create and manage personal exercises (#259)
+  - Create up to 20 custom exercises per user
+  - Name, exercise type, and muscle group configuration
+  - Edit and delete custom exercises from My Exercises screen
+  - Custom exercises appear alongside library exercises in search
+  - Firestore storage with per-user data isolation
+- **My Exercises Screen** - Manage custom exercises from Settings
+  - View all custom exercises with edit/delete options
+  - Navigate to create new custom exercises
+  - Usage count display (how many workouts use each exercise)
+- **Exercise Picker Screen** - Unified exercise selection interface
+  - Combined search across library and custom exercises
+  - Filter chips for muscle group, exercise type, and source
+  - Exercise detail bottom sheet with muscle group info
+  - Set count selector before adding to workout
+  - "Create Custom" button for quick custom exercise creation
+
+### Changed
+- Workout screen now uses Exercise Picker for adding exercises
+- Exercise cards display visible drag handle for reordering
+- Improved exercise type icons (Strength, Bodyweight, Cardio, Time-based, Custom)
+
+### Fixed
+- #302 - Firestore permission denied for custom exercises (rules deployed)
+- #303 - Create Custom button navigation now works correctly
+- #304 - Set count selector added when adding exercises to workout
+- #305 - Muscle filter now only matches primary muscles per PRD
+- #306 - Exercise card drag handle now visible for reordering
+- #311 - Set row excessive right padding removed
+- #312 - Added "My Exercises" filter option in Exercise Picker
+
+### Technical
+- Added `MuscleGroup` enum with 6 muscle groups
+- Added `LibraryExercise` model for bundled exercises
+- Added `CustomExercise` model for user-created exercises
+- Added `ExerciseLibraryProvider` for unified exercise management
+- Added Firestore security rules for `customExercises` collection
+- 128 exercises bundled in `assets/exercise_library.json`
+- Comprehensive test coverage (unit, widget, integration tests)
+
 ## [1.2.0] - 2026-01-21
 
 ### Added
