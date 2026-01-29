@@ -156,7 +156,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
           if (_isExpanded) ...[
             const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 48, 12), // Increased right padding to 48px for drag handle clearance
+              padding: const EdgeInsets.all(12), // Standard padding - drag handle is now in header
               child: Column(
                 children: [
                   // Set rows
