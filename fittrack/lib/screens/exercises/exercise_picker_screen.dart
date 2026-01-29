@@ -7,6 +7,24 @@ import '../../models/muscle_group.dart';
 import '../../models/exercise.dart';
 import 'custom_exercise_form_screen.dart';
 
+/// Filter for exercise source (library vs custom)
+enum ExerciseSource {
+  all,
+  library,
+  custom;
+
+  String get displayName {
+    switch (this) {
+      case ExerciseSource.all:
+        return 'All';
+      case ExerciseSource.library:
+        return 'Library';
+      case ExerciseSource.custom:
+        return 'My Exercises';
+    }
+  }
+}
+
 /// A screen for browsing and selecting exercises from the library or custom exercises.
 /// Returns the selected exercise data when the user taps "Add to Workout".
 class ExercisePickerScreen extends StatefulWidget {
@@ -29,6 +47,7 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
   String _searchQuery = '';
   MuscleGroup? _selectedMuscleGroup;
   ExerciseType? _selectedExerciseType;
+  ExerciseSource _selectedSource = ExerciseSource.all;
 
   @override
   void dispose() {
@@ -91,11 +110,22 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
             );
           }
 
-          final searchResults = provider.searchExercises(
+          var searchResults = provider.searchExercises(
             query: _searchQuery,
             muscleGroup: _selectedMuscleGroup,
             exerciseType: _selectedExerciseType,
           );
+
+          // Filter by source if not "All"
+          if (_selectedSource == ExerciseSource.library) {
+            searchResults = searchResults
+                .where((e) => e is LibraryExercise)
+                .toList();
+          } else if (_selectedSource == ExerciseSource.custom) {
+            searchResults = searchResults
+                .where((e) => e is CustomExercise)
+                .toList();
+          }
 
           return Column(
             children: [
@@ -225,6 +255,16 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
               });
             },
           ),
+          const SizedBox(width: 8),
+          // Source filter dropdown (Library vs Custom)
+          _SourceFilterChip(
+            value: _selectedSource,
+            onSelected: (value) {
+              setState(() {
+                _selectedSource = value;
+              });
+            },
+          ),
         ],
       ),
     );
@@ -233,7 +273,8 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
   Widget _buildEmptyState() {
     final hasFilters = _searchQuery.isNotEmpty ||
         _selectedMuscleGroup != null ||
-        _selectedExerciseType != null;
+        _selectedExerciseType != null ||
+        _selectedSource != ExerciseSource.all;
 
     return Center(
       child: Padding(
@@ -284,6 +325,7 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
       _searchQuery = '';
       _selectedMuscleGroup = null;
       _selectedExerciseType = null;
+      _selectedSource = ExerciseSource.all;
     });
   }
 
@@ -482,6 +524,57 @@ class _FilterChipDropdown<T> extends StatelessWidget {
             ? Theme.of(context).colorScheme.primaryContainer
             : null,
         side: value != null
+            ? BorderSide(color: Theme.of(context).colorScheme.primary)
+            : null,
+      ),
+    );
+  }
+}
+
+/// Filter chip specifically for ExerciseSource filtering
+class _SourceFilterChip extends StatelessWidget {
+  final ExerciseSource value;
+  final ValueChanged<ExerciseSource> onSelected;
+
+  const _SourceFilterChip({
+    required this.value,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isFiltered = value != ExerciseSource.all;
+
+    return PopupMenuButton<ExerciseSource>(
+      onSelected: onSelected,
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      itemBuilder: (context) => ExerciseSource.values
+          .map((source) => PopupMenuItem<ExerciseSource>(
+                value: source,
+                child: Text(
+                  source.displayName,
+                  style: TextStyle(
+                    fontWeight:
+                        value == source ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ))
+          .toList(),
+      child: Chip(
+        label: Text(value.displayName),
+        avatar: isFiltered
+            ? Icon(
+                Icons.check,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
+              )
+            : null,
+        backgroundColor:
+            isFiltered ? Theme.of(context).colorScheme.primaryContainer : null,
+        side: isFiltered
             ? BorderSide(color: Theme.of(context).colorScheme.primary)
             : null,
       ),
