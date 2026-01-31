@@ -21,7 +21,7 @@ class TemplateSet {
   /// Creates a TemplateSet from a Map (JSON deserialization)
   factory TemplateSet.fromMap(Map<String, dynamic> map) {
     return TemplateSet(
-      setNumber: map['setNumber'] as int? ?? 1,
+      setNumber: map['setNumber'] as int? ?? 0,
       reps: map['reps'] as int?,
       duration: map['duration'] as int?,
       restTime: map['restTime'] as int?,
@@ -58,22 +58,15 @@ class TemplateSet {
   }
 
   /// Display string for the set template
+  /// Shows "Set X: Y reps" or "Set X: Zs" (duration), prioritizing reps if both exist
   String get displayString {
-    final parts = <String>[];
-
-    if (reps != null) parts.add('$reps reps');
-    if (duration != null) {
-      final minutes = duration! ~/ 60;
-      final seconds = duration! % 60;
-      if (minutes > 0) {
-        parts.add('${minutes}m ${seconds}s');
-      } else {
-        parts.add('${seconds}s');
-      }
+    if (reps != null) {
+      return 'Set $setNumber: $reps reps';
     }
-    if (restTime != null) parts.add('rest: ${restTime}s');
-
-    return parts.isEmpty ? 'Set $setNumber' : parts.join(' × ');
+    if (duration != null) {
+      return 'Set $setNumber: ${duration}s';
+    }
+    return 'Set $setNumber';
   }
 
   @override
