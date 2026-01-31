@@ -39,6 +39,9 @@ class TemplateProvider extends ChangeNotifier {
   // Error state
   String? _error;
 
+  // Disposed state to prevent notifyListeners after dispose
+  bool _disposed = false;
+
   TemplateProvider(this._userId)
       : _firestoreService = FirestoreService.instance {
     _initialize();
@@ -95,7 +98,7 @@ class TemplateProvider extends ChangeNotifier {
 
     _isLoadingPrebuilt = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       _prebuiltPrograms = await _firestoreService.getPrebuiltPrograms();
@@ -107,7 +110,7 @@ class TemplateProvider extends ChangeNotifier {
       debugPrint('[TemplateProvider] Error loading prebuilt programs: $e');
     } finally {
       _isLoadingPrebuilt = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -133,12 +136,12 @@ class TemplateProvider extends ChangeNotifier {
         _workoutTemplates = templates;
         debugPrint(
             '[TemplateProvider] Loaded ${_workoutTemplates.length} workout templates');
-        notifyListeners();
+        _safeNotifyListeners();
       },
       onError: (e) {
         _error = 'Failed to load workout templates: $e';
         debugPrint('[TemplateProvider] Error loading workout templates: $e');
-        notifyListeners();
+        _safeNotifyListeners();
       },
     );
   }
@@ -152,12 +155,12 @@ class TemplateProvider extends ChangeNotifier {
         _weekTemplates = templates;
         debugPrint(
             '[TemplateProvider] Loaded ${_weekTemplates.length} week templates');
-        notifyListeners();
+        _safeNotifyListeners();
       },
       onError: (e) {
         _error = 'Failed to load week templates: $e';
         debugPrint('[TemplateProvider] Error loading week templates: $e');
-        notifyListeners();
+        _safeNotifyListeners();
       },
     );
   }
@@ -171,12 +174,12 @@ class TemplateProvider extends ChangeNotifier {
         _programTemplates = templates;
         debugPrint(
             '[TemplateProvider] Loaded ${_programTemplates.length} program templates');
-        notifyListeners();
+        _safeNotifyListeners();
       },
       onError: (e) {
         _error = 'Failed to load program templates: $e';
         debugPrint('[TemplateProvider] Error loading program templates: $e');
-        notifyListeners();
+        _safeNotifyListeners();
       },
     );
   }
@@ -194,27 +197,27 @@ class TemplateProvider extends ChangeNotifier {
   }) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     if (!canSaveWorkoutTemplate) {
       _error =
           'Maximum workout templates reached ($maxWorkoutTemplates). Delete a template to save a new one.';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
       _error = 'Template name cannot be empty';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       final template = WorkoutTemplate(
@@ -236,7 +239,7 @@ class TemplateProvider extends ChangeNotifier {
       return null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -249,27 +252,27 @@ class TemplateProvider extends ChangeNotifier {
   }) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     if (!canSaveWeekTemplate) {
       _error =
           'Maximum week templates reached ($maxWeekTemplates). Delete a template to save a new one.';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
       _error = 'Template name cannot be empty';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       final template = WeekTemplate(
@@ -291,7 +294,7 @@ class TemplateProvider extends ChangeNotifier {
       return null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -304,27 +307,27 @@ class TemplateProvider extends ChangeNotifier {
   }) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     if (!canSaveProgramTemplate) {
       _error =
           'Maximum program templates reached ($maxProgramTemplates). Delete a template to save a new one.';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
       _error = 'Template name cannot be empty';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       final template = ProgramTemplate(
@@ -346,7 +349,7 @@ class TemplateProvider extends ChangeNotifier {
       return null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -366,13 +369,13 @@ class TemplateProvider extends ChangeNotifier {
   }) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       // Generate a unique name using SmartCopyNaming if no custom name
@@ -398,7 +401,7 @@ class TemplateProvider extends ChangeNotifier {
       return null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -413,13 +416,13 @@ class TemplateProvider extends ChangeNotifier {
   }) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       // Generate a unique name using SmartCopyNaming if no custom name
@@ -443,7 +446,7 @@ class TemplateProvider extends ChangeNotifier {
       return null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -456,13 +459,13 @@ class TemplateProvider extends ChangeNotifier {
   }) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return null;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       // Generate a unique name using SmartCopyNaming if no custom name
@@ -485,7 +488,7 @@ class TemplateProvider extends ChangeNotifier {
       return null;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -498,13 +501,13 @@ class TemplateProvider extends ChangeNotifier {
   Future<bool> deleteWorkoutTemplate(String templateId) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _firestoreService.deleteWorkoutTemplate(_userId!, templateId);
@@ -516,7 +519,7 @@ class TemplateProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -525,13 +528,13 @@ class TemplateProvider extends ChangeNotifier {
   Future<bool> deleteWeekTemplate(String templateId) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _firestoreService.deleteWeekTemplate(_userId!, templateId);
@@ -543,7 +546,7 @@ class TemplateProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -552,13 +555,13 @@ class TemplateProvider extends ChangeNotifier {
   Future<bool> deleteProgramTemplate(String templateId) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _firestoreService.deleteProgramTemplate(_userId!, templateId);
@@ -570,7 +573,7 @@ class TemplateProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -583,20 +586,20 @@ class TemplateProvider extends ChangeNotifier {
   Future<bool> renameWorkoutTemplate(String templateId, String newName) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     final trimmedName = newName.trim();
     if (trimmedName.isEmpty) {
       _error = 'Template name cannot be empty';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _firestoreService.renameWorkoutTemplate(
@@ -610,7 +613,7 @@ class TemplateProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -619,20 +622,20 @@ class TemplateProvider extends ChangeNotifier {
   Future<bool> renameWeekTemplate(String templateId, String newName) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     final trimmedName = newName.trim();
     if (trimmedName.isEmpty) {
       _error = 'Template name cannot be empty';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _firestoreService.renameWeekTemplate(
@@ -645,7 +648,7 @@ class TemplateProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -654,20 +657,20 @@ class TemplateProvider extends ChangeNotifier {
   Future<bool> renameProgramTemplate(String templateId, String newName) async {
     if (_userId == null || _userId!.isEmpty) {
       _error = 'User not authenticated';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     final trimmedName = newName.trim();
     if (trimmedName.isEmpty) {
       _error = 'Template name cannot be empty';
-      notifyListeners();
+      _safeNotifyListeners();
       return false;
     }
 
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       await _firestoreService.renameProgramTemplate(
@@ -681,7 +684,7 @@ class TemplateProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -728,7 +731,7 @@ class TemplateProvider extends ChangeNotifier {
   /// Clear the error state.
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   // ========================================
@@ -755,7 +758,16 @@ class TemplateProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     cancelSubscriptions();
     super.dispose();
+  }
+
+  /// Safely notify listeners only if not disposed.
+  /// This prevents errors when async operations complete after dispose.
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      _safeNotifyListeners();
+    }
   }
 }
