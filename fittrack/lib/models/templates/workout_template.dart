@@ -87,7 +87,7 @@ class WorkoutTemplate {
   int get exerciseCount => exercises.length;
 
   /// Total number of sets across all exercises
-  int get totalSetCount => exercises.fold(0, (sum, e) => sum + e.setCount);
+  int get totalSetCount => exercises.fold(0, (total, e) => total + e.setCount);
 
   /// Whether this is a user-created template (not pre-built)
   bool get isUserTemplate => !isPrebuilt && userId.isNotEmpty;

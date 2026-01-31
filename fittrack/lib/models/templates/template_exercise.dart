@@ -22,7 +22,7 @@ class TemplateExercise {
   factory TemplateExercise.fromMap(Map<String, dynamic> map) {
     return TemplateExercise(
       name: map['name'] as String? ?? '',
-      exerciseType: ExerciseType.fromString(map['exerciseType'] as String? ?? 'custom'),
+      exerciseType: ExerciseType.fromString(map['exerciseType'] as String? ?? 'strength'),
       orderIndex: map['orderIndex'] as int? ?? 0,
       notes: map['notes'] as String?,
       sets: (map['sets'] as List<dynamic>?)

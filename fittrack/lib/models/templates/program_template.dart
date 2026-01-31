@@ -87,14 +87,14 @@ class ProgramTemplate {
   int get weekCount => weeks.length;
 
   /// Total number of workouts across all weeks
-  int get totalWorkoutCount => weeks.fold(0, (sum, w) => sum + w.workoutCount);
+  int get totalWorkoutCount => weeks.fold(0, (total, w) => total + w.workoutCount);
 
   /// Total number of exercises across all weeks and workouts
   int get totalExerciseCount =>
-      weeks.fold(0, (sum, w) => sum + w.totalExerciseCount);
+      weeks.fold(0, (total, w) => total + w.totalExerciseCount);
 
   /// Total number of sets across all weeks, workouts, and exercises
-  int get totalSetCount => weeks.fold(0, (sum, w) => sum + w.totalSetCount);
+  int get totalSetCount => weeks.fold(0, (total, w) => total + w.totalSetCount);
 
   /// Whether this is a user-created template (not pre-built)
   bool get isUserTemplate => !isPrebuilt && userId.isNotEmpty;

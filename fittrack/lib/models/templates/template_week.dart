@@ -58,10 +58,10 @@ class TemplateWeek {
 
   /// Total number of exercises across all workouts
   int get totalExerciseCount =>
-      workouts.fold(0, (sum, w) => sum + w.exerciseCount);
+      workouts.fold(0, (total, w) => total + w.exerciseCount);
 
   /// Total number of sets across all workouts and exercises
-  int get totalSetCount => workouts.fold(0, (sum, w) => sum + w.totalSetCount);
+  int get totalSetCount => workouts.fold(0, (total, w) => total + w.totalSetCount);
 
   /// Display string showing workout count
   String get displayString =>
