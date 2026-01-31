@@ -767,7 +767,7 @@ class TemplateProvider extends ChangeNotifier {
   /// This prevents errors when async operations complete after dispose.
   void _safeNotifyListeners() {
     if (!_disposed) {
-      _safeNotifyListeners();
+      notifyListeners();
     }
   }
 }
