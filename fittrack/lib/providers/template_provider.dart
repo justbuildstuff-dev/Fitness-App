@@ -758,6 +758,7 @@ class TemplateProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return; // Guard against double-disposal
     _disposed = true;
     cancelSubscriptions();
     super.dispose();
