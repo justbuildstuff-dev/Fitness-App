@@ -1,0 +1,1413 @@
+{
+  "programs": [
+    {
+      "id": "push-pull-legs",
+      "name": "Push Pull Legs",
+      "description": "Classic 6-day split hitting each muscle group twice per week. Ideal for intermediate to advanced lifters looking to maximize muscle growth.",
+      "category": "hypertrophy",
+      "difficulty": "intermediate",
+      "durationWeeks": 4,
+      "order": 1,
+      "isPrebuilt": true,
+      "weeks": [
+        {
+          "name": "Week 1",
+          "order": 0,
+          "workouts": [
+            {
+              "name": "Push A - Chest Focus",
+              "dayOfWeek": 1,
+              "orderIndex": 0,
+              "exercises": [
+                {
+                  "name": "Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 },
+                    { "setNumber": 3, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Incline Dumbbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Cable Fly",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Overhead Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Lateral Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Tricep Pushdown",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pull A - Back Focus",
+              "dayOfWeek": 2,
+              "orderIndex": 1,
+              "exercises": [
+                {
+                  "name": "Barbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 },
+                    { "setNumber": 3, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Lat Pulldown",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Cable Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Face Pull",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Barbell Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 60 },
+                    { "setNumber": 1, "reps": 10, "restTime": 60 },
+                    { "setNumber": 2, "reps": 10, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Hammer Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Legs A - Quad Focus",
+              "dayOfWeek": 3,
+              "orderIndex": 2,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 180 },
+                    { "setNumber": 1, "reps": 8, "restTime": 180 },
+                    { "setNumber": 2, "reps": 8, "restTime": 180 },
+                    { "setNumber": 3, "reps": 8, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Leg Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 120 },
+                    { "setNumber": 1, "reps": 10, "restTime": 120 },
+                    { "setNumber": 2, "reps": 10, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Leg Extension",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Romanian Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 120 },
+                    { "setNumber": 1, "reps": 10, "restTime": 120 },
+                    { "setNumber": 2, "reps": 10, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Leg Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Calf Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 },
+                    { "setNumber": 3, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Push B - Shoulder Focus",
+              "dayOfWeek": 4,
+              "orderIndex": 3,
+              "exercises": [
+                {
+                  "name": "Overhead Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 },
+                    { "setNumber": 3, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Incline Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Lateral Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 },
+                    { "setNumber": 3, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Tricep Dip",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Overhead Tricep Extension",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pull B - Lat Focus",
+              "dayOfWeek": 5,
+              "orderIndex": 4,
+              "exercises": [
+                {
+                  "name": "Pull-up",
+                  "exerciseType": "bodyweight",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Lat Pulldown",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Rear Delt Fly",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Incline Dumbbell Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 60 },
+                    { "setNumber": 1, "reps": 10, "restTime": 60 },
+                    { "setNumber": 2, "reps": 10, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Preacher Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Legs B - Hamstring Focus",
+              "dayOfWeek": 6,
+              "orderIndex": 5,
+              "exercises": [
+                {
+                  "name": "Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 6, "restTime": 180 },
+                    { "setNumber": 1, "reps": 6, "restTime": 180 },
+                    { "setNumber": 2, "reps": 6, "restTime": 180 },
+                    { "setNumber": 3, "reps": 6, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Bulgarian Split Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Leg Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 60 },
+                    { "setNumber": 1, "reps": 10, "restTime": 60 },
+                    { "setNumber": 2, "reps": 10, "restTime": 60 },
+                    { "setNumber": 3, "reps": 10, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Leg Extension",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Hip Thrust",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 90 },
+                    { "setNumber": 1, "reps": 12, "restTime": 90 },
+                    { "setNumber": 2, "reps": 12, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Seated Calf Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 },
+                    { "setNumber": 3, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "upper-lower",
+      "name": "Upper Lower Split",
+      "description": "Efficient 4-day split for balanced development. Perfect for those with limited time who want to train each muscle group twice per week.",
+      "category": "hypertrophy",
+      "difficulty": "beginner",
+      "durationWeeks": 4,
+      "order": 2,
+      "isPrebuilt": true,
+      "weeks": [
+        {
+          "name": "Week 1",
+          "order": 0,
+          "workouts": [
+            {
+              "name": "Upper A - Push Focus",
+              "dayOfWeek": 1,
+              "orderIndex": 0,
+              "exercises": [
+                {
+                  "name": "Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Barbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Overhead Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Lat Pulldown",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Tricep Pushdown",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Lower A - Squat Focus",
+              "dayOfWeek": 2,
+              "orderIndex": 1,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 180 },
+                    { "setNumber": 1, "reps": 8, "restTime": 180 },
+                    { "setNumber": 2, "reps": 8, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Romanian Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 120 },
+                    { "setNumber": 1, "reps": 10, "restTime": 120 },
+                    { "setNumber": 2, "reps": 10, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Leg Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Leg Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Calf Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Upper B - Pull Focus",
+              "dayOfWeek": 4,
+              "orderIndex": 2,
+              "exercises": [
+                {
+                  "name": "Pull-up",
+                  "exerciseType": "bodyweight",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Cable Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Shoulder Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Face Pull",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Hammer Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Lower B - Deadlift Focus",
+              "dayOfWeek": 5,
+              "orderIndex": 3,
+              "exercises": [
+                {
+                  "name": "Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 6, "restTime": 180 },
+                    { "setNumber": 1, "reps": 6, "restTime": 180 },
+                    { "setNumber": 2, "reps": 6, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Bulgarian Split Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Leg Extension",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Hip Thrust",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 90 },
+                    { "setNumber": 1, "reps": 12, "restTime": 90 },
+                    { "setNumber": 2, "reps": 12, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Seated Calf Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "full-body",
+      "name": "Full Body 3-Day",
+      "description": "Beginner-friendly 3-day program that trains the entire body each session. Great for building a solid foundation and maximizing recovery.",
+      "category": "general",
+      "difficulty": "beginner",
+      "durationWeeks": 4,
+      "order": 3,
+      "isPrebuilt": true,
+      "weeks": [
+        {
+          "name": "Week 1",
+          "order": 0,
+          "workouts": [
+            {
+              "name": "Full Body A",
+              "dayOfWeek": 1,
+              "orderIndex": 0,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 180 },
+                    { "setNumber": 1, "reps": 8, "restTime": 180 },
+                    { "setNumber": 2, "reps": 8, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Barbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Overhead Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Romanian Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Plank",
+                  "exerciseType": "time-based",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "duration": 45, "restTime": 60 },
+                    { "setNumber": 1, "duration": 45, "restTime": 60 },
+                    { "setNumber": 2, "duration": 45, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Full Body B",
+              "dayOfWeek": 3,
+              "orderIndex": 1,
+              "exercises": [
+                {
+                  "name": "Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 6, "restTime": 180 },
+                    { "setNumber": 1, "reps": 6, "restTime": 180 },
+                    { "setNumber": 2, "reps": 6, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Incline Dumbbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Lat Pulldown",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Leg Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 120 },
+                    { "setNumber": 1, "reps": 10, "restTime": 120 },
+                    { "setNumber": 2, "reps": 10, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Shoulder Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Tricep Pushdown",
+                  "exerciseType": "strength",
+                  "orderIndex": 6,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Full Body C",
+              "dayOfWeek": 5,
+              "orderIndex": 2,
+              "exercises": [
+                {
+                  "name": "Front Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 180 },
+                    { "setNumber": 1, "reps": 8, "restTime": 180 },
+                    { "setNumber": 2, "reps": 8, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Cable Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Hip Thrust",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 90 },
+                    { "setNumber": 1, "reps": 12, "restTime": 90 },
+                    { "setNumber": 2, "reps": 12, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Lateral Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Face Pull",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Calf Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 6,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stronglifts-5x5",
+      "name": "5x5 Strength",
+      "description": "Classic linear progression strength program focused on compound lifts. Add weight every session for consistent strength gains.",
+      "category": "strength",
+      "difficulty": "beginner",
+      "durationWeeks": 12,
+      "order": 4,
+      "isPrebuilt": true,
+      "weeks": [
+        {
+          "name": "Week 1",
+          "order": 0,
+          "workouts": [
+            {
+              "name": "Workout A",
+              "dayOfWeek": 1,
+              "orderIndex": 0,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Barbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Workout B",
+              "dayOfWeek": 3,
+              "orderIndex": 1,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Overhead Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Workout A",
+              "dayOfWeek": 5,
+              "orderIndex": 2,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Barbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 5, "restTime": 180 },
+                    { "setNumber": 1, "reps": 5, "restTime": 180 },
+                    { "setNumber": 2, "reps": 5, "restTime": 180 },
+                    { "setNumber": 3, "reps": 5, "restTime": 180 },
+                    { "setNumber": 4, "reps": 5, "restTime": 180 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bro-split",
+      "name": "Bro Split",
+      "description": "Classic 5-day bodybuilding split dedicating one day to each major muscle group. Maximum volume per muscle with ample recovery time.",
+      "category": "hypertrophy",
+      "difficulty": "intermediate",
+      "durationWeeks": 4,
+      "order": 5,
+      "isPrebuilt": true,
+      "weeks": [
+        {
+          "name": "Week 1",
+          "order": 0,
+          "workouts": [
+            {
+              "name": "Chest Day",
+              "dayOfWeek": 1,
+              "orderIndex": 0,
+              "exercises": [
+                {
+                  "name": "Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 },
+                    { "setNumber": 3, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Incline Dumbbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Decline Barbell Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Cable Fly",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Pec Deck Machine",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Back Day",
+              "dayOfWeek": 2,
+              "orderIndex": 1,
+              "exercises": [
+                {
+                  "name": "Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 6, "restTime": 180 },
+                    { "setNumber": 1, "reps": 6, "restTime": 180 },
+                    { "setNumber": 2, "reps": 6, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Barbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 },
+                    { "setNumber": 3, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Lat Pulldown",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Cable Row",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Shoulder Day",
+              "dayOfWeek": 3,
+              "orderIndex": 2,
+              "exercises": [
+                {
+                  "name": "Overhead Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 120 },
+                    { "setNumber": 1, "reps": 8, "restTime": 120 },
+                    { "setNumber": 2, "reps": 8, "restTime": 120 },
+                    { "setNumber": 3, "reps": 8, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Dumbbell Shoulder Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Lateral Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 },
+                    { "setNumber": 3, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Rear Delt Fly",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Face Pull",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Shrug",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Arms Day",
+              "dayOfWeek": 4,
+              "orderIndex": 3,
+              "exercises": [
+                {
+                  "name": "Barbell Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Close Grip Bench Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 90 },
+                    { "setNumber": 1, "reps": 10, "restTime": 90 },
+                    { "setNumber": 2, "reps": 10, "restTime": 90 }
+                  ]
+                },
+                {
+                  "name": "Hammer Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Tricep Pushdown",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Preacher Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Overhead Tricep Extension",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Leg Day",
+              "dayOfWeek": 5,
+              "orderIndex": 4,
+              "exercises": [
+                {
+                  "name": "Barbell Squat",
+                  "exerciseType": "strength",
+                  "orderIndex": 0,
+                  "sets": [
+                    { "setNumber": 0, "reps": 8, "restTime": 180 },
+                    { "setNumber": 1, "reps": 8, "restTime": 180 },
+                    { "setNumber": 2, "reps": 8, "restTime": 180 },
+                    { "setNumber": 3, "reps": 8, "restTime": 180 }
+                  ]
+                },
+                {
+                  "name": "Leg Press",
+                  "exerciseType": "strength",
+                  "orderIndex": 1,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 120 },
+                    { "setNumber": 1, "reps": 10, "restTime": 120 },
+                    { "setNumber": 2, "reps": 10, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Romanian Deadlift",
+                  "exerciseType": "strength",
+                  "orderIndex": 2,
+                  "sets": [
+                    { "setNumber": 0, "reps": 10, "restTime": 120 },
+                    { "setNumber": 1, "reps": 10, "restTime": 120 },
+                    { "setNumber": 2, "reps": 10, "restTime": 120 }
+                  ]
+                },
+                {
+                  "name": "Leg Extension",
+                  "exerciseType": "strength",
+                  "orderIndex": 3,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Leg Curl",
+                  "exerciseType": "strength",
+                  "orderIndex": 4,
+                  "sets": [
+                    { "setNumber": 0, "reps": 12, "restTime": 60 },
+                    { "setNumber": 1, "reps": 12, "restTime": 60 },
+                    { "setNumber": 2, "reps": 12, "restTime": 60 }
+                  ]
+                },
+                {
+                  "name": "Calf Raise",
+                  "exerciseType": "strength",
+                  "orderIndex": 5,
+                  "sets": [
+                    { "setNumber": 0, "reps": 15, "restTime": 60 },
+                    { "setNumber": 1, "reps": 15, "restTime": 60 },
+                    { "setNumber": 2, "reps": 15, "restTime": 60 },
+                    { "setNumber": 3, "reps": 15, "restTime": 60 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
