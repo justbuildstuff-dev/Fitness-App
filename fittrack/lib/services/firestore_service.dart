@@ -6,11 +6,13 @@ import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
 import '../models/cascade_delete_counts.dart';
+import '../models/templates/templates.dart';
 import '../converters/program_converter.dart';
 import '../converters/week_converter.dart';
 import '../converters/workout_converter.dart';
 import '../converters/exercise_converter.dart';
 import '../converters/exercise_set_converter.dart';
+import '../converters/template_converters.dart';
 import '../utils/smart_copy_naming.dart';
 
 class FirestoreService {
@@ -1655,5 +1657,582 @@ class FirestoreService {
     }
     
     await batch.commit();
+  }
+
+  // ========================================
+  // TEMPLATE OPERATIONS
+  // ========================================
+
+  /// Get pre-built program templates (server-side templates)
+  /// Uses serverAndCache for offline support
+  Future<List<ProgramTemplate>> getPrebuiltPrograms() async {
+    try {
+      final snapshot = await _firestore
+          .collection('prebuiltPrograms')
+          .orderBy('order')
+          .get(const GetOptions(source: Source.serverAndCache));
+
+      return snapshot.docs
+          .map((doc) => ProgramTemplateConverter.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching prebuilt programs: $e');
+      // Try cache-only if server fails
+      try {
+        final snapshot = await _firestore
+            .collection('prebuiltPrograms')
+            .orderBy('order')
+            .get(const GetOptions(source: Source.cache));
+
+        return snapshot.docs
+            .map((doc) => ProgramTemplateConverter.fromFirestore(doc))
+            .toList();
+      } catch (cacheError) {
+        debugPrint('Cache fallback also failed: $cacheError');
+        return [];
+      }
+    }
+  }
+
+  // ----------------------------------------
+  // WORKOUT TEMPLATE CRUD
+  // ----------------------------------------
+
+  /// Stream of user's workout templates
+  Stream<List<WorkoutTemplate>> getUserWorkoutTemplates(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workoutTemplates')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => WorkoutTemplateConverter.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Save a workout template (create or update)
+  Future<String> saveWorkoutTemplate(WorkoutTemplate template) async {
+    final docRef = template.id.isEmpty
+        ? _firestore
+            .collection('users')
+            .doc(template.userId)
+            .collection('workoutTemplates')
+            .doc()
+        : _firestore
+            .collection('users')
+            .doc(template.userId)
+            .collection('workoutTemplates')
+            .doc(template.id);
+
+    await docRef.set(WorkoutTemplateConverter.toFirestore(template));
+    return docRef.id;
+  }
+
+  /// Delete a workout template
+  Future<void> deleteWorkoutTemplate(String userId, String templateId) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workoutTemplates')
+        .doc(templateId)
+        .delete();
+  }
+
+  /// Rename a workout template
+  Future<void> renameWorkoutTemplate(
+    String userId,
+    String templateId,
+    String newName,
+  ) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workoutTemplates')
+        .doc(templateId)
+        .update({'name': newName});
+  }
+
+  // ----------------------------------------
+  // WEEK TEMPLATE CRUD
+  // ----------------------------------------
+
+  /// Stream of user's week templates
+  Stream<List<WeekTemplate>> getUserWeekTemplates(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('weekTemplates')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => WeekTemplateConverter.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Save a week template (create or update)
+  Future<String> saveWeekTemplate(WeekTemplate template) async {
+    final docRef = template.id.isEmpty
+        ? _firestore
+            .collection('users')
+            .doc(template.userId)
+            .collection('weekTemplates')
+            .doc()
+        : _firestore
+            .collection('users')
+            .doc(template.userId)
+            .collection('weekTemplates')
+            .doc(template.id);
+
+    await docRef.set(WeekTemplateConverter.toFirestore(template));
+    return docRef.id;
+  }
+
+  /// Delete a week template
+  Future<void> deleteWeekTemplate(String userId, String templateId) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('weekTemplates')
+        .doc(templateId)
+        .delete();
+  }
+
+  /// Rename a week template
+  Future<void> renameWeekTemplate(
+    String userId,
+    String templateId,
+    String newName,
+  ) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('weekTemplates')
+        .doc(templateId)
+        .update({'name': newName});
+  }
+
+  // ----------------------------------------
+  // PROGRAM TEMPLATE CRUD
+  // ----------------------------------------
+
+  /// Stream of user's program templates
+  Stream<List<ProgramTemplate>> getUserProgramTemplates(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programTemplates')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ProgramTemplateConverter.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Save a program template (create or update)
+  Future<String> saveProgramTemplate(ProgramTemplate template) async {
+    final docRef = template.id.isEmpty
+        ? _firestore
+            .collection('users')
+            .doc(template.userId)
+            .collection('programTemplates')
+            .doc()
+        : _firestore
+            .collection('users')
+            .doc(template.userId)
+            .collection('programTemplates')
+            .doc(template.id);
+
+    await docRef.set(ProgramTemplateConverter.toFirestore(template));
+    return docRef.id;
+  }
+
+  /// Delete a program template
+  Future<void> deleteProgramTemplate(String userId, String templateId) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programTemplates')
+        .doc(templateId)
+        .delete();
+  }
+
+  /// Rename a program template
+  Future<void> renameProgramTemplate(
+    String userId,
+    String templateId,
+    String newName,
+  ) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programTemplates')
+        .doc(templateId)
+        .update({'name': newName});
+  }
+
+  // ----------------------------------------
+  // TEMPLATE APPLICATION (Deep Copy)
+  // ----------------------------------------
+
+  /// Create a workout from a workout template
+  /// Applies template structure to create real workout with exercises and sets
+  Future<String> createWorkoutFromTemplate({
+    required WorkoutTemplate template,
+    required String workoutName,
+    required String weekId,
+    required String programId,
+    required String userId,
+    int? orderIndex,
+  }) async {
+    const batchLimit = 450;
+    WriteBatch batch = _firestore.batch();
+    int batchCount = 0;
+    final List<Future<void>> pendingCommits = [];
+
+    Future<void> commitBatchIfNeeded() async {
+      if (batchCount == 0) return;
+      pendingCommits.add(batch.commit());
+      batch = _firestore.batch();
+      batchCount = 0;
+    }
+
+    void addToBatch(DocumentReference ref, Map<String, dynamic> data) {
+      batch.set(ref, data);
+      batchCount++;
+    }
+
+    try {
+      // Create the workout document
+      final workoutRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .doc();
+
+      final workoutData = {
+        'name': workoutName,
+        'orderIndex': orderIndex ?? 0,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'programId': programId,
+        'weekId': weekId,
+      };
+
+      addToBatch(workoutRef, workoutData);
+
+      // Create exercises from template
+      for (final templateExercise in template.exercises) {
+        final exerciseRef = workoutRef.collection('exercises').doc();
+        final exerciseData = {
+          'name': templateExercise.name,
+          'exerciseType': templateExercise.exerciseType.toMap(),
+          'orderIndex': templateExercise.orderIndex,
+          'notes': templateExercise.notes,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'userId': userId,
+          'programId': programId,
+          'weekId': weekId,
+          'workoutId': workoutRef.id,
+        };
+
+        addToBatch(exerciseRef, exerciseData);
+        if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+        // Create sets from template (reset weight/distance/checked)
+        for (final templateSet in templateExercise.sets) {
+          final setRef = exerciseRef.collection('sets').doc();
+          final setData = {
+            'setNumber': templateSet.setNumber,
+            'reps': templateSet.reps,
+            'duration': templateSet.duration,
+            'restTime': templateSet.restTime,
+            'notes': templateSet.notes,
+            // Always reset tracking values when applying template
+            'weight': null,
+            'distance': null,
+            'checked': false,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'userId': userId,
+            'programId': programId,
+            'weekId': weekId,
+            'workoutId': workoutRef.id,
+            'exerciseId': exerciseRef.id,
+          };
+
+          addToBatch(setRef, setData);
+          if (batchCount >= batchLimit) await commitBatchIfNeeded();
+        }
+      }
+
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+
+      return workoutRef.id;
+    } catch (e) {
+      throw Exception('Failed to create workout from template: $e');
+    }
+  }
+
+  /// Create a week from a week template
+  /// Applies template structure to create real week with workouts, exercises, and sets
+  Future<String> createWeekFromTemplate({
+    required WeekTemplate template,
+    required String weekName,
+    required int order,
+    required String programId,
+    required String userId,
+  }) async {
+    const batchLimit = 450;
+    WriteBatch batch = _firestore.batch();
+    int batchCount = 0;
+    final List<Future<void>> pendingCommits = [];
+
+    Future<void> commitBatchIfNeeded() async {
+      if (batchCount == 0) return;
+      pendingCommits.add(batch.commit());
+      batch = _firestore.batch();
+      batchCount = 0;
+    }
+
+    void addToBatch(DocumentReference ref, Map<String, dynamic> data) {
+      batch.set(ref, data);
+      batchCount++;
+    }
+
+    try {
+      // Create the week document
+      final weekRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc();
+
+      final weekData = {
+        'name': weekName,
+        'order': order,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'programId': programId,
+      };
+
+      addToBatch(weekRef, weekData);
+
+      // Create workouts from template
+      for (final templateWorkout in template.workouts) {
+        final workoutRef = weekRef.collection('workouts').doc();
+        final workoutData = {
+          'name': templateWorkout.name,
+          'dayOfWeek': templateWorkout.dayOfWeek,
+          'orderIndex': templateWorkout.orderIndex,
+          'notes': templateWorkout.notes,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'userId': userId,
+          'programId': programId,
+          'weekId': weekRef.id,
+        };
+
+        addToBatch(workoutRef, workoutData);
+        if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+        // Create exercises from template
+        for (final templateExercise in templateWorkout.exercises) {
+          final exerciseRef = workoutRef.collection('exercises').doc();
+          final exerciseData = {
+            'name': templateExercise.name,
+            'exerciseType': templateExercise.exerciseType.toMap(),
+            'orderIndex': templateExercise.orderIndex,
+            'notes': templateExercise.notes,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'userId': userId,
+            'programId': programId,
+            'weekId': weekRef.id,
+            'workoutId': workoutRef.id,
+          };
+
+          addToBatch(exerciseRef, exerciseData);
+          if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+          // Create sets from template (reset weight/distance/checked)
+          for (final templateSet in templateExercise.sets) {
+            final setRef = exerciseRef.collection('sets').doc();
+            final setData = {
+              'setNumber': templateSet.setNumber,
+              'reps': templateSet.reps,
+              'duration': templateSet.duration,
+              'restTime': templateSet.restTime,
+              'notes': templateSet.notes,
+              'weight': null,
+              'distance': null,
+              'checked': false,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'userId': userId,
+              'programId': programId,
+              'weekId': weekRef.id,
+              'workoutId': workoutRef.id,
+              'exerciseId': exerciseRef.id,
+            };
+
+            addToBatch(setRef, setData);
+            if (batchCount >= batchLimit) await commitBatchIfNeeded();
+          }
+        }
+      }
+
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+
+      return weekRef.id;
+    } catch (e) {
+      throw Exception('Failed to create week from template: $e');
+    }
+  }
+
+  /// Create a program from a program template
+  /// Applies template structure to create real program with weeks, workouts, exercises, and sets
+  Future<String> createProgramFromTemplate({
+    required ProgramTemplate template,
+    required String programName,
+    required String userId,
+  }) async {
+    const batchLimit = 450;
+    WriteBatch batch = _firestore.batch();
+    int batchCount = 0;
+    final List<Future<void>> pendingCommits = [];
+
+    Future<void> commitBatchIfNeeded() async {
+      if (batchCount == 0) return;
+      pendingCommits.add(batch.commit());
+      batch = _firestore.batch();
+      batchCount = 0;
+    }
+
+    void addToBatch(DocumentReference ref, Map<String, dynamic> data) {
+      batch.set(ref, data);
+      batchCount++;
+    }
+
+    try {
+      // Create the program document
+      final programRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc();
+
+      final programData = {
+        'name': programName,
+        'description': template.description,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+      };
+
+      addToBatch(programRef, programData);
+
+      // Create weeks from template
+      for (final templateWeek in template.weeks) {
+        final weekRef = programRef.collection('weeks').doc();
+        final weekData = {
+          'name': templateWeek.name,
+          'order': templateWeek.order,
+          'notes': templateWeek.notes,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'userId': userId,
+          'programId': programRef.id,
+        };
+
+        addToBatch(weekRef, weekData);
+        if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+        // Create workouts from template
+        for (final templateWorkout in templateWeek.workouts) {
+          final workoutRef = weekRef.collection('workouts').doc();
+          final workoutData = {
+            'name': templateWorkout.name,
+            'dayOfWeek': templateWorkout.dayOfWeek,
+            'orderIndex': templateWorkout.orderIndex,
+            'notes': templateWorkout.notes,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'userId': userId,
+            'programId': programRef.id,
+            'weekId': weekRef.id,
+          };
+
+          addToBatch(workoutRef, workoutData);
+          if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+          // Create exercises from template
+          for (final templateExercise in templateWorkout.exercises) {
+            final exerciseRef = workoutRef.collection('exercises').doc();
+            final exerciseData = {
+              'name': templateExercise.name,
+              'exerciseType': templateExercise.exerciseType.toMap(),
+              'orderIndex': templateExercise.orderIndex,
+              'notes': templateExercise.notes,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'userId': userId,
+              'programId': programRef.id,
+              'weekId': weekRef.id,
+              'workoutId': workoutRef.id,
+            };
+
+            addToBatch(exerciseRef, exerciseData);
+            if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+            // Create sets from template (reset weight/distance/checked)
+            for (final templateSet in templateExercise.sets) {
+              final setRef = exerciseRef.collection('sets').doc();
+              final setData = {
+                'setNumber': templateSet.setNumber,
+                'reps': templateSet.reps,
+                'duration': templateSet.duration,
+                'restTime': templateSet.restTime,
+                'notes': templateSet.notes,
+                'weight': null,
+                'distance': null,
+                'checked': false,
+                'createdAt': FieldValue.serverTimestamp(),
+                'updatedAt': FieldValue.serverTimestamp(),
+                'userId': userId,
+                'programId': programRef.id,
+                'weekId': weekRef.id,
+                'workoutId': workoutRef.id,
+                'exerciseId': exerciseRef.id,
+              };
+
+              addToBatch(setRef, setData);
+              if (batchCount >= batchLimit) await commitBatchIfNeeded();
+            }
+          }
+        }
+      }
+
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+
+      return programRef.id;
+    } catch (e) {
+      throw Exception('Failed to create program from template: $e');
+    }
   }
 }

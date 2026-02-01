@@ -170,6 +170,63 @@ service cloud.firestore {
         allow delete: if (isOwner(userId) || isAdmin())
                       && resource.data.userId == request.auth.uid;
       }
+
+      // ---- Workout Templates subcollection ----
+      // User-saved workout templates for quick workout creation
+      match /workoutTemplates/{templateId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+
+        // Create: owner only with validation
+        allow create: if isOwner(userId)
+                      && request.resource.data.userId == request.auth.uid
+                      && validWorkoutTemplate(request.resource.data);
+
+        // Update: owner or admin with validation
+        allow update: if (isOwner(userId) || isAdmin())
+                      && validWorkoutTemplate(request.resource.data);
+
+        // Delete: owner or admin (verify existing document ownership)
+        allow delete: if (isOwner(userId) || isAdmin())
+                      && resource.data.userId == request.auth.uid;
+      }
+
+      // ---- Week Templates subcollection ----
+      // User-saved week templates for quick week creation
+      match /weekTemplates/{templateId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+
+        // Create: owner only with validation
+        allow create: if isOwner(userId)
+                      && request.resource.data.userId == request.auth.uid
+                      && validWeekTemplate(request.resource.data);
+
+        // Update: owner or admin with validation
+        allow update: if (isOwner(userId) || isAdmin())
+                      && validWeekTemplate(request.resource.data);
+
+        // Delete: owner or admin (verify existing document ownership)
+        allow delete: if (isOwner(userId) || isAdmin())
+                      && resource.data.userId == request.auth.uid;
+      }
+
+      // ---- Program Templates subcollection ----
+      // User-saved program templates for quick program creation
+      match /programTemplates/{templateId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+
+        // Create: owner only with validation
+        allow create: if isOwner(userId)
+                      && request.resource.data.userId == request.auth.uid
+                      && validProgramTemplate(request.resource.data);
+
+        // Update: owner or admin with validation
+        allow update: if (isOwner(userId) || isAdmin())
+                      && validProgramTemplate(request.resource.data);
+
+        // Delete: owner or admin (verify existing document ownership)
+        allow delete: if (isOwner(userId) || isAdmin())
+                      && resource.data.userId == request.auth.uid;
+      }
     } // end users
 
     // -----------------------
@@ -277,6 +334,51 @@ service cloud.firestore {
         && (data.userId != null && isString(data.userId))
         && (data.createdAt != null && isTimestamp(data.createdAt))
         && (data.updatedAt != null && isTimestamp(data.updatedAt));
+    }
+
+    // -----------------------
+    // Template Validators
+    // Templates store denormalized exercise/workout/week data
+    // -----------------------
+    function validWorkoutTemplate(data) {
+      return (data.name != null && isString(data.name) && data.name.size() > 0 && data.name.size() <= 100)
+        && (data.description == null || isString(data.description) && data.description.size() <= 500)
+        && (data.exercises != null && data.exercises is list)
+        && (data.userId != null && isString(data.userId))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.isPrebuilt == null || isBoolean(data.isPrebuilt));
+    }
+
+    function validWeekTemplate(data) {
+      return (data.name != null && isString(data.name) && data.name.size() > 0 && data.name.size() <= 100)
+        && (data.description == null || isString(data.description) && data.description.size() <= 500)
+        && (data.workouts != null && data.workouts is list)
+        && (data.userId != null && isString(data.userId))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.isPrebuilt == null || isBoolean(data.isPrebuilt));
+    }
+
+    function validProgramTemplate(data) {
+      return (data.name != null && isString(data.name) && data.name.size() > 0 && data.name.size() <= 100)
+        && (data.description == null || isString(data.description) && data.description.size() <= 500)
+        && (data.weeks != null && data.weeks is list)
+        && (data.userId != null && isString(data.userId))
+        && (data.createdAt != null && isTimestamp(data.createdAt))
+        && (data.isPrebuilt == null || isBoolean(data.isPrebuilt))
+        && (data.category == null || isString(data.category))
+        && (data.difficulty == null || isString(data.difficulty))
+        && (data.durationWeeks == null || isNumber(data.durationWeeks))
+        && (data.order == null || isNumber(data.order));
+    }
+
+    // -----------------------
+    // Pre-built Programs (Admin-managed, read-only for users)
+    // -----------------------
+    match /prebuiltPrograms/{programId} {
+      // All authenticated users can read pre-built programs
+      allow read: if isSignedIn();
+      // No client writes - admin only via Firebase Console/Admin SDK
+      allow write: if false;
     }
 
   } // end match /databases
