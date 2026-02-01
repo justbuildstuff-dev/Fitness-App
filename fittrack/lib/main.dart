@@ -11,6 +11,7 @@ import 'providers/auth_provider.dart' as app_auth;
 import 'providers/program_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/exercise_library_provider.dart';
+import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
@@ -94,6 +95,20 @@ class FitTrackApp extends StatelessWidget {
 
             // Create new instance to ensure proper initialization with userId
             return ExerciseLibraryProvider(userId);
+          },
+        ),
+        ChangeNotifierProxyProvider<app_auth.AuthProvider, TemplateProvider>(
+          create: (_) {
+            debugPrint('[Provider] Creating initial TemplateProvider with null userId');
+            return TemplateProvider(null);
+          },
+          update: (_, authProvider, previousProvider) {
+            final userId = authProvider.user?.uid;
+            debugPrint('[Provider] Updating TemplateProvider with userId: ${userId ?? 'null'}');
+
+            // Create new instance to ensure proper initialization with userId
+            // The provider constructor handles auto-loading data when userId is set
+            return TemplateProvider(userId);
           },
         ),
       ],
