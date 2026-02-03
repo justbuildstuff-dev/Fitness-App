@@ -1,46 +1,38 @@
 # Beta Release Notes Template
 
-<!--
-Instructions: Fill out this template before triggering a beta build.
-The beta build workflow will read this file and include it in Firebase App Distribution.
-After the build completes, clear this file for the next release.
--->
-
-## 📱 Beta Build - [Feature/Fix Name]
+## 📱 Beta Build - Workout Templates & Pre-built Programs
 
 ### Version
-<!-- Example: 1.0.0-beta.3 or 1.0.0-beta.2025-10-13 -->
-**Version:** 1.0.0-beta.X
+**Version:** 1.4.0-beta.1
 
-**Build Date:** YYYY-MM-DD
+**Build Date:** 2026-02-04
 
 ### What's New
-<!-- List all new features, improvements, and bug fixes -->
-✅ Feature/fix 1
-✅ Feature/fix 2
-✅ Feature/fix 3
+✅ **Save as Template**: Save workouts, weeks, and programs as reusable templates (10 each limit)
+✅ **Pre-built Programs**: Browse and use Beginner PPL and Full Body programs to get started quickly
+✅ **Template Picker**: Easy template selection with filtering by source (User/Pre-built)
+✅ **Template Preview**: Preview template contents before using
+✅ **My Templates**: Manage all saved templates with rename and delete options
+✅ **Create from Template**: "From Template" option available when creating programs, weeks, and workouts
 
 ### What to Test
-<!-- Specific testing instructions for QA testers -->
-- [ ] Test scenario 1
-- [ ] Test scenario 2
-- [ ] Test scenario 3
+- [ ] Browse pre-built programs (Beginner PPL, Full Body)
+- [ ] Create a new program from a pre-built template
+- [ ] Save an existing workout as a template
+- [ ] Save an existing week as a template
+- [ ] Save an existing program as a template
+- [ ] Create workout/week/program from user templates
+- [ ] Verify template limits (10 per type)
+- [ ] Rename templates in My Templates screen
+- [ ] Delete templates in My Templates screen
+- [ ] Test offline functionality with cached templates
+- [ ] Verify template previews show correct content summaries
 
 ### Known Issues
-<!-- List any known issues that haven't been fixed yet -->
 - None
 
-OR
-
-- Issue 1: Description and workaround
-- Issue 2: Description and workaround
-
 ### Related Issues
-<!-- Link to GitHub issues/PRs -->
-- Closes #XX
-- Fixes #XX
-- Related to #XX
+- Closes #260 - [Feature] Workout Templates & Pre-built Programs
 
 ### Notes
-<!-- Any additional context or information for testers -->
-(Optional additional notes)
+First beta for user testing of the complete Workout Templates feature. Focus on template save/apply workflows and pre-built program usability.
