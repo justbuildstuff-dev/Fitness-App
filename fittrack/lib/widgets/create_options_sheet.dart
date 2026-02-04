@@ -42,6 +42,7 @@ class CreateOptionsSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet<CreateOption>(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -57,75 +58,77 @@ class CreateOptionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            Text(
-              'Create $itemType',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Choose how you want to create your new ${itemType.toLowerCase()}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withValues(alpha: 0.7),
+                        .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-            ),
-            const SizedBox(height: 24),
+                ),
+              ),
+              const SizedBox(height: 20),
 
-            // Start Fresh option
-            _CreateOptionCard(
-              icon: Icons.add_circle_outline,
-              iconColor: Theme.of(context).colorScheme.primary,
-              title: 'Start Fresh',
-              description: startFreshDescription ??
-                  'Create a blank ${itemType.toLowerCase()} and add content manually',
-              onTap: () => Navigator.of(context).pop(CreateOption.startFresh),
-            ),
-            const SizedBox(height: 12),
+              // Title
+              Text(
+                'Create $itemType',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose how you want to create your new ${itemType.toLowerCase()}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
+                    ),
+              ),
+              const SizedBox(height: 24),
 
-            // From Template option
-            _CreateOptionCard(
-              icon: Icons.dashboard_customize,
-              iconColor: Theme.of(context).colorScheme.tertiary,
-              title: 'From Template',
-              description: fromTemplateDescription ??
-                  'Start with a pre-built or saved template',
-              onTap: templatesAvailable
-                  ? () => Navigator.of(context).pop(CreateOption.fromTemplate)
-                  : null,
-              enabled: templatesAvailable,
-              disabledMessage:
-                  templatesAvailable ? null : 'No templates available',
-            ),
+              // Start Fresh option
+              _CreateOptionCard(
+                icon: Icons.add_circle_outline,
+                iconColor: Theme.of(context).colorScheme.primary,
+                title: 'Start Fresh',
+                description: startFreshDescription ??
+                    'Create a blank ${itemType.toLowerCase()} and add content manually',
+                onTap: () => Navigator.of(context).pop(CreateOption.startFresh),
+              ),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 16),
-          ],
+              // From Template option
+              _CreateOptionCard(
+                icon: Icons.dashboard_customize,
+                iconColor: Theme.of(context).colorScheme.tertiary,
+                title: 'From Template',
+                description: fromTemplateDescription ??
+                    'Start with a pre-built or saved template',
+                onTap: templatesAvailable
+                    ? () => Navigator.of(context).pop(CreateOption.fromTemplate)
+                    : null,
+                enabled: templatesAvailable,
+                disabledMessage:
+                    templatesAvailable ? null : 'No templates available',
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
