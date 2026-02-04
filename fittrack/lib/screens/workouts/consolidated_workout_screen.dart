@@ -2,15 +2,18 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
+import '../../providers/template_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/navigation_section.dart';
+import '../../models/templates/templates.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/exercise_card.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../../widgets/save_as_template_menu_item.dart';
 import '../exercises/exercise_picker_screen.dart';
 
 /// Consolidated workout screen that displays all exercises and their sets inline
@@ -72,12 +75,16 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
+                case MenuActions.saveAsTemplate:
+                  _saveAsTemplate(context);
+                  break;
                 case 'delete':
                   _showDeleteConfirmation(context);
                   break;
               }
             },
             itemBuilder: (context) => [
+              const SaveAsTemplateMenuItem(),
               const PopupMenuItem(
                 value: 'delete',
                 child: ListTile(
@@ -559,6 +566,48 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
         content: Text('Edit workout functionality coming soon!'),
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+
+  void _saveAsTemplate(BuildContext context) {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final exercises = programProvider.exercises;
+
+    // Convert exercises to template format
+    final templateExercises = exercises.map((exercise) {
+      final sets = programProvider.getSetsForExercise(exercise.id);
+      return TemplateExercise(
+        name: exercise.name,
+        exerciseType: exercise.exerciseType,
+        orderIndex: exercise.orderIndex,
+        notes: exercise.notes,
+        sets: sets.map((set) => TemplateSet(
+          setNumber: set.setNumber,
+          reps: set.reps,
+          duration: set.duration,
+          restTime: set.restTime,
+          notes: set.notes,
+        )).toList(),
+      );
+    }).toList();
+
+    SaveAsTemplateHelper.handleSaveAsTemplate(
+      context: context,
+      itemType: 'Workout',
+      itemName: widget.workout.name,
+      itemDescription: widget.workout.notes,
+      onSave: (name, description) async {
+        final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
+        final result = await templateProvider.saveWorkoutAsTemplate(
+          name: name,
+          description: description,
+          exercises: templateExercises,
+        );
+
+        if (result == null && context.mounted) {
+          throw Exception(templateProvider.error ?? 'Failed to save template');
+        }
+      },
     );
   }
 

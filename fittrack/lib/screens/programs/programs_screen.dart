@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
+import '../../providers/template_provider.dart';
 import '../../models/program.dart';
 import '../../models/navigation_section.dart';
+import '../../models/templates/templates.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/error_display.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../../widgets/create_options_sheet.dart';
+import '../templates/template_picker_screen.dart';
+import '../templates/template_preview_sheet.dart';
 import 'program_detail_screen.dart';
 import 'create_program_screen.dart';
 
@@ -111,10 +116,142 @@ class ProgramsScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToCreateProgram(BuildContext context) {
+  void _navigateToCreateProgram(BuildContext context) async {
+    final option = await CreateOptionsSheet.show(
+      context,
+      itemType: 'Program',
+      startFreshDescription: 'Create a blank program and add weeks manually',
+      fromTemplateDescription: 'Start with a pre-built or saved program template',
+    );
+
+    if (option == null || !context.mounted) return;
+
+    if (option == CreateOption.startFresh) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const CreateProgramScreen(),
+        ),
+      );
+    } else if (option == CreateOption.fromTemplate) {
+      _navigateToTemplatePicker(context);
+    }
+  }
+
+  void _navigateToTemplatePicker(BuildContext context) {
+    final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+
+    // Combine pre-built and user templates
+    final allTemplates = [
+      ...templateProvider.prebuiltPrograms,
+      ...templateProvider.programTemplates,
+    ];
+
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const CreateProgramScreen(),
+        builder: (_) => TemplatePickerScreen<ProgramTemplate>(
+          title: 'Select Program Template',
+          templates: allTemplates,
+          isLoading: templateProvider.isLoadingPrebuilt,
+          error: templateProvider.error,
+          isPrebuilt: (template) => template.isPrebuilt,
+          showSourceFilter: true,
+          itemBuilder: (context, template) => ListTile(
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: template.isPrebuilt
+                    ? Theme.of(context).colorScheme.tertiaryContainer
+                    : Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                template.isPrebuilt ? Icons.star : Icons.fitness_center,
+                color: template.isPrebuilt
+                    ? Theme.of(context).colorScheme.tertiary
+                    : Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            title: Text(
+              template.name,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              '${template.weekCount} ${template.weekCount == 1 ? 'week' : 'weeks'} · ${template.totalWorkoutCount} workouts',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+          ),
+          onSelect: (template) async {
+            // Show preview sheet
+            final confirmed = await ProgramTemplatePreviewSheet.show(
+              context,
+              template: template,
+            );
+
+            if (confirmed == true && context.mounted) {
+              // Apply the template
+              final existingNames = programProvider.programs
+                  .map((p) => p.name)
+                  .toList();
+
+              final programId = await templateProvider.applyProgramTemplate(
+                template: template,
+                existingProgramNames: existingNames,
+              );
+
+              if (programId != null && context.mounted) {
+                // Pop back to programs screen
+                Navigator.of(context).pop();
+
+                // Refresh programs list
+                programProvider.loadPrograms();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Program created from "${template.name}"'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(templateProvider.error ?? 'Failed to create program'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            }
+          },
+          emptyStateWidget: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.dashboard_customize,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Templates Available',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Save a program as a template to use it here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
