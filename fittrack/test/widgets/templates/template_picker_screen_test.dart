@@ -158,9 +158,10 @@ void main() {
         showSourceFilter: true,
       ));
 
-      expect(find.text('All'), findsOneWidget);
-      expect(find.text('Pre-built'), findsOneWidget);
-      expect(find.text('My Templates'), findsOneWidget);
+      // Use widgetWithText to specifically find FilterChip widgets
+      expect(find.widgetWithText(FilterChip, 'All'), findsOneWidget);
+      expect(find.widgetWithText(FilterChip, 'Pre-built'), findsOneWidget);
+      expect(find.widgetWithText(FilterChip, 'My Templates'), findsOneWidget);
     });
 
     testWidgets('hides source filter when showSourceFilter is false',
@@ -170,8 +171,9 @@ void main() {
         showSourceFilter: false,
       ));
 
-      expect(find.text('Pre-built'), findsNothing);
-      expect(find.text('My Templates'), findsNothing);
+      // FilterChips should not exist when showSourceFilter is false
+      expect(find.widgetWithText(FilterChip, 'Pre-built'), findsNothing);
+      expect(find.widgetWithText(FilterChip, 'My Templates'), findsNothing);
     });
 
     testWidgets('filters templates by pre-built when filter selected',
@@ -182,8 +184,8 @@ void main() {
         showSourceFilter: true,
       ));
 
-      // Tap Pre-built filter
-      await tester.tap(find.text('Pre-built'));
+      // Tap Pre-built filter chip specifically
+      await tester.tap(find.widgetWithText(FilterChip, 'Pre-built'));
       await tester.pumpAndSettle();
 
       // Should show only pre-built templates

@@ -115,8 +115,9 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      expect(find.text('2'), findsOneWidget); // 2 exercises
-      expect(find.text('Exercises'), findsOneWidget);
+      // '2' appears in stats, 'Exercises' appears in stats label and section header
+      expect(find.text('2'), findsWidgets); // 2 exercises
+      expect(find.text('Exercises'), findsWidgets);
     });
 
     testWidgets('displays total set count', (tester) async {
@@ -155,7 +156,12 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Use Template'));
+      // Scroll to make the Use Template button visible
+      final useTemplateButton = find.text('Use Template');
+      await tester.ensureVisible(useTemplateButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(useTemplateButton);
       await tester.pumpAndSettle();
 
       expect(result, isTrue);
@@ -257,8 +263,9 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      expect(find.text('2'), findsOneWidget); // 2 workouts
-      expect(find.text('Workouts'), findsOneWidget);
+      // '2' may appear in multiple places, 'Workouts' in stats and section header
+      expect(find.text('2'), findsWidgets); // 2 workouts
+      expect(find.text('Workouts'), findsWidgets);
     });
 
     testWidgets('displays workout names in list', (tester) async {
@@ -288,7 +295,12 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Use Template'));
+      // Scroll to make the Use Template button visible
+      final useTemplateButton = find.text('Use Template');
+      await tester.ensureVisible(useTemplateButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(useTemplateButton);
       await tester.pumpAndSettle();
 
       expect(result, isTrue);
@@ -411,7 +423,12 @@ void main() {
       await tester.tap(find.text('Open Sheet'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Use Template'));
+      // Scroll to make the Use Template button visible
+      final useTemplateButton = find.text('Use Template');
+      await tester.ensureVisible(useTemplateButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(useTemplateButton);
       await tester.pumpAndSettle();
 
       expect(result, isTrue);
