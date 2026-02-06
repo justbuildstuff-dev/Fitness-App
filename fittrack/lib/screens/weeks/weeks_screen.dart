@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
+import '../../providers/template_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/navigation_section.dart';
+import '../../models/templates/templates.dart';
+import '../../services/firestore_service.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../../widgets/create_options_sheet.dart';
+import '../templates/template_picker_screen.dart';
+import '../templates/template_preview_sheet.dart';
 import '../workouts/create_workout_screen.dart';
 import '../workouts/consolidated_workout_screen.dart';
 
@@ -49,6 +55,14 @@ class _WeeksScreenState extends State<WeeksScreen> {
                 child: ListTile(
                   leading: Icon(Icons.content_copy),
                   title: Text('Duplicate Week'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'save_as_template',
+                child: ListTile(
+                  leading: Icon(Icons.save_alt),
+                  title: Text('Save as Template'),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -271,22 +285,150 @@ class _WeeksScreenState extends State<WeeksScreen> {
   }
 
   void _navigateToCreateWorkout(BuildContext context) async {
-    final navigator = Navigator.of(context);
+    final option = await CreateOptionsSheet.show(
+      context,
+      itemType: 'Workout',
+      startFreshDescription: 'Create a blank workout and add exercises manually',
+      fromTemplateDescription: 'Start with a saved workout template',
+    );
+
+    if (option == null || !context.mounted) return;
+
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-    
-    final result = await navigator.push<bool>(
+
+    if (option == CreateOption.startFresh) {
+      final result = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => CreateWorkoutScreen(
+            program: widget.program,
+            week: widget.week,
+          ),
+        ),
+      );
+
+      // Refresh workouts list if workout was created
+      if (result == true && mounted) {
+        programProvider.loadWorkouts(widget.program.id, widget.week.id);
+      }
+    } else if (option == CreateOption.fromTemplate) {
+      _navigateToWorkoutTemplatePicker(context);
+    }
+  }
+
+  void _navigateToWorkoutTemplatePicker(BuildContext context) {
+    final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+
+    Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CreateWorkoutScreen(
-          program: widget.program,
-          week: widget.week,
+        builder: (_) => TemplatePickerScreen<WorkoutTemplate>(
+          title: 'Select Workout Template',
+          templates: templateProvider.workoutTemplates,
+          isLoading: templateProvider.isLoading,
+          error: templateProvider.error,
+          showSourceFilter: false, // No pre-built workout templates
+          itemBuilder: (context, template) => ListTile(
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.fitness_center,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            title: Text(
+              template.name,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              '${template.exerciseCount} ${template.exerciseCount == 1 ? 'exercise' : 'exercises'} · ${template.totalSetCount} sets',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+          ),
+          onSelect: (template) async {
+            // Show preview sheet
+            final confirmed = await WorkoutTemplatePreviewSheet.show(
+              context,
+              template: template,
+            );
+
+            if (confirmed == true && context.mounted) {
+              // Get existing workout names for smart naming
+              final existingNames = programProvider.workouts
+                  .map((w) => w.name)
+                  .toList();
+
+              // Get next order index
+              final nextOrder = programProvider.workouts.isEmpty
+                  ? 0
+                  : programProvider.workouts.map((w) => w.orderIndex).reduce((a, b) => a > b ? a : b) + 1;
+
+              final workoutId = await templateProvider.applyWorkoutTemplate(
+                template: template,
+                weekId: widget.week.id,
+                programId: widget.program.id,
+                orderIndex: nextOrder,
+                existingWorkoutNames: existingNames,
+              );
+
+              if (workoutId != null && context.mounted) {
+                // Pop back to weeks screen
+                Navigator.of(context).pop();
+
+                // Refresh workouts list
+                programProvider.loadWorkouts(widget.program.id, widget.week.id);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Workout created from "${template.name}"'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(templateProvider.error ?? 'Failed to create workout'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            }
+          },
+          emptyStateWidget: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.fitness_center,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Workout Templates',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Save a workout as a template to use it here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
-    
-    // Refresh workouts list if workout was created
-    if (result == true && mounted) {
-      programProvider.loadWorkouts(widget.program.id, widget.week.id);
-    }
   }
 
   void _navigateToWorkout(BuildContext context, Workout workout) {
@@ -364,9 +506,215 @@ class _WeeksScreenState extends State<WeeksScreen> {
         // TODO: Navigate to edit week screen
         break;
 
+      case 'save_as_template':
+        _saveWeekAsTemplate(context);
+        break;
+
       case 'delete':
         _showDeleteDialog(context);
         break;
+    }
+  }
+
+  void _saveWeekAsTemplate(BuildContext context) async {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+    final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
+
+    // Workouts should already be loaded since we're on the week screen
+    final workouts = programProvider.workouts;
+
+    if (workouts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No workouts to save as template'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Show loading dialog while building template data
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Build template workouts with exercises and sets
+    final templateWorkouts = <TemplateWorkout>[];
+    final firestoreService = FirestoreService.instance;
+
+    try {
+      for (final workout in workouts) {
+        // Fetch exercises for this workout using stream.first
+        final exercises = await firestoreService.getExercises(
+          programProvider.userId!,
+          widget.program.id,
+          widget.week.id,
+          workout.id,
+        ).first;
+
+        final templateExercises = <TemplateExercise>[];
+
+        for (final exercise in exercises) {
+          // Fetch sets for this exercise using stream.first
+          final sets = await firestoreService.getSets(
+            programProvider.userId!,
+            widget.program.id,
+            widget.week.id,
+            workout.id,
+            exercise.id,
+          ).first;
+
+          templateExercises.add(TemplateExercise(
+            name: exercise.name,
+            exerciseType: exercise.exerciseType,
+            orderIndex: exercise.orderIndex,
+            notes: exercise.notes,
+            sets: sets.map((set) => TemplateSet(
+              setNumber: set.setNumber,
+              reps: set.reps,
+              duration: set.duration,
+              restTime: set.restTime,
+              notes: set.notes,
+            )).toList(),
+          ));
+        }
+
+        templateWorkouts.add(TemplateWorkout(
+          name: workout.name,
+          dayOfWeek: workout.dayOfWeek,
+          orderIndex: workout.orderIndex,
+          notes: workout.notes,
+          exercises: templateExercises,
+        ));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Dismiss loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading workout data: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    // Dismiss loading dialog
+    Navigator.of(context).pop();
+
+    // Show save dialog
+    final nameController = TextEditingController(text: widget.week.name);
+    final descriptionController = TextEditingController(text: widget.week.notes ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.save_alt,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Save as Week Template')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Template Name',
+                    hintText: 'Enter a name for the template',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.text_fields),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                  autofocus: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a template name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Description (Optional)',
+                    hintText: 'Add a description for this template',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.description),
+                    alignLabelWithHint: true,
+                  ),
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(context).pop(true);
+              }
+            },
+            icon: const Icon(Icons.save, size: 18),
+            label: const Text('Save Template'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      final templateId = await templateProvider.saveWeekAsTemplate(
+        name: nameController.text.trim(),
+        description: descriptionController.text.trim().isEmpty
+            ? null
+            : descriptionController.text.trim(),
+        workouts: templateWorkouts,
+      );
+
+      if (templateId != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Week saved as template "${nameController.text.trim()}"'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(templateProvider.error ?? 'Failed to save template'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
