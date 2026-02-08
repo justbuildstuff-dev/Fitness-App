@@ -4,7 +4,6 @@ import '../../providers/auth_provider.dart';
 import '../../models/navigation_section.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import 'settings_screen.dart';
-import 'my_templates_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -93,18 +92,6 @@ class ProfileScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const SettingsScreen(),
-                    ),
-                  );
-                },
-              ),
-              _MenuItem(
-                icon: Icons.dashboard_customize_outlined,
-                title: 'My Templates',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyTemplatesScreen(),
                     ),
                   );
                 },
