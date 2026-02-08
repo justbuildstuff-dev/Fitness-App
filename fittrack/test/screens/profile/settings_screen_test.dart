@@ -97,7 +97,16 @@ class MockTemplateProvider extends ChangeNotifier implements TemplateProvider {
   List<ProgramTemplate> get programTemplates => [];
 
   @override
+  List<ProgramTemplate> get prebuiltPrograms => [];
+
+  @override
   bool get isLoading => false;
+
+  @override
+  bool get isLoadingPrebuilt => false;
+
+  @override
+  bool get isPrebuiltLoaded => true;
 
   @override
   String? get error => null;
@@ -127,6 +136,12 @@ class MockTemplateProvider extends ChangeNotifier implements TemplateProvider {
   void clearError() {}
 
   @override
+  void cancelSubscriptions() {}
+
+  @override
+  Future<void> loadPrebuiltPrograms() async {}
+
+  @override
   Future<String?> saveWorkoutTemplate(WorkoutTemplate template) async => 'mock_id';
 
   @override
@@ -134,6 +149,53 @@ class MockTemplateProvider extends ChangeNotifier implements TemplateProvider {
 
   @override
   Future<String?> saveProgramTemplate(ProgramTemplate template) async => 'mock_id';
+
+  @override
+  Future<String?> saveWorkoutAsTemplate({
+    required String name,
+    String? description,
+    required List<TemplateExercise> exercises,
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> saveWeekAsTemplate({
+    required String name,
+    String? description,
+    required List<TemplateWorkout> workouts,
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> saveProgramAsTemplate({
+    required String name,
+    String? description,
+    required List<TemplateWeek> weeks,
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> applyWorkoutTemplate({
+    required WorkoutTemplate template,
+    required String weekId,
+    required String programId,
+    String? customName,
+    int? orderIndex,
+    List<String> existingWorkoutNames = const [],
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> applyWeekTemplate({
+    required WeekTemplate template,
+    required String programId,
+    required int order,
+    String? customName,
+    List<String> existingWeekNames = const [],
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> applyProgramTemplate({
+    required ProgramTemplate template,
+    String? customName,
+    List<String> existingProgramNames = const [],
+  }) async => 'mock_id';
 
   @override
   Future<bool> deleteWorkoutTemplate(String templateId) async => true;
@@ -161,6 +223,9 @@ class MockTemplateProvider extends ChangeNotifier implements TemplateProvider {
 
   @override
   ProgramTemplate? getProgramTemplateById(String id) => null;
+
+  @override
+  ProgramTemplate? getPrebuiltProgramById(String id) => null;
 
   @override
   void dispose() {}
