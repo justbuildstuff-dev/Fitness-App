@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/exercise_library_provider.dart';
+import '../../providers/template_provider.dart';
 import 'my_exercises_screen.dart';
+import 'my_templates_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -202,6 +204,44 @@ class SettingsScreen extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const MyExercisesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // My Templates Card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Consumer<TemplateProvider>(
+                  builder: (context, provider, child) {
+                    final totalTemplates = provider.workoutTemplateCount +
+                        provider.weekTemplateCount +
+                        provider.programTemplateCount;
+                    return Card(
+                      margin: EdgeInsets.zero,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                          child: Icon(
+                            Icons.dashboard_customize_outlined,
+                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                        title: const Text('My Templates'),
+                        subtitle: Text(
+                          '$totalTemplates saved templates',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MyTemplatesScreen(),
                             ),
                           );
                         },

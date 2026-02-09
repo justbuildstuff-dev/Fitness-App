@@ -7,10 +7,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/screens/profile/settings_screen.dart';
 import 'package:fittrack/providers/theme_provider.dart';
 import 'package:fittrack/providers/exercise_library_provider.dart';
+import 'package:fittrack/providers/template_provider.dart';
 import 'package:fittrack/models/library_exercise.dart';
 import 'package:fittrack/models/custom_exercise.dart';
 import 'package:fittrack/models/muscle_group.dart';
 import 'package:fittrack/models/exercise.dart';
+import 'package:fittrack/models/templates/templates.dart';
 
 import 'settings_screen_test.mocks.dart';
 
@@ -83,6 +85,152 @@ class MockExerciseLibraryProvider extends ChangeNotifier
   void cancelSubscriptions() {}
 }
 
+/// Mock TemplateProvider for settings screen tests
+class MockTemplateProvider extends ChangeNotifier implements TemplateProvider {
+  @override
+  List<WorkoutTemplate> get workoutTemplates => [];
+
+  @override
+  List<WeekTemplate> get weekTemplates => [];
+
+  @override
+  List<ProgramTemplate> get programTemplates => [];
+
+  @override
+  List<ProgramTemplate> get prebuiltPrograms => [];
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  bool get isLoadingPrebuilt => false;
+
+  @override
+  bool get isPrebuiltLoaded => true;
+
+  @override
+  String? get error => null;
+
+  @override
+  int get workoutTemplateCount => 0;
+
+  @override
+  int get weekTemplateCount => 0;
+
+  @override
+  int get programTemplateCount => 0;
+
+  @override
+  bool get canSaveWorkoutTemplate => true;
+
+  @override
+  bool get canSaveWeekTemplate => true;
+
+  @override
+  bool get canSaveProgramTemplate => true;
+
+  @override
+  void initialize(String userId) {}
+
+  @override
+  void clearError() {}
+
+  @override
+  void cancelSubscriptions() {}
+
+  @override
+  Future<void> loadPrebuiltPrograms() async {}
+
+  @override
+  Future<String?> saveWorkoutTemplate(WorkoutTemplate template) async => 'mock_id';
+
+  @override
+  Future<String?> saveWeekTemplate(WeekTemplate template) async => 'mock_id';
+
+  @override
+  Future<String?> saveProgramTemplate(ProgramTemplate template) async => 'mock_id';
+
+  @override
+  Future<String?> saveWorkoutAsTemplate({
+    required String name,
+    String? description,
+    required List<TemplateExercise> exercises,
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> saveWeekAsTemplate({
+    required String name,
+    String? description,
+    required List<TemplateWorkout> workouts,
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> saveProgramAsTemplate({
+    required String name,
+    String? description,
+    required List<TemplateWeek> weeks,
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> applyWorkoutTemplate({
+    required WorkoutTemplate template,
+    required String weekId,
+    required String programId,
+    String? customName,
+    int? orderIndex,
+    List<String> existingWorkoutNames = const [],
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> applyWeekTemplate({
+    required WeekTemplate template,
+    required String programId,
+    required int order,
+    String? customName,
+    List<String> existingWeekNames = const [],
+  }) async => 'mock_id';
+
+  @override
+  Future<String?> applyProgramTemplate({
+    required ProgramTemplate template,
+    String? customName,
+    List<String> existingProgramNames = const [],
+  }) async => 'mock_id';
+
+  @override
+  Future<bool> deleteWorkoutTemplate(String templateId) async => true;
+
+  @override
+  Future<bool> deleteWeekTemplate(String templateId) async => true;
+
+  @override
+  Future<bool> deleteProgramTemplate(String templateId) async => true;
+
+  @override
+  Future<bool> renameWorkoutTemplate(String templateId, String newName) async => true;
+
+  @override
+  Future<bool> renameWeekTemplate(String templateId, String newName) async => true;
+
+  @override
+  Future<bool> renameProgramTemplate(String templateId, String newName) async => true;
+
+  @override
+  WorkoutTemplate? getWorkoutTemplateById(String id) => null;
+
+  @override
+  WeekTemplate? getWeekTemplateById(String id) => null;
+
+  @override
+  ProgramTemplate? getProgramTemplateById(String id) => null;
+
+  @override
+  ProgramTemplate? getPrebuiltProgramById(String id) => null;
+
+  @override
+  void dispose() {}
+}
+
 @GenerateMocks([ThemeProvider])
 void main() {
   group('SettingsScreen', () {
@@ -113,6 +261,9 @@ void main() {
             ),
             ChangeNotifierProvider<ExerciseLibraryProvider>.value(
               value: MockExerciseLibraryProvider(),
+            ),
+            ChangeNotifierProvider<TemplateProvider>.value(
+              value: MockTemplateProvider(),
             ),
           ],
           child: const SettingsScreen(),
@@ -279,6 +430,9 @@ void main() {
                 ChangeNotifierProvider<ExerciseLibraryProvider>.value(
                   value: MockExerciseLibraryProvider(),
                 ),
+                ChangeNotifierProvider<TemplateProvider>.value(
+                  value: MockTemplateProvider(),
+                ),
               ],
               child: const SettingsScreen(),
             ),
@@ -371,6 +525,9 @@ void main() {
                             ),
                             ChangeNotifierProvider<ExerciseLibraryProvider>.value(
                               value: MockExerciseLibraryProvider(),
+                            ),
+                            ChangeNotifierProvider<TemplateProvider>.value(
+                              value: MockTemplateProvider(),
                             ),
                           ],
                           child: const SettingsScreen(),
@@ -542,6 +699,9 @@ void main() {
                 ),
                 ChangeNotifierProvider<ExerciseLibraryProvider>.value(
                   value: MockExerciseLibraryProvider(),
+                ),
+                ChangeNotifierProvider<TemplateProvider>.value(
+                  value: MockTemplateProvider(),
                 ),
               ],
               child: const SettingsScreen(),
