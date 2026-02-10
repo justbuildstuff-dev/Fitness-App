@@ -2153,8 +2153,11 @@ class FirestoreService {
         'userId': userId,
       };
 
+      debugPrint('[FirestoreService] Program data: name=${programData['name']}, userId=${programData['userId']}, description length=${(template.description?.length ?? 0)}');
+
       addToBatch(programRef, programData);
 
+      int weekIndex = 0;
       // Create weeks from template
       for (final templateWeek in template.weeks) {
         final weekRef = programRef.collection('weeks').doc();
@@ -2168,9 +2171,15 @@ class FirestoreService {
           'programId': programRef.id,
         };
 
+        if (weekIndex == 0) {
+          debugPrint('[FirestoreService] First week data: name=${weekData['name']}, order=${weekData['order']}, programId=${weekData['programId']}');
+        }
+        weekIndex++;
+
         addToBatch(weekRef, weekData);
         if (batchCount >= batchLimit) await commitBatchIfNeeded();
 
+        int workoutIndex = 0;
         // Create workouts from template
         for (final templateWorkout in templateWeek.workouts) {
           final workoutRef = weekRef.collection('workouts').doc();
@@ -2185,6 +2194,11 @@ class FirestoreService {
             'programId': programRef.id,
             'weekId': weekRef.id,
           };
+
+          if (weekIndex == 1 && workoutIndex == 0) {
+            debugPrint('[FirestoreService] First workout data: name=${workoutData['name']}, dayOfWeek=${workoutData['dayOfWeek']}, orderIndex=${workoutData['orderIndex']}');
+          }
+          workoutIndex++;
 
           addToBatch(workoutRef, workoutData);
           if (batchCount >= batchLimit) await commitBatchIfNeeded();
