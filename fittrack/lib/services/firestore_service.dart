@@ -2138,22 +2138,43 @@ class FirestoreService {
       // DEBUG: Test each document type individually to find which one fails
       debugPrint('[FirestoreService] === TESTING INDIVIDUAL DOCUMENT WRITES ===');
 
-      // Test 1: Program
+      // Test 1: Program (matching exact format that worked before)
       final testProgramRef = _firestore.collection('users').doc(userId).collection('programs').doc();
       final testProgramData = {
         'name': 'TEST_PROGRAM',
-        'description': template.description,
-        'notes': null,
+        'description': null,  // null description works
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'userId': userId,
+        'isArchived': false,  // include isArchived
       };
       try {
         await testProgramRef.set(testProgramData);
-        debugPrint('[FirestoreService] ✓ TEST 1 PASSED: Program write OK');
+        debugPrint('[FirestoreService] ✓ TEST 1 PASSED: Program write OK (null description)');
       } catch (e) {
         debugPrint('[FirestoreService] ✗ TEST 1 FAILED: Program write - $e');
         throw Exception('Program write failed: $e');
+      }
+
+      // Test 1b: Program with actual description (to test if description is the issue)
+      final testProgram2Ref = _firestore.collection('users').doc(userId).collection('programs').doc();
+      final testProgram2Data = {
+        'name': 'TEST_PROGRAM_WITH_DESC',
+        'description': template.description,  // actual description from template
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'isArchived': false,
+      };
+      try {
+        await testProgram2Ref.set(testProgram2Data);
+        debugPrint('[FirestoreService] ✓ TEST 1b PASSED: Program with description OK (length=${template.description?.length ?? 0})');
+        await testProgram2Ref.delete();
+      } catch (e) {
+        debugPrint('[FirestoreService] ✗ TEST 1b FAILED: Program with description - $e');
+        debugPrint('[FirestoreService] Description value: "${template.description}"');
+        await testProgramRef.delete();
+        throw Exception('Program with description failed: $e');
       }
 
       // Test 2: Week
@@ -2276,13 +2297,13 @@ class FirestoreService {
       final programData = {
         'name': programName,
         'description': template.description,
-        'notes': null,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'userId': userId,
+        'isArchived': false,
       };
 
-      debugPrint('[FirestoreService] Program data: name=${programData['name']}, userId=${programData['userId']}, description length=${(template.description?.length ?? 0)}');
+      debugPrint('[FirestoreService] Program data: name=${programData['name']}, userId=${programData['userId']}, description length=${(template.description?.length ?? 0)}, isArchived=false');
 
       addToBatch(programRef, programData);
 
