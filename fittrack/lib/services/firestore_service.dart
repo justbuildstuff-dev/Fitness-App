@@ -2110,20 +2110,13 @@ class FirestoreService {
     required String programName,
     required String userId,
   }) async {
-    debugPrint('[FirestoreService] createProgramFromTemplate called');
-    debugPrint('[FirestoreService] userId: $userId');
-    debugPrint('[FirestoreService] programName: $programName');
-    debugPrint('[FirestoreService] template has ${template.weeks.length} weeks');
-
     const batchLimit = 450;
     WriteBatch batch = _firestore.batch();
     int batchCount = 0;
     final List<Future<void>> pendingCommits = [];
-    int totalSets = 0;
 
     Future<void> commitBatchIfNeeded() async {
       if (batchCount == 0) return;
-      debugPrint('[FirestoreService] Committing batch with $batchCount operations');
       pendingCommits.add(batch.commit());
       batch = _firestore.batch();
       batchCount = 0;
@@ -2135,164 +2128,12 @@ class FirestoreService {
     }
 
     try {
-      // DEBUG: Test each document type individually to find which one fails
-      debugPrint('[FirestoreService] === TESTING INDIVIDUAL DOCUMENT WRITES ===');
-
-      // Test 1: Program (matching exact format that worked before)
-      final testProgramRef = _firestore.collection('users').doc(userId).collection('programs').doc();
-      final testProgramData = {
-        'name': 'TEST_PROGRAM',
-        'description': null,  // null description works
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'userId': userId,
-        'isArchived': false,  // include isArchived
-      };
-      try {
-        await testProgramRef.set(testProgramData);
-        debugPrint('[FirestoreService] ✓ TEST 1 PASSED: Program write OK (null description)');
-      } catch (e) {
-        debugPrint('[FirestoreService] ✗ TEST 1 FAILED: Program write - $e');
-        throw Exception('Program write failed: $e');
-      }
-
-      // Test 1b: Program with actual description (to test if description is the issue)
-      final testProgram2Ref = _firestore.collection('users').doc(userId).collection('programs').doc();
-      final testProgram2Data = {
-        'name': 'TEST_PROGRAM_WITH_DESC',
-        'description': template.description,  // actual description from template
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'userId': userId,
-        'isArchived': false,
-      };
-      try {
-        await testProgram2Ref.set(testProgram2Data);
-        debugPrint('[FirestoreService] ✓ TEST 1b PASSED: Program with description OK (length=${template.description?.length ?? 0})');
-        await testProgram2Ref.delete();
-      } catch (e) {
-        debugPrint('[FirestoreService] ✗ TEST 1b FAILED: Program with description - $e');
-        debugPrint('[FirestoreService] Description value: "${template.description}"');
-        await testProgramRef.delete();
-        throw Exception('Program with description failed: $e');
-      }
-
-      // Test 2: Week
-      final testWeekRef = testProgramRef.collection('weeks').doc();
-      final testWeekData = {
-        'name': 'TEST_WEEK',
-        'order': 0,
-        'notes': null,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'userId': userId,
-        'programId': testProgramRef.id,
-      };
-      try {
-        await testWeekRef.set(testWeekData);
-        debugPrint('[FirestoreService] ✓ TEST 2 PASSED: Week write OK');
-      } catch (e) {
-        debugPrint('[FirestoreService] ✗ TEST 2 FAILED: Week write - $e');
-        await testProgramRef.delete();
-        throw Exception('Week write failed: $e');
-      }
-
-      // Test 3: Workout
-      final testWorkoutRef = testWeekRef.collection('workouts').doc();
-      final testWorkoutData = {
-        'name': 'TEST_WORKOUT',
-        'dayOfWeek': 1,
-        'orderIndex': 0,
-        'notes': null,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'userId': userId,
-        'programId': testProgramRef.id,
-        'weekId': testWeekRef.id,
-      };
-      try {
-        await testWorkoutRef.set(testWorkoutData);
-        debugPrint('[FirestoreService] ✓ TEST 3 PASSED: Workout write OK');
-      } catch (e) {
-        debugPrint('[FirestoreService] ✗ TEST 3 FAILED: Workout write - $e');
-        await testWeekRef.delete();
-        await testProgramRef.delete();
-        throw Exception('Workout write failed: $e');
-      }
-
-      // Test 4: Exercise
-      final testExerciseRef = testWorkoutRef.collection('exercises').doc();
-      final testExerciseData = {
-        'name': 'TEST_EXERCISE',
-        'exerciseType': 'strength',
-        'orderIndex': 0,
-        'notes': null,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'userId': userId,
-        'programId': testProgramRef.id,
-        'weekId': testWeekRef.id,
-        'workoutId': testWorkoutRef.id,
-      };
-      try {
-        await testExerciseRef.set(testExerciseData);
-        debugPrint('[FirestoreService] ✓ TEST 4 PASSED: Exercise write OK');
-      } catch (e) {
-        debugPrint('[FirestoreService] ✗ TEST 4 FAILED: Exercise write - $e');
-        await testWorkoutRef.delete();
-        await testWeekRef.delete();
-        await testProgramRef.delete();
-        throw Exception('Exercise write failed: $e');
-      }
-
-      // Test 5: Set
-      final testSetRef = testExerciseRef.collection('sets').doc();
-      final testSetData = {
-        'setNumber': 0,
-        'reps': 8,
-        'duration': null,
-        'restTime': 120,
-        'notes': null,
-        'weight': null,
-        'distance': null,
-        'checked': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'userId': userId,
-        'programId': testProgramRef.id,
-        'weekId': testWeekRef.id,
-        'workoutId': testWorkoutRef.id,
-        'exerciseId': testExerciseRef.id,
-      };
-      try {
-        await testSetRef.set(testSetData);
-        debugPrint('[FirestoreService] ✓ TEST 5 PASSED: Set write OK');
-      } catch (e) {
-        debugPrint('[FirestoreService] ✗ TEST 5 FAILED: Set write - $e');
-        await testExerciseRef.delete();
-        await testWorkoutRef.delete();
-        await testWeekRef.delete();
-        await testProgramRef.delete();
-        throw Exception('Set write failed: $e');
-      }
-
-      // Cleanup test documents
-      debugPrint('[FirestoreService] ✓ ALL INDIVIDUAL TESTS PASSED - cleaning up test docs');
-      await testSetRef.delete();
-      await testExerciseRef.delete();
-      await testWorkoutRef.delete();
-      await testWeekRef.delete();
-      await testProgramRef.delete();
-      debugPrint('[FirestoreService] === END INDIVIDUAL TESTS ===');
-
       // Create the program document
       final programRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('programs')
           .doc();
-
-      debugPrint('[FirestoreService] Creating program at path: ${programRef.path}');
 
       final programData = {
         'name': programName,
@@ -2303,11 +2144,8 @@ class FirestoreService {
         'isArchived': false,
       };
 
-      debugPrint('[FirestoreService] Program data: name=${programData['name']}, userId=${programData['userId']}, description length=${(template.description?.length ?? 0)}, isArchived=false');
-
       addToBatch(programRef, programData);
 
-      int weekIndex = 0;
       // Create weeks from template
       for (final templateWeek in template.weeks) {
         final weekRef = programRef.collection('weeks').doc();
@@ -2321,15 +2159,9 @@ class FirestoreService {
           'programId': programRef.id,
         };
 
-        if (weekIndex == 0) {
-          debugPrint('[FirestoreService] First week data: name=${weekData['name']}, order=${weekData['order']}, programId=${weekData['programId']}');
-        }
-        weekIndex++;
-
         addToBatch(weekRef, weekData);
         if (batchCount >= batchLimit) await commitBatchIfNeeded();
 
-        int workoutIndex = 0;
         // Create workouts from template
         for (final templateWorkout in templateWeek.workouts) {
           final workoutRef = weekRef.collection('workouts').doc();
@@ -2344,11 +2176,6 @@ class FirestoreService {
             'programId': programRef.id,
             'weekId': weekRef.id,
           };
-
-          if (weekIndex == 1 && workoutIndex == 0) {
-            debugPrint('[FirestoreService] First workout data: name=${workoutData['name']}, dayOfWeek=${workoutData['dayOfWeek']}, orderIndex=${workoutData['orderIndex']}');
-          }
-          workoutIndex++;
 
           addToBatch(workoutRef, workoutData);
           if (batchCount >= batchLimit) await commitBatchIfNeeded();
@@ -2375,19 +2202,6 @@ class FirestoreService {
             // Create sets from template (reset weight/distance/checked)
             for (final templateSet in templateExercise.sets) {
               final setRef = exerciseRef.collection('sets').doc();
-
-              // Debug: Log set data to trace validation issues
-              totalSets++;
-              if (totalSets <= 5) {
-                debugPrint('[FirestoreService] Set #$totalSets: setNumber=${templateSet.setNumber}, reps=${templateSet.reps}, duration=${templateSet.duration}, restTime=${templateSet.restTime}');
-              }
-
-              // Validate hasMetric locally before sending to Firestore
-              final hasMetric = templateSet.reps != null || templateSet.duration != null;
-              if (!hasMetric) {
-                debugPrint('[FirestoreService] WARNING: Set #$totalSets has no metric (reps or duration)!');
-              }
-
               final setData = {
                 'setNumber': templateSet.setNumber,
                 'reps': templateSet.reps,
@@ -2413,16 +2227,11 @@ class FirestoreService {
         }
       }
 
-      debugPrint('[FirestoreService] Total sets to create: $totalSets');
-      debugPrint('[FirestoreService] Committing all batches...');
-
       await commitBatchIfNeeded();
       await Future.wait(pendingCommits);
 
-      debugPrint('[FirestoreService] ✓ Successfully created program at ${programRef.path}');
       return programRef.id;
     } catch (e) {
-      debugPrint('[FirestoreService] ✗ ERROR creating program: $e');
       throw Exception('Failed to create program from template: $e');
     }
   }

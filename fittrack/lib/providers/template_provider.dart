@@ -457,12 +457,7 @@ class TemplateProvider extends ChangeNotifier {
     String? customName,
     List<String> existingProgramNames = const [],
   }) async {
-    debugPrint('[TemplateProvider] applyProgramTemplate called');
-    debugPrint('[TemplateProvider] userId: $_userId');
-    debugPrint('[TemplateProvider] template: ${template.name} (${template.weekCount} weeks)');
-
     if (_userId == null || _userId!.isEmpty) {
-      debugPrint('[TemplateProvider] ERROR: userId is null or empty');
       _error = 'User not authenticated';
       _safeNotifyListeners();
       return null;
@@ -479,15 +474,12 @@ class TemplateProvider extends ChangeNotifier {
           : SmartCopyNaming.generateCopyName(
               template.name, existingProgramNames);
 
-      debugPrint('[TemplateProvider] Creating program "$programName" for user $_userId');
-
       final programId = await _firestoreService.createProgramFromTemplate(
         template: template,
         programName: programName,
         userId: _userId!,
       );
 
-      debugPrint('[TemplateProvider] Applied program template: $programName');
       return programId;
     } catch (e) {
       _error = 'Failed to apply program template: $e';
