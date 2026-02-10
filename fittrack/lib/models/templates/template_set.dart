@@ -21,12 +21,28 @@ class TemplateSet {
   /// Creates a TemplateSet from a Map (JSON deserialization)
   factory TemplateSet.fromMap(Map<String, dynamic> map) {
     return TemplateSet(
-      setNumber: map['setNumber'] as int? ?? 0,
-      reps: map['reps'] as int?,
-      duration: map['duration'] as int?,
-      restTime: map['restTime'] as int?,
+      setNumber: _parseIntOrDefault(map['setNumber'], 0),
+      reps: _parseIntOrNull(map['reps']),
+      duration: _parseIntOrNull(map['duration']),
+      restTime: _parseIntOrNull(map['restTime']),
       notes: map['notes'] as String?,
     );
+  }
+
+  /// Safely parse a number to int, handling both int and double from Firestore
+  static int? _parseIntOrNull(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return null;
+  }
+
+  /// Safely parse a number to int with a default value
+  static int _parseIntOrDefault(dynamic value, int defaultValue) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return defaultValue;
   }
 
   /// Converts to Map for JSON serialization

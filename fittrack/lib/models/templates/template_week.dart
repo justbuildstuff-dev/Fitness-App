@@ -19,13 +19,21 @@ class TemplateWeek {
   factory TemplateWeek.fromMap(Map<String, dynamic> map) {
     return TemplateWeek(
       name: map['name'] as String? ?? '',
-      order: map['order'] as int? ?? 0,
+      order: _parseIntOrDefault(map['order'], 0),
       notes: map['notes'] as String?,
       workouts: (map['workouts'] as List<dynamic>?)
               ?.map((w) => TemplateWorkout.fromMap(w as Map<String, dynamic>))
               .toList() ??
           [],
     );
+  }
+
+  /// Safely parse a number to int with a default value
+  static int _parseIntOrDefault(dynamic value, int defaultValue) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return defaultValue;
   }
 
   /// Converts to Map for JSON serialization

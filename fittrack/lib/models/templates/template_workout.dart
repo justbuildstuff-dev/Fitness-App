@@ -21,14 +21,30 @@ class TemplateWorkout {
   factory TemplateWorkout.fromMap(Map<String, dynamic> map) {
     return TemplateWorkout(
       name: map['name'] as String? ?? '',
-      dayOfWeek: map['dayOfWeek'] as int?,
-      orderIndex: map['orderIndex'] as int? ?? 0,
+      dayOfWeek: _parseIntOrNull(map['dayOfWeek']),
+      orderIndex: _parseIntOrDefault(map['orderIndex'], 0),
       notes: map['notes'] as String?,
       exercises: (map['exercises'] as List<dynamic>?)
               ?.map((e) => TemplateExercise.fromMap(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
+  }
+
+  /// Safely parse a number to int, handling both int and double from Firestore
+  static int? _parseIntOrNull(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return null;
+  }
+
+  /// Safely parse a number to int with a default value
+  static int _parseIntOrDefault(dynamic value, int defaultValue) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return defaultValue;
   }
 
   /// Converts to Map for JSON serialization

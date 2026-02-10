@@ -23,13 +23,21 @@ class TemplateExercise {
     return TemplateExercise(
       name: map['name'] as String? ?? '',
       exerciseType: ExerciseType.fromString(map['exerciseType'] as String? ?? 'strength'),
-      orderIndex: map['orderIndex'] as int? ?? 0,
+      orderIndex: _parseIntOrDefault(map['orderIndex'], 0),
       notes: map['notes'] as String?,
       sets: (map['sets'] as List<dynamic>?)
               ?.map((s) => TemplateSet.fromMap(s as Map<String, dynamic>))
               .toList() ??
           [],
     );
+  }
+
+  /// Safely parse a number to int with a default value
+  static int _parseIntOrDefault(dynamic value, int defaultValue) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return defaultValue;
   }
 
   /// Converts to Map for JSON serialization

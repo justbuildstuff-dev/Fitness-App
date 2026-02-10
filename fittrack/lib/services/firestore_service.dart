@@ -2110,13 +2110,20 @@ class FirestoreService {
     required String programName,
     required String userId,
   }) async {
+    debugPrint('[FirestoreService] createProgramFromTemplate called');
+    debugPrint('[FirestoreService] userId: $userId');
+    debugPrint('[FirestoreService] programName: $programName');
+    debugPrint('[FirestoreService] template has ${template.weeks.length} weeks');
+
     const batchLimit = 450;
     WriteBatch batch = _firestore.batch();
     int batchCount = 0;
     final List<Future<void>> pendingCommits = [];
+    int totalSets = 0;
 
     Future<void> commitBatchIfNeeded() async {
       if (batchCount == 0) return;
+      debugPrint('[FirestoreService] Committing batch with $batchCount operations');
       pendingCommits.add(batch.commit());
       batch = _firestore.batch();
       batchCount = 0;
@@ -2134,6 +2141,8 @@ class FirestoreService {
           .doc(userId)
           .collection('programs')
           .doc();
+
+      debugPrint('[FirestoreService] Creating program at path: ${programRef.path}');
 
       final programData = {
         'name': programName,
@@ -2202,6 +2211,13 @@ class FirestoreService {
             // Create sets from template (reset weight/distance/checked)
             for (final templateSet in templateExercise.sets) {
               final setRef = exerciseRef.collection('sets').doc();
+
+              // Debug: Log set data to trace validation issues
+              totalSets++;
+              if (totalSets <= 3) {
+                debugPrint('[FirestoreService] Set #$totalSets: reps=${templateSet.reps}, duration=${templateSet.duration}');
+              }
+
               final setData = {
                 'setNumber': templateSet.setNumber,
                 'reps': templateSet.reps,
@@ -2227,11 +2243,16 @@ class FirestoreService {
         }
       }
 
+      debugPrint('[FirestoreService] Total sets to create: $totalSets');
+      debugPrint('[FirestoreService] Committing all batches...');
+
       await commitBatchIfNeeded();
       await Future.wait(pendingCommits);
 
+      debugPrint('[FirestoreService] ✓ Successfully created program at ${programRef.path}');
       return programRef.id;
     } catch (e) {
+      debugPrint('[FirestoreService] ✗ ERROR creating program: $e');
       throw Exception('Failed to create program from template: $e');
     }
   }
