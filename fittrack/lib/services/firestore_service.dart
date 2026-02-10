@@ -2135,6 +2135,30 @@ class FirestoreService {
     }
 
     try {
+      // DEBUG: Test single document write first to verify permissions
+      debugPrint('[FirestoreService] Testing single write to verify permissions...');
+      try {
+        final testRef = _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('programs')
+            .doc();
+
+        await testRef.set({
+          'name': 'TEST_PROGRAM_DELETE_ME',
+          'description': null,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'userId': userId,
+          'isArchived': false,
+        });
+        debugPrint('[FirestoreService] ✓ Single write test PASSED - deleting test doc');
+        await testRef.delete();
+      } catch (testError) {
+        debugPrint('[FirestoreService] ✗ Single write test FAILED: $testError');
+        throw Exception('Single write test failed - user cannot write programs: $testError');
+      }
+
       // Create the program document
       final programRef = _firestore
           .collection('users')
@@ -2228,8 +2252,14 @@ class FirestoreService {
 
               // Debug: Log set data to trace validation issues
               totalSets++;
-              if (totalSets <= 3) {
-                debugPrint('[FirestoreService] Set #$totalSets: reps=${templateSet.reps}, duration=${templateSet.duration}');
+              if (totalSets <= 5) {
+                debugPrint('[FirestoreService] Set #$totalSets: setNumber=${templateSet.setNumber}, reps=${templateSet.reps}, duration=${templateSet.duration}, restTime=${templateSet.restTime}');
+              }
+
+              // Validate hasMetric locally before sending to Firestore
+              final hasMetric = templateSet.reps != null || templateSet.duration != null;
+              if (!hasMetric) {
+                debugPrint('[FirestoreService] WARNING: Set #$totalSets has no metric (reps or duration)!');
               }
 
               final setData = {
