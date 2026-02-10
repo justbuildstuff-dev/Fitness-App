@@ -47,5 +47,6 @@ app.*.map.json
 # Node.js (Firebase admin scripts)
 node_modules/
 package-lock.json
+scripts/package.json
 
 # CI trigger
