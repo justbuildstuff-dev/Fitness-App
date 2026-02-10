@@ -2135,29 +2135,134 @@ class FirestoreService {
     }
 
     try {
-      // DEBUG: Test single document write first to verify permissions
-      debugPrint('[FirestoreService] Testing single write to verify permissions...');
-      try {
-        final testRef = _firestore
-            .collection('users')
-            .doc(userId)
-            .collection('programs')
-            .doc();
+      // DEBUG: Test each document type individually to find which one fails
+      debugPrint('[FirestoreService] === TESTING INDIVIDUAL DOCUMENT WRITES ===');
 
-        await testRef.set({
-          'name': 'TEST_PROGRAM_DELETE_ME',
-          'description': null,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'userId': userId,
-          'isArchived': false,
-        });
-        debugPrint('[FirestoreService] ✓ Single write test PASSED - deleting test doc');
-        await testRef.delete();
-      } catch (testError) {
-        debugPrint('[FirestoreService] ✗ Single write test FAILED: $testError');
-        throw Exception('Single write test failed - user cannot write programs: $testError');
+      // Test 1: Program
+      final testProgramRef = _firestore.collection('users').doc(userId).collection('programs').doc();
+      final testProgramData = {
+        'name': 'TEST_PROGRAM',
+        'description': template.description,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+      };
+      try {
+        await testProgramRef.set(testProgramData);
+        debugPrint('[FirestoreService] ✓ TEST 1 PASSED: Program write OK');
+      } catch (e) {
+        debugPrint('[FirestoreService] ✗ TEST 1 FAILED: Program write - $e');
+        throw Exception('Program write failed: $e');
       }
+
+      // Test 2: Week
+      final testWeekRef = testProgramRef.collection('weeks').doc();
+      final testWeekData = {
+        'name': 'TEST_WEEK',
+        'order': 0,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'programId': testProgramRef.id,
+      };
+      try {
+        await testWeekRef.set(testWeekData);
+        debugPrint('[FirestoreService] ✓ TEST 2 PASSED: Week write OK');
+      } catch (e) {
+        debugPrint('[FirestoreService] ✗ TEST 2 FAILED: Week write - $e');
+        await testProgramRef.delete();
+        throw Exception('Week write failed: $e');
+      }
+
+      // Test 3: Workout
+      final testWorkoutRef = testWeekRef.collection('workouts').doc();
+      final testWorkoutData = {
+        'name': 'TEST_WORKOUT',
+        'dayOfWeek': 1,
+        'orderIndex': 0,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'programId': testProgramRef.id,
+        'weekId': testWeekRef.id,
+      };
+      try {
+        await testWorkoutRef.set(testWorkoutData);
+        debugPrint('[FirestoreService] ✓ TEST 3 PASSED: Workout write OK');
+      } catch (e) {
+        debugPrint('[FirestoreService] ✗ TEST 3 FAILED: Workout write - $e');
+        await testWeekRef.delete();
+        await testProgramRef.delete();
+        throw Exception('Workout write failed: $e');
+      }
+
+      // Test 4: Exercise
+      final testExerciseRef = testWorkoutRef.collection('exercises').doc();
+      final testExerciseData = {
+        'name': 'TEST_EXERCISE',
+        'exerciseType': 'strength',
+        'orderIndex': 0,
+        'notes': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'programId': testProgramRef.id,
+        'weekId': testWeekRef.id,
+        'workoutId': testWorkoutRef.id,
+      };
+      try {
+        await testExerciseRef.set(testExerciseData);
+        debugPrint('[FirestoreService] ✓ TEST 4 PASSED: Exercise write OK');
+      } catch (e) {
+        debugPrint('[FirestoreService] ✗ TEST 4 FAILED: Exercise write - $e');
+        await testWorkoutRef.delete();
+        await testWeekRef.delete();
+        await testProgramRef.delete();
+        throw Exception('Exercise write failed: $e');
+      }
+
+      // Test 5: Set
+      final testSetRef = testExerciseRef.collection('sets').doc();
+      final testSetData = {
+        'setNumber': 0,
+        'reps': 8,
+        'duration': null,
+        'restTime': 120,
+        'notes': null,
+        'weight': null,
+        'distance': null,
+        'checked': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'programId': testProgramRef.id,
+        'weekId': testWeekRef.id,
+        'workoutId': testWorkoutRef.id,
+        'exerciseId': testExerciseRef.id,
+      };
+      try {
+        await testSetRef.set(testSetData);
+        debugPrint('[FirestoreService] ✓ TEST 5 PASSED: Set write OK');
+      } catch (e) {
+        debugPrint('[FirestoreService] ✗ TEST 5 FAILED: Set write - $e');
+        await testExerciseRef.delete();
+        await testWorkoutRef.delete();
+        await testWeekRef.delete();
+        await testProgramRef.delete();
+        throw Exception('Set write failed: $e');
+      }
+
+      // Cleanup test documents
+      debugPrint('[FirestoreService] ✓ ALL INDIVIDUAL TESTS PASSED - cleaning up test docs');
+      await testSetRef.delete();
+      await testExerciseRef.delete();
+      await testWorkoutRef.delete();
+      await testWeekRef.delete();
+      await testProgramRef.delete();
+      debugPrint('[FirestoreService] === END INDIVIDUAL TESTS ===');
 
       // Create the program document
       final programRef = _firestore
