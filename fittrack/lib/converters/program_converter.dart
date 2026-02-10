@@ -23,10 +23,18 @@ class ProgramConverter {
       id: doc.id,
       name: data['name'] ?? '',
       description: data['description'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: _parseTimestamp(data['createdAt']),
+      updatedAt: _parseTimestamp(data['updatedAt']),
       userId: data['userId'] ?? '',
       isArchived: data['isArchived'] ?? false,
     );
+  }
+
+  /// Safely parse a Timestamp, returning current time if null
+  static DateTime _parseTimestamp(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.now();
   }
 }
