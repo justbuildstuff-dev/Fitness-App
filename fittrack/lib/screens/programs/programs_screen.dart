@@ -138,86 +138,85 @@ class ProgramsScreen extends StatelessWidget {
   }
 
   void _navigateToTemplatePicker(BuildContext context) {
-    final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
-    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-
-    // Combine pre-built and user templates
-    final allTemplates = [
-      ...templateProvider.prebuiltPrograms,
-      ...templateProvider.programTemplates,
-    ];
-
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => TemplatePickerScreen<ProgramTemplate>(
-          title: 'Select Program Template',
-          templates: allTemplates,
-          isLoading: templateProvider.isLoadingPrebuilt,
-          error: templateProvider.error,
-          isPrebuilt: (template) => template.isPrebuilt,
-          showSourceFilter: true,
-          itemBuilder: (context, template) => ListTile(
-            leading: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: template.isPrebuilt
-                    ? Theme.of(context).colorScheme.tertiaryContainer
-                    : Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                template.isPrebuilt ? Icons.star : Icons.fitness_center,
-                color: template.isPrebuilt
-                    ? Theme.of(context).colorScheme.tertiary
-                    : Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            title: Text(
-              template.name,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Text(
-              '${template.weekCount} ${template.weekCount == 1 ? 'week' : 'weeks'} · ${template.totalWorkoutCount} workouts',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            trailing: const Icon(Icons.chevron_right),
-          ),
-          onSelect: (template) async {
-            // Show preview sheet
-            final confirmed = await ProgramTemplatePreviewSheet.show(
-              context,
-              template: template,
-            );
+        builder: (_) => Consumer<TemplateProvider>(
+          builder: (context, templateProvider, _) {
+            final allTemplates = [
+              ...templateProvider.prebuiltPrograms,
+              ...templateProvider.programTemplates,
+            ];
 
-            if (confirmed == true && context.mounted) {
-              // Apply the template
-              final existingNames = programProvider.programs
-                  .map((p) => p.name)
-                  .toList();
-
-              final programId = await templateProvider.applyProgramTemplate(
-                template: template,
-                existingProgramNames: existingNames,
-              );
-
-              if (programId != null && context.mounted) {
-                // Pop back to programs screen
-                Navigator.of(context).pop();
-
-                // Refresh programs list
-                programProvider.loadPrograms();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Program created from "${template.name}"'),
-                    behavior: SnackBarBehavior.floating,
+            return TemplatePickerScreen<ProgramTemplate>(
+              title: 'Select Program Template',
+              templates: allTemplates,
+              isLoading: templateProvider.isLoadingPrebuilt,
+              error: templateProvider.error,
+              isPrebuilt: (template) => template.isPrebuilt,
+              showSourceFilter: true,
+              itemBuilder: (context, template) => ListTile(
+                leading: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: template.isPrebuilt
+                        ? Theme.of(context).colorScheme.tertiaryContainer
+                        : Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(
+                    template.isPrebuilt ? Icons.star : Icons.fitness_center,
+                    color: template.isPrebuilt
+                        ? Theme.of(context).colorScheme.tertiary
+                        : Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                title: Text(
+                  template.name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  '${template.weekCount} ${template.weekCount == 1 ? 'week' : 'weeks'} · ${template.totalWorkoutCount} workouts',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing: const Icon(Icons.chevron_right),
+              ),
+              onSelect: (template) async {
+                // Show preview sheet
+                final confirmed = await ProgramTemplatePreviewSheet.show(
+                  context,
+                  template: template,
                 );
-              } else if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+
+                if (confirmed == true && context.mounted) {
+                  final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+                  // Apply the template
+                  final existingNames = programProvider.programs
+                      .map((p) => p.name)
+                      .toList();
+
+                  final programId = await templateProvider.applyProgramTemplate(
+                    template: template,
+                    existingProgramNames: existingNames,
+                  );
+
+                  if (programId != null && context.mounted) {
+                    // Pop back to programs screen
+                    Navigator.of(context).pop();
+
+                    // Refresh programs list
+                    programProvider.loadPrograms();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Program created from "${template.name}"'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  } else if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(templateProvider.error ?? 'Failed to create program'),
                     backgroundColor: Theme.of(context).colorScheme.error,
@@ -251,6 +250,8 @@ class ProgramsScreen extends StatelessWidget {
               ],
             ),
           ),
+            );
+          },
         ),
       ),
     );
