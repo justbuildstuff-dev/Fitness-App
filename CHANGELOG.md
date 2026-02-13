@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-02-13
+
+### Added
+- **Pre-built Program Templates** - Start training faster with ready-made programs (#260)
+  - Browse curated program templates (Push Pull Legs, Upper/Lower, Full Body, etc.)
+  - Preview full program structure before applying (weeks, workouts, exercises, sets)
+  - One-tap program creation from any template
+  - Server-side templates allow new programs without app updates
+  - Offline support with local caching
+- **Save as Template** - Turn your workouts, weeks, and programs into reusable templates (#260)
+  - Save any workout as a template from the workout detail screen
+  - Save weeks and programs as templates from their respective screens
+  - Up to 10 templates per type (workout, week, program)
+  - Custom naming with validation
+- **Template Picker** - Unified template selection experience (#260)
+  - Filter by source: All, Pre-built, My Templates
+  - Preview bottom sheet with full structure breakdown
+  - Template statistics (exercises, sets, workouts, weeks)
+  - Smart copy naming avoids duplicate names
+- **My Templates Screen** - Manage all saved templates from Profile (#260)
+  - Three sections: Workouts, Weeks, Programs
+  - Delete templates with confirmation
+  - Rename templates inline
+  - Template count indicators with limits (10 per type)
+- **Create from Template** - "From Template" option on all create screens (#260)
+  - Programs: Choose between "Start Fresh" or "From Template"
+  - Weeks: Apply week templates with auto-ordering
+  - Workouts: Apply workout templates with exercise and set structure
+
+### Fixed
+- #348 - Permission denied when creating programs from templates (missing `isArchived` field)
+- #348 - Null timestamp crash when loading programs created from templates
+- #348 - Firestore number type conversion errors in template model parsing
+- #348 - Template picker stuck on loading spinner on first visit
+
+### Technical
+- Added `ProgramTemplate`, `WeekTemplate`, `WorkoutTemplate` models with nested template structures
+- Added `TemplateProvider` with real-time stream subscriptions and pre-built program caching
+- Added `TemplatePickerScreen<T>` generic reusable template picker widget
+- Added `TemplatePreviewSheet` bottom sheets for program, week, and workout previews
+- Added `SaveTemplateDialog` with limit enforcement and validation
+- Added template Firestore service methods (CRUD + deep copy application)
+- Added Firestore security rules for `workoutTemplates`, `weekTemplates`, `programTemplates` collections
+- Added pre-built programs seed data in `prebuiltPrograms` Firestore collection
+- Safe number parsing helpers for Firestore double-to-int conversion
+- Null-safe timestamp handling in `ProgramConverter` for optimistic writes
+- Reactive `Consumer<TemplateProvider>` pattern for template picker loading state
+
 ## [1.3.0] - 2026-01-30
 
 ### Added
