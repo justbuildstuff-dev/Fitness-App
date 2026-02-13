@@ -19,8 +19,7 @@ This document defines what documentation exists in the FitTrack project, who cre
 **Purpose:** Define business requirements, user stories, and acceptance criteria
 **Created by:** BA Agent
 **When:** After requirements gathering (BA Phase 2)
-**Location:** Notion "Product Requirements" database
-**Format:** Notion page
+**Location:** `Docs/PRDs/[Feature_Name]_PRD.md`
 
 **Contents:**
 - Business problem statement
@@ -33,7 +32,7 @@ This document defines what documentation exists in the FitTrack project, who cre
 **Lifecycle:**
 - Created: After user confirms requirements
 - Updated: Rarely (requirements should be stable before design)
-- Status transitions: "Requirements Gathering" → "Ready for Design" → "Design Complete" → "In Development" → "Testing" → "QA" → "Deployed"
+- Status tracked via GitHub issue labels
 
 **Linked to:**
 - GitHub Feature Issue (bidirectional link)
@@ -46,15 +45,12 @@ This document defines what documentation exists in the FitTrack project, who cre
 **Purpose:** Define technical architecture, component design, and implementation approach
 **Created by:** SA Agent
 **When:** After PRD approved, before implementation (SA Phase 2)
-**Location:** Hybrid approach:
-- **Summary:** Notion "Technical Designs" database (for tracking/metadata)
-- **Detailed:** `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
+**Location:** `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
 
 **Naming Convention:** `[Feature_Name]_Technical_Design.md`
 - Use PascalCase for multi-word features
 - Example: `Dark_Mode_Technical_Design.md`
-- Example: `Analytics_Stat_Card_Contrast_Fix.md`
-- Example: `Biometric_Authentication_Technical_Design.md`
+- Example: `Exercise_Library_Technical_Design.md`
 
 **Contents:**
 - Current architecture analysis (discovered patterns)
@@ -71,18 +67,15 @@ This document defines what documentation exists in the FitTrack project, who cre
 - Updated:
   - By SA if design changes before implementation
   - By Developer in "Implementation Notes" section (as-built)
-- Status transitions: "In Progress" → "Ready for Review" → "Approved" → "In Development"
 
 **Linked to:**
-- Notion PRD (parent requirement)
+- PRD (parent requirement)
 - GitHub Feature Issue
 - GitHub Task Issues (child tasks)
 
-**Template:** See `.claude/skills/notion_documentation/` for complete template
-
 ---
 
-### 3. Architectural/Framework Documents
+### 3. Architectural Documents
 
 **Purpose:** Document enduring architectural patterns, frameworks, and system design
 **Created by:** SA Agent (initially), any agent (when discovering patterns)
@@ -91,11 +84,6 @@ This document defines what documentation exists in the FitTrack project, who cre
 - When introducing new architectural patterns
 - When documenting discovered patterns for reuse
 
-**Location:** `Docs/Architecture/` or `Docs/Components/`
-
-**Types:**
-
-#### A. Core Architecture Documents
 **Location:** `Docs/Architecture/`
 
 **Naming Convention:** `[Topic].md` (PascalCase)
@@ -104,29 +92,7 @@ This document defines what documentation exists in the FitTrack project, who cre
 - `ArchitectureOverview.md` - Overall system architecture
 - `DataModels.md` - Database schema and Firestore structure
 - `SecurityRules.md` - Firebase security rules implementation
-- `StateManagement.md` - State management patterns (Provider/Riverpod/etc)
-
-#### B. Component Documentation
-**Location:** `Docs/Components/`
-
-**Naming Convention:** `[ComponentName].md` (PascalCase)
-
-**Examples:**
-- `Authentication.md` - Auth system architecture
-- `DuplicationSystem.md` - Workout duplication logic
-- `ExerciseSetManagement.md` - Exercise and set handling
-- `FirestoreService.md` - Firestore interaction patterns
-- `UIComponents.md` - Reusable UI component patterns
-
-#### C. Feature Documentation
-**Location:** `Docs/Features/`
-
-**Naming Convention:** `[FeatureName].md` (PascalCase)
-
-**Examples:**
-- `AnalyticsScreen.md` - Analytics feature documentation
-- `EditDeleteFunctionality.md` - Edit/delete workflow
-- `CurrentScreens.md` - Screen inventory and status
+- `StateManagement.md` - State management patterns (Provider)
 
 **Contents:**
 - Architecture decisions
@@ -147,7 +113,7 @@ This document defines what documentation exists in the FitTrack project, who cre
 **Purpose:** Define testing strategy, patterns, and standards
 **Created by:** SA Agent (initially), Developer Agent (as patterns emerge)
 **When:** Initial project setup, updated as testing patterns mature
-**Location:** `Docs/Testing/TestingFramework.md`
+**Location:** `Docs/Testing/`
 
 **Contents:**
 - Testing philosophy (TDD approach)
@@ -162,7 +128,7 @@ This document defines what documentation exists in the FitTrack project, who cre
 - Updated: As testing patterns evolve
 - Referenced by: Developer Agent, Testing Agent
 
-**Note:** Detailed testing patterns are now in `.claude/skills/flutter_testing/`
+**Note:** Detailed testing patterns are in `.claude/skills/flutter_testing/`
 
 ---
 
@@ -215,74 +181,17 @@ This document defines what documentation exists in the FitTrack project, who cre
 **When:** During deployment preparation (Deployment Phase 2)
 **Location:**
 - `CHANGELOG.md` (root level, version controlled)
-- `release_notes_v[X.Y.Z].md` (user-facing, archived in `Docs/Releases/`)
+- `Docs/Releases/release_notes_v[X.Y.Z].md` (user-facing, archived)
 
 **Naming Convention:**
 - **CHANGELOG:** `CHANGELOG.md` (single file, all releases)
 - **Release Notes:** `release_notes_v[X.Y.Z].md` (one per release)
   - Example: `release_notes_v1.2.0.md`
-  - Example: `release_notes_v2.0.0.md`
-
-**CHANGELOG.md Format:**
-```markdown
-# Changelog
-
-## [1.2.0] - 2025-10-09
-
-### Added
-- Dark mode theme support (#1)
-- Theme toggle in Settings screen (#13)
-
-### Changed
-- Enhanced Settings screen UI (#13)
-
-### Fixed
-- Theme persistence across app restarts
-
-**Full Implementation:**
-- Task #10: Add SharedPreferences dependency
-- Task #11: Create ThemeProvider
-[...]
-
-**PRs:** #101, #102, #103
-```
-
-**Release Notes Format:**
-```markdown
-# What's New in Version 1.2.0
-
-## Dark Mode Support
-Customize your FitTrack experience with dark mode! Reduce eye strain and save battery.
-
-### New Features
-- Dark mode theme option in Settings
-- Automatic theme switching based on system preferences
-
-### Improvements
-- Enhanced Settings screen navigation
-
----
-
-Thank you for using FitTrack!
-```
+  - Example: `release_notes_v1.4.0.md`
 
 **Lifecycle:**
 - Created: Once per release
 - Updated: Never (immutable release record)
-
----
-
-### 7. Process Documentation
-
-**Purpose:** Document agent workflows, skills, and development processes
-**Created by:** User or Claude (meta-documentation)
-**When:** As needed to improve workflow
-**Location:** `Docs/Process/`
-
-**Examples:**
-- `Skills_Migration_Summary.md` - Skills extraction documentation
-- `Documentation_Lifecycle.md` - This document
-- `Agent_Workflow_Guide.md` - How agents work together
 
 ---
 
@@ -291,40 +200,32 @@ Thank you for using FitTrack!
 ### General Rules
 
 1. **Use PascalCase** for all documentation files
-   - ✅ `ArchitectureOverview.md`
-   - ✅ `Dark_Mode_Technical_Design.md`
-   - ❌ `architecture-overview.md`
-   - ❌ `dark_mode_technical_design.md`
+   - `ArchitectureOverview.md`
+   - `Dark_Mode_Technical_Design.md`
 
 2. **Be descriptive but concise**
-   - ✅ `BiometricAuthentication.md`
-   - ❌ `Auth.md` (too vague)
-   - ❌ `BiometricAuthenticationSystemDocumentation.md` (too verbose)
+   - `Exercise_Library_PRD.md`
+   - `DataModels.md`
 
-3. **Use underscores for multi-word features in Technical Designs**
-   - ✅ `Dark_Mode_Technical_Design.md`
-   - ✅ `User_Profile_Settings_Technical_Design.md`
-   - ❌ `DarkModeTechnicalDesign.md` (hard to read)
+3. **Use underscores for multi-word names in PRDs and Technical Designs**
+   - `Dark_Mode_Technical_Design.md`
+   - `Enhanced_Progress_Tracking_PRD.md`
 
-4. **Always include suffix for Technical Designs**
-   - ✅ `Dark_Mode_Technical_Design.md`
-   - ❌ `Dark_Mode.md` (ambiguous - feature or design?)
+4. **Always include suffix for typed documents**
+   - PRDs: `[Feature_Name]_PRD.md`
+   - Technical Designs: `[Feature_Name]_Technical_Design.md`
 
 5. **Version numbers in release notes**
-   - ✅ `release_notes_v1.2.0.md`
-   - ❌ `release_notes_1.2.0.md`
-   - ❌ `v1.2.0_release_notes.md`
+   - `release_notes_v1.2.0.md`
 
 ### Specific Patterns
 
 | Document Type | Pattern | Example |
 |---------------|---------|---------|
 | Architecture | `[Topic].md` | `ArchitectureOverview.md` |
-| Component | `[ComponentName].md` | `Authentication.md` |
-| Feature | `[FeatureName].md` | `AnalyticsScreen.md` |
+| PRD | `[Feature_Name]_PRD.md` | `Exercise_Library_PRD.md` |
 | Technical Design | `[Feature_Name]_Technical_Design.md` | `Dark_Mode_Technical_Design.md` |
 | Release Notes | `release_notes_v[X.Y.Z].md` | `release_notes_v1.2.0.md` |
-| Process | `[Process_Name].md` | `Skills_Migration_Summary.md` |
 
 ---
 
@@ -334,6 +235,7 @@ Thank you for using FitTrack!
 Docs/
 ├── README.md                                      # Guide to documentation (index)
 ├── Documentation_Lifecycle.md                     # This document
+├── CurrentScreens.md                              # Screen inventory and status
 │
 ├── Architecture/                                  # Core architecture docs
 │   ├── ArchitectureOverview.md
@@ -342,41 +244,36 @@ Docs/
 │   ├── StateManagement.md
 │   └── FirestoreValidationStrategy.md
 │
-├── Components/                                    # Component documentation
-│   ├── Authentication.md
-│   ├── DuplicationSystem.md
-│   ├── ExerciseSetManagement.md
-│   ├── FirestoreService.md
-│   └── UIComponents.md
-│
-├── Features/                                      # Feature-specific docs
-│   ├── AnalyticsScreen.md
-│   ├── EditDeleteFunctionality.md
-│   └── CurrentScreens.md
-│
-├── Testing/                                       # Testing documentation
-│   └── TestingFramework.md
+├── PRDs/                                          # Product Requirements Documents
+│   ├── Exercise_Library_PRD.md
+│   ├── Workout_Templates_PRD.md
+│   ├── Enhanced_Progress_Tracking_PRD.md
+│   └── Habit_Tracker_Monthly_Swipe_View_PRD.md
 │
 ├── Technical_Designs/                             # Feature technical designs
 │   ├── Dark_Mode_Technical_Design.md
-│   ├── Analytics_Stat_Card_Contrast_Fix.md
+│   ├── Color_Scheme_Selector_Technical_Design.md
+│   ├── Exercise_Library_Technical_Design.md
+│   ├── Workout_Templates_Technical_Design.md
 │   └── [Future_Feature]_Technical_Design.md
 │
-├── Releases/                                      # Release notes archive
-│   ├── release_notes_v1.0.0.md
-│   ├── release_notes_v1.1.0.md
-│   └── release_notes_v1.2.0.md
+├── Testing/                                       # Testing documentation
+│   ├── TestingFramework.md
+│   ├── TestClassification.md
+│   └── CI_Integration_Tests_Guide.md
 │
-├── Process/                                       # Process documentation
-│   └── Skills_Migration_Summary.md
+├── Releases/                                      # Release notes archive
+│   ├── release_notes_v1.1.0.md
+│   ├── release_notes_v1.2.0.md
+│   └── release_notes_v1.4.0.md
 │
 └── Archive/                                       # Deprecated documents
-    └── original_README.md
+    ├── original_README.md
+    └── [archived files]
 ```
 
 **Root Level Files:**
 - `CHANGELOG.md` - Version controlled changelog (stays at root)
-- `README.md` - Project overview (if exists, stays at root)
 
 ---
 
@@ -386,12 +283,11 @@ Docs/
 
 | Agent | Creates | When | Location |
 |-------|---------|------|----------|
-| **BA** | PRD | Phase 2: After requirements gathering | Notion |
+| **BA** | PRD | Phase 2: After requirements gathering | `Docs/PRDs/` |
 | **BA** | Feature Issue | Phase 3: After PRD created | GitHub |
-| **SA** | Technical Design (summary) | Phase 2: After reading PRD | Notion |
-| **SA** | Technical Design (detailed) | Phase 2: Same time as summary | `Docs/Technical_Designs/` |
+| **SA** | Technical Design | Phase 2: After reading PRD | `Docs/Technical_Designs/` |
 | **SA** | Task Issues | Phase 3: After design complete | GitHub |
-| **SA** | Architecture Docs | As needed: When introducing patterns | `Docs/Architecture/` or `Docs/Components/` |
+| **SA** | Architecture Docs | As needed: When introducing patterns | `Docs/Architecture/` |
 | **Developer** | Implementation Notes | Phase 4: Before handoff to Testing | Added to Technical Design |
 | **Developer** | Code Comments | During implementation | Inline in code |
 | **Testing** | Test Reports | Phase 4: After test execution | GitHub issue comments |
@@ -403,37 +299,35 @@ Docs/
 ### By Phase (Full Feature Lifecycle)
 
 **1. Requirements Phase (BA Agent)**
-- ✅ Create PRD in Notion
-- ✅ Create Feature Issue in GitHub
-- ✅ Link PRD ↔ GitHub Issue bidirectionally
+- Create PRD in `Docs/PRDs/[Feature_Name]_PRD.md`
+- Create Feature Issue in GitHub with PRD link
+- Add `requirements-complete` label when done
 
 **2. Design Phase (SA Agent)**
-- ✅ Create Technical Design summary in Notion
-- ✅ Create detailed Technical Design in `Docs/Technical_Designs/`
-- ✅ Create Task Issues in GitHub (one per implementation task)
-- ✅ Link Technical Design → PRD, Feature Issue, Task Issues
-- 📝 Update Architecture/Component docs if new patterns introduced
+- Create Technical Design in `Docs/Technical_Designs/`
+- Create Task Issues in GitHub (one per implementation task)
+- Link Technical Design to PRD and Feature Issue
+- Update Architecture docs if new patterns introduced
 
 **3. Implementation Phase (Developer Agent)**
-- ✅ Write code following Technical Design
-- ✅ Create PRs for each task
-- ✅ Add Implementation Notes to Technical Design before handoff
+- Write code following Technical Design
+- Create PRs for each task
+- Add Implementation Notes to Technical Design before handoff
 
 **4. Testing Phase (Testing Agent)**
-- ✅ Verify tests pass
-- ✅ Add test results as GitHub issue comment
+- Verify tests pass
+- Add test results as GitHub issue comment
 
 **5. QA Phase (QA Agent)**
-- ✅ Manual testing
-- ✅ Add QA report as GitHub issue comment
-- 📝 Create bug issues if problems found
+- Manual testing
+- Add QA report as GitHub issue comment
+- Create bug issues if problems found
 
 **6. Deployment Phase (Deployment Agent)**
-- ✅ Create release notes in `Docs/Releases/`
-- ✅ Update `CHANGELOG.md`
-- ✅ Create GitHub Release
-- ✅ Update Notion PRD status to "Deployed"
-- ✅ Close Feature Issue
+- Create release notes in `Docs/Releases/`
+- Update `CHANGELOG.md`
+- Create GitHub Release
+- Close Feature Issue
 
 ---
 
@@ -441,57 +335,52 @@ Docs/
 
 ### When to Update Existing Documents
 
-**PRDs (Notion):**
-- ❌ Rarely update after approval
-- ✅ Only if fundamental requirements change (get user approval)
-- Status updates via properties, not content changes
+**PRDs:**
+- Rarely update after approval
+- Only if fundamental requirements change (get user approval)
+- Status tracked via GitHub issue labels
 
 **Technical Designs:**
-- ✅ SA updates if design changes before implementation
-- ✅ Developer adds "Implementation Notes" section after implementation
-- ❌ Don't update the original design - add notes to show deviations
+- SA updates if design changes before implementation
+- Developer adds "Implementation Notes" section after implementation
+- Don't update the original design - add notes to show deviations
 
-**Architecture/Component Docs:**
-- ✅ Update when patterns evolve
-- ✅ Update when new features extend existing components
-- ✅ Living documents - keep current with codebase
+**Architecture Docs:**
+- Update when patterns evolve
+- Update when new features extend existing components
+- Living documents - keep current with codebase
 
 **Testing Framework:**
-- ✅ Update as testing patterns mature
-- ✅ Update when new testing strategies introduced
-- Reference skills for detailed patterns
+- Update as testing patterns mature
+- Update when new testing strategies introduced
 
 **CHANGELOG:**
-- ✅ Add new section for each release
-- ❌ Never modify past release entries
+- Add new section for each release
+- Never modify past release entries
 
 **Release Notes:**
-- ❌ Never modify (immutable release record)
-- ✅ Create new file for each version
+- Never modify (immutable release record)
+- Create new file for each version
 
 ---
 
 ## Best Practices
 
 ### Do:
-
-- ✅ Follow naming conventions consistently
-- ✅ Link documents bidirectionally (Notion ↔ GitHub, Design ↔ PRD)
-- ✅ Update architecture docs when patterns change
-- ✅ Add Implementation Notes to Technical Designs
-- ✅ Keep CHANGELOG.md updated with every release
-- ✅ Use proper directory structure
-- ✅ Reference skills for procedural knowledge (don't duplicate)
+- Follow naming conventions consistently
+- Link documents to GitHub issues
+- Update architecture docs when patterns change
+- Add Implementation Notes to Technical Designs
+- Keep CHANGELOG.md updated with every release
+- Use proper directory structure
 
 ### Don't:
-
-- ❌ Create orphaned documents without links
-- ❌ Mix business requirements into technical designs
-- ❌ Put technical details in PRDs (keep business-focused)
-- ❌ Modify release notes after publishing
-- ❌ Skip documenting architectural decisions
-- ❌ Create documentation in wrong directory
-- ❌ Use inconsistent naming conventions
+- Create orphaned documents without links
+- Mix business requirements into technical designs
+- Put technical details in PRDs (keep business-focused)
+- Modify release notes after publishing
+- Skip documenting architectural decisions
+- Create documentation in wrong directory
 
 ---
 
@@ -501,52 +390,24 @@ Docs/
 
 | Document Type | Location | Example |
 |---------------|----------|---------|
-| Business requirements | Notion PRD | (Notion only) |
+| Business requirements | `Docs/PRDs/` | `Exercise_Library_PRD.md` |
 | Technical design | `Docs/Technical_Designs/` | `Dark_Mode_Technical_Design.md` |
 | Architecture pattern | `Docs/Architecture/` | `StateManagement.md` |
-| Component guide | `Docs/Components/` | `Authentication.md` |
-| Feature overview | `Docs/Features/` | `AnalyticsScreen.md` |
 | Testing guide | `Docs/Testing/` | `TestingFramework.md` |
 | Release notes | `Docs/Releases/` | `release_notes_v1.2.0.md` |
 | Changelog | Root level | `CHANGELOG.md` |
-| Process docs | `Docs/Process/` | `Skills_Migration_Summary.md` |
 | Deprecated | `Docs/Archive/` | `original_README.md` |
 
 **"Who creates this?"**
 
-- PRD → BA Agent
-- Technical Design → SA Agent
-- Implementation Notes → Developer Agent
-- Release Notes/Changelog → Deployment Agent
-- Architecture Docs → SA Agent (or any agent discovering patterns)
-- Test/QA Reports → GitHub comments (not separate docs)
-
-**"When is this created?"**
-
-- PRD → After requirements gathering
-- Technical Design → After PRD approved
-- Implementation Notes → After implementation, before testing
-- Release Notes → During deployment preparation
-- Architecture Docs → As needed when patterns introduced
+- PRD -> BA Agent
+- Technical Design -> SA Agent
+- Implementation Notes -> Developer Agent
+- Release Notes/Changelog -> Deployment Agent
+- Architecture Docs -> SA Agent (or any agent discovering patterns)
+- Test/QA Reports -> GitHub comments (not separate docs)
 
 ---
 
-## For Agents
-
-Each agent should reference this document to understand:
-
-1. **What documentation you create** - See "Creation Workflow" table
-2. **When to create it** - See your agent's phase in workflow
-3. **Where to put it** - See "Directory Structure"
-4. **How to name it** - See "Naming Conventions"
-5. **How to link it** - See "Update Guidelines"
-
-**Skills integration:**
-- Detailed templates → See `.claude/skills/notion_documentation/`
-- Procedural standards → See `.claude/skills/github_workflow/`
-- This document defines **what** and **when**, skills define **how**
-
----
-
-**Last Updated:** 2025-10-17
+**Last Updated:** 2026-02-13
 **Maintained By:** All agents following this lifecycle

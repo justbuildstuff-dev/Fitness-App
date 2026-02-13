@@ -2,20 +2,18 @@
 
 This directory contains all technical documentation for the FitTrack mobile application.
 
-## 📋 Quick Navigation
+## Quick Navigation
 
 | Category | Location | Purpose |
 |----------|----------|---------|
 | **Architecture** | [`Architecture/`](Architecture/) | Core system architecture and patterns |
-| **Components** | [`Components/`](Components/) | Component-level documentation |
-| **Features** | [`Features/`](Features/) | Feature-specific documentation |
+| **PRDs** | [`PRDs/`](PRDs/) | Product Requirements Documents |
 | **Technical Designs** | [`Technical_Designs/`](Technical_Designs/) | Feature implementation designs |
-| **Testing** | [`Testing/`](Testing/) | Testing framework and strategies |
+| **Testing** | [`Testing/`](Testing/) | Testing framework, strategies, CI guides |
 | **Releases** | [`Releases/`](Releases/) | Release notes archive |
-| **Process** | [`Process/`](Process/) | Development process documentation |
 | **Archive** | [`Archive/`](Archive/) | Deprecated/legacy documents |
 
-## 📚 Documentation Types
+## Documentation Types
 
 ### Core Architecture (`Architecture/`)
 
@@ -27,30 +25,26 @@ Foundational architectural decisions and system-wide patterns:
 - **[StateManagement.md](Architecture/StateManagement.md)** - State management patterns (Provider)
 - **[FirestoreValidationStrategy.md](Architecture/FirestoreValidationStrategy.md)** - Data validation approach
 
-### Components (`Components/`)
+### PRDs (`PRDs/`)
 
-Component-level implementation details:
+Product Requirements Documents created by BA Agent:
 
-- **[Authentication.md](Components/Authentication.md)** - Authentication system
-- **[DuplicationSystem.md](Components/DuplicationSystem.md)** - Workout/week duplication logic
-- **[ExerciseSetManagement.md](Components/ExerciseSetManagement.md)** - Exercise and set handling
-- **[FirestoreService.md](Components/FirestoreService.md)** - Firestore interaction patterns
-- **[UIComponents.md](Components/UIComponents.md)** - Reusable UI components
-
-### Features (`Features/`)
-
-Feature-specific documentation:
-
-- **[AnalyticsScreen.md](Features/AnalyticsScreen.md)** - Analytics feature
-- **[CurrentScreens.md](Features/CurrentScreens.md)** - Screen inventory and implementation status
-- **[EditDeleteFunctionality.md](Features/EditDeleteFunctionality.md)** - Edit/delete workflows
+- **[Exercise_Library_PRD.md](PRDs/Exercise_Library_PRD.md)** - Exercise library feature
+- **[Workout_Templates_PRD.md](PRDs/Workout_Templates_PRD.md)** - Workout templates feature
+- **[Enhanced_Progress_Tracking_PRD.md](PRDs/Enhanced_Progress_Tracking_PRD.md)** - Progress tracking & charts
+- **[Habit_Tracker_Monthly_Swipe_View_PRD.md](PRDs/Habit_Tracker_Monthly_Swipe_View_PRD.md)** - Habit tracker
 
 ### Technical Designs (`Technical_Designs/`)
 
 SA Agent creates these for each new feature:
 
+- **[Workout_Templates_Technical_Design.md](Technical_Designs/Workout_Templates_Technical_Design.md)** - Templates implementation
+- **[Exercise_Library_Technical_Design.md](Technical_Designs/Exercise_Library_Technical_Design.md)** - Exercise library implementation
+- **[Color_Scheme_Selector_Technical_Design.md](Technical_Designs/Color_Scheme_Selector_Technical_Design.md)** - Color scheme implementation
+- **[Consolidated_Workout_Screen_Technical_Design.md](Technical_Designs/Consolidated_Workout_Screen_Technical_Design.md)** - Consolidated workout screen
+- **[Global_Bottom_Navigation_Bar_Technical_Design.md](Technical_Designs/Global_Bottom_Navigation_Bar_Technical_Design.md)** - Bottom nav bar
 - **[Dark_Mode_Technical_Design.md](Technical_Designs/Dark_Mode_Technical_Design.md)** - Dark mode implementation
-- **[Analytics_Stat_Card_Contrast_Fix.md](Technical_Designs/Analytics_Stat_Card_Contrast_Fix.md)** - Contrast fix design
+- And more (habit tracker, duplicate week enhancement)
 
 **New designs:** Follow naming convention `[Feature_Name]_Technical_Design.md`
 
@@ -59,20 +53,19 @@ SA Agent creates these for each new feature:
 Testing framework and standards:
 
 - **[TestingFramework.md](Testing/TestingFramework.md)** - Testing strategy, patterns, and setup
+- **[TestClassification.md](Testing/TestClassification.md)** - Test classification guide
+- **[CI_Integration_Tests_Guide.md](Testing/CI_Integration_Tests_Guide.md)** - CI/CD integration tests guide
 
 **Note:** Detailed testing patterns are in `.claude/skills/flutter_testing/`
 
-### Process (`Process/`)
+### Root-Level Files
 
-Development process and workflow documentation:
-
-- **[CI_Integration_Tests_Guide.md](Process/CI_Integration_Tests_Guide.md)** - CI/CD integration tests guide
-- **[Skills_Migration_Summary.md](Process/Skills_Migration_Summary.md)** - Skills extraction from agents
-- **[Documentation_Lifecycle.md](../Documentation_Lifecycle.md)** - This documentation system (parent level)
+- **[CurrentScreens.md](CurrentScreens.md)** - Screen inventory and implementation status
+- **[Documentation_Lifecycle.md](Documentation_Lifecycle.md)** - Documentation system master document
 
 ---
 
-## 📖 Documentation Lifecycle
+## Documentation Lifecycle
 
 **See [Documentation_Lifecycle.md](Documentation_Lifecycle.md) for:**
 - What documents exist
@@ -82,62 +75,49 @@ Development process and workflow documentation:
 - Naming conventions
 - Update guidelines
 
-## 🤖 For Agents
+## For Agents
 
 ### BA Agent
 **Creates:**
-- PRD in Notion (not in Docs/)
-- GitHub Feature Issue
-
-**References:** `Documentation_Lifecycle.md` for PRD structure
+- PRD in `Docs/PRDs/[Feature_Name]_PRD.md`
+- GitHub Feature Issue with PRD link
 
 ### SA Agent
 **Creates:**
-- Technical Design summary in Notion
-- Technical Design detailed doc in `Technical_Designs/[Feature_Name]_Technical_Design.md`
-- Architecture/Component docs (as needed)
-
-**References:** `Documentation_Lifecycle.md`, `.claude/skills/notion_documentation/`
+- Technical Design in `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
+- Architecture docs (as needed) in `Docs/Architecture/`
 
 ### Developer Agent
 **Creates:**
 - Implementation Notes (added to Technical Design)
 - Code comments (inline)
 
-**References:** `Documentation_Lifecycle.md`, Technical Designs
-
 ### Deployment Agent
 **Creates:**
-- Release notes in `Releases/release_notes_v[X.Y.Z].md`
+- Release notes in `Docs/Releases/release_notes_v[X.Y.Z].md`
 - Updates `CHANGELOG.md` (root level)
-
-**References:** `Documentation_Lifecycle.md`
 
 ---
 
-## 🗂️ Naming Conventions
+## Naming Conventions
 
 | Document Type | Pattern | Example |
 |---------------|---------|---------|
 | Architecture | `[Topic].md` | `ArchitectureOverview.md` |
-| Component | `[ComponentName].md` | `Authentication.md` |
-| Feature | `[FeatureName].md` | `AnalyticsScreen.md` |
+| PRD | `[Feature_Name]_PRD.md` | `Exercise_Library_PRD.md` |
 | Technical Design | `[Feature_Name]_Technical_Design.md` | `Dark_Mode_Technical_Design.md` |
 | Release Notes | `release_notes_v[X.Y.Z].md` | `release_notes_v1.2.0.md` |
-| Process | `[Process_Name].md` | `Skills_Migration_Summary.md` |
 
 **General Rules:**
 - Use PascalCase for all files
-- Use underscores in Technical Design feature names
+- Use underscores between words in PRDs and Technical Designs
 - Be descriptive but concise
-- Include appropriate suffixes (`_Technical_Design`, `_v[version]`)
 
 ---
 
-## 🔗 Related Documentation
+## Related Documentation
 
 **In `.claude/skills/`:**
-- Notion documentation templates and standards
 - GitHub workflow and issue templates
 - Flutter testing patterns
 - Flutter code quality standards
@@ -149,27 +129,23 @@ Development process and workflow documentation:
 - Development commands
 - Quick reference
 
-**In Notion:**
-- Product Requirements Documents (PRDs)
-- Technical Design summaries
-- User Stories
-- Decisions & Notes
-
 ---
 
-## 🆕 Adding New Documentation
+## Adding New Documentation
+
+### New Feature PRD
+1. BA Agent creates after requirements gathering
+2. Location: `Docs/PRDs/[Feature_Name]_PRD.md`
+3. Link: PRD -> GitHub Issue (bidirectional)
 
 ### New Feature Technical Design
 1. SA Agent creates after PRD approval
 2. Location: `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
-3. Also create summary in Notion "Technical Designs" database
-4. Link: Technical Design → PRD → GitHub Issue
+3. Link: Technical Design -> PRD -> GitHub Issue
 
-### New Architecture/Component Doc
+### New Architecture Doc
 1. Created by SA Agent when introducing new patterns
-2. Location:
-   - Architecture: `Docs/Architecture/[Topic].md`
-   - Component: `Docs/Components/[ComponentName].md`
+2. Location: `Docs/Architecture/[Topic].md`
 3. Update this README if it's a major addition
 
 ### New Release Notes
@@ -179,12 +155,10 @@ Development process and workflow documentation:
 
 ---
 
-## 📝 Maintenance
+## Maintenance
 
 **Living Documents** (update as code evolves):
 - Architecture docs
-- Component docs
-- Feature docs
 - Testing framework
 
 **Immutable Documents** (never modify after creation):
@@ -194,33 +168,9 @@ Development process and workflow documentation:
 
 **Deprecated Documents:**
 - Move to `Archive/`
-- Add note at top explaining why archived
 - Keep for historical reference
 
 ---
 
-## 🔍 Finding Documentation
-
-**By Agent:**
-- BA Agent docs → Notion PRDs
-- SA Agent docs → `Technical_Designs/`, `Architecture/`, `Components/`
-- Developer notes → `Technical_Designs/` (Implementation Notes section)
-- Deployment docs → `Releases/`, `CHANGELOG.md`
-
-**By Type:**
-- Business requirements → Notion
-- Technical architecture → `Architecture/`
-- Implementation design → `Technical_Designs/`
-- Component guides → `Components/`
-- Process guides → `Process/`, `.claude/`
-
-**By Feature:**
-- Check `Technical_Designs/` for implementation design
-- Check `Features/` for feature-level overview
-- Check Notion PRD for business requirements
-- Check GitHub for issues and PRs
-
----
-
-**Last Updated:** 2025-10-17
+**Last Updated:** 2026-02-13
 **For Questions:** See `Documentation_Lifecycle.md` or `CLAUDE.md`

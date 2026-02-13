@@ -28,19 +28,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Key Documentation Locations:**
 - `Docs/Architecture/` - System architecture, data models, security rules, state management
-- `Docs/Components/` - Component-specific documentation (Authentication, Firestore, UI components)
-- `Docs/Features/` - Feature implementations and screen documentation
+- `Docs/PRDs/` - Product Requirements Documents for each feature
 - `Docs/Technical_Designs/` - Detailed technical designs for each feature
-- `Docs/Testing/` - Testing framework and strategies
+- `Docs/Testing/` - Testing framework, strategies, and CI guides
 - `Docs/Releases/` - Release notes for each version
-- `Docs/Process/` - Process documentation and workflow guides
-- `Docs/Archive/` - Legacy documentation
+- `Docs/Archive/` - Legacy and deprecated documentation
 
 **Important Files:**
 - [Docs/Architecture/ArchitectureOverview.md](Docs/Architecture/ArchitectureOverview.md) - Review for cross-component changes
 - [Docs/Architecture/DataModels.md](Docs/Architecture/DataModels.md) - Firestore schema reference
 - [Docs/Testing/TestingFramework.md](Docs/Testing/TestingFramework.md) - Testing patterns and standards
-- [Docs/Features/CurrentScreens.md](Docs/Features/CurrentScreens.md) - Screen inventory and pipeline
+- [Docs/CurrentScreens.md](Docs/CurrentScreens.md) - Screen inventory and pipeline
 
 ## Data Model
 
@@ -74,7 +72,7 @@ Before committing ANY code:
 4. **Scan commits** - Run security verification commands before push
 
 **Protected files** (in `.gitignore`, never commit):
-- `.claude/settings.json` - Contains GitHub/Notion tokens
+- `.claude/settings.json` - Contains GitHub tokens
 - `.env*` files with real values
 - Private keys (`.pem`, `.key`, `.p12`)
 - Keystores (`.jks`, `.keystore`)
@@ -108,9 +106,9 @@ Before committing ANY code:
 
 1. **Review Documentation**:
    - See [Docs/README.md](Docs/README.md) for navigation to relevant documents
-   - Review [Docs/Features/CurrentScreens.md](Docs/Features/CurrentScreens.md) for pipeline status
+   - Review [Docs/CurrentScreens.md](Docs/CurrentScreens.md) for pipeline status
    - Check [Docs/Architecture/ArchitectureOverview.md](Docs/Architecture/ArchitectureOverview.md) for cross-component changes
-   - Review relevant component documentation from `Docs/Components/` or `Docs/Architecture/`
+   - Review relevant documentation from `Docs/Architecture/` or `Docs/Technical_Designs/`
 
 2. **Plan & Outline**:
    - State intentions and list sub-tasks before coding
@@ -133,7 +131,7 @@ Before committing ANY code:
 
 7. **Update Documentation**:
    - Follow [Docs/Documentation_Lifecycle.md](Docs/Documentation_Lifecycle.md) for naming conventions and structure
-   - Update existing documentation in appropriate directories (`Docs/Architecture/`, `Docs/Components/`, `Docs/Features/`)
+   - Update existing documentation in appropriate directories (`Docs/Architecture/`, `Docs/Technical_Designs/`)
    - Use PascalCase naming for all new documentation files
    - Documentation is only required when integral functionality has been modified or implemented
 
@@ -236,38 +234,22 @@ Available agents:
 
 **Skills (Reusable Procedural Knowledge):** Located in `.claude/skills/`
 - `github_workflow/` - GitHub issues, PRs, labels, workflow management
-- `notion_documentation/` - PRD and Technical Design templates
 - `flutter_testing/` - Test patterns, coverage requirements, mocking strategies
 - `flutter_code_quality/` - Dart style guide, code quality standards
 - `agent_handoff/` - Agent-to-agent handoff protocols
 
 Agents automatically reference relevant skills for procedural knowledge. Skills reduce duplication and ensure consistency across all agents.
 
-## Notion Configuration
+## Documentation Workflow
 
-**Workspace:** FitTrack Development
-
-**Databases:**
-- **Product Requirements** - Feature PRDs and specifications (created by BA Agent)
-- **User Stories** - User stories linked to PRDs (stored within PRD, not separate database)
-- **Technical Designs** - Architecture and design documents (summary created by SA Agent)
-- **Decisions & Notes** - Meeting notes and key decisions
-
-**Templates:**
-- Feature PRD Template - For new feature requirements (see `.claude/skills/notion_documentation/`)
-- Technical Design Template - For technical architecture (see `.claude/skills/notion_documentation/`)
-
-**Hybrid Documentation Approach:**
-- **Notion:** Metadata, tracking, summaries, links (better for searchability and properties)
-- **Git (Docs/):** Detailed technical content, version-controlled documentation
-- **Example:** SA creates summary in Notion + detailed design in `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
+All documentation is stored in the Git repository under `Docs/`. Status tracking is done via GitHub issue labels.
 
 **Workflow:**
-1. BA creates PRD in "Product Requirements" database
-2. BA creates user stories within the PRD (not as separate database entries)
-3. SA creates technical design summary in "Technical Designs" database
-4. SA creates detailed design in `Docs/Technical_Designs/` (version-controlled)
-5. All documents link bidirectionally (Notion ↔ GitHub)
+1. BA creates PRD in `Docs/PRDs/[Feature_Name]_PRD.md`
+2. BA creates/updates Feature Issue in GitHub with PRD link
+3. SA creates detailed Technical Design in `Docs/Technical_Designs/[Feature_Name]_Technical_Design.md`
+4. SA creates Task Issues in GitHub linked to parent feature issue
+5. All documents link to GitHub issues; status tracked via issue labels
 
 ## GitHub Configuration
 **Repository:** justbuildstuff-dev/Fitness-App
@@ -382,7 +364,7 @@ main
 @sa "Requirements complete for [Feature Name].
 
 GitHub Issue: #XX
-Notion PRD: [URL]
+PRD: Docs/PRDs/[Feature_Name]_PRD.md
 
 Key considerations:
 - [Point 1]
@@ -398,7 +380,7 @@ Parent Issue: #XX
 Feature Branch: feature/issue-XX-feature-name (created)
 Implementation Tasks: #XX, #XX, #XX
 
-Technical Design: [Notion URL]
+Technical Design: Docs/Technical_Designs/[Feature_Name]_Technical_Design.md
 
 IMPORTANT: Create task branches from the feature branch, not main.
 Target all PRs to the feature branch."
@@ -492,16 +474,16 @@ Final: Issue #47 CLOSED by Deployment Agent after production release
 
 **BA Agent** - Requirements gathering
 - Interview users to understand needs
-- Create PRD in Notion (see `.claude/skills/notion_documentation/`)
-- Create GitHub feature issue (see `.claude/skills/github_workflow/`)
-- Documentation: PRD (Notion), Feature Issue (GitHub)
+- Create PRD in `Docs/PRDs/` (see `.claude/skills/github_workflow/`)
+- Create GitHub feature issue
+- Documentation: PRD (`Docs/PRDs/`), Feature Issue (GitHub)
 - Hand off to SA after user approval
 
 **SA Agent** - Technical design
 - Analyze codebase and discover existing patterns
-- Create technical design summary (Notion) + detailed design (`Docs/Technical_Designs/`)
+- Create detailed Technical Design in `Docs/Technical_Designs/`
 - Break down into implementation tasks (GitHub issues)
-- Documentation: Technical Design (Notion + Git), Task Issues (GitHub), Architecture/Component docs as needed
+- Documentation: Technical Design (`Docs/Technical_Designs/`), Task Issues (GitHub), Architecture docs as needed
 - Hand off to Developer after user approval
 
 **Developer Agent** - Implementation
@@ -558,20 +540,18 @@ Use extended thinking for:
 
 ### Document Types
 
-1. **Product Requirements Document (PRD)** - Created by BA Agent in Notion
-2. **Technical Design Document** - Created by SA Agent (summary in Notion + detailed in `Docs/Technical_Designs/`)
-3. **Architectural/Framework Documents** - Created by SA Agent in `Docs/Architecture/` or `Docs/Components/`
+1. **Product Requirements Document (PRD)** - Created by BA Agent in `Docs/PRDs/`
+2. **Technical Design Document** - Created by SA Agent in `Docs/Technical_Designs/`
+3. **Architectural Documents** - Created by SA Agent in `Docs/Architecture/`
 4. **Testing Framework** - Located in `Docs/Testing/`
 5. **Implementation Notes** - Added by Developer Agent to Technical Design documents
 6. **Release Documentation** - Created by Deployment Agent in `Docs/Releases/`
-7. **Process Documentation** - Located in `Docs/Process/`
 
 ### Naming Conventions
 
 **All documentation uses PascalCase:**
 - Architecture: `ArchitectureOverview.md`, `DataModels.md`, `StateManagement.md`
-- Components: `Authentication.md`, `FirestoreService.md`, `UIComponents.md`
-- Features: `AnalyticsScreen.md`, `CurrentScreens.md`
+- PRDs: `[Feature_Name]_PRD.md` (with underscores)
 - Technical Designs: `[Feature_Name]_Technical_Design.md` (with underscores)
 - Release Notes: `release_notes_v[X.Y.Z].md` (lowercase v, semver format)
 
@@ -581,20 +561,19 @@ Use extended thinking for:
 Docs/
 ├── README.md                    # Navigation guide
 ├── Documentation_Lifecycle.md   # Documentation system master document
+├── CurrentScreens.md            # Screen inventory and pipeline
 ├── Architecture/                # System architecture and patterns
-├── Components/                  # Component-specific documentation
-├── Features/                    # Feature implementations
+├── PRDs/                        # Product Requirements Documents
 ├── Technical_Designs/           # Detailed technical designs
-├── Testing/                     # Testing framework and strategies
+├── Testing/                     # Testing framework, strategies, CI guides
 ├── Releases/                    # Release notes for each version
-├── Process/                     # Process documentation and guides
-└── Archive/                     # Legacy documentation
+└── Archive/                     # Legacy and deprecated documentation
 ```
 
 ### Agent Documentation Responsibilities
 
-- **BA:** PRD (Notion), GitHub Feature Issue
-- **SA:** Technical Design (Notion + Git), Task Issues, Architecture/Component docs
+- **BA:** PRD (`Docs/PRDs/`), GitHub Feature Issue
+- **SA:** Technical Design (`Docs/Technical_Designs/`), Task Issues, Architecture docs
 - **Developer:** Implementation Notes, Code comments
 - **Testing:** Test reports (GitHub comments)
 - **QA:** QA reports (GitHub comments)
@@ -605,7 +584,6 @@ Docs/
 The `.claude/skills/` directory contains reusable procedural knowledge that agents automatically reference:
 
 - **GitHub Workflow** - Issue templates, PR standards, labels
-- **Notion Documentation** - PRD and Technical Design templates
 - **Flutter Testing** - Test patterns, coverage requirements
 - **Flutter Code Quality** - Dart style guide, best practices
 - **Agent Handoff** - Handoff protocols between agents
