@@ -902,6 +902,40 @@ Task 4 (Provider) ← Task 6 (Seed Data)
 
 ---
 
+## Implementation Notes
+
+*Added during QA — documents bugs found and lessons learned.*
+
+### Bug #1: Missing `isArchived` field in program creation from template
+
+**Symptom:** `PERMISSION_DENIED` when applying program templates via batched writes.
+**Root Cause:** `createProgramFromTemplate` did not include `isArchived: false` in the program document data. Firestore security rules (`validProgram`) require this field, causing the entire batch write to fail.
+**Fix:** Added `'isArchived': false` to `programData` in `firestore_service.dart:createProgramFromTemplate`.
+**Lesson:** When adding new Firestore write paths, always cross-reference the security rules validation functions to ensure all required fields are included.
+
+### Bug #2: Null timestamp crash when loading programs
+
+**Symptom:** `TypeError: null is not a subtype of type 'Timestamp'` in `ProgramConverter.fromFirestore`.
+**Root Cause:** When `FieldValue.serverTimestamp()` is used in a batched write, the local cache initially stores `null` for the timestamp field until the server confirms. `ProgramConverter` assumed `createdAt` was always a non-null `Timestamp`.
+**Fix:** Added `_parseTimestamp` helper in `ProgramConverter` that returns `DateTime.now()` as fallback for null values.
+**Lesson:** Any Firestore converter that reads timestamp fields must handle null gracefully when using `FieldValue.serverTimestamp()` in writes, due to the local optimistic write behavior.
+
+### Bug #3: Firestore number type conversion in template models
+
+**Symptom:** Potential `TypeError` when parsing template data from Firestore.
+**Root Cause:** Firestore stores all numbers as doubles internally (JavaScript number type). Template models used `as int?` casts which can fail when the value is a `double`.
+**Fix:** Added `_parseIntOrNull` and `_parseIntOrDefault` safe parsing helpers to all template model classes (`TemplateSet`, `TemplateExercise`, `TemplateWorkout`, `TemplateWeek`).
+**Lesson:** Always use safe number parsing when reading int fields from Firestore. Never use direct `as int?` casts.
+
+### Bug #4: Template picker stuck on loading spinner on first visit
+
+**Symptom:** Template picker shows infinite loading spinner on first navigation; works correctly on subsequent visits.
+**Root Cause:** `_navigateToTemplatePicker` in `programs_screen.dart` captured `templateProvider.prebuiltPrograms` and `templateProvider.isLoadingPrebuilt` as static values with `listen: false`. On first visit, `loadPrebuiltPrograms()` was still in-flight, so the screen got `templates: []` and `isLoading: true` that never updated.
+**Fix:** Wrapped `TemplatePickerScreen` in a `Consumer<TemplateProvider>` so the screen rebuilds reactively when the provider finishes loading.
+**Lesson:** When navigating to screens that depend on async provider data, use `Consumer` or `context.watch` in the route builder — not `listen: false` snapshots.
+
+---
+
 ## Future Enhancements (Out of Scope)
 
 1. **Community Templates**: Add `isPublic` flag, query public templates
