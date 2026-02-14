@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
+import 'package:fittrack/models/muscle_group.dart';
 import 'package:fittrack/models/workout.dart';
 
 void main() {
@@ -454,6 +455,373 @@ void main() {
         expect(monthData.getIntensityForDay(5), equals(HeatmapIntensity.high));
         expect(monthData.getIntensityForDay(6), equals(HeatmapIntensity.high));
         expect(monthData.getIntensityForDay(7), equals(HeatmapIntensity.veryHigh));
+      });
+    });
+
+    group('DateRange - new factories', () {
+      test('lastMonth creates ~30 day range ending today', () {
+        final range = DateRange.lastMonth();
+        final now = DateTime.now();
+        expect(range.end.year, equals(now.year));
+        expect(range.end.month, equals(now.month));
+        expect(range.end.day, equals(now.day));
+        // Start should be roughly 1 month ago
+        expect(range.durationInDays, greaterThanOrEqualTo(28));
+        expect(range.durationInDays, lessThanOrEqualTo(32));
+      });
+
+      test('last3Months creates ~90 day range ending today', () {
+        final range = DateRange.last3Months();
+        final now = DateTime.now();
+        expect(range.end.year, equals(now.year));
+        expect(range.end.month, equals(now.month));
+        expect(range.end.day, equals(now.day));
+        expect(range.durationInDays, greaterThanOrEqualTo(89));
+        expect(range.durationInDays, lessThanOrEqualTo(93));
+      });
+
+      test('last6Months creates ~180 day range ending today', () {
+        final range = DateRange.last6Months();
+        final now = DateTime.now();
+        expect(range.end.year, equals(now.year));
+        expect(range.end.month, equals(now.month));
+        expect(range.end.day, equals(now.day));
+        expect(range.durationInDays, greaterThanOrEqualTo(181));
+        expect(range.durationInDays, lessThanOrEqualTo(185));
+      });
+
+      test('allTime starts from Jan 1 2020 and ends today', () {
+        final range = DateRange.allTime();
+        final now = DateTime.now();
+        expect(range.start.year, equals(2020));
+        expect(range.start.month, equals(1));
+        expect(range.start.day, equals(1));
+        expect(range.end.year, equals(now.year));
+        expect(range.end.month, equals(now.month));
+        expect(range.end.day, equals(now.day));
+      });
+
+      test('last3Months contains dates within range', () {
+        final range = DateRange.last3Months();
+        final now = DateTime.now();
+        expect(range.contains(now), isTrue);
+        expect(range.contains(now.subtract(const Duration(days: 30))), isTrue);
+        expect(range.contains(now.subtract(const Duration(days: 60))), isTrue);
+      });
+
+      test('last3Months does not contain dates outside range', () {
+        final range = DateRange.last3Months();
+        final now = DateTime.now();
+        // A date well outside 3 months ago
+        expect(range.contains(now.subtract(const Duration(days: 200))), isFalse);
+      });
+    });
+
+    group('ExerciseProgressPoint', () {
+      test('creates with all fields', () {
+        final point = ExerciseProgressPoint(
+          date: DateTime(2024, 6, 15),
+          workoutId: 'w1',
+          maxWeight: 100.0,
+          maxReps: 10,
+          totalVolume: 1500.0,
+          totalDuration: 300,
+          totalDistance: 5000.0,
+          estimated1RM: 133.3,
+        );
+
+        expect(point.date, equals(DateTime(2024, 6, 15)));
+        expect(point.workoutId, equals('w1'));
+        expect(point.maxWeight, equals(100.0));
+        expect(point.maxReps, equals(10));
+        expect(point.totalVolume, equals(1500.0));
+        expect(point.totalDuration, equals(300));
+        expect(point.totalDistance, equals(5000.0));
+        expect(point.estimated1RM, equals(133.3));
+      });
+
+      test('creates with nullable fields as null', () {
+        final point = ExerciseProgressPoint(
+          date: DateTime(2024, 6, 15),
+          workoutId: 'w1',
+        );
+
+        expect(point.maxWeight, isNull);
+        expect(point.maxReps, isNull);
+        expect(point.totalVolume, isNull);
+        expect(point.totalDuration, isNull);
+        expect(point.totalDistance, isNull);
+        expect(point.estimated1RM, isNull);
+      });
+
+      test('equality works correctly', () {
+        final point1 = ExerciseProgressPoint(
+          date: DateTime(2024, 6, 15),
+          workoutId: 'w1',
+          maxWeight: 100.0,
+        );
+        final point2 = ExerciseProgressPoint(
+          date: DateTime(2024, 6, 15),
+          workoutId: 'w1',
+          maxWeight: 100.0,
+        );
+        final point3 = ExerciseProgressPoint(
+          date: DateTime(2024, 6, 16),
+          workoutId: 'w1',
+          maxWeight: 100.0,
+        );
+
+        expect(point1, equals(point2));
+        expect(point1, isNot(equals(point3)));
+      });
+    });
+
+    group('ExerciseProgressData', () {
+      test('creates with data points', () {
+        final data = ExerciseProgressData(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dataPoints: [
+            ExerciseProgressPoint(
+              date: DateTime(2024, 6, 1),
+              workoutId: 'w1',
+              maxWeight: 80.0,
+            ),
+            ExerciseProgressPoint(
+              date: DateTime(2024, 6, 8),
+              workoutId: 'w2',
+              maxWeight: 85.0,
+            ),
+          ],
+          dateRange: DateRange(
+            start: DateTime(2024, 6, 1),
+            end: DateTime(2024, 6, 30),
+          ),
+        );
+
+        expect(data.exerciseId, equals('ex1'));
+        expect(data.exerciseName, equals('Bench Press'));
+        expect(data.exerciseType, equals(ExerciseType.strength));
+        expect(data.dataPoints.length, equals(2));
+        expect(data.isEmpty, isFalse);
+        expect(data.isSinglePoint, isFalse);
+      });
+
+      test('isEmpty returns true for empty data points', () {
+        final data = ExerciseProgressData(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dataPoints: [],
+          dateRange: DateRange(
+            start: DateTime(2024, 6, 1),
+            end: DateTime(2024, 6, 30),
+          ),
+        );
+
+        expect(data.isEmpty, isTrue);
+        expect(data.isSinglePoint, isFalse);
+      });
+
+      test('isSinglePoint returns true for exactly one data point', () {
+        final data = ExerciseProgressData(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dataPoints: [
+            ExerciseProgressPoint(
+              date: DateTime(2024, 6, 1),
+              workoutId: 'w1',
+              maxWeight: 80.0,
+            ),
+          ],
+          dateRange: DateRange(
+            start: DateTime(2024, 6, 1),
+            end: DateTime(2024, 6, 30),
+          ),
+        );
+
+        expect(data.isEmpty, isFalse);
+        expect(data.isSinglePoint, isTrue);
+      });
+    });
+
+    group('MuscleGroupVolume', () {
+      test('creates with muscle group', () {
+        final volume = MuscleGroupVolume(
+          muscleGroup: MuscleGroup.chest,
+          label: 'Chest',
+          totalSets: 45,
+          percentage: 25.0,
+        );
+
+        expect(volume.muscleGroup, equals(MuscleGroup.chest));
+        expect(volume.label, equals('Chest'));
+        expect(volume.totalSets, equals(45));
+        expect(volume.percentage, equals(25.0));
+      });
+
+      test('creates Other category with null muscle group', () {
+        final volume = MuscleGroupVolume(
+          muscleGroup: null,
+          label: 'Other',
+          totalSets: 10,
+          percentage: 5.5,
+        );
+
+        expect(volume.muscleGroup, isNull);
+        expect(volume.label, equals('Other'));
+      });
+
+      test('equality works correctly', () {
+        final v1 = MuscleGroupVolume(
+          muscleGroup: MuscleGroup.back,
+          label: 'Back',
+          totalSets: 30,
+          percentage: 20.0,
+        );
+        final v2 = MuscleGroupVolume(
+          muscleGroup: MuscleGroup.back,
+          label: 'Back',
+          totalSets: 30,
+          percentage: 20.0,
+        );
+
+        expect(v1, equals(v2));
+      });
+    });
+
+    group('WeeklyTrendPoint', () {
+      test('creates with correct fields', () {
+        final monday = DateTime(2024, 6, 10); // A Monday
+        final point = WeeklyTrendPoint(
+          weekStart: monday,
+          totalVolume: 15000.0,
+          workoutCount: 4,
+        );
+
+        expect(point.weekStart, equals(monday));
+        expect(point.totalVolume, equals(15000.0));
+        expect(point.workoutCount, equals(4));
+      });
+
+      test('weekEnd returns correct Sunday', () {
+        final monday = DateTime(2024, 6, 10);
+        final point = WeeklyTrendPoint(
+          weekStart: monday,
+          totalVolume: 0,
+          workoutCount: 0,
+        );
+
+        expect(point.weekEnd, equals(DateTime(2024, 6, 16)));
+      });
+
+      test('weekRangeString formats correctly', () {
+        final point = WeeklyTrendPoint(
+          weekStart: DateTime(2024, 6, 10),
+          totalVolume: 0,
+          workoutCount: 0,
+        );
+
+        expect(point.weekRangeString, equals('Jun 10 - Jun 16'));
+      });
+
+      test('weekRangeString handles month boundary', () {
+        final point = WeeklyTrendPoint(
+          weekStart: DateTime(2024, 6, 27),
+          totalVolume: 0,
+          workoutCount: 0,
+        );
+
+        // June 27 (Thu) + 6 days = July 3
+        expect(point.weekRangeString, equals('Jun 27 - Jul 3'));
+      });
+
+      test('equality works correctly', () {
+        final p1 = WeeklyTrendPoint(
+          weekStart: DateTime(2024, 6, 10),
+          totalVolume: 15000.0,
+          workoutCount: 4,
+        );
+        final p2 = WeeklyTrendPoint(
+          weekStart: DateTime(2024, 6, 10),
+          totalVolume: 15000.0,
+          workoutCount: 4,
+        );
+
+        expect(p1, equals(p2));
+      });
+    });
+
+    group('ConfigurableStreak', () {
+      test('creates with correct fields', () {
+        final streak = ConfigurableStreak(
+          weeklyTarget: 3,
+          currentStreak: 12,
+          longestStreak: 15,
+        );
+
+        expect(streak.weeklyTarget, equals(3));
+        expect(streak.currentStreak, equals(12));
+        expect(streak.longestStreak, equals(15));
+      });
+
+      test('currentStreakString formats correctly', () {
+        expect(
+          ConfigurableStreak(weeklyTarget: 3, currentStreak: 0, longestStreak: 0)
+              .currentStreakString,
+          equals('No streak'),
+        );
+        expect(
+          ConfigurableStreak(weeklyTarget: 3, currentStreak: 1, longestStreak: 1)
+              .currentStreakString,
+          equals('1-week streak'),
+        );
+        expect(
+          ConfigurableStreak(weeklyTarget: 3, currentStreak: 12, longestStreak: 15)
+              .currentStreakString,
+          equals('12-week streak'),
+        );
+      });
+
+      test('longestStreakString formats correctly', () {
+        expect(
+          ConfigurableStreak(weeklyTarget: 3, currentStreak: 0, longestStreak: 0)
+              .longestStreakString,
+          equals('No record'),
+        );
+        expect(
+          ConfigurableStreak(weeklyTarget: 3, currentStreak: 0, longestStreak: 1)
+              .longestStreakString,
+          equals('1 week'),
+        );
+        expect(
+          ConfigurableStreak(weeklyTarget: 3, currentStreak: 5, longestStreak: 15)
+              .longestStreakString,
+          equals('15 weeks'),
+        );
+      });
+
+      test('equality works correctly', () {
+        final s1 = ConfigurableStreak(
+          weeklyTarget: 3,
+          currentStreak: 5,
+          longestStreak: 10,
+        );
+        final s2 = ConfigurableStreak(
+          weeklyTarget: 3,
+          currentStreak: 5,
+          longestStreak: 10,
+        );
+        final s3 = ConfigurableStreak(
+          weeklyTarget: 4,
+          currentStreak: 5,
+          longestStreak: 10,
+        );
+
+        expect(s1, equals(s2));
+        expect(s1, isNot(equals(s3)));
       });
     });
   });
