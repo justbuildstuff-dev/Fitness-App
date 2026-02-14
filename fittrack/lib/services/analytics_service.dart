@@ -1,8 +1,12 @@
 import 'dart:async';
 import '../models/analytics.dart';
+import '../models/custom_exercise.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../models/library_exercise.dart';
+import '../models/muscle_group.dart';
 import '../models/workout.dart';
+import '../utils/one_rm_calculator.dart';
 import 'firestore_service.dart';
 
 /// Service for computing workout analytics and personal records
@@ -397,6 +401,435 @@ class AnalyticsService {
       'completionPercentage': completionPercentage,
       'workoutsPerWeek': workoutsPerWeek,
     };
+  }
+
+  /// Get per-exercise progress data for charting
+  ///
+  /// Retrieves all sets for a specific exercise within the date range,
+  /// groups them by workout session, and computes per-session aggregates.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID
+  /// - [exerciseId]: The exercise to retrieve progress for
+  /// - [exerciseName]: Display name for the result
+  /// - [exerciseType]: Type of exercise (determines which metrics to compute)
+  /// - [dateRange]: Time period to analyze
+  ///
+  /// **Returns:**
+  /// [ExerciseProgressData] with chronologically ordered data points.
+  /// For strength exercises, includes estimated 1RM per session.
+  Future<ExerciseProgressData> getExerciseProgress({
+    required String userId,
+    required String exerciseId,
+    required String exerciseName,
+    required ExerciseType exerciseType,
+    required DateRange dateRange,
+  }) async {
+    final cacheKey = '${userId}_exercise_progress_${exerciseId}_${dateRange.start.toIso8601String()}_${dateRange.end.toIso8601String()}';
+
+    if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid) {
+      return _cache[cacheKey]!.data as ExerciseProgressData;
+    }
+
+    final allSets = await _getAllUserSets(userId, dateRange);
+
+    // Filter sets for this specific exercise
+    final exerciseSets = allSets.where((s) => s.exerciseId == exerciseId).toList();
+
+    // Group sets by workoutId (one data point per workout session)
+    final Map<String, List<ExerciseSet>> setsByWorkout = {};
+    for (final set in exerciseSets) {
+      setsByWorkout.putIfAbsent(set.workoutId, () => []).add(set);
+    }
+
+    // Build data points from grouped sets
+    final List<ExerciseProgressPoint> dataPoints = [];
+    for (final entry in setsByWorkout.entries) {
+      final workoutSets = entry.value;
+      final workoutId = entry.key;
+
+      // Use earliest set's createdAt as the session date
+      workoutSets.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      final sessionDate = workoutSets.first.createdAt;
+
+      // Compute per-session aggregates
+      double? maxWeight;
+      int? maxReps;
+      double totalVolume = 0;
+      int totalDuration = 0;
+      double totalDistance = 0;
+
+      for (final set in workoutSets) {
+        if (set.weight != null && (maxWeight == null || set.weight! > maxWeight)) {
+          maxWeight = set.weight;
+        }
+        if (set.reps != null && (maxReps == null || set.reps! > maxReps)) {
+          maxReps = set.reps;
+        }
+        if (set.weight != null && set.reps != null) {
+          totalVolume += set.weight! * set.reps!;
+        }
+        if (set.duration != null) {
+          totalDuration += set.duration!;
+        }
+        if (set.distance != null) {
+          totalDistance += set.distance!;
+        }
+      }
+
+      // Compute estimated 1RM for strength exercises
+      double? estimated1RM;
+      if (exerciseType == ExerciseType.strength) {
+        estimated1RM = OneRMCalculator.estimateFromSets(workoutSets);
+      }
+
+      dataPoints.add(ExerciseProgressPoint(
+        date: sessionDate,
+        workoutId: workoutId,
+        maxWeight: maxWeight,
+        maxReps: maxReps,
+        totalVolume: totalVolume > 0 ? totalVolume : null,
+        totalDuration: totalDuration > 0 ? totalDuration : null,
+        totalDistance: totalDistance > 0 ? totalDistance : null,
+        estimated1RM: estimated1RM,
+      ));
+    }
+
+    // Sort chronologically
+    dataPoints.sort((a, b) => a.date.compareTo(b.date));
+
+    final result = ExerciseProgressData(
+      exerciseId: exerciseId,
+      exerciseName: exerciseName,
+      exerciseType: exerciseType,
+      dataPoints: dataPoints,
+      dateRange: dateRange,
+    );
+
+    _cache[cacheKey] = _CachedAnalytics(
+      data: result,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return result;
+  }
+
+  /// Get muscle group volume distribution for a date range
+  ///
+  /// Matches exercises by name to library/custom exercises to determine
+  /// primary muscle group. Unmatched exercises are grouped as "Other".
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID
+  /// - [dateRange]: Time period to analyze
+  /// - [libraryExercises]: Available library exercises for name matching
+  /// - [customExercises]: User's custom exercises for name matching
+  ///
+  /// **Returns:**
+  /// List of [MuscleGroupVolume] sorted by totalSets descending, with percentages.
+  Future<List<MuscleGroupVolume>> getMuscleGroupVolume({
+    required String userId,
+    required DateRange dateRange,
+    required List<LibraryExercise> libraryExercises,
+    required List<CustomExercise> customExercises,
+  }) async {
+    final cacheKey = '${userId}_muscle_volume_${dateRange.start.toIso8601String()}_${dateRange.end.toIso8601String()}';
+
+    if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid) {
+      return _cache[cacheKey]!.data as List<MuscleGroupVolume>;
+    }
+
+    final exercises = await _getAllUserExercises(userId, dateRange);
+    final allSets = await _getAllUserSets(userId, dateRange);
+
+    // Build a name→MuscleGroup lookup from library and custom exercises
+    final Map<String, MuscleGroup> nameToMuscleGroup = {};
+    for (final libEx in libraryExercises) {
+      if (libEx.primaryMuscles.isNotEmpty) {
+        nameToMuscleGroup[libEx.name.toLowerCase()] = libEx.primaryMuscles.first;
+      }
+    }
+    for (final customEx in customExercises) {
+      if (customEx.primaryMuscles.isNotEmpty) {
+        nameToMuscleGroup[customEx.name.toLowerCase()] = customEx.primaryMuscles.first;
+      }
+    }
+
+    // Build exerciseId→MuscleGroup mapping
+    final Map<String, MuscleGroup?> exerciseToMuscleGroup = {};
+    for (final exercise in exercises) {
+      exerciseToMuscleGroup[exercise.id] =
+          nameToMuscleGroup[exercise.name.toLowerCase()];
+    }
+
+    // Count sets per muscle group
+    final Map<MuscleGroup?, int> setCounts = {};
+    for (final set in allSets) {
+      final muscleGroup = exerciseToMuscleGroup[set.exerciseId];
+      setCounts[muscleGroup] = (setCounts[muscleGroup] ?? 0) + 1;
+    }
+
+    final totalSets = setCounts.values.fold<int>(0, (sum, count) => sum + count);
+    if (totalSets == 0) {
+      _cache[cacheKey] = _CachedAnalytics(
+        data: <MuscleGroupVolume>[],
+        computedAt: DateTime.now(),
+        validFor: _cacheValidDuration,
+      );
+      return [];
+    }
+
+    // Build result list
+    final List<MuscleGroupVolume> result = [];
+    for (final entry in setCounts.entries) {
+      result.add(MuscleGroupVolume(
+        muscleGroup: entry.key,
+        label: entry.key?.displayName ?? 'Other',
+        totalSets: entry.value,
+        percentage: (entry.value / totalSets) * 100,
+      ));
+    }
+
+    // Sort by totalSets descending
+    result.sort((a, b) => b.totalSets.compareTo(a.totalSets));
+
+    _cache[cacheKey] = _CachedAnalytics(
+      data: result,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return result;
+  }
+
+  /// Get weekly training trends for a date range
+  ///
+  /// Groups workouts and sets by ISO 8601 week (Monday-Sunday),
+  /// computing total volume and workout count per week.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID
+  /// - [dateRange]: Time period to analyze
+  ///
+  /// **Returns:**
+  /// List of [WeeklyTrendPoint] sorted chronologically by weekStart.
+  Future<List<WeeklyTrendPoint>> getWeeklyTrends({
+    required String userId,
+    required DateRange dateRange,
+  }) async {
+    final cacheKey = '${userId}_weekly_trends_${dateRange.start.toIso8601String()}_${dateRange.end.toIso8601String()}';
+
+    if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid) {
+      return _cache[cacheKey]!.data as List<WeeklyTrendPoint>;
+    }
+
+    final workouts = await _getAllUserWorkouts(userId, dateRange);
+    final allSets = await _getAllUserSets(userId, dateRange);
+
+    // Helper: get the Monday of a given date's week
+    DateTime getWeekStart(DateTime date) {
+      final daysFromMonday = date.weekday - 1; // Monday = 1, so subtract 1
+      return DateTime(date.year, date.month, date.day - daysFromMonday);
+    }
+
+    // Group workouts by week (count unique workouts per week)
+    final Map<DateTime, Set<String>> workoutsByWeek = {};
+    for (final workout in workouts) {
+      final weekStart = getWeekStart(workout.createdAt);
+      workoutsByWeek.putIfAbsent(weekStart, () => {}).add(workout.id);
+    }
+
+    // Group sets by week and compute volume
+    final Map<DateTime, double> volumeByWeek = {};
+    for (final set in allSets) {
+      final weekStart = getWeekStart(set.createdAt);
+      double setVolume = 0;
+      if (set.weight != null && set.reps != null) {
+        setVolume = set.weight! * set.reps!;
+      }
+      volumeByWeek[weekStart] = (volumeByWeek[weekStart] ?? 0) + setVolume;
+    }
+
+    // Merge into WeeklyTrendPoints
+    final allWeeks = <DateTime>{...workoutsByWeek.keys, ...volumeByWeek.keys};
+    final List<WeeklyTrendPoint> result = allWeeks.map((weekStart) {
+      return WeeklyTrendPoint(
+        weekStart: weekStart,
+        totalVolume: volumeByWeek[weekStart] ?? 0,
+        workoutCount: workoutsByWeek[weekStart]?.length ?? 0,
+      );
+    }).toList();
+
+    // Sort chronologically
+    result.sort((a, b) => a.weekStart.compareTo(b.weekStart));
+
+    _cache[cacheKey] = _CachedAnalytics(
+      data: result,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return result;
+  }
+
+  /// Get configurable workout streak based on weekly target
+  ///
+  /// Counts consecutive weeks (from current week backwards) where the
+  /// workout count meets or exceeds the weekly target.
+  ///
+  /// **Parameters:**
+  /// - [userId]: The user ID
+  /// - [weeklyTarget]: Minimum workouts per week to count (1-7)
+  ///
+  /// **Returns:**
+  /// [ConfigurableStreak] with current streak, longest streak, and target.
+  Future<ConfigurableStreak> getConfigurableStreak({
+    required String userId,
+    required int weeklyTarget,
+  }) async {
+    final cacheKey = '${userId}_streak_$weeklyTarget';
+
+    if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid) {
+      return _cache[cacheKey]!.data as ConfigurableStreak;
+    }
+
+    // Get workouts for past 2 years
+    final now = DateTime.now();
+    final dateRange = DateRange(
+      start: DateTime(now.year - 2, now.month, now.day),
+      end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+    );
+
+    final workouts = await _getAllUserWorkouts(userId, dateRange);
+
+    // Helper: get the Monday of a given date's week
+    DateTime getWeekStart(DateTime date) {
+      final daysFromMonday = date.weekday - 1;
+      return DateTime(date.year, date.month, date.day - daysFromMonday);
+    }
+
+    // Group workouts by week
+    final Map<DateTime, int> workoutsPerWeek = {};
+    for (final workout in workouts) {
+      final weekStart = getWeekStart(workout.createdAt);
+      workoutsPerWeek[weekStart] = (workoutsPerWeek[weekStart] ?? 0) + 1;
+    }
+
+    if (workoutsPerWeek.isEmpty) {
+      final result = ConfigurableStreak(
+        weeklyTarget: weeklyTarget,
+        currentStreak: 0,
+        longestStreak: 0,
+      );
+      _cache[cacheKey] = _CachedAnalytics(
+        data: result,
+        computedAt: DateTime.now(),
+        validFor: _cacheValidDuration,
+      );
+      return result;
+    }
+
+    // Sort weeks chronologically
+    final sortedWeeks = workoutsPerWeek.keys.toList()..sort();
+
+    // Calculate longest streak
+    int longestStreak = 0;
+    int tempStreak = 0;
+    DateTime? previousWeek;
+
+    for (final weekStart in sortedWeeks) {
+      final count = workoutsPerWeek[weekStart]!;
+      if (count >= weeklyTarget) {
+        if (previousWeek == null ||
+            weekStart.difference(previousWeek).inDays == 7) {
+          tempStreak++;
+        } else {
+          tempStreak = 1;
+        }
+        if (tempStreak > longestStreak) {
+          longestStreak = tempStreak;
+        }
+        previousWeek = weekStart;
+      } else {
+        tempStreak = 0;
+        previousWeek = null;
+      }
+    }
+
+    // Calculate current streak (working backwards from current week)
+    int currentStreak = 0;
+    DateTime checkWeek = getWeekStart(now);
+
+    while (true) {
+      final count = workoutsPerWeek[checkWeek] ?? 0;
+      if (count >= weeklyTarget) {
+        currentStreak++;
+        checkWeek = checkWeek.subtract(const Duration(days: 7));
+      } else {
+        break;
+      }
+    }
+
+    final result = ConfigurableStreak(
+      weeklyTarget: weeklyTarget,
+      currentStreak: currentStreak,
+      longestStreak: longestStreak,
+    );
+
+    _cache[cacheKey] = _CachedAnalytics(
+      data: result,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return result;
+  }
+
+  /// Get list of exercises the user has logged across all programs
+  ///
+  /// Scans all exercises across all programs and deduplicates by name.
+  /// No date filter applied - returns all exercises ever logged.
+  ///
+  /// **Returns:**
+  /// List of ({String exerciseId, String exerciseName, ExerciseType exerciseType})
+  /// records sorted alphabetically by name.
+  Future<List<({String exerciseId, String exerciseName, ExerciseType exerciseType})>> getLoggedExercises({
+    required String userId,
+  }) async {
+    final cacheKey = '${userId}_logged_exercises';
+
+    if (_cache.containsKey(cacheKey) && _cache[cacheKey]!.isValid) {
+      return _cache[cacheKey]!.data as List<({String exerciseId, String exerciseName, ExerciseType exerciseType})>;
+    }
+
+    // Use allTime range to get all exercises
+    final dateRange = DateRange.allTime();
+    final exercises = await _getAllUserExercises(userId, dateRange);
+
+    // Deduplicate by exercise name (keep first occurrence for ID)
+    final Map<String, ({String exerciseId, String exerciseName, ExerciseType exerciseType})> seen = {};
+    for (final exercise in exercises) {
+      final key = exercise.name.toLowerCase();
+      if (!seen.containsKey(key)) {
+        seen[key] = (
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          exerciseType: exercise.exerciseType,
+        );
+      }
+    }
+
+    final result = seen.values.toList()
+      ..sort((a, b) => a.exerciseName.toLowerCase().compareTo(b.exerciseName.toLowerCase()));
+
+    _cache[cacheKey] = _CachedAnalytics(
+      data: result,
+      computedAt: DateTime.now(),
+      validFor: _cacheValidDuration,
+    );
+
+    return result;
   }
 
   /// Clear the analytics cache
