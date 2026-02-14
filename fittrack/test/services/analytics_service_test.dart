@@ -4,8 +4,11 @@ import 'package:mockito/annotations.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/analytics.dart';
+import 'package:fittrack/models/custom_exercise.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
+import 'package:fittrack/models/library_exercise.dart';
+import 'package:fittrack/models/muscle_group.dart';
 import 'package:fittrack/models/workout.dart';
 import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
@@ -1139,6 +1142,653 @@ void main() {
         expect(febData.month, equals(2));
       });
     });
+
+    group('getExerciseProgress', () {
+      test('returns data points grouped by workout session', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          // Workout 1: 2 sets for exercise ex1
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 80.0, reps: 10,
+            createdAt: now.subtract(const Duration(days: 7)),
+          ),
+          _createTestSetFull(
+            id: 's2', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 85.0, reps: 8,
+            createdAt: now.subtract(const Duration(days: 7)),
+          ),
+          // Workout 2: 1 set for exercise ex1
+          _createTestSetFull(
+            id: 's3', exerciseId: 'ex1', workoutId: 'w2',
+            weight: 90.0, reps: 5,
+            createdAt: now.subtract(const Duration(days: 3)),
+          ),
+          // Different exercise - should be filtered out
+          _createTestSetFull(
+            id: 's4', exerciseId: 'ex2', workoutId: 'w1',
+            weight: 50.0, reps: 12,
+            createdAt: now.subtract(const Duration(days: 7)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [
+            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w1'),
+            _createTestExercise(id: 'ex2', exerciseType: ExerciseType.strength, workoutId: 'w1'),
+            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w2'),
+          ],
+          workouts: [
+            _createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 7))),
+            _createTestWorkout(id: 'w2', createdAt: now.subtract(const Duration(days: 3))),
+          ],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.exerciseId, equals('ex1'));
+        expect(result.exerciseName, equals('Bench Press'));
+        expect(result.dataPoints.length, equals(2)); // 2 workout sessions
+        expect(result.isEmpty, isFalse);
+
+        // First session: maxWeight should be 85, maxReps should be 10
+        // totalVolume = 80*10 + 85*8 = 800 + 680 = 1480
+        final firstPoint = result.dataPoints.first;
+        expect(firstPoint.maxWeight, equals(85.0));
+        expect(firstPoint.maxReps, equals(10));
+        expect(firstPoint.totalVolume, equals(1480.0));
+
+        // Second session: single set 90kg x 5
+        final secondPoint = result.dataPoints.last;
+        expect(secondPoint.maxWeight, equals(90.0));
+        expect(secondPoint.maxReps, equals(5));
+        expect(secondPoint.totalVolume, equals(450.0));
+      });
+
+      test('includes estimated 1RM for strength exercises', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 100.0, reps: 5,
+            createdAt: now.subtract(const Duration(days: 3)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1')],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 3)))],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Squat',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.length, equals(1));
+        // Epley: 100 * (1 + 5/30) ≈ 116.67
+        expect(result.dataPoints.first.estimated1RM, closeTo(116.67, 0.01));
+      });
+
+      test('returns null estimated 1RM for non-strength exercises', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            reps: 15, createdAt: now.subtract(const Duration(days: 3)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.bodyweight)],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 3)))],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Push-ups',
+          exerciseType: ExerciseType.bodyweight,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.first.estimated1RM, isNull);
+      });
+
+      test('returns empty data points when no matching sets', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: [],
+          exercises: [],
+          workouts: [],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex_nonexistent',
+          exerciseName: 'Nothing',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.isEmpty, isTrue);
+        expect(result.dataPoints, isEmpty);
+      });
+
+      test('computes duration and distance for cardio exercises', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            duration: 1800, distance: 5000.0,
+            createdAt: now.subtract(const Duration(days: 3)),
+          ),
+          _createTestSetFull(
+            id: 's2', exerciseId: 'ex1', workoutId: 'w1',
+            duration: 900, distance: 2500.0,
+            createdAt: now.subtract(const Duration(days: 3)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.cardio)],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 3)))],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Running',
+          exerciseType: ExerciseType.cardio,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.length, equals(1));
+        expect(result.dataPoints.first.totalDuration, equals(2700));
+        expect(result.dataPoints.first.totalDistance, equals(7500.0));
+      });
+    });
+
+    group('getMuscleGroupVolume', () {
+      test('maps exercises to muscle groups by name', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final libraryExercises = [
+          const LibraryExercise(
+            id: 'lib1', name: 'Bench Press',
+            exerciseType: ExerciseType.strength,
+            primaryMuscles: [MuscleGroup.chest],
+          ),
+          const LibraryExercise(
+            id: 'lib2', name: 'Barbell Row',
+            exerciseType: ExerciseType.strength,
+            primaryMuscles: [MuscleGroup.back],
+          ),
+        ];
+
+        final testSets = [
+          _createTestSetFull(id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 100, reps: 10, createdAt: now.subtract(const Duration(days: 5))),
+          _createTestSetFull(id: 's2', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 100, reps: 8, createdAt: now.subtract(const Duration(days: 5))),
+          _createTestSetFull(id: 's3', exerciseId: 'ex2', workoutId: 'w1',
+            weight: 80, reps: 10, createdAt: now.subtract(const Duration(days: 5))),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [
+            _createTestExerciseWithName(id: 'ex1', name: 'Bench Press'),
+            _createTestExerciseWithName(id: 'ex2', name: 'Barbell Row'),
+          ],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5)))],
+        );
+
+        final result = await analyticsService.getMuscleGroupVolume(
+          userId: 'test_user',
+          dateRange: dateRange,
+          libraryExercises: libraryExercises,
+          customExercises: [],
+        );
+
+        expect(result.length, equals(2)); // chest and back
+        // Chest has 2 sets, Back has 1 set
+        final chestVolume = result.firstWhere((v) => v.muscleGroup == MuscleGroup.chest);
+        final backVolume = result.firstWhere((v) => v.muscleGroup == MuscleGroup.back);
+        expect(chestVolume.totalSets, equals(2));
+        expect(backVolume.totalSets, equals(1));
+        expect(chestVolume.percentage, closeTo(66.67, 0.01));
+        expect(backVolume.percentage, closeTo(33.33, 0.01));
+      });
+
+      test('groups unmatched exercises as Other', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          _createTestSetFull(id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 50, reps: 10, createdAt: now.subtract(const Duration(days: 5))),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [
+            _createTestExerciseWithName(id: 'ex1', name: 'My Custom Move'),
+          ],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5)))],
+        );
+
+        // No library exercises match "My Custom Move"
+        final result = await analyticsService.getMuscleGroupVolume(
+          userId: 'test_user',
+          dateRange: dateRange,
+          libraryExercises: [],
+          customExercises: [],
+        );
+
+        expect(result.length, equals(1));
+        expect(result.first.muscleGroup, isNull);
+        expect(result.first.label, equals('Other'));
+        expect(result.first.totalSets, equals(1));
+        expect(result.first.percentage, equals(100.0));
+      });
+
+      test('returns empty list when no data', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService, sets: [], exercises: [], workouts: [],
+        );
+
+        final result = await analyticsService.getMuscleGroupVolume(
+          userId: 'test_user',
+          dateRange: dateRange,
+          libraryExercises: [],
+          customExercises: [],
+        );
+
+        expect(result, isEmpty);
+      });
+
+      test('matches custom exercises by name', () async {
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final customExercises = [
+          CustomExercise(
+            id: 'custom1', name: 'My Curl',
+            exerciseType: ExerciseType.strength,
+            primaryMuscles: const [MuscleGroup.arms],
+            userId: 'test_user',
+            createdAt: now, updatedAt: now,
+          ),
+        ];
+
+        final testSets = [
+          _createTestSetFull(id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 20, reps: 12, createdAt: now.subtract(const Duration(days: 5))),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExerciseWithName(id: 'ex1', name: 'My Curl')],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5)))],
+        );
+
+        final result = await analyticsService.getMuscleGroupVolume(
+          userId: 'test_user',
+          dateRange: dateRange,
+          libraryExercises: [],
+          customExercises: customExercises,
+        );
+
+        expect(result.length, equals(1));
+        expect(result.first.muscleGroup, equals(MuscleGroup.arms));
+        expect(result.first.label, equals('Arms'));
+      });
+    });
+
+    group('getWeeklyTrends', () {
+      test('groups data by ISO week (Monday-Sunday)', () async {
+        // Monday Jan 6 2025
+        final monday = DateTime(2025, 1, 6);
+        final dateRange = DateRange(
+          start: monday,
+          end: monday.add(const Duration(days: 13, hours: 23, minutes: 59, seconds: 59)),
+        );
+
+        final testSets = [
+          // Week 1: Mon Jan 6 and Wed Jan 8
+          _createTestSetFull(id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 100, reps: 10, createdAt: DateTime(2025, 1, 6, 10)),
+          _createTestSetFull(id: 's2', exerciseId: 'ex1', workoutId: 'w2',
+            weight: 80, reps: 8, createdAt: DateTime(2025, 1, 8, 10)),
+          // Week 2: Mon Jan 13
+          _createTestSetFull(id: 's3', exerciseId: 'ex1', workoutId: 'w3',
+            weight: 90, reps: 5, createdAt: DateTime(2025, 1, 13, 10)),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [
+            _createTestExercise(id: 'ex1', workoutId: 'w1'),
+            _createTestExercise(id: 'ex1', workoutId: 'w2'),
+            _createTestExercise(id: 'ex1', workoutId: 'w3'),
+          ],
+          workouts: [
+            _createTestWorkout(id: 'w1', createdAt: DateTime(2025, 1, 6, 10)),
+            _createTestWorkout(id: 'w2', createdAt: DateTime(2025, 1, 8, 10)),
+            _createTestWorkout(id: 'w3', createdAt: DateTime(2025, 1, 13, 10)),
+          ],
+        );
+
+        final result = await analyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        );
+
+        expect(result.length, equals(2));
+
+        // Week 1: volume = 100*10 + 80*8 = 1640, workouts = 2
+        expect(result[0].weekStart, equals(DateTime(2025, 1, 6)));
+        expect(result[0].totalVolume, equals(1640.0));
+        expect(result[0].workoutCount, equals(2));
+
+        // Week 2: volume = 90*5 = 450, workouts = 1
+        expect(result[1].weekStart, equals(DateTime(2025, 1, 13)));
+        expect(result[1].totalVolume, equals(450.0));
+        expect(result[1].workoutCount, equals(1));
+      });
+
+      test('returns empty list when no data', () async {
+        final dateRange = DateRange.lastMonth();
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService, sets: [], exercises: [], workouts: [],
+        );
+
+        final result = await analyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        );
+
+        expect(result, isEmpty);
+      });
+
+      test('sorted chronologically', () async {
+        final dateRange = DateRange(
+          start: DateTime(2025, 1, 1),
+          end: DateTime(2025, 1, 31, 23, 59, 59),
+        );
+
+        final testSets = [
+          _createTestSetFull(id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 50, reps: 10, createdAt: DateTime(2025, 1, 20, 10)),
+          _createTestSetFull(id: 's2', exerciseId: 'ex1', workoutId: 'w2',
+            weight: 60, reps: 10, createdAt: DateTime(2025, 1, 6, 10)),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [
+            _createTestExercise(id: 'ex1', workoutId: 'w1'),
+            _createTestExercise(id: 'ex1', workoutId: 'w2'),
+          ],
+          workouts: [
+            _createTestWorkout(id: 'w1', createdAt: DateTime(2025, 1, 20, 10)),
+            _createTestWorkout(id: 'w2', createdAt: DateTime(2025, 1, 6, 10)),
+          ],
+        );
+
+        final result = await analyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        );
+
+        expect(result.length, equals(2));
+        // Should be sorted: Jan 6 week before Jan 20 week
+        expect(result[0].weekStart.isBefore(result[1].weekStart), isTrue);
+      });
+    });
+
+    group('getConfigurableStreak', () {
+      test('returns 0 streak when no workouts', () async {
+        when(mockFirestoreService.getPrograms(any))
+            .thenAnswer((_) => Stream.value([]));
+
+        final result = await analyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 3,
+        );
+
+        expect(result.weeklyTarget, equals(3));
+        expect(result.currentStreak, equals(0));
+        expect(result.longestStreak, equals(0));
+      });
+
+      test('counts consecutive weeks meeting target', () async {
+        final now = DateTime.now();
+
+        // Create workouts for 3 consecutive weeks (target = 2 per week)
+        final workouts = <Workout>[];
+        for (int week = 0; week < 3; week++) {
+          for (int day = 0; day < 2; day++) {
+            workouts.add(_createTestWorkout(
+              id: 'w_${week}_$day',
+              createdAt: now.subtract(Duration(days: week * 7 + day)),
+            ));
+          }
+        }
+
+        _setupMockFirestoreWithWorkoutsOnly(mockFirestoreService, workouts);
+
+        final result = await analyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 2,
+        );
+
+        expect(result.currentStreak, equals(3));
+        expect(result.longestStreak, equals(3));
+      });
+
+      test('breaks streak when week misses target', () async {
+        final now = DateTime.now();
+
+        // Current week: 3 workouts (meets target of 2)
+        // Last week: 1 workout (misses target of 2)
+        // 2 weeks ago: 3 workouts (meets target of 2)
+        final workouts = <Workout>[
+          // Current week
+          _createTestWorkout(id: 'w1', createdAt: now),
+          _createTestWorkout(id: 'w2', createdAt: now.subtract(const Duration(days: 1))),
+          _createTestWorkout(id: 'w3', createdAt: now.subtract(const Duration(days: 2))),
+          // Last week - only 1 workout (below target)
+          _createTestWorkout(id: 'w4', createdAt: now.subtract(const Duration(days: 8))),
+          // 2 weeks ago - meets target
+          _createTestWorkout(id: 'w5', createdAt: now.subtract(const Duration(days: 14))),
+          _createTestWorkout(id: 'w6', createdAt: now.subtract(const Duration(days: 15))),
+        ];
+
+        _setupMockFirestoreWithWorkoutsOnly(mockFirestoreService, workouts);
+
+        final result = await analyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 2,
+        );
+
+        // Current streak should be 1 (only current week meets target)
+        expect(result.currentStreak, equals(1));
+        // Longest streak should be 1 (no consecutive weeks)
+        expect(result.longestStreak, greaterThanOrEqualTo(1));
+      });
+
+      test('finds longest streak across history', () async {
+        final now = DateTime.now();
+
+        // Create a gap then a longer streak in the past
+        final workouts = <Workout>[];
+
+        // Old streak: 5 consecutive weeks, 20 weeks ago
+        for (int week = 20; week > 15; week--) {
+          for (int day = 0; day < 3; day++) {
+            workouts.add(_createTestWorkout(
+              id: 'old_${week}_$day',
+              createdAt: now.subtract(Duration(days: week * 7 + day)),
+            ));
+          }
+        }
+
+        // Current: 2 weeks meeting target
+        for (int week = 0; week < 2; week++) {
+          for (int day = 0; day < 3; day++) {
+            workouts.add(_createTestWorkout(
+              id: 'new_${week}_$day',
+              createdAt: now.subtract(Duration(days: week * 7 + day)),
+            ));
+          }
+        }
+
+        _setupMockFirestoreWithWorkoutsOnly(mockFirestoreService, workouts);
+
+        final result = await analyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 3,
+        );
+
+        expect(result.currentStreak, equals(2));
+        expect(result.longestStreak, equals(5));
+      });
+    });
+
+    group('getLoggedExercises', () {
+      test('returns deduplicated exercises sorted alphabetically', () async {
+        final now = DateTime.now();
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: [],
+          exercises: [
+            _createTestExerciseWithName(id: 'ex1', name: 'Squat'),
+            _createTestExerciseWithName(id: 'ex2', name: 'Bench Press'),
+            _createTestExerciseWithName(id: 'ex3', name: 'squat'), // Duplicate (different case)
+            _createTestExerciseWithName(id: 'ex4', name: 'Deadlift'),
+          ],
+          workouts: [
+            _createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5))),
+          ],
+        );
+
+        final result = await analyticsService.getLoggedExercises(
+          userId: 'test_user',
+        );
+
+        // Should be deduplicated: Bench Press, Deadlift, Squat (3 unique)
+        expect(result.length, equals(3));
+        expect(result[0].exerciseName, equals('Bench Press'));
+        expect(result[1].exerciseName, equals('Deadlift'));
+        expect(result[2].exerciseName, equals('Squat'));
+      });
+
+      test('returns empty list when no exercises', () async {
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService, sets: [], exercises: [], workouts: [],
+        );
+
+        final result = await analyticsService.getLoggedExercises(
+          userId: 'test_user',
+        );
+
+        expect(result, isEmpty);
+      });
+
+      test('preserves exercise type in results', () async {
+        final now = DateTime.now();
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: [],
+          exercises: [
+            _createTestExerciseWithName(id: 'ex1', name: 'Bench Press', exerciseType: ExerciseType.strength),
+            _createTestExerciseWithName(id: 'ex2', name: 'Running', exerciseType: ExerciseType.cardio),
+          ],
+          workouts: [
+            _createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5))),
+          ],
+        );
+
+        final result = await analyticsService.getLoggedExercises(
+          userId: 'test_user',
+        );
+
+        expect(result.length, equals(2));
+        final benchPress = result.firstWhere((e) => e.exerciseName == 'Bench Press');
+        final running = result.firstWhere((e) => e.exerciseName == 'Running');
+        expect(benchPress.exerciseType, equals(ExerciseType.strength));
+        expect(running.exerciseType, equals(ExerciseType.cardio));
+      });
+    });
   });
 }
 
@@ -1173,8 +1823,9 @@ List<Exercise> _createTestExercises() {
 }
 
 Exercise _createTestExercise({
-  required String id, 
+  required String id,
   ExerciseType? exerciseType,
+  String workoutId = 'w1',
 }) {
   final now = DateTime.now();
   return Exercise(
@@ -1185,7 +1836,7 @@ Exercise _createTestExercise({
     createdAt: now,
     updatedAt: now,
     userId: 'test_user',
-    workoutId: 'w1',
+    workoutId: workoutId,
     weekId: 'week1',
     programId: 'prog1',
   );
@@ -1485,5 +2136,139 @@ void _setupMockFirestore(
              set.programId == queryProgramId;
     }).toList();
     return Stream.value(workoutSets);
+  });
+}
+
+// Helper to create a test set with full control over all fields
+ExerciseSet _createTestSetFull({
+  required String id,
+  required DateTime createdAt,
+  String exerciseId = 'ex1',
+  String workoutId = 'w1',
+  String programId = 'p1',
+  double? weight,
+  int? reps,
+  int? duration,
+  double? distance,
+  bool checked = false,
+}) {
+  return ExerciseSet(
+    id: id,
+    setNumber: 1,
+    reps: reps,
+    weight: weight,
+    duration: duration,
+    distance: distance,
+    checked: checked,
+    createdAt: createdAt,
+    updatedAt: createdAt,
+    userId: 'test_user',
+    exerciseId: exerciseId,
+    workoutId: workoutId,
+    weekId: 'wk1',
+    programId: programId,
+  );
+}
+
+// Helper to create a test exercise with a custom name
+Exercise _createTestExerciseWithName({
+  required String id,
+  required String name,
+  ExerciseType exerciseType = ExerciseType.strength,
+  String workoutId = 'w1',
+}) {
+  final now = DateTime.now();
+  return Exercise(
+    id: id,
+    name: name,
+    exerciseType: exerciseType,
+    orderIndex: 0,
+    createdAt: now,
+    updatedAt: now,
+    userId: 'test_user',
+    workoutId: workoutId,
+    weekId: 'wk1',
+    programId: 'p1',
+  );
+}
+
+// Helper to setup mock Firestore with explicit exercises, sets, and workouts
+void _setupMockFirestoreWithSetsAndExercises(
+  MockFirestoreService mockService, {
+  required List<ExerciseSet> sets,
+  required List<Exercise> exercises,
+  required List<Workout> workouts,
+}) {
+  when(mockService.getPrograms(any)).thenAnswer((_) => Stream.value([
+    Program(
+      id: 'p1',
+      name: 'Test Program',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      userId: 'test_user',
+    ),
+  ]));
+
+  when(mockService.getWeeks(any, any)).thenAnswer((_) => Stream.value([
+    Week(
+      id: 'wk1',
+      name: 'Week 1',
+      order: 1,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      userId: 'test_user',
+      programId: 'p1',
+    ),
+  ]));
+
+  when(mockService.getWorkouts(any, any, any)).thenAnswer((_) {
+    if (workouts.isEmpty) return Stream.value([]);
+    // Return workouts with createdAt matching date range filter
+    return Stream.value(workouts);
+  });
+
+  when(mockService.getExercises(any, any, any, any)).thenAnswer((invocation) {
+    final workoutId = invocation.positionalArguments[3] as String;
+    final filtered = exercises.where((e) => e.workoutId == workoutId).toList();
+    return Stream.value(filtered);
+  });
+
+  when(mockService.getSets(any, any, any, any, any)).thenAnswer((invocation) {
+    final workoutId = invocation.positionalArguments[3] as String;
+    final exerciseId = invocation.positionalArguments[4] as String;
+    final filtered = sets.where((s) => s.exerciseId == exerciseId && s.workoutId == workoutId).toList();
+    return Stream.value(filtered);
+  });
+}
+
+// Helper to setup mock Firestore with only workouts (for streak tests)
+void _setupMockFirestoreWithWorkoutsOnly(
+  MockFirestoreService mockService,
+  List<Workout> workouts,
+) {
+  when(mockService.getPrograms(any)).thenAnswer((_) => Stream.value([
+    Program(
+      id: 'p1',
+      name: 'Test Program',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      userId: 'test_user',
+    ),
+  ]));
+
+  when(mockService.getWeeks(any, any)).thenAnswer((_) => Stream.value([
+    Week(
+      id: 'wk1',
+      name: 'Week 1',
+      order: 1,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      userId: 'test_user',
+      programId: 'p1',
+    ),
+  ]));
+
+  when(mockService.getWorkouts(any, any, any)).thenAnswer((_) {
+    return Stream.value(workouts);
   });
 }
