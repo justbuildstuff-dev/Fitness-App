@@ -1181,8 +1181,9 @@ void main() {
           mockFirestoreService,
           sets: testSets,
           exercises: [
-            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength),
-            _createTestExercise(id: 'ex2', exerciseType: ExerciseType.strength),
+            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w1'),
+            _createTestExercise(id: 'ex2', exerciseType: ExerciseType.strength, workoutId: 'w1'),
+            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w2'),
           ],
           workouts: [
             _createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 7))),
@@ -1530,7 +1531,11 @@ void main() {
         _setupMockFirestoreWithSetsAndExercises(
           mockFirestoreService,
           sets: testSets,
-          exercises: [_createTestExercise(id: 'ex1')],
+          exercises: [
+            _createTestExercise(id: 'ex1', workoutId: 'w1'),
+            _createTestExercise(id: 'ex1', workoutId: 'w2'),
+            _createTestExercise(id: 'ex1', workoutId: 'w3'),
+          ],
           workouts: [
             _createTestWorkout(id: 'w1', createdAt: DateTime(2025, 1, 6, 10)),
             _createTestWorkout(id: 'w2', createdAt: DateTime(2025, 1, 8, 10)),
@@ -1587,7 +1592,10 @@ void main() {
         _setupMockFirestoreWithSetsAndExercises(
           mockFirestoreService,
           sets: testSets,
-          exercises: [_createTestExercise(id: 'ex1')],
+          exercises: [
+            _createTestExercise(id: 'ex1', workoutId: 'w1'),
+            _createTestExercise(id: 'ex1', workoutId: 'w2'),
+          ],
           workouts: [
             _createTestWorkout(id: 'w1', createdAt: DateTime(2025, 1, 20, 10)),
             _createTestWorkout(id: 'w2', createdAt: DateTime(2025, 1, 6, 10)),
@@ -1815,8 +1823,9 @@ List<Exercise> _createTestExercises() {
 }
 
 Exercise _createTestExercise({
-  required String id, 
+  required String id,
   ExerciseType? exerciseType,
+  String workoutId = 'w1',
 }) {
   final now = DateTime.now();
   return Exercise(
@@ -1827,7 +1836,7 @@ Exercise _createTestExercise({
     createdAt: now,
     updatedAt: now,
     userId: 'test_user',
-    workoutId: 'w1',
+    workoutId: workoutId,
     weekId: 'week1',
     programId: 'prog1',
   );
@@ -2166,6 +2175,7 @@ Exercise _createTestExerciseWithName({
   required String id,
   required String name,
   ExerciseType exerciseType = ExerciseType.strength,
+  String workoutId = 'w1',
 }) {
   final now = DateTime.now();
   return Exercise(
@@ -2176,7 +2186,7 @@ Exercise _createTestExerciseWithName({
     createdAt: now,
     updatedAt: now,
     userId: 'test_user',
-    workoutId: 'w1',
+    workoutId: workoutId,
     weekId: 'wk1',
     programId: 'p1',
   );
@@ -2217,12 +2227,17 @@ void _setupMockFirestoreWithSetsAndExercises(
     return Stream.value(workouts);
   });
 
-  when(mockService.getExercises(any, any, any, any)).thenAnswer((_) {
-    return Stream.value(exercises);
+  when(mockService.getExercises(any, any, any, any)).thenAnswer((invocation) {
+    final workoutId = invocation.positionalArguments[3] as String;
+    final filtered = exercises.where((e) => e.workoutId == workoutId).toList();
+    return Stream.value(filtered);
   });
 
-  when(mockService.getSets(any, any, any, any, any)).thenAnswer((_) {
-    return Stream.value(sets);
+  when(mockService.getSets(any, any, any, any, any)).thenAnswer((invocation) {
+    final workoutId = invocation.positionalArguments[3] as String;
+    final exerciseId = invocation.positionalArguments[4] as String;
+    final filtered = sets.where((s) => s.exerciseId == exerciseId && s.workoutId == workoutId).toList();
+    return Stream.value(filtered);
   });
 }
 
