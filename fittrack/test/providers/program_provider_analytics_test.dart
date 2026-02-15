@@ -6,8 +6,11 @@ import 'package:fittrack/providers/program_provider.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/analytics.dart';
+import 'package:fittrack/models/custom_exercise.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
+import 'package:fittrack/models/library_exercise.dart';
+import 'package:fittrack/models/muscle_group.dart';
 
 import 'program_provider_analytics_test.mocks.dart';
 
@@ -82,6 +85,18 @@ void main() {
         year: now.year,
         month: now.month,
       )).thenAnswer((_) async {});
+
+      // Stubs for loadConfigurableStreak (called via loadAnalytics)
+      when(mockFirestoreService.getUserProfile(any))
+          .thenAnswer((_) => Stream.value({'settings': {'workoutTarget': 3}}));
+      when(mockAnalyticsService.getConfigurableStreak(
+        userId: 'test_user',
+        weeklyTarget: 3,
+      )).thenAnswer((_) async => const ConfigurableStreak(
+        weeklyTarget: 3,
+        currentStreak: 0,
+        longestStreak: 0,
+      ));
 
       provider = ProgramProvider.withServices('test_user', mockFirestoreService, mockAnalyticsService);
     });
@@ -508,34 +523,425 @@ void main() {
       });
     });
 
-    group('Integration with Existing Provider Methods', () {
-      test('createSet triggers PR check', () async {
-        // This test would verify that creating a set also checks for PRs
-        // Would require mocking the existing createSet method flow
-        expect(true, isTrue); // Placeholder
+    group('loadExerciseProgress', () {
+      test('loads exercise progress and updates getter', () async {
+        final dateRange = DateRange.lastMonth();
+        final mockData = ExerciseProgressData(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dataPoints: [
+            ExerciseProgressPoint(
+              date: DateTime(2024, 6, 1),
+              workoutId: 'w1',
+              maxWeight: 100.0,
+              maxReps: 8,
+              totalVolume: 800.0,
+              estimated1RM: 120.0,
+            ),
+          ],
+          dateRange: dateRange,
+        );
+
+        when(mockAnalyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        )).thenAnswer((_) async => mockData);
+
+        await provider.loadExerciseProgress(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(provider.exerciseProgress, isNotNull);
+        expect(provider.exerciseProgress!.exerciseId, equals('ex1'));
+        expect(provider.exerciseProgress!.dataPoints.length, equals(1));
       });
 
-      test('updating set triggers PR check', () async {
-        // This test would verify that updating a set also checks for PRs
-        expect(true, isTrue); // Placeholder
+      test('handles errors gracefully', () async {
+        final dateRange = DateRange.lastMonth();
+
+        when(mockAnalyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        )).thenThrow(Exception('Network error'));
+
+        await provider.loadExerciseProgress(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        // Should not crash, exerciseProgress stays null
+        expect(provider.exerciseProgress, isNull);
+      });
+    });
+
+    group('loadMuscleGroupVolume', () {
+      test('loads muscle group volume and updates getter', () async {
+        final dateRange = DateRange.lastMonth();
+        final mockData = [
+          const MuscleGroupVolume(
+            muscleGroup: MuscleGroup.chest,
+            label: 'Chest',
+            totalSets: 20,
+            percentage: 40.0,
+          ),
+          const MuscleGroupVolume(
+            muscleGroup: MuscleGroup.back,
+            label: 'Back',
+            totalSets: 15,
+            percentage: 30.0,
+          ),
+          const MuscleGroupVolume(
+            muscleGroup: MuscleGroup.legs,
+            label: 'Legs',
+            totalSets: 15,
+            percentage: 30.0,
+          ),
+        ];
+
+        when(mockAnalyticsService.getMuscleGroupVolume(
+          userId: 'test_user',
+          dateRange: dateRange,
+          libraryExercises: const <LibraryExercise>[],
+          customExercises: const <CustomExercise>[],
+        )).thenAnswer((_) async => mockData);
+
+        await provider.loadMuscleGroupVolume(
+          dateRange: dateRange,
+          libraryExercises: const [],
+          customExercises: const [],
+        );
+
+        expect(provider.muscleGroupVolume, isNotNull);
+        expect(provider.muscleGroupVolume!.length, equals(3));
+        expect(provider.muscleGroupVolume!.first.label, equals('Chest'));
+      });
+
+      test('handles errors gracefully', () async {
+        final dateRange = DateRange.lastMonth();
+
+        when(mockAnalyticsService.getMuscleGroupVolume(
+          userId: 'test_user',
+          dateRange: dateRange,
+          libraryExercises: const <LibraryExercise>[],
+          customExercises: const <CustomExercise>[],
+        )).thenThrow(Exception('Network error'));
+
+        await provider.loadMuscleGroupVolume(
+          dateRange: dateRange,
+          libraryExercises: const [],
+          customExercises: const [],
+        );
+
+        expect(provider.muscleGroupVolume, isNull);
+      });
+    });
+
+    group('loadWeeklyTrends', () {
+      test('loads weekly trends and updates getter', () async {
+        final dateRange = DateRange.lastMonth();
+        final mockData = [
+          WeeklyTrendPoint(
+            weekStart: DateTime(2024, 6, 3),
+            totalVolume: 5000.0,
+            workoutCount: 3,
+          ),
+          WeeklyTrendPoint(
+            weekStart: DateTime(2024, 6, 10),
+            totalVolume: 6000.0,
+            workoutCount: 4,
+          ),
+        ];
+
+        when(mockAnalyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        )).thenAnswer((_) async => mockData);
+
+        await provider.loadWeeklyTrends(dateRange: dateRange);
+
+        expect(provider.weeklyTrends, isNotNull);
+        expect(provider.weeklyTrends!.length, equals(2));
+        expect(provider.weeklyTrends!.first.workoutCount, equals(3));
+      });
+
+      test('handles errors gracefully', () async {
+        final dateRange = DateRange.lastMonth();
+
+        when(mockAnalyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        )).thenThrow(Exception('Network error'));
+
+        await provider.loadWeeklyTrends(dateRange: dateRange);
+
+        expect(provider.weeklyTrends, isNull);
+      });
+    });
+
+    group('loadConfigurableStreak', () {
+      test('reads target from user profile and loads streak', () async {
+        // The setUp already stubs getUserProfile and getConfigurableStreak.
+        // Wait for auto-load to settle, then re-load manually.
+        await Future.delayed(Duration.zero);
+
+        // Setup a specific profile to verify it reads the target
+        when(mockFirestoreService.getUserProfile('test_user'))
+            .thenAnswer((_) => Stream.value({'settings': {'workoutTarget': 5}}));
+        when(mockAnalyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 5,
+        )).thenAnswer((_) async => const ConfigurableStreak(
+          weeklyTarget: 5,
+          currentStreak: 8,
+          longestStreak: 12,
+        ));
+
+        await provider.loadConfigurableStreak();
+
+        expect(provider.weeklyWorkoutTarget, equals(5));
+        expect(provider.configurableStreak, isNotNull);
+        expect(provider.configurableStreak!.currentStreak, equals(8));
+        expect(provider.configurableStreak!.longestStreak, equals(12));
+      });
+
+      test('uses default target of 3 when no settings', () async {
+        await Future.delayed(Duration.zero);
+
+        when(mockFirestoreService.getUserProfile('test_user'))
+            .thenAnswer((_) => Stream.value(null));
+        when(mockAnalyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 3,
+        )).thenAnswer((_) async => const ConfigurableStreak(
+          weeklyTarget: 3,
+          currentStreak: 0,
+          longestStreak: 0,
+        ));
+
+        await provider.loadConfigurableStreak();
+
+        expect(provider.weeklyWorkoutTarget, equals(3));
+        expect(provider.configurableStreak, isNotNull);
+      });
+
+      test('handles errors gracefully', () async {
+        await Future.delayed(Duration.zero);
+
+        when(mockFirestoreService.getUserProfile('test_user'))
+            .thenAnswer((_) => Stream.error(Exception('Permission denied')));
+
+        await provider.loadConfigurableStreak();
+
+        // Should not crash
+        expect(true, isTrue);
+      });
+    });
+
+    group('setWeeklyWorkoutTarget', () {
+      test('persists target to Firestore and reloads streak', () async {
+        await Future.delayed(Duration.zero);
+
+        // Stub read of existing profile (with existing settings to preserve)
+        when(mockFirestoreService.getUserProfile('test_user'))
+            .thenAnswer((_) => Stream.value({
+              'settings': {'theme': 'dark', 'workoutTarget': 3},
+            }));
+
+        when(mockFirestoreService.updateUserProfile(
+          userId: 'test_user',
+          settings: {'theme': 'dark', 'workoutTarget': 5},
+        )).thenAnswer((_) async {});
+
+        when(mockAnalyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 5,
+        )).thenAnswer((_) async => const ConfigurableStreak(
+          weeklyTarget: 5,
+          currentStreak: 2,
+          longestStreak: 10,
+        ));
+
+        await provider.setWeeklyWorkoutTarget(5);
+
+        expect(provider.weeklyWorkoutTarget, equals(5));
+        expect(provider.configurableStreak!.currentStreak, equals(2));
+
+        verify(mockFirestoreService.updateUserProfile(
+          userId: 'test_user',
+          settings: {'theme': 'dark', 'workoutTarget': 5},
+        )).called(1);
+      });
+
+      test('creates settings map when none exists', () async {
+        await Future.delayed(Duration.zero);
+
+        when(mockFirestoreService.getUserProfile('test_user'))
+            .thenAnswer((_) => Stream.value(null));
+
+        when(mockFirestoreService.updateUserProfile(
+          userId: 'test_user',
+          settings: {'workoutTarget': 4},
+        )).thenAnswer((_) async {});
+
+        when(mockAnalyticsService.getConfigurableStreak(
+          userId: 'test_user',
+          weeklyTarget: 4,
+        )).thenAnswer((_) async => const ConfigurableStreak(
+          weeklyTarget: 4,
+          currentStreak: 0,
+          longestStreak: 0,
+        ));
+
+        await provider.setWeeklyWorkoutTarget(4);
+
+        expect(provider.weeklyWorkoutTarget, equals(4));
+        verify(mockFirestoreService.updateUserProfile(
+          userId: 'test_user',
+          settings: {'workoutTarget': 4},
+        )).called(1);
+      });
+
+      test('handles errors gracefully', () async {
+        await Future.delayed(Duration.zero);
+
+        when(mockFirestoreService.getUserProfile('test_user'))
+            .thenAnswer((_) => Stream.value({'settings': {}}));
+
+        when(mockFirestoreService.updateUserProfile(
+          userId: 'test_user',
+          settings: {'workoutTarget': 5},
+        )).thenThrow(Exception('Write failed'));
+
+        await provider.setWeeklyWorkoutTarget(5);
+
+        // Target should still be updated locally even if persist fails
+        expect(provider.weeklyWorkoutTarget, equals(5));
+      });
+    });
+
+    group('getLoggedExercises', () {
+      test('returns logged exercises from analytics service', () async {
+        final mockResult = [
+          (exerciseId: 'ex1', exerciseName: 'Bench Press', exerciseType: ExerciseType.strength),
+          (exerciseId: 'ex2', exerciseName: 'Running', exerciseType: ExerciseType.cardio),
+        ];
+
+        when(mockAnalyticsService.getLoggedExercises(
+          userId: 'test_user',
+        )).thenAnswer((_) async => mockResult);
+
+        final result = await provider.getLoggedExercises();
+
+        expect(result.length, equals(2));
+        expect(result[0].exerciseName, equals('Bench Press'));
+        expect(result[1].exerciseName, equals('Running'));
+      });
+
+      test('returns empty list on error', () async {
+        when(mockAnalyticsService.getLoggedExercises(
+          userId: 'test_user',
+        )).thenThrow(Exception('Network error'));
+
+        final result = await provider.getLoggedExercises();
+
+        expect(result, isEmpty);
+      });
+
+      test('returns empty list when userId is null', () async {
+        // Create provider with null userId
+        final nullProvider = ProgramProvider.withServices(
+          null,
+          mockFirestoreService,
+          mockAnalyticsService,
+        );
+
+        final result = await nullProvider.getLoggedExercises();
+
+        expect(result, isEmpty);
+      });
+    });
+
+    group('new analytics getters default values', () {
+      test('exerciseProgress is initially null', () {
+        expect(provider.exerciseProgress, isNull);
+      });
+
+      test('muscleGroupVolume is initially null', () {
+        expect(provider.muscleGroupVolume, isNull);
+      });
+
+      test('weeklyTrends is initially null', () {
+        expect(provider.weeklyTrends, isNull);
+      });
+
+      test('weeklyWorkoutTarget defaults to 3', () {
+        // Create a fresh provider without any auto-load modifying the target
+        final freshProvider = ProgramProvider.withServices(
+          null,
+          mockFirestoreService,
+          mockAnalyticsService,
+        );
+        expect(freshProvider.weeklyWorkoutTarget, equals(3));
+      });
+    });
+
+    group('null userId guard', () {
+      late ProgramProvider nullProvider;
+
+      setUp(() {
+        nullProvider = ProgramProvider.withServices(
+          null,
+          mockFirestoreService,
+          mockAnalyticsService,
+        );
+      });
+
+      test('loadExerciseProgress returns early with null userId', () async {
+        await nullProvider.loadExerciseProgress(
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: DateRange.lastMonth(),
+        );
+
+        // Getter remains null since service was never called
+        expect(nullProvider.exerciseProgress, isNull);
+      });
+
+      test('loadMuscleGroupVolume returns early with null userId', () async {
+        await nullProvider.loadMuscleGroupVolume(
+          dateRange: DateRange.lastMonth(),
+          libraryExercises: const [],
+          customExercises: const [],
+        );
+
+        expect(nullProvider.muscleGroupVolume, isNull);
+      });
+
+      test('loadWeeklyTrends returns early with null userId', () async {
+        await nullProvider.loadWeeklyTrends(dateRange: DateRange.lastMonth());
+
+        expect(nullProvider.weeklyTrends, isNull);
+      });
+
+      test('setWeeklyWorkoutTarget returns early with null userId', () async {
+        await nullProvider.setWeeklyWorkoutTarget(5);
+
+        // Target stays at default since method returned early
+        expect(nullProvider.weeklyWorkoutTarget, equals(3));
       });
     });
   });
-}
-
-// Helper class to simulate Future completion for testing async loading states
-class Completer<T> {
-  late Future<T> future;
-  late Function(T) _complete;
-  late Function(Object) _completeError;
-
-  Completer() {
-    final controller = StreamController<T>();
-    future = controller.stream.single;
-    _complete = controller.add;
-    _completeError = controller.addError;
-  }
-
-  void complete(T value) => _complete(value);
-  void completeError(Object error) => _completeError(error);
 }

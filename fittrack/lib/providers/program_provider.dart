@@ -8,6 +8,8 @@ import '../models/exercise.dart';
 import '../models/exercise_set.dart';
 import '../models/analytics.dart';
 import '../models/cascade_delete_counts.dart';
+import '../models/custom_exercise.dart';
+import '../models/library_exercise.dart';
 import '../services/firestore_service.dart';
 import '../services/analytics_service.dart';
 
@@ -137,6 +139,13 @@ class ProgramProvider extends ChangeNotifier {
   Map<String, dynamic>? _keyStatistics;
   bool _isLoadingAnalytics = false;
 
+  // Enhanced analytics (Task #351)
+  ExerciseProgressData? _exerciseProgress;
+  List<MuscleGroupVolume>? _muscleGroupVolume;
+  List<WeeklyTrendPoint>? _weeklyTrends;
+  ConfigurableStreak? _configurableStreak;
+  int _weeklyWorkoutTarget = 3;
+
   // Disposal tracking
   bool _disposed = false;
 
@@ -192,6 +201,13 @@ class ProgramProvider extends ChangeNotifier {
   Map<String, dynamic>? get keyStatistics => _keyStatistics;
   bool get isLoadingAnalytics => _isLoadingAnalytics;
   MonthHeatmapData? get monthHeatmapData => _monthHeatmapData;
+
+  // Enhanced analytics getters
+  ExerciseProgressData? get exerciseProgress => _exerciseProgress;
+  List<MuscleGroupVolume>? get muscleGroupVolume => _muscleGroupVolume;
+  List<WeeklyTrendPoint>? get weeklyTrends => _weeklyTrends;
+  ConfigurableStreak? get configurableStreak => _configurableStreak;
+  int get weeklyWorkoutTarget => _weeklyWorkoutTarget;
 
   /// Get current sets (convenience method)
   List<ExerciseSet> getCurrentSets() => _sets;
@@ -1388,6 +1404,9 @@ class ProgramProvider extends ChangeNotifier {
       _recentPRs = results[4] as List<PersonalRecord>;
       _keyStatistics = results[5] as Map<String, dynamic>;
 
+      // Load configurable streak concurrently (doesn't block other analytics)
+      unawaited(loadConfigurableStreak());
+
     } catch (e) {
       _analyticsError = 'Failed to load analytics: $e';
       debugPrint('[ProgramProvider] loadAnalytics error: $e');
@@ -1425,6 +1444,129 @@ class ProgramProvider extends ChangeNotifier {
       return pr;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Load exercise progress data for charting
+  Future<void> loadExerciseProgress({
+    required String exerciseId,
+    required String exerciseName,
+    required ExerciseType exerciseType,
+    required DateRange dateRange,
+  }) async {
+    if (_userId == null) return;
+
+    try {
+      _exerciseProgress = await _analyticsService.getExerciseProgress(
+        userId: _userId!,
+        exerciseId: exerciseId,
+        exerciseName: exerciseName,
+        exerciseType: exerciseType,
+        dateRange: dateRange,
+      );
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('[ProgramProvider] loadExerciseProgress error: $e');
+    }
+  }
+
+  /// Load muscle group volume distribution
+  Future<void> loadMuscleGroupVolume({
+    required DateRange dateRange,
+    required List<LibraryExercise> libraryExercises,
+    required List<CustomExercise> customExercises,
+  }) async {
+    if (_userId == null) return;
+
+    try {
+      _muscleGroupVolume = await _analyticsService.getMuscleGroupVolume(
+        userId: _userId!,
+        dateRange: dateRange,
+        libraryExercises: libraryExercises,
+        customExercises: customExercises,
+      );
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('[ProgramProvider] loadMuscleGroupVolume error: $e');
+    }
+  }
+
+  /// Load weekly training trends
+  Future<void> loadWeeklyTrends({required DateRange dateRange}) async {
+    if (_userId == null) return;
+
+    try {
+      _weeklyTrends = await _analyticsService.getWeeklyTrends(
+        userId: _userId!,
+        dateRange: dateRange,
+      );
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('[ProgramProvider] loadWeeklyTrends error: $e');
+    }
+  }
+
+  /// Load configurable streak using stored weekly target
+  Future<void> loadConfigurableStreak() async {
+    if (_userId == null) return;
+
+    try {
+      // Read target from user settings
+      final profile = await _firestoreService.getUserProfile(_userId!).first;
+      if (profile != null) {
+        final settings = profile['settings'] as Map<String, dynamic>?;
+        if (settings != null && settings['workoutTarget'] is int) {
+          _weeklyWorkoutTarget = settings['workoutTarget'] as int;
+        }
+      }
+
+      _configurableStreak = await _analyticsService.getConfigurableStreak(
+        userId: _userId!,
+        weeklyTarget: _weeklyWorkoutTarget,
+      );
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('[ProgramProvider] loadConfigurableStreak error: $e');
+    }
+  }
+
+  /// Set weekly workout target and persist to Firestore
+  Future<void> setWeeklyWorkoutTarget(int target) async {
+    if (_userId == null) return;
+
+    _weeklyWorkoutTarget = target;
+
+    try {
+      // Read existing settings to preserve other keys
+      final profile = await _firestoreService.getUserProfile(_userId!).first;
+      final existingSettings = (profile?['settings'] as Map<String, dynamic>?) ?? {};
+      final updatedSettings = {...existingSettings, 'workoutTarget': target};
+
+      await _firestoreService.updateUserProfile(
+        userId: _userId!,
+        settings: updatedSettings,
+      );
+
+      // Reload streak with new target
+      _configurableStreak = await _analyticsService.getConfigurableStreak(
+        userId: _userId!,
+        weeklyTarget: _weeklyWorkoutTarget,
+      );
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('[ProgramProvider] setWeeklyWorkoutTarget error: $e');
+    }
+  }
+
+  /// Get list of exercises the user has logged across all programs
+  Future<List<({String exerciseId, String exerciseName, ExerciseType exerciseType})>> getLoggedExercises() async {
+    if (_userId == null) return [];
+
+    try {
+      return await _analyticsService.getLoggedExercises(userId: _userId!);
+    } catch (e) {
+      debugPrint('[ProgramProvider] getLoggedExercises error: $e');
+      return [];
     }
   }
 
