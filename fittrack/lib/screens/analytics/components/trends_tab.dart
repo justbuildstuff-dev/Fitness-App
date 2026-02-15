@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../models/custom_exercise.dart';
-import '../../../models/library_exercise.dart';
-import '../../../models/muscle_group.dart';
+import '../../../providers/exercise_library_provider.dart';
 import '../../../providers/program_provider.dart';
-import '../../../widgets/charts/bar_chart_widget.dart';
-import '../../../widgets/charts/chart_data.dart';
-import '../../../widgets/charts/line_chart_widget.dart';
 import '../../../widgets/charts/time_range_selector.dart';
+import 'muscle_group_section.dart';
+import 'training_trends_section.dart';
 
 /// Trends tab showing streak, muscle group volume, and weekly trends.
 ///
 /// Lazy-loads data on first visit. Displays three sections:
 /// 1. Configurable streak
 /// 2. Muscle group volume bar chart
-/// 3. Weekly training trends line chart
+/// 3. Weekly training trends line charts (volume + frequency)
 class TrendsTab extends StatefulWidget {
   const TrendsTab({super.key});
 
@@ -42,14 +39,15 @@ class _TrendsTabState extends State<TrendsTab>
   Future<void> _loadTrendsData() async {
     setState(() => _loading = true);
     final provider = context.read<ProgramProvider>();
+    final exerciseLibrary = context.read<ExerciseLibraryProvider>();
     final dateRange = _selectedTimeRange.toDateRange();
 
     await Future.wait([
       provider.loadWeeklyTrends(dateRange: dateRange),
       provider.loadMuscleGroupVolume(
         dateRange: dateRange,
-        libraryExercises: const <LibraryExercise>[],
-        customExercises: const <CustomExercise>[],
+        libraryExercises: exerciseLibrary.libraryExercises,
+        customExercises: exerciseLibrary.customExercises,
       ),
     ]);
 
@@ -93,14 +91,20 @@ class _TrendsTabState extends State<TrendsTab>
 
                 // Streak section
                 _buildStreakSection(context, provider),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Muscle group volume section
-                _buildMuscleGroupSection(context, provider),
-                const SizedBox(height: 24),
+                MuscleGroupSection(
+                  volumeData: provider.muscleGroupVolume,
+                  isLoading: _loading,
+                ),
+                const SizedBox(height: 16),
 
-                // Weekly trends section
-                _buildWeeklyTrendsSection(context, provider),
+                // Weekly trends section (volume + frequency)
+                TrainingTrendsSection(
+                  trendsData: provider.weeklyTrends,
+                  isLoading: _loading,
+                ),
                 const SizedBox(height: 24),
               ],
             ),
@@ -176,95 +180,5 @@ class _TrendsTabState extends State<TrendsTab>
         ),
       ),
     );
-  }
-
-  Widget _buildMuscleGroupSection(
-      BuildContext context, ProgramProvider provider) {
-    final volumeData = provider.muscleGroupVolume;
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Muscle Group Volume', style: textTheme.titleMedium),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (volumeData == null || volumeData.isEmpty)
-              Text('No volume data for this period',
-                  style: textTheme.bodyMedium)
-            else
-              BarChartWidget(
-                entries: volumeData
-                    .map((v) => BarChartEntry(
-                          label: v.label,
-                          value: v.totalSets.toDouble(),
-                          percentage: v.percentage,
-                          color: _colorForMuscleGroup(v.muscleGroup, colorScheme),
-                        ))
-                    .toList(),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeeklyTrendsSection(
-      BuildContext context, ProgramProvider provider) {
-    final trendsData = provider.weeklyTrends;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Weekly Training Volume', style: textTheme.titleMedium),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else if (trendsData == null || trendsData.isEmpty)
-              Text('No training data for this period',
-                  style: textTheme.bodyMedium)
-            else
-              LineChartWidget(
-                data: trendsData
-                    .map((w) => ChartDataPoint(
-                          date: w.weekStart,
-                          value: w.totalVolume,
-                          label: '${w.workoutCount} workouts',
-                        ))
-                    .toList(),
-                primaryLabel: 'Volume (kg)',
-                emptyMessage: 'No training data',
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _colorForMuscleGroup(MuscleGroup? muscleGroup, ColorScheme colorScheme) {
-    if (muscleGroup == null) return colorScheme.surfaceContainerHighest;
-    switch (muscleGroup) {
-      case MuscleGroup.chest:
-        return colorScheme.primary;
-      case MuscleGroup.back:
-        return colorScheme.secondary;
-      case MuscleGroup.shoulders:
-        return colorScheme.tertiary;
-      case MuscleGroup.arms:
-        return colorScheme.primaryContainer;
-      case MuscleGroup.legs:
-        return colorScheme.error;
-      case MuscleGroup.core:
-        return colorScheme.tertiaryContainer;
-    }
   }
 }
