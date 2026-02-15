@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'exercise.dart';
 import 'exercise_set.dart';
+import 'muscle_group.dart';
 import 'workout.dart';
 
 /// Analytics data for a specific date range
@@ -653,6 +654,38 @@ class DateRange {
     return DateRange(start: start, end: end);
   }
 
+  /// Creates a rolling 1-month date range ending today
+  factory DateRange.lastMonth() {
+    final now = DateTime.now();
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final start = DateTime(now.year, now.month - 1, now.day);
+    return DateRange(start: start, end: end);
+  }
+
+  /// Creates a rolling 3-month date range ending today
+  factory DateRange.last3Months() {
+    final now = DateTime.now();
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final start = DateTime(now.year, now.month - 3, now.day);
+    return DateRange(start: start, end: end);
+  }
+
+  /// Creates a rolling 6-month date range ending today
+  factory DateRange.last6Months() {
+    final now = DateTime.now();
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final start = DateTime(now.year, now.month - 6, now.day);
+    return DateRange(start: start, end: end);
+  }
+
+  /// Creates a date range from Jan 1, 2020 to today (all historical data)
+  factory DateRange.allTime() {
+    final now = DateTime.now();
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final start = DateTime(2020, 1, 1);
+    return DateRange(start: start, end: end);
+  }
+
   /// Check if a date falls within this range
   bool contains(DateTime date) {
     return date.isAfter(start.subtract(const Duration(microseconds: 1))) &&
@@ -661,5 +694,251 @@ class DateRange {
 
   /// Duration of the range in days
   int get durationInDays => end.difference(start).inDays + 1;
+}
+
+/// Per-exercise progress data point representing one workout session
+///
+/// Each point aggregates all sets for a specific exercise within a single
+/// workout session. The metrics captured depend on the exercise type.
+class ExerciseProgressPoint {
+  /// Date of the workout session
+  final DateTime date;
+
+  /// Workout that contained this exercise
+  final String workoutId;
+
+  /// Highest weight used in any set (strength exercises)
+  final double? maxWeight;
+
+  /// Highest reps in any set (bodyweight exercises)
+  final int? maxReps;
+
+  /// Sum of (weight * reps) across all sets in the session
+  final double? totalVolume;
+
+  /// Sum of duration across all sets in the session (seconds)
+  final int? totalDuration;
+
+  /// Sum of distance across all sets in the session (meters)
+  final double? totalDistance;
+
+  /// Estimated 1RM from the best set in the session (Epley formula)
+  /// Null if no eligible set (reps > 10 or weight <= 0)
+  final double? estimated1RM;
+
+  const ExerciseProgressPoint({
+    required this.date,
+    required this.workoutId,
+    this.maxWeight,
+    this.maxReps,
+    this.totalVolume,
+    this.totalDuration,
+    this.totalDistance,
+    this.estimated1RM,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ExerciseProgressPoint &&
+        other.date == date &&
+        other.workoutId == workoutId &&
+        other.maxWeight == maxWeight &&
+        other.maxReps == maxReps &&
+        other.totalVolume == totalVolume &&
+        other.totalDuration == totalDuration &&
+        other.totalDistance == totalDistance &&
+        other.estimated1RM == estimated1RM;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        date, workoutId, maxWeight, maxReps,
+        totalVolume, totalDuration, totalDistance, estimated1RM,
+      );
+}
+
+/// Aggregated exercise progress data for charting
+///
+/// Contains all data points for a single exercise across a date range,
+/// ready to be rendered as a line chart.
+class ExerciseProgressData {
+  /// Unique identifier of the exercise
+  final String exerciseId;
+
+  /// Display name of the exercise
+  final String exerciseName;
+
+  /// Type of exercise (determines which metrics to chart)
+  final ExerciseType exerciseType;
+
+  /// Chronologically ordered data points (one per workout session)
+  final List<ExerciseProgressPoint> dataPoints;
+
+  /// Date range the data was queried for
+  final DateRange dateRange;
+
+  const ExerciseProgressData({
+    required this.exerciseId,
+    required this.exerciseName,
+    required this.exerciseType,
+    required this.dataPoints,
+    required this.dateRange,
+  });
+
+  /// Whether there is any data to display
+  bool get isEmpty => dataPoints.isEmpty;
+
+  /// Whether there is only a single data point (renders as dot, no line)
+  bool get isSinglePoint => dataPoints.length == 1;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ExerciseProgressData &&
+        other.exerciseId == exerciseId &&
+        other.exerciseName == exerciseName &&
+        other.exerciseType == exerciseType &&
+        other.dataPoints.length == dataPoints.length &&
+        other.dateRange.start == dateRange.start &&
+        other.dateRange.end == dateRange.end;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        exerciseId, exerciseName, exerciseType,
+        dataPoints.length, dateRange.start, dateRange.end,
+      );
+}
+
+/// Muscle group volume breakdown for a date range
+///
+/// Represents the total number of sets performed for a specific muscle group,
+/// along with its percentage of total training volume.
+class MuscleGroupVolume {
+  /// The muscle group (or null for "Other" category)
+  final MuscleGroup? muscleGroup;
+
+  /// Display label (muscle group name or "Other")
+  final String label;
+
+  /// Total number of sets for this muscle group
+  final int totalSets;
+
+  /// Percentage of total sets across all muscle groups (0-100)
+  final double percentage;
+
+  const MuscleGroupVolume({
+    this.muscleGroup,
+    required this.label,
+    required this.totalSets,
+    required this.percentage,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is MuscleGroupVolume &&
+        other.muscleGroup == muscleGroup &&
+        other.label == label &&
+        other.totalSets == totalSets &&
+        other.percentage == percentage;
+  }
+
+  @override
+  int get hashCode => Object.hash(muscleGroup, label, totalSets, percentage);
+}
+
+/// Weekly training trend data point
+///
+/// Represents aggregated training data for a single calendar week (Mon-Sun).
+/// Used to show volume and frequency trends over time.
+class WeeklyTrendPoint {
+  /// Monday of the week this data point represents
+  final DateTime weekStart;
+
+  /// Total volume (sum of weight * reps) for the week
+  final double totalVolume;
+
+  /// Number of workouts completed during the week
+  final int workoutCount;
+
+  const WeeklyTrendPoint({
+    required this.weekStart,
+    required this.totalVolume,
+    required this.workoutCount,
+  });
+
+  /// The Sunday ending this week
+  DateTime get weekEnd => weekStart.add(const Duration(days: 6));
+
+  /// Display string for the week range (e.g., "Jan 6 - Jan 12")
+  String get weekRangeString {
+    final months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final end = weekEnd;
+    return '${months[weekStart.month]} ${weekStart.day} - ${months[end.month]} ${end.day}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is WeeklyTrendPoint &&
+        other.weekStart == weekStart &&
+        other.totalVolume == totalVolume &&
+        other.workoutCount == workoutCount;
+  }
+
+  @override
+  int get hashCode => Object.hash(weekStart, totalVolume, workoutCount);
+}
+
+/// Configurable weekly streak data
+///
+/// Tracks consecutive weeks where the user met their workout target.
+/// The streak resets when a completed week has fewer workouts than the target.
+class ConfigurableStreak {
+  /// User's weekly workout target (1-7)
+  final int weeklyTarget;
+
+  /// Consecutive weeks meeting the target (ending at current/most recent week)
+  final int currentStreak;
+
+  /// Longest streak of consecutive weeks meeting the target
+  final int longestStreak;
+
+  const ConfigurableStreak({
+    required this.weeklyTarget,
+    required this.currentStreak,
+    required this.longestStreak,
+  });
+
+  /// Display string for current streak (e.g., "12-week streak")
+  String get currentStreakString {
+    if (currentStreak == 0) return 'No streak';
+    if (currentStreak == 1) return '1-week streak';
+    return '$currentStreak-week streak';
+  }
+
+  /// Display string for longest streak
+  String get longestStreakString {
+    if (longestStreak == 0) return 'No record';
+    if (longestStreak == 1) return '1 week';
+    return '$longestStreak weeks';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ConfigurableStreak &&
+        other.weeklyTarget == weeklyTarget &&
+        other.currentStreak == currentStreak &&
+        other.longestStreak == longestStreak;
+  }
+
+  @override
+  int get hashCode => Object.hash(weeklyTarget, currentStreak, longestStreak);
 }
 
