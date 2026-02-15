@@ -37,7 +37,7 @@ void main() {
     testWidgets('renders with entries', (tester) async {
       await tester.pumpWidget(buildTestWidget(entries: sampleEntries));
 
-      expect(find.byType(CustomPaint), findsOneWidget);
+      expect(find.byType(BarChartWidget), findsOneWidget);
     });
 
     testWidgets('renders empty state', (tester) async {
@@ -45,7 +45,7 @@ void main() {
         emptyMessage: 'No muscle data',
       ));
 
-      expect(find.byType(CustomPaint), findsOneWidget);
+      expect(find.byType(BarChartWidget), findsOneWidget);
     });
 
     testWidgets('auto-sizes height from entry count', (tester) async {
@@ -93,7 +93,7 @@ void main() {
         ],
       ));
 
-      expect(find.byType(CustomPaint), findsOneWidget);
+      expect(find.byType(BarChartWidget), findsOneWidget);
     });
   });
 
