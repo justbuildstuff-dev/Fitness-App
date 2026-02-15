@@ -396,4 +396,65 @@ void main() {
       expect(refreshButton, findsOneWidget);
     });
   });
+
+  group('AnalyticsScreen - Tab Navigation', () {
+    void setupWithData() {
+      when(mockProvider.monthHeatmapData).thenReturn(MonthHeatmapData(
+        year: 2024,
+        month: 12,
+        dailySetCounts: {1: 5},
+        totalSets: 5,
+        fetchedAt: DateTime.now(),
+      ));
+      when(mockProvider.userId).thenReturn('test-user-id');
+
+      // Stub new provider getters
+      when(mockProvider.exerciseProgress).thenReturn(null);
+      when(mockProvider.muscleGroupVolume).thenReturn(null);
+      when(mockProvider.weeklyTrends).thenReturn(null);
+      when(mockProvider.configurableStreak).thenReturn(null);
+      when(mockProvider.weeklyWorkoutTarget).thenReturn(3);
+      when(mockProvider.getLoggedExercises()).thenAnswer((_) async => []);
+    }
+
+    testWidgets('shows TabBar with 3 tabs when data available', (WidgetTester tester) async {
+      setupWithData();
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
+      expect(find.text('Exercise'), findsOneWidget);
+      expect(find.text('Trends'), findsOneWidget);
+    });
+
+    testWidgets('does not show TabBar when loading', (WidgetTester tester) async {
+      when(mockProvider.isLoadingAnalytics).thenReturn(true);
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byType(TabBar), findsNothing);
+    });
+
+    testWidgets('does not show TabBar when error', (WidgetTester tester) async {
+      when(mockProvider.error).thenReturn('Some error');
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byType(TabBar), findsNothing);
+    });
+
+    testWidgets('does not show TabBar when no data', (WidgetTester tester) async {
+      // Default setup has no data
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byType(TabBar), findsNothing);
+    });
+
+    testWidgets('shows tab icons', (WidgetTester tester) async {
+      setupWithData();
+      await tester.pumpWidget(createTestWidget());
+
+      expect(find.byIcon(Icons.dashboard), findsOneWidget);
+      expect(find.byIcon(Icons.show_chart), findsOneWidget);
+      expect(find.byIcon(Icons.trending_up), findsOneWidget);
+    });
+  });
 }
