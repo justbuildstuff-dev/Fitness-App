@@ -4,6 +4,7 @@ import '../../../providers/exercise_library_provider.dart';
 import '../../../providers/program_provider.dart';
 import '../../../widgets/charts/time_range_selector.dart';
 import 'muscle_group_section.dart';
+import 'streak_section.dart';
 import 'training_trends_section.dart';
 
 /// Trends tab showing streak, muscle group volume, and weekly trends.
@@ -90,7 +91,14 @@ class _TrendsTabState extends State<TrendsTab>
                 const SizedBox(height: 24),
 
                 // Streak section
-                _buildStreakSection(context, provider),
+                StreakSection(
+                  streak: provider.configurableStreak,
+                  weeklyTarget: provider.weeklyWorkoutTarget,
+                  onTargetChanged: (value) {
+                    provider.setWeeklyWorkoutTarget(value);
+                  },
+                  isLoading: _loading,
+                ),
                 const SizedBox(height: 16),
 
                 // Muscle group volume section
@@ -114,71 +122,4 @@ class _TrendsTabState extends State<TrendsTab>
     );
   }
 
-  Widget _buildStreakSection(BuildContext context, ProgramProvider provider) {
-    final streak = provider.configurableStreak;
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Workout Streak', style: textTheme.titleMedium),
-                // Weekly target selector
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Target: ', style: textTheme.bodySmall),
-                    DropdownButton<int>(
-                      value: provider.weeklyWorkoutTarget,
-                      underline: const SizedBox.shrink(),
-                      isDense: true,
-                      items: List.generate(7, (i) => i + 1)
-                          .map((n) => DropdownMenuItem(
-                                value: n,
-                                child: Text('$n/wk'),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          provider.setWeeklyWorkoutTarget(value);
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (streak != null) ...[
-              Row(
-                children: [
-                  Icon(Icons.local_fire_department,
-                      color: colorScheme.primary, size: 32),
-                  const SizedBox(width: 8),
-                  Text(
-                    streak.currentStreakString,
-                    style: textTheme.headlineSmall,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Longest: ${streak.longestStreakString}',
-                style: textTheme.bodySmall,
-              ),
-            ] else if (_loading)
-              const Center(child: CircularProgressIndicator())
-            else
-              Text('No streak data', style: textTheme.bodyMedium),
-          ],
-        ),
-      ),
-    );
-  }
 }
