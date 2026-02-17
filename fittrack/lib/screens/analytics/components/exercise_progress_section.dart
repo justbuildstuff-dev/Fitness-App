@@ -161,7 +161,7 @@ class ExerciseProgressSection extends StatelessWidget {
     switch (type) {
       case ExerciseType.strength:
         return const _ChartLabels(
-          primary: 'Weight',
+          primary: 'Actual Weight',
           secondary: 'Est. 1RM',
           yAxis: 'kg',
           metricDescription: 'Showing max weight per session',

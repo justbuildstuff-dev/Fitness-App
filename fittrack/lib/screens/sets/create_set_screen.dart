@@ -7,6 +7,7 @@ import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
+import '../../widgets/pr_notification_banner.dart';
 
 class CreateSetScreen extends StatefulWidget {
   final Program program;
@@ -577,6 +578,10 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
 
         if (mounted) {
           if (setId != null) {
+            // Capture the navigator's overlay before popping so the PR
+            // banner can be shown on the parent screen after navigation.
+            final navigatorOverlay = Navigator.of(context).overlay;
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Set added successfully!'),
@@ -584,6 +589,17 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
               ),
             );
             Navigator.of(context).pop(true); // Return true to indicate success
+
+            // Fire-and-forget PR check after navigation completes
+            _checkForPR(
+              programProvider,
+              setId: setId,
+              reps: reps,
+              weight: weight,
+              duration: duration,
+              distance: distance,
+              overlay: navigatorOverlay,
+            );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -613,6 +629,69 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  /// Fire-and-forget PR check after a new set is created.
+  ///
+  /// Constructs an [ExerciseSet] from the saved values and calls
+  /// [ProgramProvider.checkForPersonalRecord]. If a PR is found,
+  /// shows a [PRNotificationBanner] on the navigator's overlay
+  /// (which persists after this screen has been popped).
+  Future<void> _checkForPR(
+    ProgramProvider provider, {
+    required String setId,
+    required int? reps,
+    required double? weight,
+    required int? duration,
+    required double? distance,
+    required OverlayState? overlay,
+  }) async {
+    try {
+      final userId = provider.userId;
+      if (userId == null || overlay == null) return;
+
+      final exerciseSet = ExerciseSet(
+        id: setId,
+        setNumber: 0,
+        reps: reps,
+        weight: weight,
+        duration: duration,
+        distance: distance,
+        userId: userId,
+        exerciseId: widget.exercise.id,
+        workoutId: widget.workout.id,
+        weekId: widget.week.id,
+        programId: widget.program.id,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final pr = await provider.checkForPersonalRecord(
+        exerciseSet,
+        widget.exercise,
+      );
+
+      if (pr != null) {
+        late OverlayEntry entry;
+        entry = OverlayEntry(
+          builder: (ctx) => Positioned(
+            top: MediaQuery.of(ctx).padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: PRNotificationBanner(
+                pr: pr,
+                onDismissed: () => entry.remove(),
+              ),
+            ),
+          ),
+        );
+        overlay.insert(entry);
+      }
+    } catch (_) {
+      // Silently fail - don't interrupt the user's workflow
     }
   }
 }

@@ -9,6 +9,7 @@ import 'package:fittrack/models/program.dart';
 import 'package:fittrack/models/week.dart';
 import 'package:fittrack/models/workout.dart';
 import 'package:fittrack/models/exercise.dart';
+import 'package:fittrack/models/exercise_set.dart';
 
 import 'create_set_screen_test.mocks.dart';
 import '../integration/test_setup_helper.dart';
@@ -97,7 +98,10 @@ void main() {
       when(mockProvider.error).thenReturn(null);
       when(mockProvider.isLoading).thenReturn(false);
       when(mockProvider.isLoadingSets).thenReturn(false);
-      
+      when(mockProvider.userId).thenReturn('user-1');
+      when(mockProvider.checkForPersonalRecord(any, any))
+          .thenAnswer((_) async => null);
+
       // Set up basic createSet mock without argument matchers in setUp
       when(mockProvider.createSet(
         programId: 'program-1',
@@ -512,17 +516,17 @@ void main() {
     testWidgets('shows success message on successful creation', (tester) async {
       /// Test Purpose: Verify success feedback is shown
       /// Users should see confirmation that set was created
-      
+
       await tester.pumpWidget(createTestWidget(strengthExercise));
-      
+
       // Enter valid data
       await tester.enterText(find.widgetWithText(TextFormField, 'Reps *'), '12');
-      
+
       // Save the set
       await tester.tap(find.text('ADD'));
       await tester.pump();
       await tester.pumpAndSettle();
-      
+
       // Verify createSet was called (core functionality)
       verify(mockProvider.createSet(
         programId: 'program-1',
@@ -536,6 +540,67 @@ void main() {
         restTime: null,
         notes: null,
       )).called(1);
+    });
+
+    testWidgets('calls checkForPersonalRecord after successful set creation',
+        (tester) async {
+      /// Test Purpose: Verify PR detection is triggered after set creation
+      /// The system should check for new PRs when a set is saved
+
+      await tester.pumpWidget(createTestWidget(strengthExercise));
+
+      // Enter valid data
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Reps *'), '10');
+
+      // Save the set
+      await tester.tap(find.text('ADD'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Verify checkForPersonalRecord was called with matching exercise
+      verify(mockProvider.checkForPersonalRecord(
+        argThat(isA<ExerciseSet>()
+            .having((s) => s.id, 'id', 'new-set-id')
+            .having((s) => s.reps, 'reps', 10)
+            .having((s) => s.exerciseId, 'exerciseId', 'exercise-1')),
+        strengthExercise,
+      )).called(1);
+    });
+
+    testWidgets('does not call checkForPersonalRecord when set creation fails',
+        (tester) async {
+      /// Test Purpose: Verify PR detection is NOT triggered on failure
+      /// Only successful set creation should check for PRs
+
+      when(mockProvider.createSet(
+        programId: anyNamed('programId'),
+        weekId: anyNamed('weekId'),
+        workoutId: anyNamed('workoutId'),
+        exerciseId: anyNamed('exerciseId'),
+        reps: anyNamed('reps'),
+        weight: anyNamed('weight'),
+        duration: anyNamed('duration'),
+        distance: anyNamed('distance'),
+        restTime: anyNamed('restTime'),
+        notes: anyNamed('notes'),
+      )).thenAnswer((_) async => null);
+
+      when(mockProvider.error).thenReturn('Failed to create set');
+
+      await tester.pumpWidget(createTestWidget(strengthExercise));
+
+      // Enter valid data
+      await tester.enterText(
+          find.widgetWithText(TextFormField, 'Reps *'), '10');
+
+      // Save the set
+      await tester.tap(find.text('ADD'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // checkForPersonalRecord should NOT be called on failure
+      verifyNever(mockProvider.checkForPersonalRecord(any, any));
     });
   });
 }
