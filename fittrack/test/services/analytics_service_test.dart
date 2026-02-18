@@ -1630,14 +1630,17 @@ void main() {
 
       test('counts consecutive weeks meeting target', () async {
         final now = DateTime.now();
+        // Anchor to the Monday of the current week to avoid day-of-week issues
+        final thisMonday = now.subtract(Duration(days: now.weekday - 1));
 
         // Create workouts for 3 consecutive weeks (target = 2 per week)
         final workouts = <Workout>[];
         for (int week = 0; week < 3; week++) {
+          final weekMonday = thisMonday.subtract(Duration(days: week * 7));
           for (int day = 0; day < 2; day++) {
             workouts.add(_createTestWorkout(
               id: 'w_${week}_$day',
-              createdAt: now.subtract(Duration(days: week * 7 + day)),
+              createdAt: weekMonday.add(Duration(days: day)),
             ));
           }
         }
@@ -1655,20 +1658,24 @@ void main() {
 
       test('breaks streak when week misses target', () async {
         final now = DateTime.now();
+        // Anchor to the Monday of the current week to avoid day-of-week issues
+        final thisMonday = now.subtract(Duration(days: now.weekday - 1));
+        final lastMonday = thisMonday.subtract(const Duration(days: 7));
+        final twoWeeksAgoMonday = thisMonday.subtract(const Duration(days: 14));
 
         // Current week: 3 workouts (meets target of 2)
         // Last week: 1 workout (misses target of 2)
-        // 2 weeks ago: 3 workouts (meets target of 2)
+        // 2 weeks ago: 2 workouts (meets target of 2)
         final workouts = <Workout>[
-          // Current week
-          _createTestWorkout(id: 'w1', createdAt: now),
-          _createTestWorkout(id: 'w2', createdAt: now.subtract(const Duration(days: 1))),
-          _createTestWorkout(id: 'w3', createdAt: now.subtract(const Duration(days: 2))),
+          // Current week - 3 workouts within Mon-Wed
+          _createTestWorkout(id: 'w1', createdAt: thisMonday),
+          _createTestWorkout(id: 'w2', createdAt: thisMonday.add(const Duration(days: 1))),
+          _createTestWorkout(id: 'w3', createdAt: thisMonday.add(const Duration(days: 2))),
           // Last week - only 1 workout (below target)
-          _createTestWorkout(id: 'w4', createdAt: now.subtract(const Duration(days: 8))),
+          _createTestWorkout(id: 'w4', createdAt: lastMonday),
           // 2 weeks ago - meets target
-          _createTestWorkout(id: 'w5', createdAt: now.subtract(const Duration(days: 14))),
-          _createTestWorkout(id: 'w6', createdAt: now.subtract(const Duration(days: 15))),
+          _createTestWorkout(id: 'w5', createdAt: twoWeeksAgoMonday),
+          _createTestWorkout(id: 'w6', createdAt: twoWeeksAgoMonday.add(const Duration(days: 1))),
         ];
 
         _setupMockFirestoreWithWorkoutsOnly(mockFirestoreService, workouts);
@@ -1686,26 +1693,30 @@ void main() {
 
       test('finds longest streak across history', () async {
         final now = DateTime.now();
+        // Anchor to the Monday of the current week to avoid day-of-week issues
+        final thisMonday = now.subtract(Duration(days: now.weekday - 1));
 
         // Create a gap then a longer streak in the past
         final workouts = <Workout>[];
 
-        // Old streak: 5 consecutive weeks, 20 weeks ago
+        // Old streak: 5 consecutive weeks, starting 20 weeks ago
         for (int week = 20; week > 15; week--) {
+          final weekMonday = thisMonday.subtract(Duration(days: week * 7));
           for (int day = 0; day < 3; day++) {
             workouts.add(_createTestWorkout(
               id: 'old_${week}_$day',
-              createdAt: now.subtract(Duration(days: week * 7 + day)),
+              createdAt: weekMonday.add(Duration(days: day)),
             ));
           }
         }
 
-        // Current: 2 weeks meeting target
+        // Current: 2 weeks meeting target (this week + last week)
         for (int week = 0; week < 2; week++) {
+          final weekMonday = thisMonday.subtract(Duration(days: week * 7));
           for (int day = 0; day < 3; day++) {
             workouts.add(_createTestWorkout(
               id: 'new_${week}_$day',
-              createdAt: now.subtract(Duration(days: week * 7 + day)),
+              createdAt: weekMonday.add(Duration(days: day)),
             ));
           }
         }
