@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-02-18
+
+### Added
+- **Exercise Progress Charts** - View progress for any exercise over time with line charts (#262)
+  - Searchable exercise picker with type filtering
+  - Strength exercises show max weight per session
+  - Bodyweight exercises show max reps per session
+  - Cardio exercises show distance and duration trends
+  - Time range selector: 1 month, 3 months, 6 months, All time
+- **Estimated 1RM Tracking** - See theoretical max strength trend on exercise charts (#262)
+  - Epley formula calculation from working sets (reps <= 10)
+  - Dual-line chart: "Actual Weight" vs "Est. 1RM"
+- **Muscle Group Volume Breakdown** - Horizontal bar chart showing training balance (#262)
+  - Six muscle groups: Chest, Back, Shoulders, Arms, Legs, Core
+  - Set count and percentage per muscle group
+  - Uses exercise library muscle group assignments
+- **Training Trends** - Weekly volume and frequency trend charts (#262)
+  - Weekly total volume (weight x reps) line chart
+  - Weekly workout frequency line chart
+  - 4-week moving average smoothing
+- **Configurable Workout Streaks** - Set weekly target and track consistency (#262)
+  - Configurable target: 1-7 workouts per week (default: 3)
+  - Current streak and longest streak display
+  - Flame icon streak indicator
+  - Streak persists in Firestore user preferences
+- **PR Celebration Notifications** - Inline banner when a new PR is set (#262)
+  - Appears on workout screen after saving a set that beats a PR
+  - Shows exercise name, PR type, new value, improvement amount
+  - Auto-dismisses after 5 seconds or tap to dismiss
+  - "NEW" badge on recent PRs in Analytics PR list
+
+### Changed
+- Analytics screen reorganized into 3-tab layout: Overview, Exercise, Trends
+- Existing analytics content (heatmap, key stats, charts) moved to Overview tab
+
+### Fixed
+- #366 - PR notification not triggering after set creation (wiring missing)
+- #367 - Exercise chart legend label changed from 'Weight' to 'Actual Weight'
+- Fixed flaky configurable streak tests (calendar week boundary issue)
+
+### Technical
+- Added `ExerciseProgressData` and `OneRepMaxEstimate` data models
+- Added `ConfigurableStreak` model with user-set weekly target
+- Added `LineChartWidget` and `BarChartWidget` using Flutter `CustomPainter`
+- Added `ExercisePickerSection` with searchable exercise selection
+- Added `ExerciseProgressSection` with time range selector and dual-line charts
+- Added `MuscleGroupSection` and `TrainingTrendsSection` components
+- Added `StreakSection` with configurable target and flame indicator
+- Added `PRNotificationBanner` with navigator overlay persistence pattern
+- Extended `AnalyticsService` with per-exercise, 1RM, muscle group, and streak methods
+- Extended `ProgramProvider` with analytics loading and PR detection
+- All chart data cached with 5-minute TTL matching existing pattern
+- 1,446 automated tests passing (805 unit + 579 widget + 48 integration + 14 performance)
+
 ## [1.4.0] - 2026-02-13
 
 ### Added
