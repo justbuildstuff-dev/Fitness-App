@@ -483,10 +483,14 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   void _toggleSetCompletion(ExerciseSet set) async {
     final provider = Provider.of<ProgramProvider>(context, listen: false);
-    
+
+    final now = DateTime.now();
+    final newChecked = !set.checked;
     final updatedSet = set.copyWith(
-      checked: !set.checked,
-      updatedAt: DateTime.now(),
+      checked: newChecked,
+      completedAt: newChecked ? now : null,
+      clearCompletedAt: !newChecked,
+      updatedAt: now,
     );
 
     await provider.updateSet(updatedSet);
