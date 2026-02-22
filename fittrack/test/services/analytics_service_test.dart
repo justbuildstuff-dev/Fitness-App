@@ -617,6 +617,64 @@ void main() {
         expect(heatmapData.currentStreak, equals(0));
         expect(heatmapData.longestStreak, equals(0));
       });
+
+      test('groups sets by completedAt when available', () async {
+        /// Test Purpose: Verify heatmap uses completedAt for grouping, not createdAt
+
+        final now = DateTime.now();
+        final day3Ago = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
+        final day1Ago = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+        final dateRange = DateRange(
+          start: day3Ago,
+          end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+        );
+
+        final sets = [
+          // Set created 3 days ago but completed 1 day ago — should be counted on day 1 ago
+          ExerciseSet(
+            id: 's1',
+            setNumber: 1,
+            reps: 10,
+            checked: true,
+            completedAt: day1Ago,
+            createdAt: day3Ago,
+            updatedAt: day3Ago,
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+          // Set with no completedAt — should fall back to updatedAt (day3Ago)
+          ExerciseSet(
+            id: 's2',
+            setNumber: 2,
+            reps: 10,
+            checked: true,
+            completedAt: null,
+            createdAt: day3Ago,
+            updatedAt: day3Ago,
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+        ];
+
+        _mockSetBasedHeatmapData(mockFirestoreService, sets, 'p1');
+
+        final heatmapData = await analyticsService.generateSetBasedHeatmapData(
+          userId: 'test_user',
+          dateRange: dateRange,
+          programId: 'p1',
+        );
+
+        expect(heatmapData.totalSets, equals(2));
+        // s1 should be on day1Ago, s2 (no completedAt) falls back to updatedAt = day3Ago
+        expect(heatmapData.dailySetCounts[day1Ago], equals(1));
+        expect(heatmapData.dailySetCounts[day3Ago], equals(1));
+      });
     });
 
     group('Personal Records Detection', () {
@@ -1140,6 +1198,42 @@ void main() {
         expect(decData.month, equals(12));
         expect(febData.year, equals(2024));
         expect(febData.month, equals(2));
+      });
+
+      test('groups sets by completedAt day when available', () async {
+        /// Test Purpose: Verify getMonthHeatmapData uses completedAt for day grouping
+
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          // Created Dec 1, completed Dec 15 — should count on day 15
+          _createTestSet(
+            id: 's1',
+            createdAt: DateTime(2024, 12, 1),
+            checked: true,
+            completedAt: DateTime(2024, 12, 15),
+          ),
+          // Created Dec 5, no completedAt — falls back to updatedAt = Dec 5 → day 5
+          _createTestSet(
+            id: 's2',
+            createdAt: DateTime(2024, 12, 5),
+            checked: true,
+          ),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.totalSets, equals(2));
+        expect(monthData.getSetCountForDay(15), equals(1)); // s1 grouped by completedAt
+        expect(monthData.getSetCountForDay(5), equals(1));  // s2 grouped by updatedAt fallback
+        expect(monthData.getSetCountForDay(1), equals(0));  // s1's createdAt day — should NOT be used
       });
     });
 
@@ -2024,6 +2118,7 @@ ExerciseSet _createTestSet({
   String programId = 'p1',
   int? reps,
   double? weight,
+  DateTime? completedAt,
 }) {
   return ExerciseSet(
     id: id,
@@ -2031,6 +2126,7 @@ ExerciseSet _createTestSet({
     reps: reps ?? 10,
     weight: weight,
     checked: checked,
+    completedAt: completedAt,
     createdAt: createdAt,
     updatedAt: createdAt,
     userId: 'test_user',

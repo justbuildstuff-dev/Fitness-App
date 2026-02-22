@@ -147,13 +147,14 @@ class AnalyticsService {
     // Filter only checked sets (completed sets)
     final checkedSets = allSets.where((set) => set.checked).toList();
 
-    // Group sets by date (normalize to midnight for consistent day-level grouping)
+    // Group sets by completion date (normalize to midnight for consistent day-level grouping)
     final Map<DateTime, int> dailySetCounts = {};
     for (final set in checkedSets) {
+      final completionDate = _completionDate(set);
       final date = DateTime(
-        set.createdAt.year,
-        set.createdAt.month,
-        set.createdAt.day,
+        completionDate.year,
+        completionDate.month,
+        completionDate.day,
       );
       dailySetCounts[date] = (dailySetCounts[date] ?? 0) + 1;
     }
@@ -238,10 +239,10 @@ class AnalyticsService {
     // Filter only checked sets (completed sets)
     final checkedSets = allSets.where((set) => set.checked).toList();
 
-    // Group sets by day of month
+    // Group sets by day of month using completion date
     final Map<int, int> dailySetCounts = {};
     for (final set in checkedSets) {
-      final day = set.createdAt.day;
+      final day = _completionDate(set).day;
       dailySetCounts[day] = (dailySetCounts[day] ?? 0) + 1;
     }
 
@@ -839,6 +840,14 @@ class AnalyticsService {
 
   // Private helper methods
 
+  /// Returns the date to use for analytics grouping for a completed set.
+  ///
+  /// Uses [ExerciseSet.completedAt] when available (set when a set is checked),
+  /// falling back to [ExerciseSet.updatedAt] for historical sets created before
+  /// the completedAt field was introduced. This ensures no Firestore migration
+  /// is needed while still providing accurate completion-date analytics.
+  DateTime _completionDate(ExerciseSet set) => set.completedAt ?? set.updatedAt;
+
   Future<List<Workout>> _getAllUserWorkouts(String userId, DateRange dateRange) async {
     final List<Workout> allWorkouts = [];
     
@@ -925,9 +934,7 @@ class AnalyticsService {
                 final sets = await _firestoreService.getSets(
                   userId, program.id, week.id, workout.id, exercise.id).first;
 
-                // Filter sets by date range
-                final filteredSets = sets.where((s) => dateRange.contains(s.createdAt));
-                allSets.addAll(filteredSets);
+                allSets.addAll(sets);
               }
             }
           }
