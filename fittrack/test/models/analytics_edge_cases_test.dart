@@ -51,6 +51,7 @@ void main() {
               setNumber: j + 1,
               reps: 8 + j,
               weight: 50.0 + i,
+              checked: true,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
               userId: 'test_user',
@@ -169,6 +170,7 @@ void main() {
           ExerciseSet(
             id: '1',
             setNumber: 1,
+            checked: true,
             // Missing reps, weight, duration, etc.
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
@@ -278,6 +280,7 @@ void main() {
             setNumber: 1,
             reps: 1,
             weight: 1000.0, // 1000kg
+            checked: true,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
             userId: 'test_user',
@@ -292,6 +295,7 @@ void main() {
             setNumber: 1,
             reps: 1000,
             weight: 0.5, // 0.5kg
+            checked: true,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
             userId: 'test_user',
@@ -306,6 +310,7 @@ void main() {
             setNumber: 1,
             reps: 0,
             weight: 0.0,
+            checked: true,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
             userId: 'test_user',
