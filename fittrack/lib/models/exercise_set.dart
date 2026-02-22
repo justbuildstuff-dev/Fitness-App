@@ -10,6 +10,7 @@ class ExerciseSet {
   final int? restTime; // seconds
   final bool checked;
   final String? notes;
+  final DateTime? completedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String userId;
@@ -28,6 +29,7 @@ class ExerciseSet {
     this.restTime,
     this.checked = false,
     this.notes,
+    this.completedAt,
     required this.createdAt,
     required this.updatedAt,
     required this.userId,
@@ -48,6 +50,7 @@ class ExerciseSet {
       'restTime': restTime,
       'checked': checked,
       'notes': notes,
+      'completedAt': completedAt?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
@@ -67,6 +70,8 @@ class ExerciseSet {
     int? restTime,
     bool? checked,
     String? notes,
+    DateTime? completedAt,
+    bool clearCompletedAt = false,
     DateTime? updatedAt,
   }) {
     return ExerciseSet(
@@ -79,6 +84,7 @@ class ExerciseSet {
       restTime: restTime ?? this.restTime,
       checked: checked ?? this.checked,
       notes: notes ?? this.notes,
+      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       userId: userId,
@@ -166,6 +172,7 @@ class ExerciseSet {
       distance: newDistance,
       restTime: restTime,
       checked: false, // Always reset checked status
+      completedAt: null, // Always reset completion timestamp
       notes: notes,
       createdAt: now,
       updatedAt: now,

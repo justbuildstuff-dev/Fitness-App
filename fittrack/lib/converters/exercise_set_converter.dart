@@ -14,6 +14,7 @@ class ExerciseSetConverter {
       'restTime': set.restTime,
       'checked': set.checked,
       'notes': set.notes,
+      'completedAt': set.completedAt != null ? Timestamp.fromDate(set.completedAt!) : null,
       'createdAt': Timestamp.fromDate(set.createdAt),
       'updatedAt': Timestamp.fromDate(set.updatedAt),
       'userId': set.userId,
@@ -43,6 +44,9 @@ class ExerciseSetConverter {
       restTime: data['restTime']?.toInt(),
       checked: data['checked'] ?? false,
       notes: data['notes'],
+      completedAt: data['completedAt'] != null
+          ? (data['completedAt'] as Timestamp).toDate()
+          : null,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       userId: data['userId'] ?? '',
