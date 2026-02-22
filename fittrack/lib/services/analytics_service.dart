@@ -962,8 +962,8 @@ class AnalyticsService {
       final exerciseSets = setsByExercise[exercise.id] ?? [];
       if (exerciseSets.isEmpty) continue;
 
-      // Sort sets by date to track progression
-      exerciseSets.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      // Sort sets by completion date to track progression
+      exerciseSets.sort((a, b) => _completionDate(a).compareTo(_completionDate(b)));
 
       // Detect different types of PRs
       final exercisePRs = _findPRsForExercise(exercise, exerciseSets);
@@ -998,7 +998,7 @@ class AnalyticsService {
             prType: PRType.maxWeight,
             value: set.weight!,
             previousValue: maxWeight,
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1018,7 +1018,7 @@ class AnalyticsService {
             prType: PRType.maxReps,
             value: set.reps!.toDouble(),
             previousValue: maxReps?.toDouble(),
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1039,7 +1039,7 @@ class AnalyticsService {
             prType: PRType.maxVolume,
             value: volume,
             previousValue: maxVolume,
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1059,7 +1059,7 @@ class AnalyticsService {
             prType: PRType.maxDuration,
             value: set.duration!.toDouble(),
             previousValue: maxDuration?.toDouble(),
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1079,7 +1079,7 @@ class AnalyticsService {
             prType: PRType.maxDistance,
             value: set.distance!,
             previousValue: maxDistance,
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1115,7 +1115,7 @@ class AnalyticsService {
               prType: PRType.maxWeight,
               value: newSet.weight!,
               previousValue: maxPreviousWeight,
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );
@@ -1142,7 +1142,7 @@ class AnalyticsService {
               prType: PRType.maxReps,
               value: newSet.reps!.toDouble(),
               previousValue: maxPreviousReps?.toDouble(),
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );
@@ -1170,7 +1170,7 @@ class AnalyticsService {
               prType: PRType.maxDuration,
               value: newSet.duration!.toDouble(),
               previousValue: maxPreviousDuration?.toDouble(),
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );
@@ -1200,7 +1200,7 @@ class AnalyticsService {
               prType: PRType.maxVolume,
               value: volume,
               previousValue: maxPreviousVolume,
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );

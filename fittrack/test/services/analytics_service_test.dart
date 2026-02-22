@@ -89,6 +89,44 @@ void main() {
         expect(analytics.averageWorkoutDuration, equals(0.0));
       });
 
+      test('only counts checked sets for totalSets and totalVolume', () async {
+        /// Test Purpose: Verify WorkoutAnalytics only includes completed sets
+
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final checkedSet = ExerciseSet(
+          id: 'cs1', setNumber: 1, reps: 10, weight: 100.0,
+          checked: true,
+          createdAt: now, updatedAt: now,
+          userId: 'test_user', exerciseId: 'ex1',
+          workoutId: 'w1', weekId: 'wk1', programId: 'p1',
+        );
+        final uncheckedSet = ExerciseSet(
+          id: 'us1', setNumber: 2, reps: 8, weight: 100.0,
+          checked: false,
+          createdAt: now, updatedAt: now,
+          userId: 'test_user', exerciseId: 'ex1',
+          workoutId: 'w1', weekId: 'wk1', programId: 'p1',
+        );
+
+        final analytics = WorkoutAnalytics.fromWorkoutData(
+          userId: 'test_user',
+          startDate: dateRange.start,
+          endDate: dateRange.end,
+          workouts: _createTestWorkouts(),
+          exercises: _createTestExercises(),
+          sets: [checkedSet, uncheckedSet],
+        );
+
+        // Only the checked set should be counted
+        expect(analytics.totalSets, equals(1));
+        expect(analytics.totalVolume, equals(1000.0)); // 100 * 10 = 1000, not 1800
+      });
+
       test('filters workouts by date range correctly', () async {
         final now = DateTime.now();
         final dateRange = DateRange(
@@ -817,6 +855,52 @@ void main() {
         );
 
         expect(pr.improvement, equals(300.0)); // 5 minutes = 300 seconds
+      });
+
+      test('PR achievedAt uses completedAt when available', () async {
+        /// Test Purpose: Verify PR detection uses _completionDate for achievedAt
+
+        final now = DateTime.now();
+        final createdDate = now.subtract(const Duration(days: 7));
+        final completedDate = now.subtract(const Duration(days: 2));
+
+        final prSet = ExerciseSet(
+          id: 's1',
+          setNumber: 1,
+          reps: 10,
+          weight: 150.0, // A PR weight
+          checked: true,
+          completedAt: completedDate,
+          createdAt: createdDate,
+          updatedAt: createdDate,
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          workoutId: 'w1',
+          weekId: 'wk1',
+          programId: 'p1',
+        );
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: [prSet],
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength)],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: createdDate)],
+        );
+
+        final prs = await analyticsService.getPersonalRecords(
+          userId: 'test_user',
+        );
+
+        expect(prs, isNotEmpty);
+        final weightPR = prs.firstWhere(
+          (pr) => pr.prType == PRType.maxWeight,
+          orElse: () => throw StateError('No weight PR found'),
+        );
+
+        // achievedAt should use completedAt, not createdAt
+        expect(weightPR.achievedAt.year, equals(completedDate.year));
+        expect(weightPR.achievedAt.month, equals(completedDate.month));
+        expect(weightPR.achievedAt.day, equals(completedDate.day));
       });
     });
 
