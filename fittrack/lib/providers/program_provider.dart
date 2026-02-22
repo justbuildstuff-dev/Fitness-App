@@ -777,11 +777,14 @@ class ProgramProvider extends ChangeNotifier {
   void loadExercises(String programId, String weekId, String workoutId) {
     if (_userId == null) return;
 
+    // Cancel previous subscription
+    _exercisesSubscription?.cancel();
+
     _isLoadingExercises = true;
     _programsError = null;
     notifyListeners();
 
-    _firestoreService.getExercises(_userId!, programId, weekId, workoutId).listen(
+    _exercisesSubscription = _firestoreService.getExercises(_userId!, programId, weekId, workoutId).listen(
       (exercises) {
         _exercises = exercises;
         _isLoadingExercises = false;
