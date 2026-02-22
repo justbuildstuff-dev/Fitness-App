@@ -298,6 +298,7 @@ service cloud.firestore {
         && (data.distance == null || isNumber(data.distance) && data.distance >= 0)
         && (data.restTime == null || isNumber(data.restTime) && data.restTime >= 0)
         && (data.checked == null || isBoolean(data.checked))
+        && (data.completedAt == null || isTimestamp(data.completedAt))
         && (data.notes == null || isString(data.notes))
         && (data.createdAt != null && isTimestamp(data.createdAt))
         && (data.updatedAt != null && isTimestamp(data.updatedAt))
