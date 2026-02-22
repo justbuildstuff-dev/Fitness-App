@@ -49,19 +49,21 @@ class WorkoutAnalytics {
           (typeBreakdown[exercise.exerciseType] ?? 0) + 1;
     }
 
-    // Calculate volume and duration
+    // Calculate volume and duration — only count completed (checked) sets
     double volume = 0.0;
     int duration = 0;
     int totalSetsCount = 0;
 
     for (final set in sets) {
+      if (!set.checked) continue;
+
       totalSetsCount++;
-      
+
       // Volume calculation (weight * reps)
       if (set.weight != null && set.reps != null) {
         volume += set.weight! * set.reps!;
       }
-      
+
       // Duration accumulation
       if (set.duration != null) {
         duration += set.duration!;
