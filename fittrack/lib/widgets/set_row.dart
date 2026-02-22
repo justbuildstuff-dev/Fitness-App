@@ -61,9 +61,12 @@ class _SetRowState extends State<SetRow> {
   void _handleCheckboxChange(bool? checked) {
     if (checked == null) return;
 
+    final now = DateTime.now();
     final updatedSet = widget.set.copyWith(
       checked: checked,
-      updatedAt: DateTime.now(),
+      completedAt: checked ? now : null,
+      clearCompletedAt: !checked,
+      updatedAt: now,
     );
 
     widget.onUpdate(updatedSet);

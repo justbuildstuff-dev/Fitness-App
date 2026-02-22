@@ -89,6 +89,44 @@ void main() {
         expect(analytics.averageWorkoutDuration, equals(0.0));
       });
 
+      test('only counts checked sets for totalSets and totalVolume', () async {
+        /// Test Purpose: Verify WorkoutAnalytics only includes completed sets
+
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final checkedSet = ExerciseSet(
+          id: 'cs1', setNumber: 1, reps: 10, weight: 100.0,
+          checked: true,
+          createdAt: now, updatedAt: now,
+          userId: 'test_user', exerciseId: 'ex1',
+          workoutId: 'w1', weekId: 'wk1', programId: 'p1',
+        );
+        final uncheckedSet = ExerciseSet(
+          id: 'us1', setNumber: 2, reps: 8, weight: 100.0,
+          checked: false,
+          createdAt: now, updatedAt: now,
+          userId: 'test_user', exerciseId: 'ex1',
+          workoutId: 'w1', weekId: 'wk1', programId: 'p1',
+        );
+
+        final analytics = WorkoutAnalytics.fromWorkoutData(
+          userId: 'test_user',
+          startDate: dateRange.start,
+          endDate: dateRange.end,
+          workouts: _createTestWorkouts(),
+          exercises: _createTestExercises(),
+          sets: [checkedSet, uncheckedSet],
+        );
+
+        // Only the checked set should be counted
+        expect(analytics.totalSets, equals(1));
+        expect(analytics.totalVolume, equals(1000.0)); // 100 * 10 = 1000, not 1800
+      });
+
       test('filters workouts by date range correctly', () async {
         final now = DateTime.now();
         final dateRange = DateRange(
@@ -395,7 +433,7 @@ void main() {
             setNumber: 1,
             checked: true,
             createdAt: date1.add(const Duration(hours: 10)),
-            updatedAt: now,
+            updatedAt: date1.add(const Duration(hours: 10)),
             userId: 'test_user',
             exerciseId: 'ex1',
             workoutId: 'w1',
@@ -407,7 +445,7 @@ void main() {
             setNumber: 2,
             checked: true,
             createdAt: date1.add(const Duration(hours: 11)),
-            updatedAt: now,
+            updatedAt: date1.add(const Duration(hours: 11)),
             userId: 'test_user',
             exerciseId: 'ex1',
             workoutId: 'w1',
@@ -419,7 +457,7 @@ void main() {
             setNumber: 3,
             checked: true,
             createdAt: date1.add(const Duration(hours: 12)),
-            updatedAt: now,
+            updatedAt: date1.add(const Duration(hours: 12)),
             userId: 'test_user',
             exerciseId: 'ex1',
             workoutId: 'w1',
@@ -432,7 +470,7 @@ void main() {
             setNumber: 1,
             checked: true,
             createdAt: date2.add(const Duration(hours: 14)),
-            updatedAt: now,
+            updatedAt: date2.add(const Duration(hours: 14)),
             userId: 'test_user',
             exerciseId: 'ex2',
             workoutId: 'w2',
@@ -444,7 +482,7 @@ void main() {
             setNumber: 2,
             checked: true,
             createdAt: date2.add(const Duration(hours: 15)),
-            updatedAt: now,
+            updatedAt: date2.add(const Duration(hours: 15)),
             userId: 'test_user',
             exerciseId: 'ex2',
             workoutId: 'w2',
@@ -617,6 +655,64 @@ void main() {
         expect(heatmapData.currentStreak, equals(0));
         expect(heatmapData.longestStreak, equals(0));
       });
+
+      test('groups sets by completedAt when available', () async {
+        /// Test Purpose: Verify heatmap uses completedAt for grouping, not createdAt
+
+        final now = DateTime.now();
+        final day3Ago = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
+        final day1Ago = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+        final dateRange = DateRange(
+          start: day3Ago,
+          end: DateTime(now.year, now.month, now.day, 23, 59, 59),
+        );
+
+        final sets = [
+          // Set created 3 days ago but completed 1 day ago — should be counted on day 1 ago
+          ExerciseSet(
+            id: 's1',
+            setNumber: 1,
+            reps: 10,
+            checked: true,
+            completedAt: day1Ago,
+            createdAt: day3Ago,
+            updatedAt: day3Ago,
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+          // Set with no completedAt — should fall back to updatedAt (day3Ago)
+          ExerciseSet(
+            id: 's2',
+            setNumber: 2,
+            reps: 10,
+            checked: true,
+            completedAt: null,
+            createdAt: day3Ago,
+            updatedAt: day3Ago,
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+        ];
+
+        _mockSetBasedHeatmapData(mockFirestoreService, sets, 'p1');
+
+        final heatmapData = await analyticsService.generateSetBasedHeatmapData(
+          userId: 'test_user',
+          dateRange: dateRange,
+          programId: 'p1',
+        );
+
+        expect(heatmapData.totalSets, equals(2));
+        // s1 should be on day1Ago, s2 (no completedAt) falls back to updatedAt = day3Ago
+        expect(heatmapData.dailySetCounts[day1Ago], equals(1));
+        expect(heatmapData.dailySetCounts[day3Ago], equals(1));
+      });
     });
 
     group('Personal Records Detection', () {
@@ -760,6 +856,52 @@ void main() {
 
         expect(pr.improvement, equals(300.0)); // 5 minutes = 300 seconds
       });
+
+      test('PR achievedAt uses completedAt when available', () async {
+        /// Test Purpose: Verify PR detection uses _completionDate for achievedAt
+
+        final now = DateTime.now();
+        final createdDate = now.subtract(const Duration(days: 7));
+        final completedDate = now.subtract(const Duration(days: 2));
+
+        final prSet = ExerciseSet(
+          id: 's1',
+          setNumber: 1,
+          reps: 10,
+          weight: 150.0, // A PR weight
+          checked: true,
+          completedAt: completedDate,
+          createdAt: createdDate,
+          updatedAt: createdDate,
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          workoutId: 'w1',
+          weekId: 'wk1',
+          programId: 'p1',
+        );
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: [prSet],
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength)],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: createdDate)],
+        );
+
+        final prs = await analyticsService.getPersonalRecords(
+          userId: 'test_user',
+        );
+
+        expect(prs, isNotEmpty);
+        final weightPR = prs.firstWhere(
+          (pr) => pr.prType == PRType.maxWeight,
+          orElse: () => throw StateError('No weight PR found'),
+        );
+
+        // achievedAt should use completedAt, not createdAt
+        expect(weightPR.achievedAt.year, equals(completedDate.year));
+        expect(weightPR.achievedAt.month, equals(completedDate.month));
+        expect(weightPR.achievedAt.day, equals(completedDate.day));
+      });
     });
 
     group('Cache Management', () {
@@ -792,6 +934,7 @@ void main() {
             ExerciseSet(
               id: 'bad_set',
               setNumber: 1,
+              checked: true,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
               userId: 'test_user',
@@ -1141,6 +1284,42 @@ void main() {
         expect(febData.year, equals(2024));
         expect(febData.month, equals(2));
       });
+
+      test('groups sets by completedAt day when available', () async {
+        /// Test Purpose: Verify getMonthHeatmapData uses completedAt for day grouping
+
+        final mockService = MockFirestoreService();
+        final analyticsService = AnalyticsService.withFirestoreService(mockService);
+
+        final testSets = [
+          // Created Dec 1, completed Dec 15 — should count on day 15
+          _createTestSet(
+            id: 's1',
+            createdAt: DateTime(2024, 12, 1),
+            checked: true,
+            completedAt: DateTime(2024, 12, 15),
+          ),
+          // Created Dec 5, no completedAt — falls back to updatedAt = Dec 5 → day 5
+          _createTestSet(
+            id: 's2',
+            createdAt: DateTime(2024, 12, 5),
+            checked: true,
+          ),
+        ];
+
+        _setupMockFirestore(mockService, sets: testSets);
+
+        final monthData = await analyticsService.getMonthHeatmapData(
+          userId: 'test_user',
+          year: 2024,
+          month: 12,
+        );
+
+        expect(monthData.totalSets, equals(2));
+        expect(monthData.getSetCountForDay(15), equals(1)); // s1 grouped by completedAt
+        expect(monthData.getSetCountForDay(5), equals(1));  // s2 grouped by updatedAt fallback
+        expect(monthData.getSetCountForDay(1), equals(0));  // s1's createdAt day — should NOT be used
+      });
     });
 
     group('getExerciseProgress', () {
@@ -1349,6 +1528,58 @@ void main() {
         expect(result.dataPoints.length, equals(1));
         expect(result.dataPoints.first.totalDuration, equals(2700));
         expect(result.dataPoints.first.totalDistance, equals(7500.0));
+      });
+
+      test('uses completedAt as session date when available', () async {
+        /// Test Purpose: Verify session date is based on completedAt, not createdAt
+
+        final now = DateTime.now();
+        final createdDate = now.subtract(const Duration(days: 7));
+        final completedDate = now.subtract(const Duration(days: 3));
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          ExerciseSet(
+            id: 's1',
+            setNumber: 1,
+            reps: 10,
+            weight: 100.0,
+            checked: true,
+            completedAt: completedDate,
+            createdAt: createdDate,
+            updatedAt: createdDate,
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength)],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: createdDate)],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.length, equals(1));
+        // Session date should be completedAt, not createdAt
+        final sessionDate = result.dataPoints.first.date;
+        expect(sessionDate.year, equals(completedDate.year));
+        expect(sessionDate.month, equals(completedDate.month));
+        expect(sessionDate.day, equals(completedDate.day));
       });
     });
 
@@ -1611,6 +1842,58 @@ void main() {
         // Should be sorted: Jan 6 week before Jan 20 week
         expect(result[0].weekStart.isBefore(result[1].weekStart), isTrue);
       });
+
+      test('groups set volume by completedAt week when available', () async {
+        /// Test Purpose: Verify weekly volume uses completedAt for week grouping
+
+        // Monday Jan 6, 2025 = week 1; Monday Jan 13, 2025 = week 2
+        final week1Monday = DateTime(2025, 1, 6);
+        final week2Monday = DateTime(2025, 1, 13);
+        final dateRange = DateRange(
+          start: week1Monday,
+          end: week2Monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59)),
+        );
+
+        final testSets = [
+          // Set created in week 1, but completed in week 2 — volume should be in week 2
+          ExerciseSet(
+            id: 's1',
+            setNumber: 1,
+            reps: 10,
+            weight: 100.0,
+            checked: true,
+            completedAt: DateTime(2025, 1, 14), // Tuesday of week 2
+            createdAt: DateTime(2025, 1, 7),    // Tuesday of week 1
+            updatedAt: DateTime(2025, 1, 7),
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1')],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: DateTime(2025, 1, 7))],
+        );
+
+        final result = await analyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        );
+
+        // Volume should appear in week 2 (week of Jan 13), not week 1 (week of Jan 6)
+        final week2 = result.firstWhere((t) => t.weekStart == week2Monday, orElse: () =>
+          WeeklyTrendPoint(weekStart: week2Monday, totalVolume: 0, workoutCount: 0));
+        final week1 = result.firstWhere((t) => t.weekStart == week1Monday, orElse: () =>
+          WeeklyTrendPoint(weekStart: week1Monday, totalVolume: 0, workoutCount: 0));
+
+        expect(week2.totalVolume, equals(1000.0)); // 100 * 10 = 1000
+        expect(week1.totalVolume, equals(0.0));    // completedAt was in week 2
+      });
     });
 
     group('getConfigurableStreak', () {
@@ -1861,6 +2144,7 @@ List<ExerciseSet> _createTestSets() {
       setNumber: 1,
       reps: 10,
       weight: 100.0,
+      checked: true,
       createdAt: now,
       updatedAt: now,
       userId: 'test_user',
@@ -1874,6 +2158,7 @@ List<ExerciseSet> _createTestSets() {
       setNumber: 2,
       reps: 8,
       weight: 105.0,
+      checked: true,
       createdAt: now,
       updatedAt: now,
       userId: 'test_user',
@@ -1886,6 +2171,7 @@ List<ExerciseSet> _createTestSets() {
       id: '3',
       setNumber: 1,
       reps: 15,
+      checked: true,
       createdAt: now,
       updatedAt: now,
       userId: 'test_user',
@@ -1898,6 +2184,7 @@ List<ExerciseSet> _createTestSets() {
       id: '4',
       setNumber: 1,
       duration: 1800, // 30 minutes
+      checked: true,
       createdAt: now,
       updatedAt: now,
       userId: 'test_user',
@@ -2024,6 +2311,7 @@ ExerciseSet _createTestSet({
   String programId = 'p1',
   int? reps,
   double? weight,
+  DateTime? completedAt,
 }) {
   return ExerciseSet(
     id: id,
@@ -2031,6 +2319,7 @@ ExerciseSet _createTestSet({
     reps: reps ?? 10,
     weight: weight,
     checked: checked,
+    completedAt: completedAt,
     createdAt: createdAt,
     updatedAt: createdAt,
     userId: 'test_user',

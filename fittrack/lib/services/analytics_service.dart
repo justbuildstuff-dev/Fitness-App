@@ -147,13 +147,14 @@ class AnalyticsService {
     // Filter only checked sets (completed sets)
     final checkedSets = allSets.where((set) => set.checked).toList();
 
-    // Group sets by date (normalize to midnight for consistent day-level grouping)
+    // Group sets by completion date (normalize to midnight for consistent day-level grouping)
     final Map<DateTime, int> dailySetCounts = {};
     for (final set in checkedSets) {
+      final completionDate = _completionDate(set);
       final date = DateTime(
-        set.createdAt.year,
-        set.createdAt.month,
-        set.createdAt.day,
+        completionDate.year,
+        completionDate.month,
+        completionDate.day,
       );
       dailySetCounts[date] = (dailySetCounts[date] ?? 0) + 1;
     }
@@ -238,10 +239,10 @@ class AnalyticsService {
     // Filter only checked sets (completed sets)
     final checkedSets = allSets.where((set) => set.checked).toList();
 
-    // Group sets by day of month
+    // Group sets by day of month using completion date
     final Map<int, int> dailySetCounts = {};
     for (final set in checkedSets) {
-      final day = set.createdAt.day;
+      final day = _completionDate(set).day;
       dailySetCounts[day] = (dailySetCounts[day] ?? 0) + 1;
     }
 
@@ -448,9 +449,9 @@ class AnalyticsService {
       final workoutSets = entry.value;
       final workoutId = entry.key;
 
-      // Use earliest set's createdAt as the session date
-      workoutSets.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      final sessionDate = workoutSets.first.createdAt;
+      // Use earliest set's completion date as the session date
+      workoutSets.sort((a, b) => _completionDate(a).compareTo(_completionDate(b)));
+      final sessionDate = _completionDate(workoutSets.first);
 
       // Compute per-session aggregates
       double? maxWeight;
@@ -640,10 +641,10 @@ class AnalyticsService {
       workoutsByWeek.putIfAbsent(weekStart, () => {}).add(workout.id);
     }
 
-    // Group sets by week and compute volume
+    // Group sets by week using completion date and compute volume
     final Map<DateTime, double> volumeByWeek = {};
     for (final set in allSets) {
-      final weekStart = getWeekStart(set.createdAt);
+      final weekStart = getWeekStart(_completionDate(set));
       double setVolume = 0;
       if (set.weight != null && set.reps != null) {
         setVolume = set.weight! * set.reps!;
@@ -839,6 +840,14 @@ class AnalyticsService {
 
   // Private helper methods
 
+  /// Returns the date to use for analytics grouping for a completed set.
+  ///
+  /// Uses [ExerciseSet.completedAt] when available (set when a set is checked),
+  /// falling back to [ExerciseSet.updatedAt] for historical sets created before
+  /// the completedAt field was introduced. This ensures no Firestore migration
+  /// is needed while still providing accurate completion-date analytics.
+  DateTime _completionDate(ExerciseSet set) => set.completedAt ?? set.updatedAt;
+
   Future<List<Workout>> _getAllUserWorkouts(String userId, DateRange dateRange) async {
     final List<Workout> allWorkouts = [];
     
@@ -925,9 +934,7 @@ class AnalyticsService {
                 final sets = await _firestoreService.getSets(
                   userId, program.id, week.id, workout.id, exercise.id).first;
 
-                // Filter sets by date range
-                final filteredSets = sets.where((s) => dateRange.contains(s.createdAt));
-                allSets.addAll(filteredSets);
+                allSets.addAll(sets);
               }
             }
           }
@@ -955,8 +962,8 @@ class AnalyticsService {
       final exerciseSets = setsByExercise[exercise.id] ?? [];
       if (exerciseSets.isEmpty) continue;
 
-      // Sort sets by date to track progression
-      exerciseSets.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      // Sort sets by completion date to track progression
+      exerciseSets.sort((a, b) => _completionDate(a).compareTo(_completionDate(b)));
 
       // Detect different types of PRs
       final exercisePRs = _findPRsForExercise(exercise, exerciseSets);
@@ -991,7 +998,7 @@ class AnalyticsService {
             prType: PRType.maxWeight,
             value: set.weight!,
             previousValue: maxWeight,
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1011,7 +1018,7 @@ class AnalyticsService {
             prType: PRType.maxReps,
             value: set.reps!.toDouble(),
             previousValue: maxReps?.toDouble(),
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1032,7 +1039,7 @@ class AnalyticsService {
             prType: PRType.maxVolume,
             value: volume,
             previousValue: maxVolume,
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1052,7 +1059,7 @@ class AnalyticsService {
             prType: PRType.maxDuration,
             value: set.duration!.toDouble(),
             previousValue: maxDuration?.toDouble(),
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1072,7 +1079,7 @@ class AnalyticsService {
             prType: PRType.maxDistance,
             value: set.distance!,
             previousValue: maxDistance,
-            achievedAt: set.createdAt,
+            achievedAt: _completionDate(set),
             workoutId: set.workoutId,
             setId: set.id,
           ));
@@ -1108,7 +1115,7 @@ class AnalyticsService {
               prType: PRType.maxWeight,
               value: newSet.weight!,
               previousValue: maxPreviousWeight,
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );
@@ -1135,7 +1142,7 @@ class AnalyticsService {
               prType: PRType.maxReps,
               value: newSet.reps!.toDouble(),
               previousValue: maxPreviousReps?.toDouble(),
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );
@@ -1163,7 +1170,7 @@ class AnalyticsService {
               prType: PRType.maxDuration,
               value: newSet.duration!.toDouble(),
               previousValue: maxPreviousDuration?.toDouble(),
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );
@@ -1193,7 +1200,7 @@ class AnalyticsService {
               prType: PRType.maxVolume,
               value: volume,
               previousValue: maxPreviousVolume,
-              achievedAt: newSet.createdAt,
+              achievedAt: _completionDate(newSet),
               workoutId: newSet.workoutId,
               setId: newSet.id,
             );

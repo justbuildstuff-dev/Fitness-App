@@ -147,10 +147,11 @@ class TestDataFactory {
     String programId = 'test-program-1',
     String userId = 'test-user-123',
     bool checked = false,
+    DateTime? completedAt,
     SetIntensity intensity = SetIntensity.moderate,
   }) {
     final now = DateTime.now();
-    
+
     return ExerciseSet(
       id: id ?? generateId('set'),
       setNumber: setNumber,
@@ -160,6 +161,7 @@ class TestDataFactory {
       distance: _getRealisticDistance(exerciseType, intensity),
       restTime: _getRealisticRestTime(exerciseType, intensity),
       checked: checked,
+      completedAt: completedAt,
       notes: _getSetNotes(exerciseType, setNumber),
       createdAt: now.subtract(Duration(minutes: _random.nextInt(180))),
       updatedAt: now.subtract(Duration(minutes: _random.nextInt(30))),

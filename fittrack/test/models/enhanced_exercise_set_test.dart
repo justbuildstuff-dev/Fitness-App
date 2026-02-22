@@ -715,6 +715,151 @@ void main() {
       });
     });
 
+    group('completedAt Field', () {
+      late ExerciseSet baseSet;
+
+      setUp(() {
+        baseSet = ExerciseSet(
+          id: 'set-ca',
+          setNumber: 1,
+          reps: 10,
+          weight: 80.0,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          exerciseId: 'exercise-1',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
+      });
+
+      test('completedAt defaults to null on construction', () {
+        /// Test Purpose: Verify new sets have no completion timestamp by default
+        expect(baseSet.completedAt, isNull);
+        expect(baseSet.checked, false);
+      });
+
+      test('completedAt can be set on construction', () {
+        /// Test Purpose: Verify completedAt can be explicitly provided
+        final completedSet = ExerciseSet(
+          id: 'set-ca2',
+          setNumber: 1,
+          reps: 10,
+          completedAt: testDate,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          exerciseId: 'exercise-1',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
+
+        expect(completedSet.completedAt, testDate);
+      });
+
+      test('copyWith sets completedAt when provided', () {
+        /// Test Purpose: Verify copyWith correctly sets completedAt (checking a set)
+        final completionTime = testDate.add(const Duration(hours: 2));
+        final checked = baseSet.copyWith(
+          checked: true,
+          completedAt: completionTime,
+          updatedAt: completionTime,
+        );
+
+        expect(checked.completedAt, completionTime);
+        expect(checked.checked, true);
+      });
+
+      test('copyWith preserves existing completedAt when not specified', () {
+        /// Test Purpose: Verify copyWith does not clear completedAt on unrelated updates
+        final completionTime = testDate.add(const Duration(hours: 1));
+        final checked = baseSet.copyWith(
+          checked: true,
+          completedAt: completionTime,
+          updatedAt: completionTime,
+        );
+
+        // Update weight without touching completedAt
+        final weightUpdated = checked.copyWith(weight: 90.0);
+
+        expect(weightUpdated.completedAt, completionTime); // Preserved
+        expect(weightUpdated.weight, 90.0);
+      });
+
+      test('copyWith clears completedAt when clearCompletedAt is true', () {
+        /// Test Purpose: Verify unchecking a set clears the completion timestamp
+        final completionTime = testDate.add(const Duration(hours: 1));
+        final checked = baseSet.copyWith(
+          checked: true,
+          completedAt: completionTime,
+          updatedAt: completionTime,
+        );
+
+        final unchecked = checked.copyWith(
+          checked: false,
+          clearCompletedAt: true,
+          updatedAt: testDate.add(const Duration(hours: 2)),
+        );
+
+        expect(unchecked.completedAt, isNull);
+        expect(unchecked.checked, false);
+      });
+
+      test('createDuplicateCopy always resets completedAt to null', () {
+        /// Test Purpose: Verify duplicated sets start with no completion timestamp
+        final completionTime = testDate.add(const Duration(hours: 1));
+        final completedSet = ExerciseSet(
+          id: 'original',
+          setNumber: 1,
+          reps: 10,
+          weight: 100.0,
+          checked: true,
+          completedAt: completionTime,
+          createdAt: testDate,
+          updatedAt: completionTime,
+          userId: 'user-123',
+          exerciseId: 'exercise-1',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
+
+        final duplicate = completedSet.createDuplicateCopy(
+          newId: 'duplicate',
+          newExerciseId: 'exercise-2',
+          newWorkoutId: 'workout-2',
+          newWeekId: 'week-2',
+          newProgramId: 'program-2',
+          exerciseType: ExerciseType.strength,
+        );
+
+        expect(duplicate.completedAt, isNull);
+        expect(duplicate.checked, false);
+      });
+
+      test('toMap includes completedAt as ISO8601 string when set', () {
+        /// Test Purpose: Verify completedAt is serialized correctly
+        final completionTime = testDate.add(const Duration(hours: 3));
+        final completedSet = baseSet.copyWith(
+          checked: true,
+          completedAt: completionTime,
+          updatedAt: completionTime,
+        );
+
+        final map = completedSet.toMap();
+        expect(map['completedAt'], completionTime.toIso8601String());
+      });
+
+      test('toMap includes null for completedAt when not set', () {
+        /// Test Purpose: Verify null completedAt serializes as null (not missing key)
+        final map = baseSet.toMap();
+        expect(map.containsKey('completedAt'), isTrue);
+        expect(map['completedAt'], isNull);
+      });
+    });
+
     group('Comprehensive Validation Tests', () {
       test('validates complete strength set correctly', () {
         /// Test Purpose: Verify comprehensive validation for strength exercises

@@ -114,6 +114,60 @@ void main() {
       expect(updatedSet!.checked, isTrue);
     });
 
+    testWidgets('checking checkbox sets completedAt to current time', (tester) async {
+      /// Test Purpose: Verify completedAt is populated when set is checked
+
+      ExerciseSet? updatedSet;
+      final beforeCheck = DateTime.now();
+
+      await tester.pumpWidget(createTestWidget(
+        set: testSet,
+        exerciseType: ExerciseType.strength,
+        onUpdate: (set) => updatedSet = set,
+      ));
+
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+
+      expect(updatedSet, isNotNull);
+      expect(updatedSet!.completedAt, isNotNull);
+      expect(updatedSet!.completedAt!.isAfter(beforeCheck) || updatedSet!.completedAt!.isAtSameMomentAs(beforeCheck), isTrue);
+    });
+
+    testWidgets('unchecking checkbox clears completedAt', (tester) async {
+      /// Test Purpose: Verify completedAt is cleared when set is unchecked
+
+      final checkedSet = ExerciseSet(
+        id: testSet.id,
+        setNumber: testSet.setNumber,
+        checked: true,
+        reps: testSet.reps,
+        weight: testSet.weight,
+        completedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        createdAt: testSet.createdAt,
+        updatedAt: testSet.updatedAt,
+        userId: testSet.userId,
+        exerciseId: testSet.exerciseId,
+        workoutId: testSet.workoutId,
+        weekId: testSet.weekId,
+        programId: testSet.programId,
+      );
+
+      ExerciseSet? updatedSet;
+      await tester.pumpWidget(createTestWidget(
+        set: checkedSet,
+        exerciseType: ExerciseType.strength,
+        onUpdate: (set) => updatedSet = set,
+      ));
+
+      await tester.tap(find.byType(Checkbox));
+      await tester.pump();
+
+      expect(updatedSet, isNotNull);
+      expect(updatedSet!.checked, isFalse);
+      expect(updatedSet!.completedAt, isNull);
+    });
+
     testWidgets('displays duration and distance for cardio exercise', (tester) async {
       /// Test Purpose: Verify cardio fields are shown
 
