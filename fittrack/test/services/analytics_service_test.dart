@@ -1444,6 +1444,58 @@ void main() {
         expect(result.dataPoints.first.totalDuration, equals(2700));
         expect(result.dataPoints.first.totalDistance, equals(7500.0));
       });
+
+      test('uses completedAt as session date when available', () async {
+        /// Test Purpose: Verify session date is based on completedAt, not createdAt
+
+        final now = DateTime.now();
+        final createdDate = now.subtract(const Duration(days: 7));
+        final completedDate = now.subtract(const Duration(days: 3));
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          ExerciseSet(
+            id: 's1',
+            setNumber: 1,
+            reps: 10,
+            weight: 100.0,
+            checked: true,
+            completedAt: completedDate,
+            createdAt: createdDate,
+            updatedAt: createdDate,
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength)],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: createdDate)],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.length, equals(1));
+        // Session date should be completedAt, not createdAt
+        final sessionDate = result.dataPoints.first.date;
+        expect(sessionDate.year, equals(completedDate.year));
+        expect(sessionDate.month, equals(completedDate.month));
+        expect(sessionDate.day, equals(completedDate.day));
+      });
     });
 
     group('getMuscleGroupVolume', () {
@@ -1704,6 +1756,58 @@ void main() {
         expect(result.length, equals(2));
         // Should be sorted: Jan 6 week before Jan 20 week
         expect(result[0].weekStart.isBefore(result[1].weekStart), isTrue);
+      });
+
+      test('groups set volume by completedAt week when available', () async {
+        /// Test Purpose: Verify weekly volume uses completedAt for week grouping
+
+        // Monday Jan 6, 2025 = week 1; Monday Jan 13, 2025 = week 2
+        final week1Monday = DateTime(2025, 1, 6);
+        final week2Monday = DateTime(2025, 1, 13);
+        final dateRange = DateRange(
+          start: week1Monday,
+          end: week2Monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59)),
+        );
+
+        final testSets = [
+          // Set created in week 1, but completed in week 2 — volume should be in week 2
+          ExerciseSet(
+            id: 's1',
+            setNumber: 1,
+            reps: 10,
+            weight: 100.0,
+            checked: true,
+            completedAt: DateTime(2025, 1, 14), // Tuesday of week 2
+            createdAt: DateTime(2025, 1, 7),    // Tuesday of week 1
+            updatedAt: DateTime(2025, 1, 7),
+            userId: 'test_user',
+            exerciseId: 'ex1',
+            workoutId: 'w1',
+            weekId: 'wk1',
+            programId: 'p1',
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1')],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: DateTime(2025, 1, 7))],
+        );
+
+        final result = await analyticsService.getWeeklyTrends(
+          userId: 'test_user',
+          dateRange: dateRange,
+        );
+
+        // Volume should appear in week 2 (week of Jan 13), not week 1 (week of Jan 6)
+        final week2 = result.firstWhere((t) => t.weekStart == week2Monday, orElse: () =>
+          WeeklyTrendPoint(weekStart: week2Monday, totalVolume: 0, workoutCount: 0));
+        final week1 = result.firstWhere((t) => t.weekStart == week1Monday, orElse: () =>
+          WeeklyTrendPoint(weekStart: week1Monday, totalVolume: 0, workoutCount: 0));
+
+        expect(week2.totalVolume, equals(1000.0)); // 100 * 10 = 1000
+        expect(week1.totalVolume, equals(0.0));    // completedAt was in week 2
       });
     });
 

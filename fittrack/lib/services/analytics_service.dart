@@ -449,9 +449,9 @@ class AnalyticsService {
       final workoutSets = entry.value;
       final workoutId = entry.key;
 
-      // Use earliest set's createdAt as the session date
-      workoutSets.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      final sessionDate = workoutSets.first.createdAt;
+      // Use earliest set's completion date as the session date
+      workoutSets.sort((a, b) => _completionDate(a).compareTo(_completionDate(b)));
+      final sessionDate = _completionDate(workoutSets.first);
 
       // Compute per-session aggregates
       double? maxWeight;
@@ -641,10 +641,10 @@ class AnalyticsService {
       workoutsByWeek.putIfAbsent(weekStart, () => {}).add(workout.id);
     }
 
-    // Group sets by week and compute volume
+    // Group sets by week using completion date and compute volume
     final Map<DateTime, double> volumeByWeek = {};
     for (final set in allSets) {
-      final weekStart = getWeekStart(set.createdAt);
+      final weekStart = getWeekStart(_completionDate(set));
       double setVolume = 0;
       if (set.weight != null && set.reps != null) {
         setVolume = set.weight! * set.reps!;
