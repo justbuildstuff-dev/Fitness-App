@@ -34,31 +34,50 @@ class ConsolidatedWorkoutScreen extends StatefulWidget {
   State<ConsolidatedWorkoutScreen> createState() => _ConsolidatedWorkoutScreenState();
 }
 
-class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen> {
+class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
+    with WidgetsBindingObserver {
   // Track which exercises are currently adding sets (for debouncing)
   final Set<String> _addingSetForExercise = {};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Load exercises and all sets when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final programProvider = Provider.of<ProgramProvider>(context, listen: false);
-
-      // First load exercises
-      programProvider.loadExercises(
-        widget.program.id,
-        widget.week.id,
-        widget.workout.id,
-      );
-
-      // Then load all sets for all exercises
-      programProvider.loadAllSetsForWorkout(
-        programId: widget.program.id,
-        weekId: widget.week.id,
-        workoutId: widget.workout.id,
-      );
+      _loadWorkoutData();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadWorkoutData();
+    }
+  }
+
+  void _loadWorkoutData() {
+    final programProvider = Provider.of<ProgramProvider>(context, listen: false);
+
+    // Load exercises (live stream)
+    programProvider.loadExercises(
+      widget.program.id,
+      widget.week.id,
+      widget.workout.id,
+    );
+
+    // Load all sets for all exercises
+    programProvider.loadAllSetsForWorkout(
+      programId: widget.program.id,
+      weekId: widget.week.id,
+      workoutId: widget.workout.id,
+    );
   }
 
   @override
