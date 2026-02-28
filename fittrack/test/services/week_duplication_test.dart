@@ -2,64 +2,44 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Unit tests for week duplication sequential naming logic.
 ///
-/// duplicateWeek() in FirestoreService uses sequential naming:
-/// - Finds the maximum 'order' value among existing weeks in the program
-/// - New week gets order = maxOrder + 1
+/// duplicateWeek() in FirestoreService uses count-based naming:
+/// - Counts existing weeks in the program
+/// - New week gets order = existingCount + 1
 /// - New week name = 'Week $newOrder'
 ///
-/// This replaces the previous SmartCopyNaming-based approach ("Copy N" suffix).
+/// This approach is robust against stale/zero 'order' field values in
+/// existing Firestore documents (a pre-existing data issue).
 ///
 /// Related files:
 /// - lib/services/firestore_service.dart - duplicateWeek() implementation
 
-/// Mirrors the max-order calculation used in FirestoreService.duplicateWeek().
-int _computeNewOrder(List<int?> existingOrders) {
-  return existingOrders
-      .map((order) => order ?? 0)
-      .fold(0, (max, order) => order > max ? order : max) + 1;
-}
+/// Mirrors the order calculation used in FirestoreService.duplicateWeek().
+int _computeNewOrder(int existingCount) => existingCount + 1;
 
 /// Mirrors the name generation used in FirestoreService.duplicateWeek().
 String _computeNewWeekName(int newOrder) => 'Week $newOrder';
 
 void main() {
   group('Week Duplication Sequential Naming', () {
-    group('order calculation', () {
-      test('returns 2 when only one week exists with order 1', () {
-        expect(_computeNewOrder([1]), 2);
+    group('order calculation (count-based)', () {
+      test('returns 2 when one week exists', () {
+        expect(_computeNewOrder(1), 2);
       });
 
-      test('returns maxOrder + 1 for sequential weeks', () {
-        expect(_computeNewOrder([1, 2, 3]), 4);
+      test('returns 3 when two weeks exist', () {
+        expect(_computeNewOrder(2), 3);
       });
 
-      test('returns maxOrder + 1 for non-sequential (gap) orders', () {
-        // Gaps in order don't cause duplicates — new week appends after max
-        expect(_computeNewOrder([1, 3, 5]), 6);
+      test('returns 4 when three weeks exist', () {
+        expect(_computeNewOrder(3), 4);
       });
 
       test('returns 1 when no weeks exist', () {
-        expect(_computeNewOrder([]), 1);
+        expect(_computeNewOrder(0), 1);
       });
 
-      test('handles null order values by treating them as 0', () {
-        expect(_computeNewOrder([null, 2, 3]), 4);
-      });
-
-      test('handles all null order values, returns 1', () {
-        expect(_computeNewOrder([null, null]), 1);
-      });
-
-      test('handles a single null order, returns 1', () {
-        expect(_computeNewOrder([null]), 1);
-      });
-
-      test('returns max + 1 when orders are unsorted', () {
-        expect(_computeNewOrder([3, 1, 4, 2]), 5);
-      });
-
-      test('handles large order numbers', () {
-        expect(_computeNewOrder([1, 2, 98, 99, 100]), 101);
+      test('returns 11 when ten weeks exist', () {
+        expect(_computeNewOrder(10), 11);
       });
     });
 
@@ -72,57 +52,55 @@ void main() {
         expect(_computeNewWeekName(2), 'Week 2');
       });
 
-      test('generates "Week 10" for order 10', () {
-        expect(_computeNewWeekName(10), 'Week 10');
+      test('generates "Week 3" for order 3', () {
+        expect(_computeNewWeekName(3), 'Week 3');
+      });
+
+      test('generates correct name for large order numbers', () {
+        expect(_computeNewWeekName(100), 'Week 100');
       });
     });
 
     group('sequential duplication workflow', () {
-      test('first duplication of a 1-week program creates Week 2', () {
-        final existingOrders = [1];
-        final newOrder = _computeNewOrder(existingOrders);
-
+      test('duplicating from a 1-week program creates Week 2', () {
+        final newOrder = _computeNewOrder(1);
         expect(newOrder, 2);
         expect(_computeNewWeekName(newOrder), 'Week 2');
       });
 
-      test('duplicating a 2-week program creates Week 3', () {
-        final existingOrders = [1, 2];
-        final newOrder = _computeNewOrder(existingOrders);
-
+      test('duplicating from a 2-week program creates Week 3', () {
+        final newOrder = _computeNewOrder(2);
         expect(newOrder, 3);
         expect(_computeNewWeekName(newOrder), 'Week 3');
       });
 
       test('consecutive duplications produce strictly sequential names', () {
-        var orders = [1];
+        // Simulate: start with 1 week, duplicate 3 times
+        var count = 1;
 
-        final order2 = _computeNewOrder(orders);
+        final order2 = _computeNewOrder(count);
         expect(_computeNewWeekName(order2), 'Week 2');
-        orders.add(order2);
+        count++;
 
-        final order3 = _computeNewOrder(orders);
+        final order3 = _computeNewOrder(count);
         expect(_computeNewWeekName(order3), 'Week 3');
-        orders.add(order3);
+        count++;
 
-        final order4 = _computeNewOrder(orders);
+        final order4 = _computeNewOrder(count);
         expect(_computeNewWeekName(order4), 'Week 4');
       });
 
-      test('duplicate after week deletion appends after remaining max', () {
-        // Program had weeks 1, 2, 3 but week 2 was deleted
-        // Sequential naming appends after max (3), not filling gaps
-        final existingOrders = [1, 3];
-        final newOrder = _computeNewOrder(existingOrders);
-
-        expect(newOrder, 4);
-        expect(_computeNewWeekName(newOrder), 'Week 4');
+      test('count-based naming is unaffected by stale order field values', () {
+        // Existing weeks all have order: 0 in Firestore (pre-existing data issue)
+        // Count = 2, so new order = 3 regardless of stored order values
+        const existingCount = 2;
+        final newOrder = _computeNewOrder(existingCount);
+        expect(newOrder, 3);
+        expect(_computeNewWeekName(newOrder), 'Week 3');
       });
 
       test('empty program duplicates to Week 1', () {
-        final existingOrders = <int?>[];
-        final newOrder = _computeNewOrder(existingOrders);
-
+        final newOrder = _computeNewOrder(0);
         expect(newOrder, 1);
         expect(_computeNewWeekName(newOrder), 'Week 1');
       });

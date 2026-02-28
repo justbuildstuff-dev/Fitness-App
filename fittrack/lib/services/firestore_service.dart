@@ -533,11 +533,8 @@ class FirestoreService {
           .collection('weeks')
           .get();
 
-      // Calculate the next week number (max existing order + 1, minimum 1)
-      final maxOrder = existingWeeksSnap.docs
-          .map((doc) => (doc.data()['order'] as int?) ?? 0)
-          .fold(0, (max, order) => order > max ? order : max);
-      final newOrder = maxOrder + 1;
+      // Calculate the next week number using doc count (robust against stale order values)
+      final newOrder = existingWeeksSnap.docs.length + 1;
       final newWeekName = 'Week $newOrder';
 
       // 3) Create new Week document
