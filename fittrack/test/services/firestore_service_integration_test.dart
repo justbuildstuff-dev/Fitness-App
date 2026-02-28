@@ -27,7 +27,7 @@ void main() {
       //
       // Those tests verify:
       // - Cascade delete operations
-      // - Smart copy naming with SmartCopyNaming.generateCopyName
+      // - Sequential week naming (duplicateWeek uses maxOrder + 1)
       // - Firebase emulator connectivity
       // - Real Firestore operations
       expect(true, isTrue,

@@ -95,58 +95,60 @@ class _WeeksScreenState extends State<WeeksScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            child: Consumer<ProgramProvider>(
+              builder: (context, programProvider, child) {
+                final weekIndex = programProvider.weeks.indexWhere((w) => w.id == widget.week.id);
+                final weekNumber = weekIndex >= 0 ? weekIndex + 1 : widget.week.order;
+                final workoutCount = programProvider.workouts.length;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${widget.week.order}',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
+                    Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.week.name,
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (widget.week.notes != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.week.notes!,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          child: Center(
+                            child: Text(
+                              '$weekNumber',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
-                          ],
-                        ],
-                      ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.week.name,
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (widget.week.notes != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.week.notes!,
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Consumer<ProgramProvider>(
-                  builder: (context, programProvider, child) {
-                    final workoutCount = programProvider.workouts.length;
-                    return Row(
+                    const SizedBox(height: 16),
+                    Row(
                       children: [
                         _StatCard(
                           icon: Icons.fitness_center,
@@ -158,14 +160,14 @@ class _WeeksScreenState extends State<WeeksScreen> {
                         _StatCard(
                           icon: Icons.calendar_today,
                           label: 'Week',
-                          value: '${widget.week.order}',
+                          value: '$weekNumber',
                           color: Theme.of(context).colorScheme.secondary,
                         ),
                       ],
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           

@@ -65,6 +65,7 @@ void main() {
       when(mockProvider.error).thenReturn(null);
       when(mockProvider.isLoadingWorkouts).thenReturn(false);
       when(mockProvider.workouts).thenReturn([]);
+      when(mockProvider.weeks).thenReturn([testWeek]);
 
       // Set up mock stubs for ConsolidatedWorkoutScreen navigation
       // When tests tap workout cards, navigation pushes ConsolidatedWorkoutScreen

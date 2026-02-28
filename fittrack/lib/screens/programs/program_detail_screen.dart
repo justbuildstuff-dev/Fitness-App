@@ -248,6 +248,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                       return _WeekCard(
                         program: widget.program,
                         week: week,
+                        weekNumber: index + 1,
                         onTap: () => _navigateToWeek(context, week),
                       );
                     },
@@ -761,11 +762,13 @@ class _StatCard extends StatelessWidget {
 class _WeekCard extends StatelessWidget {
   final Program program;
   final Week week;
+  final int weekNumber;
   final VoidCallback onTap;
 
   const _WeekCard({
     required this.program,
     required this.week,
+    required this.weekNumber,
     required this.onTap,
   });
 
@@ -783,7 +786,7 @@ class _WeekCard extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              '${week.order}',
+              '$weekNumber',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.primary,

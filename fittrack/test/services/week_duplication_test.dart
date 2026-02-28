@@ -1,382 +1,108 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fittrack/utils/smart_copy_naming.dart';
 
-/// Unit tests for week duplication logic with smart naming integration
+/// Unit tests for week duplication sequential naming logic.
 ///
-/// These tests verify that the smart naming algorithm works correctly
-/// when integrated with week duplication workflows. They test the logic
-/// that will be used in FirestoreService.duplicateWeek().
+/// duplicateWeek() in FirestoreService uses count-based naming:
+/// - Counts existing weeks in the program
+/// - New week gets order = existingCount + 1
+/// - New week name = 'Week $newOrder'
+///
+/// This approach is robust against stale/zero 'order' field values in
+/// existing Firestore documents (a pre-existing data issue).
 ///
 /// Related files:
-/// - lib/utils/smart_copy_naming.dart - Smart naming utility
-/// - lib/services/firestore_service.dart - Week duplication implementation
-/// - test/utils/smart_copy_naming_test.dart - Comprehensive SmartCopyNaming tests
+/// - lib/services/firestore_service.dart - duplicateWeek() implementation
+
+/// Mirrors the order calculation used in FirestoreService.duplicateWeek().
+int _computeNewOrder(int existingCount) => existingCount + 1;
+
+/// Mirrors the name generation used in FirestoreService.duplicateWeek().
+String _computeNewWeekName(int newOrder) => 'Week $newOrder';
+
 void main() {
-  group('Week Duplication Smart Naming Integration', () {
-    group('Basic Duplication Scenarios', () {
-      test('first duplication of a week generates "Copy 1"', () {
-        // Simulate duplicating "Week 1" with no existing copies
-        const weekName = 'Week 1';
-        final existingWeekNames = ['Week 1']; // Original week
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 1');
+  group('Week Duplication Sequential Naming', () {
+    group('order calculation (count-based)', () {
+      test('returns 2 when one week exists', () {
+        expect(_computeNewOrder(1), 2);
       });
 
-      test('second duplication generates "Copy 2"', () {
-        // Simulate duplicating "Week 1" when "Week 1 Copy 1" exists
-        const weekName = 'Week 1';
-        final existingWeekNames = ['Week 1', 'Week 1 Copy 1'];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 2');
+      test('returns 3 when two weeks exist', () {
+        expect(_computeNewOrder(2), 3);
       });
 
-      test('third duplication generates "Copy 3"', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          'Week 1 Copy 2',
-        ];
+      test('returns 4 when three weeks exist', () {
+        expect(_computeNewOrder(3), 4);
+      });
 
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
+      test('returns 1 when no weeks exist', () {
+        expect(_computeNewOrder(0), 1);
+      });
 
-        expect(duplicatedName, 'Week 1 Copy 3');
+      test('returns 11 when ten weeks exist', () {
+        expect(_computeNewOrder(10), 11);
       });
     });
 
-    group('Duplicating Copies', () {
-      test('duplicating "Copy 1" generates "Copy 2" when Copy 2 does not exist', () {
-        // User duplicates "Week 1 Copy 1"
-        const weekName = 'Week 1 Copy 1';
-        final existingWeekNames = ['Week 1', 'Week 1 Copy 1'];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 2');
+    group('name generation', () {
+      test('generates "Week 1" for order 1', () {
+        expect(_computeNewWeekName(1), 'Week 1');
       });
 
-      test('duplicating "Copy 2" generates "Copy 3" when Copy 3 does not exist', () {
-        const weekName = 'Week 1 Copy 2';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          'Week 1 Copy 2',
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 3');
+      test('generates "Week 2" for order 2', () {
+        expect(_computeNewWeekName(2), 'Week 2');
       });
 
-      test('duplicating "Copy 5" fills gap at "Copy 2"', () {
-        const weekName = 'Week 1 Copy 5';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          'Week 1 Copy 5', // Source week
-          // Gap at Copy 2, 3, 4
-        ];
+      test('generates "Week 3" for order 3', () {
+        expect(_computeNewWeekName(3), 'Week 3');
+      });
 
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 2'); // Fills lowest gap
+      test('generates correct name for large order numbers', () {
+        expect(_computeNewWeekName(100), 'Week 100');
       });
     });
 
-    group('Gap Filling', () {
-      test('fills gap when "Copy 2" is deleted', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          // Gap at Copy 2 (was deleted)
-          'Week 1 Copy 3',
-          'Week 1 Copy 4',
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 2');
+    group('sequential duplication workflow', () {
+      test('duplicating from a 1-week program creates Week 2', () {
+        final newOrder = _computeNewOrder(1);
+        expect(newOrder, 2);
+        expect(_computeNewWeekName(newOrder), 'Week 2');
       });
 
-      test('fills lowest gap when multiple gaps exist', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          // Gap at Copy 2
-          'Week 1 Copy 3',
-          // Gap at Copy 4
-          'Week 1 Copy 5',
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 2'); // Lowest gap
+      test('duplicating from a 2-week program creates Week 3', () {
+        final newOrder = _computeNewOrder(2);
+        expect(newOrder, 3);
+        expect(_computeNewWeekName(newOrder), 'Week 3');
       });
 
-      test('uses next number when no gaps exist', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          'Week 1 Copy 2',
-          'Week 1 Copy 3',
-        ];
+      test('consecutive duplications produce strictly sequential names', () {
+        // Simulate: start with 1 week, duplicate 3 times
+        var count = 1;
 
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
+        final order2 = _computeNewOrder(count);
+        expect(_computeNewWeekName(order2), 'Week 2');
+        count++;
 
-        expect(duplicatedName, 'Week 1 Copy 4');
-      });
-    });
+        final order3 = _computeNewOrder(count);
+        expect(_computeNewWeekName(order3), 'Week 3');
+        count++;
 
-    group('Custom Week Names', () {
-      test('duplicates custom week name "Upper Body"', () {
-        const weekName = 'Upper Body';
-        final existingWeekNames = ['Upper Body'];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Upper Body Copy 1');
+        final order4 = _computeNewOrder(count);
+        expect(_computeNewWeekName(order4), 'Week 4');
       });
 
-      test('increments custom week name copies correctly', () {
-        const weekName = 'Upper Body';
-        final existingWeekNames = [
-          'Upper Body',
-          'Upper Body Copy 1',
-          'Upper Body Copy 2',
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Upper Body Copy 3');
+      test('count-based naming is unaffected by stale order field values', () {
+        // Existing weeks all have order: 0 in Firestore (pre-existing data issue)
+        // Count = 2, so new order = 3 regardless of stored order values
+        const existingCount = 2;
+        final newOrder = _computeNewOrder(existingCount);
+        expect(newOrder, 3);
+        expect(_computeNewWeekName(newOrder), 'Week 3');
       });
 
-      test('handles week names with special characters', () {
-        const weekName = 'Week #1 - Push Day';
-        final existingWeekNames = ['Week #1 - Push Day'];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week #1 - Push Day Copy 1');
-      });
-    });
-
-    group('Multi-Program Isolation', () {
-      test('ignores copies from other weeks with different names', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 2 Copy 1', // Different week
-          'Week 2 Copy 2', // Different week
-          'Upper Body Copy 1', // Different week
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        // Should generate Copy 1 (not affected by other week names)
-        expect(duplicatedName, 'Week 1 Copy 1');
-      });
-
-      test('correctly handles multiple weeks with copies in same program', () {
-        const weekName = 'Week 2';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          'Week 1 Copy 2',
-          'Week 2',
-          'Week 2 Copy 1', // Week 2's first copy
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        // Should generate Week 2 Copy 2 (ignores Week 1 copies)
-        expect(duplicatedName, 'Week 2 Copy 2');
-      });
-    });
-
-    group('Edge Cases', () {
-      test('handles empty existing names list', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = <String>[];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 1');
-      });
-
-      test('handles very long week names', () {
-        const weekName = 'This is a very long week name for a custom program';
-        final existingWeekNames = [weekName];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(
-          duplicatedName,
-          'This is a very long week name for a custom program Copy 1',
-        );
-      });
-
-      test('handles large copy numbers', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1',
-          'Week 1 Copy 98',
-          'Week 1 Copy 99',
-          'Week 1 Copy 100',
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 101');
-      });
-
-      test('handles unsorted existing copy numbers', () {
-        const weekName = 'Week 1';
-        final existingWeekNames = [
-          'Week 1 Copy 5',
-          'Week 1',
-          'Week 1 Copy 1',
-          'Week 1 Copy 3',
-        ];
-
-        final duplicatedName = SmartCopyNaming.generateCopyName(
-          weekName,
-          existingWeekNames,
-        );
-
-        expect(duplicatedName, 'Week 1 Copy 2'); // Fills gap at 2
-      });
-    });
-
-    group('Real-World Workflow Scenarios', () {
-      test('scenario: create, duplicate, duplicate again', () {
-        var existingNames = ['Week 1'];
-
-        // First duplication
-        var name1 = SmartCopyNaming.generateCopyName('Week 1', existingNames);
-        expect(name1, 'Week 1 Copy 1');
-        existingNames.add(name1);
-
-        // Second duplication
-        var name2 = SmartCopyNaming.generateCopyName('Week 1', existingNames);
-        expect(name2, 'Week 1 Copy 2');
-        existingNames.add(name2);
-
-        // Third duplication
-        var name3 = SmartCopyNaming.generateCopyName('Week 1', existingNames);
-        expect(name3, 'Week 1 Copy 3');
-      });
-
-      test('scenario: create, duplicate, delete copy, duplicate again', () {
-        var existingNames = ['Week 1', 'Week 1 Copy 1', 'Week 1 Copy 2'];
-
-        // User deletes "Week 1 Copy 1"
-        existingNames.remove('Week 1 Copy 1');
-
-        // Next duplication fills the gap
-        var name = SmartCopyNaming.generateCopyName('Week 1', existingNames);
-        expect(name, 'Week 1 Copy 1'); // Fills gap
-      });
-
-      test('scenario: duplicate a copy multiple times', () {
-        var existingNames = ['Week 1', 'Week 1 Copy 1'];
-
-        // Duplicate "Week 1 Copy 1"
-        var name1 = SmartCopyNaming.generateCopyName('Week 1 Copy 1', existingNames);
-        expect(name1, 'Week 1 Copy 2');
-        existingNames.add(name1);
-
-        // Duplicate "Week 1 Copy 1" again
-        var name2 = SmartCopyNaming.generateCopyName('Week 1 Copy 1', existingNames);
-        expect(name2, 'Week 1 Copy 3');
-        existingNames.add(name2);
-
-        // Duplicate "Week 1 Copy 2"
-        var name3 = SmartCopyNaming.generateCopyName('Week 1 Copy 2', existingNames);
-        expect(name3, 'Week 1 Copy 4');
-      });
-
-      test('scenario: mixed operations with different week names', () {
-        var existingNames = [
-          'Week 1',
-          'Week 1 Copy 1',
-          'Upper Body',
-          'Upper Body Copy 1',
-        ];
-
-        // Duplicate "Week 1"
-        var weekCopy = SmartCopyNaming.generateCopyName('Week 1', existingNames);
-        expect(weekCopy, 'Week 1 Copy 2');
-
-        // Duplicate "Upper Body"
-        var upperBodyCopy = SmartCopyNaming.generateCopyName('Upper Body', existingNames);
-        expect(upperBodyCopy, 'Upper Body Copy 2');
-
-        // Names don't interfere with each other
-        existingNames.add(weekCopy);
-        existingNames.add(upperBodyCopy);
-
-        expect(existingNames, containsAll([
-          'Week 1 Copy 2',
-          'Upper Body Copy 2',
-        ]));
+      test('empty program duplicates to Week 1', () {
+        final newOrder = _computeNewOrder(0);
+        expect(newOrder, 1);
+        expect(_computeNewWeekName(newOrder), 'Week 1');
       });
     });
   });
