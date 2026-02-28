@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/screens/profile/settings_screen.dart';
 import 'package:fittrack/providers/theme_provider.dart';
+import 'package:fittrack/providers/weight_unit_provider.dart';
 import 'package:fittrack/providers/exercise_library_provider.dart';
 import 'package:fittrack/providers/template_provider.dart';
 import 'package:fittrack/models/library_exercise.dart';
@@ -235,12 +236,17 @@ class MockTemplateProvider extends ChangeNotifier implements TemplateProvider {
 void main() {
   group('SettingsScreen', () {
     late MockThemeProvider mockThemeProvider;
+    late WeightUnitProvider weightUnitProvider;
 
     setUpAll(() async {
       TestWidgetsFlutterBinding.ensureInitialized();
     });
 
-    setUp(() {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      weightUnitProvider = WeightUnitProvider(prefs);
+
       mockThemeProvider = MockThemeProvider();
 
       // Default mock responses for theme mode
@@ -258,6 +264,9 @@ void main() {
           providers: [
             ChangeNotifierProvider<ThemeProvider>.value(
               value: mockThemeProvider,
+            ),
+            ChangeNotifierProvider<WeightUnitProvider>.value(
+              value: weightUnitProvider,
             ),
             ChangeNotifierProvider<ExerciseLibraryProvider>.value(
               value: MockExerciseLibraryProvider(),
@@ -427,6 +436,9 @@ void main() {
                 ChangeNotifierProvider<ThemeProvider>.value(
                   value: realThemeProvider,
                 ),
+                ChangeNotifierProvider<WeightUnitProvider>.value(
+                  value: WeightUnitProvider(prefs),
+                ),
                 ChangeNotifierProvider<ExerciseLibraryProvider>.value(
                   value: MockExerciseLibraryProvider(),
                 ),
@@ -522,6 +534,9 @@ void main() {
                           providers: [
                             ChangeNotifierProvider<ThemeProvider>.value(
                               value: mockThemeProvider,
+                            ),
+                            ChangeNotifierProvider<WeightUnitProvider>.value(
+                              value: weightUnitProvider,
                             ),
                             ChangeNotifierProvider<ExerciseLibraryProvider>.value(
                               value: MockExerciseLibraryProvider(),
@@ -696,6 +711,9 @@ void main() {
               providers: [
                 ChangeNotifierProvider<ThemeProvider>.value(
                   value: realThemeProvider,
+                ),
+                ChangeNotifierProvider<WeightUnitProvider>.value(
+                  value: WeightUnitProvider(prefs),
                 ),
                 ChangeNotifierProvider<ExerciseLibraryProvider>.value(
                   value: MockExerciseLibraryProvider(),

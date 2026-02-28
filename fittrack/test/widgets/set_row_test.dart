@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/widgets/set_row.dart';
 import 'package:fittrack/models/exercise_set.dart';
 import 'package:fittrack/models/exercise.dart';
+import 'package:fittrack/providers/weight_unit_provider.dart';
 
 import '../integration/test_setup_helper.dart';
 
 void main() {
   group('SetRow Widget Tests', () {
     late ExerciseSet testSet;
+    late WeightUnitProvider weightUnitProvider;
 
     setUpAll(() async {
+      SharedPreferences.setMockInitialValues({});
       await TestSetupHelper.initializeFirebaseForWidgetTests();
     });
 
-    setUp(() {
+    setUp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      weightUnitProvider = WeightUnitProvider(prefs);
       testSet = ExerciseSet(
         id: 'set-1',
         setNumber: 1,
@@ -38,14 +45,18 @@ void main() {
       required Function(ExerciseSet) onUpdate,
       VoidCallback? onDelete,
     }) {
-      return MaterialApp(
-        home: Scaffold(
-          body: SetRow(
-            set: set,
-            exerciseType: exerciseType,
-            isLastSet: isLastSet,
-            onUpdate: onUpdate,
-            onDelete: onDelete,
+      return ChangeNotifierProvider<WeightUnitProvider>.value(
+        value: weightUnitProvider,
+        child: MaterialApp(
+          home: Scaffold(
+            body: SetRow(
+              set: set,
+              displayIndex: 1,
+              exerciseType: exerciseType,
+              isLastSet: isLastSet,
+              onUpdate: onUpdate,
+              onDelete: onDelete,
+            ),
           ),
         ),
       );
