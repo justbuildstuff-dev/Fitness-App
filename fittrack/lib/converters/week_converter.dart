@@ -24,8 +24,8 @@ class WeekConverter {
       name: data['name'] ?? 'Week ${data['order'] ?? 1}',
       order: data['order'] ?? 1,
       notes: data['notes'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       userId: data['userId'] ?? '',
       programId: data['programId'] ?? programId ?? '',
     );

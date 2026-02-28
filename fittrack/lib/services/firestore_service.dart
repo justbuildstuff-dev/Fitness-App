@@ -13,7 +13,6 @@ import '../converters/workout_converter.dart';
 import '../converters/exercise_converter.dart';
 import '../converters/exercise_set_converter.dart';
 import '../converters/template_converters.dart';
-import '../utils/smart_copy_naming.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -525,7 +524,7 @@ class FirestoreService {
         throw Exception('You do not own this week');
       }
 
-      // 2) Query all existing week names for smart copy naming
+      // 2) Query all existing weeks to determine next sequential order
       final existingWeeksSnap = await _firestore
           .collection('users')
           .doc(userId)
@@ -534,15 +533,12 @@ class FirestoreService {
           .collection('weeks')
           .get();
 
-      final existingWeekNames = existingWeeksSnap.docs
-          .map((doc) => doc.data()['name'] as String?)
-          .where((name) => name != null)
-          .cast<String>()
-          .toList();
-
-      // Generate smart copy name
-      final sourceName = srcWeekData['name'] as String? ?? 'Week';
-      final smartCopyName = SmartCopyNaming.generateCopyName(sourceName, existingWeekNames);
+      // Calculate the next week number (max existing order + 1, minimum 1)
+      final maxOrder = existingWeeksSnap.docs
+          .map((doc) => (doc.data()['order'] as int?) ?? 0)
+          .fold(0, (max, order) => order > max ? order : max);
+      final newOrder = maxOrder + 1;
+      final newWeekName = 'Week $newOrder';
 
       // 3) Create new Week document
       final newWeekRef = _firestore
@@ -554,8 +550,8 @@ class FirestoreService {
           .doc();
 
       final newWeekData = {
-        'name': smartCopyName,
-        'order': srcWeekData['order'],
+        'name': newWeekName,
+        'order': newOrder,
         'notes': srcWeekData['notes'],
         // Always set fresh timestamps for duplicated week
         // Don't copy completedAt - duplicated week should start fresh
