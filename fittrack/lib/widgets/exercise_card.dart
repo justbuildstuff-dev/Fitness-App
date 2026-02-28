@@ -167,6 +167,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                     return SetRow(
                       key: ValueKey(set.id),
                       set: set,
+                      displayIndex: entry.key + 1,
                       exerciseType: widget.exercise.exerciseType,
                       isLastSet: isLastSet,
                       onUpdate: widget.onUpdateSet,

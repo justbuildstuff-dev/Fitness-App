@@ -144,11 +144,11 @@ class PersonalRecord {
     return '$prefix${diff.toStringAsFixed(diff == diff.roundToDouble() ? 0 : 1)}';
   }
 
-  /// Display string for the PR value
-  String get displayValue {
+  /// Display string for the PR value using the user's chosen weight unit label.
+  String displayValueWithUnit(String unit) {
     switch (prType) {
       case PRType.maxWeight:
-        return '${value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1)}kg';
+        return '${value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1)}$unit';
       case PRType.maxReps:
         return '${value.toInt()} reps';
       case PRType.maxDuration:
@@ -163,15 +163,18 @@ class PersonalRecord {
           return '${minutes}m ${seconds}s';
         }
       case PRType.maxDistance:
-        return value >= 1000 
+        return value >= 1000
             ? '${(value / 1000).toStringAsFixed(2)}km'
             : '${value.toStringAsFixed(0)}m';
       case PRType.maxVolume:
-        return '${value.toStringAsFixed(0)} vol';
+        return '${value.toStringAsFixed(0)} $unit';
       case PRType.oneRepMax:
-        return '${value.toStringAsFixed(0)}kg (1RM)';
+        return '${value.toStringAsFixed(0)}$unit (1RM)';
     }
   }
+
+  /// Display string for the PR value (defaults to kg for backwards compatibility).
+  String get displayValue => displayValueWithUnit('kg');
 
   factory PersonalRecord.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;

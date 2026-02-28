@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../models/analytics.dart';
 import '../../../models/exercise.dart';
+import '../../../providers/weight_unit_provider.dart';
 
 /// Charts section displaying detailed analytics visualizations
 class ChartsSection extends StatelessWidget {
@@ -276,7 +278,8 @@ class PersonalRecordTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timeAgo = _getTimeAgo(record.achievedAt);
-    
+    final weightUnit = context.watch<WeightUnitProvider>().label;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -346,7 +349,7 @@ class PersonalRecordTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      record.displayValue,
+                      record.displayValueWithUnit(weightUnit),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: _getColorForPRType(context, record.prType),
                         fontWeight: FontWeight.bold,

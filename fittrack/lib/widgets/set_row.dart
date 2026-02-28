@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../models/exercise.dart';
 import '../models/exercise_set.dart';
+import '../providers/weight_unit_provider.dart';
 import 'set_notes_modal.dart';
 
 /// A row widget that displays a single set with inline editing capabilities
 /// Fields displayed depend on exercise type (strength, cardio, bodyweight, custom)
 class SetRow extends StatefulWidget {
   final ExerciseSet set;
+  /// 1-based display position (always reflects list order, not stored setNumber)
+  final int displayIndex;
   final ExerciseType exerciseType;
   final bool isLastSet; // If true, delete button is disabled
   final Function(ExerciseSet updatedSet) onUpdate;
@@ -16,6 +20,7 @@ class SetRow extends StatefulWidget {
   const SetRow({
     super.key,
     required this.set,
+    required this.displayIndex,
     required this.exerciseType,
     required this.isLastSet,
     required this.onUpdate,
@@ -142,6 +147,7 @@ class _SetRowState extends State<SetRow> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isReadOnly = widget.set.checked;
+    final weightUnit = context.watch<WeightUnitProvider>().label;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -149,11 +155,11 @@ class _SetRowState extends State<SetRow> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         child: Row(
           children: [
-            // Set number
+            // Set number (1-based list position, robust against stale stored values)
             SizedBox(
               width: 28,
               child: Text(
-                '${widget.set.setNumber}',
+                '${widget.displayIndex}',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -166,7 +172,7 @@ class _SetRowState extends State<SetRow> {
 
             // Fields based on exercise type
             Expanded(
-              child: _buildFieldsForExerciseType(isReadOnly),
+              child: _buildFieldsForExerciseType(isReadOnly, weightUnit),
             ),
 
             const SizedBox(width: 4),
@@ -231,10 +237,10 @@ class _SetRowState extends State<SetRow> {
     );
   }
 
-  Widget _buildFieldsForExerciseType(bool isReadOnly) {
+  Widget _buildFieldsForExerciseType(bool isReadOnly, String weightUnit) {
     switch (widget.exerciseType) {
       case ExerciseType.strength:
-        return _buildStrengthFields(isReadOnly);
+        return _buildStrengthFields(isReadOnly, weightUnit);
       case ExerciseType.cardio:
       case ExerciseType.timeBased:
         return _buildCardioFields(isReadOnly);
@@ -245,7 +251,7 @@ class _SetRowState extends State<SetRow> {
     }
   }
 
-  Widget _buildStrengthFields(bool isReadOnly) {
+  Widget _buildStrengthFields(bool isReadOnly, String weightUnit) {
     return Row(
       children: [
         // Weight field (optional)
@@ -258,10 +264,10 @@ class _SetRowState extends State<SetRow> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
             ],
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Weight',
               hintText: '0',
-              suffixText: 'kg',
+              suffixText: weightUnit,
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               border: OutlineInputBorder(),
