@@ -432,11 +432,22 @@ class AnalyticsService {
       return _cache[cacheKey]!.data as ExerciseProgressData;
     }
 
+    // Find all exercise IDs matching this exercise name across all workouts in the
+    // date range. Week duplication creates new exercise document IDs for the same
+    // logical exercise, so we must match by name rather than by a single exerciseId.
+    final allExercises = await _getAllUserExercises(userId, dateRange);
+    final matchingExerciseIds = allExercises
+        .where((e) => e.name.toLowerCase() == exerciseName.toLowerCase())
+        .map((e) => e.id)
+        .toSet();
+
     final allSets = await _getAllUserSets(userId, dateRange);
 
-    // Filter sets for this specific exercise - only checked (completed) sets,
+    // Filter sets for this exercise (matched by name) - only checked (completed) sets,
     // consistent with heatmap and workout analytics which also exclude unchecked sets.
-    final exerciseSets = allSets.where((s) => s.exerciseId == exerciseId && s.checked).toList();
+    final exerciseSets = allSets
+        .where((s) => matchingExerciseIds.contains(s.exerciseId) && s.checked)
+        .toList();
 
     // Group sets by workoutId (one data point per workout session)
     final Map<String, List<ExerciseSet>> setsByWorkout = {};
