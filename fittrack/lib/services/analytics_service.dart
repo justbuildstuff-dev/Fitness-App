@@ -434,8 +434,9 @@ class AnalyticsService {
 
     final allSets = await _getAllUserSets(userId, dateRange);
 
-    // Filter sets for this specific exercise
-    final exerciseSets = allSets.where((s) => s.exerciseId == exerciseId).toList();
+    // Filter sets for this specific exercise - only checked (completed) sets,
+    // consistent with heatmap and workout analytics which also exclude unchecked sets.
+    final exerciseSets = allSets.where((s) => s.exerciseId == exerciseId && s.checked).toList();
 
     // Group sets by workoutId (one data point per workout session)
     final Map<String, List<ExerciseSet>> setsByWorkout = {};

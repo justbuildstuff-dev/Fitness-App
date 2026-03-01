@@ -1334,18 +1334,18 @@ void main() {
           // Workout 1: 2 sets for exercise ex1
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            weight: 80.0, reps: 10,
+            weight: 80.0, reps: 10, checked: true,
             createdAt: now.subtract(const Duration(days: 7)),
           ),
           _createTestSetFull(
             id: 's2', exerciseId: 'ex1', workoutId: 'w1',
-            weight: 85.0, reps: 8,
+            weight: 85.0, reps: 8, checked: true,
             createdAt: now.subtract(const Duration(days: 7)),
           ),
           // Workout 2: 1 set for exercise ex1
           _createTestSetFull(
             id: 's3', exerciseId: 'ex1', workoutId: 'w2',
-            weight: 90.0, reps: 5,
+            weight: 90.0, reps: 5, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
           // Different exercise - should be filtered out
@@ -1407,7 +1407,7 @@ void main() {
         final testSets = [
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            weight: 100.0, reps: 5,
+            weight: 100.0, reps: 5, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
         ];
@@ -1442,7 +1442,7 @@ void main() {
         final testSets = [
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            reps: 15, createdAt: now.subtract(const Duration(days: 3)),
+            reps: 15, checked: true, createdAt: now.subtract(const Duration(days: 3)),
           ),
         ];
 
@@ -1500,12 +1500,12 @@ void main() {
         final testSets = [
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            duration: 1800, distance: 5000.0,
+            duration: 1800, distance: 5000.0, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
           _createTestSetFull(
             id: 's2', exerciseId: 'ex1', workoutId: 'w1',
-            duration: 900, distance: 2500.0,
+            duration: 900, distance: 2500.0, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
         ];
@@ -1580,6 +1580,53 @@ void main() {
         expect(sessionDate.year, equals(completedDate.year));
         expect(sessionDate.month, equals(completedDate.month));
         expect(sessionDate.day, equals(completedDate.day));
+      });
+
+      test('only includes checked (completed) sets', () async {
+        /// Test Purpose: Verify unchecked sets are excluded from exercise progress,
+        /// consistent with heatmap and workout analytics behaviour.
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          // Checked set - should be included
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 100.0, reps: 10, checked: true,
+            createdAt: now.subtract(const Duration(days: 5)),
+          ),
+          // Unchecked set - should be excluded
+          _createTestSetFull(
+            id: 's2', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 120.0, reps: 8, checked: false,
+            createdAt: now.subtract(const Duration(days: 5)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1')],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5)))],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.length, equals(1));
+        // maxWeight should be 100 (from checked set), NOT 120 (from unchecked set)
+        expect(result.dataPoints.first.maxWeight, equals(100.0));
+        expect(result.dataPoints.first.maxReps, equals(10));
+        // totalVolume = 100 * 10 = 1000 (unchecked set excluded)
+        expect(result.dataPoints.first.totalVolume, equals(1000.0));
       });
     });
 
