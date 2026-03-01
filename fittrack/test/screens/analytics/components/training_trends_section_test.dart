@@ -1,20 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/models/analytics.dart';
+import 'package:fittrack/providers/weight_unit_provider.dart';
 import 'package:fittrack/screens/analytics/components/training_trends_section.dart';
 import 'package:fittrack/widgets/charts/line_chart_widget.dart';
 
 void main() {
+  late WeightUnitProvider weightUnitProvider;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    weightUnitProvider = WeightUnitProvider(prefs);
+  });
+
   Widget buildTestWidget({
     List<WeeklyTrendPoint>? trendsData,
     bool isLoading = false,
   }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: TrainingTrendsSection(
-            trendsData: trendsData,
-            isLoading: isLoading,
+    return ChangeNotifierProvider<WeightUnitProvider>.value(
+      value: weightUnitProvider,
+      child: MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TrainingTrendsSection(
+              trendsData: trendsData,
+              isLoading: isLoading,
+            ),
           ),
         ),
       ),

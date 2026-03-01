@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/screens/analytics/analytics_screen.dart';
 import 'package:fittrack/providers/program_provider.dart';
+import 'package:fittrack/providers/weight_unit_provider.dart';
 import 'package:fittrack/services/analytics_service.dart';
 import 'package:fittrack/models/analytics.dart';
 import 'package:fittrack/models/exercise.dart';
@@ -19,6 +21,13 @@ import 'analytics_screen_test.mocks.dart';
 void main() {
   late MockProgramProvider mockProvider;
   late MockAnalyticsService mockAnalyticsService;
+  late WeightUnitProvider weightUnitProvider;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    weightUnitProvider = WeightUnitProvider(prefs);
+  });
 
   setUp(() {
     mockProvider = MockProgramProvider();
@@ -36,8 +45,11 @@ void main() {
 
   Widget createTestWidget() {
     return MaterialApp(
-      home: ChangeNotifierProvider<ProgramProvider>.value(
-        value: mockProvider,
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<ProgramProvider>.value(value: mockProvider),
+          ChangeNotifierProvider<WeightUnitProvider>.value(value: weightUnitProvider),
+        ],
         child: AnalyticsScreen(analyticsService: mockAnalyticsService),
       ),
     );

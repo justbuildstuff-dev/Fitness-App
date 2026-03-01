@@ -382,7 +382,7 @@ void main() {
           (PRType.maxDuration, 90.0, '90s'),
           (PRType.maxDistance, 5000.0, '5.00km'),
           (PRType.maxDistance, 800.0, '800m'),
-          (PRType.maxVolume, 1200.0, '1200 vol'),
+          (PRType.maxVolume, 1200.0, '1200 kg'),
           (PRType.oneRepMax, 120.0, '120kg (1RM)'),
         ];
 

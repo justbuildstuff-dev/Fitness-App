@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/weight_unit_provider.dart';
 
 /// Key statistics section displaying workout metrics in cards
 class KeyStatisticsSection extends StatelessWidget {
@@ -11,6 +13,7 @@ class KeyStatisticsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final weightUnit = context.watch<WeightUnitProvider>().label;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
@@ -61,7 +64,7 @@ class KeyStatisticsSection extends StatelessWidget {
                     child: StatCard(
                       title: 'Volume',
                       value: _formatVolume(statistics['totalVolume']),
-                      subtitle: 'Total kg',
+                      subtitle: 'Total $weightUnit',
                       icon: Icons.fitness_center,
                       color: Theme.of(context).colorScheme.secondary,
                     ),

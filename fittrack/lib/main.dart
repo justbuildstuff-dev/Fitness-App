@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart' as app_auth;
 import 'providers/program_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/weight_unit_provider.dart';
 import 'providers/exercise_library_provider.dart';
 import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
@@ -68,6 +69,7 @@ class FitTrackApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),
+        ChangeNotifierProvider(create: (_) => WeightUnitProvider(prefs)),
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
         ChangeNotifierProxyProvider<app_auth.AuthProvider, ProgramProvider>(
           create: (_) {

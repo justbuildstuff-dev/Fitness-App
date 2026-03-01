@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../models/analytics.dart';
+import '../../../providers/weight_unit_provider.dart';
 import '../../../widgets/charts/chart_data.dart';
 import '../../../widgets/charts/line_chart_widget.dart';
 
@@ -92,7 +94,7 @@ class TrainingTrendsSection extends StatelessWidget {
       secondaryData: movingAvgData,
       primaryLabel: 'Volume',
       secondaryLabel: movingAvgData != null ? '4-wk avg' : null,
-      yAxisLabel: 'kg',
+      yAxisLabel: context.watch<WeightUnitProvider>().label,
       emptyMessage: 'No training data',
     );
   }

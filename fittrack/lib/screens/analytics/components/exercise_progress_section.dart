@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../models/analytics.dart';
 import '../../../models/exercise.dart';
+import '../../../providers/weight_unit_provider.dart';
 import '../../../widgets/charts/chart_data.dart';
 import '../../../widgets/charts/line_chart_widget.dart';
 import '../../../widgets/charts/time_range_selector.dart';
@@ -103,7 +105,8 @@ class ExerciseProgressSection extends StatelessWidget {
     final secondaryData = isStrength ? _buildSecondaryData() : null;
 
     // Determine labels based on exercise type
-    final labels = _labelsForType(progressData!.exerciseType);
+    final weightUnit = context.watch<WeightUnitProvider>().label;
+    final labels = _labelsForType(progressData!.exerciseType, weightUnit);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -157,13 +160,13 @@ class ExerciseProgressSection extends StatelessWidget {
     return points.isNotEmpty ? points : null;
   }
 
-  static _ChartLabels _labelsForType(ExerciseType type) {
+  static _ChartLabels _labelsForType(ExerciseType type, String weightUnit) {
     switch (type) {
       case ExerciseType.strength:
-        return const _ChartLabels(
+        return _ChartLabels(
           primary: 'Actual Weight',
           secondary: 'Est. 1RM',
-          yAxis: 'kg',
+          yAxis: weightUnit,
           metricDescription: 'Showing max weight per session',
         );
       case ExerciseType.bodyweight:
@@ -180,9 +183,9 @@ class ExerciseProgressSection extends StatelessWidget {
           metricDescription: 'Showing total duration per session',
         );
       case ExerciseType.custom:
-        return const _ChartLabels(
+        return _ChartLabels(
           primary: 'Volume',
-          yAxis: 'vol',
+          yAxis: weightUnit,
           metricDescription: 'Showing estimated volume per session',
         );
     }

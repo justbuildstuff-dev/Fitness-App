@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/widgets/exercise_card.dart';
 import 'package:fittrack/models/exercise.dart';
 import 'package:fittrack/models/exercise_set.dart';
+import 'package:fittrack/providers/weight_unit_provider.dart';
 
 import '../integration/test_setup_helper.dart';
 
@@ -10,12 +13,16 @@ void main() {
   group('ExerciseCard Widget Tests', () {
     late Exercise testExercise;
     late List<ExerciseSet> testSets;
+    late WeightUnitProvider weightUnitProvider;
 
     setUpAll(() async {
+      SharedPreferences.setMockInitialValues({});
       await TestSetupHelper.initializeFirebaseForWidgetTests();
     });
 
-    setUp(() {
+    setUp(() async {
+      final prefs = await SharedPreferences.getInstance();
+      weightUnitProvider = WeightUnitProvider(prefs);
       testExercise = Exercise(
         id: 'exercise-1',
         name: 'Bench Press',
@@ -57,18 +64,21 @@ void main() {
       required Function(ExerciseSet) onUpdateSet,
       required Function(String, String) onDeleteSet,
     }) {
-      return MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: ExerciseCard(
-              exercise: exercise,
-              sets: sets,
-              isReorderEnabled: isReorderEnabled,
-              onAddSet: onAddSet,
-              onEditName: onEditName,
-              onDelete: onDelete,
-              onUpdateSet: onUpdateSet,
-              onDeleteSet: onDeleteSet,
+      return ChangeNotifierProvider<WeightUnitProvider>.value(
+        value: weightUnitProvider,
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ExerciseCard(
+                exercise: exercise,
+                sets: sets,
+                isReorderEnabled: isReorderEnabled,
+                onAddSet: onAddSet,
+                onEditName: onEditName,
+                onDelete: onDelete,
+                onUpdateSet: onUpdateSet,
+                onDeleteSet: onDeleteSet,
+              ),
             ),
           ),
         ),

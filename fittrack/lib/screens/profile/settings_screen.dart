@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/weight_unit_provider.dart';
 import '../../providers/exercise_library_provider.dart';
 import '../../providers/template_provider.dart';
 import 'my_exercises_screen.dart';
@@ -16,8 +17,8 @@ class SettingsScreen extends StatelessWidget {
         title: const Text('Settings'),
         elevation: 0,
       ),
-      body: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
+      body: Consumer2<ThemeProvider, WeightUnitProvider>(
+        builder: (context, themeProvider, weightUnitProvider, child) {
           return ListView(
             children: [
               // Appearance Section
@@ -148,6 +149,64 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             );
                           }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Units Section
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Units',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Divider(
+                  thickness: 1,
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Weight Unit',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      SegmentedButton<WeightUnit>(
+                        segments: const [
+                          ButtonSegment(value: WeightUnit.kg, label: Text('kg')),
+                          ButtonSegment(value: WeightUnit.lb, label: Text('lb')),
+                        ],
+                        selected: {weightUnitProvider.unit},
+                        onSelectionChanged: (selected) =>
+                            weightUnitProvider.setUnit(selected.first),
+                        style: const ButtonStyle(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
                         ),
                       ),
                     ],
