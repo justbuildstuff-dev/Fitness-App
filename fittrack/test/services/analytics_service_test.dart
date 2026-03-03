@@ -1334,18 +1334,18 @@ void main() {
           // Workout 1: 2 sets for exercise ex1
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            weight: 80.0, reps: 10,
+            weight: 80.0, reps: 10, checked: true,
             createdAt: now.subtract(const Duration(days: 7)),
           ),
           _createTestSetFull(
             id: 's2', exerciseId: 'ex1', workoutId: 'w1',
-            weight: 85.0, reps: 8,
+            weight: 85.0, reps: 8, checked: true,
             createdAt: now.subtract(const Duration(days: 7)),
           ),
           // Workout 2: 1 set for exercise ex1
           _createTestSetFull(
             id: 's3', exerciseId: 'ex1', workoutId: 'w2',
-            weight: 90.0, reps: 5,
+            weight: 90.0, reps: 5, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
           // Different exercise - should be filtered out
@@ -1360,9 +1360,9 @@ void main() {
           mockFirestoreService,
           sets: testSets,
           exercises: [
-            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w1'),
-            _createTestExercise(id: 'ex2', exerciseType: ExerciseType.strength, workoutId: 'w1'),
-            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w2'),
+            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w1', name: 'Bench Press'),
+            _createTestExercise(id: 'ex2', exerciseType: ExerciseType.strength, workoutId: 'w1', name: 'Squat'),
+            _createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, workoutId: 'w2', name: 'Bench Press'),
           ],
           workouts: [
             _createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 7))),
@@ -1407,7 +1407,7 @@ void main() {
         final testSets = [
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            weight: 100.0, reps: 5,
+            weight: 100.0, reps: 5, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
         ];
@@ -1415,7 +1415,7 @@ void main() {
         _setupMockFirestoreWithSetsAndExercises(
           mockFirestoreService,
           sets: testSets,
-          exercises: [_createTestExercise(id: 'ex1')],
+          exercises: [_createTestExercise(id: 'ex1', name: 'Squat')],
           workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 3)))],
         );
 
@@ -1442,14 +1442,14 @@ void main() {
         final testSets = [
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            reps: 15, createdAt: now.subtract(const Duration(days: 3)),
+            reps: 15, checked: true, createdAt: now.subtract(const Duration(days: 3)),
           ),
         ];
 
         _setupMockFirestoreWithSetsAndExercises(
           mockFirestoreService,
           sets: testSets,
-          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.bodyweight)],
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.bodyweight, name: 'Push-ups')],
           workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 3)))],
         );
 
@@ -1500,12 +1500,12 @@ void main() {
         final testSets = [
           _createTestSetFull(
             id: 's1', exerciseId: 'ex1', workoutId: 'w1',
-            duration: 1800, distance: 5000.0,
+            duration: 1800, distance: 5000.0, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
           _createTestSetFull(
             id: 's2', exerciseId: 'ex1', workoutId: 'w1',
-            duration: 900, distance: 2500.0,
+            duration: 900, distance: 2500.0, checked: true,
             createdAt: now.subtract(const Duration(days: 3)),
           ),
         ];
@@ -1513,7 +1513,7 @@ void main() {
         _setupMockFirestoreWithSetsAndExercises(
           mockFirestoreService,
           sets: testSets,
-          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.cardio)],
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.cardio, name: 'Running')],
           workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 3)))],
         );
 
@@ -1562,7 +1562,7 @@ void main() {
         _setupMockFirestoreWithSetsAndExercises(
           mockFirestoreService,
           sets: testSets,
-          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength)],
+          exercises: [_createTestExercise(id: 'ex1', exerciseType: ExerciseType.strength, name: 'Bench Press')],
           workouts: [_createTestWorkout(id: 'w1', createdAt: createdDate)],
         );
 
@@ -1580,6 +1580,128 @@ void main() {
         expect(sessionDate.year, equals(completedDate.year));
         expect(sessionDate.month, equals(completedDate.month));
         expect(sessionDate.day, equals(completedDate.day));
+      });
+
+      test('only includes checked (completed) sets', () async {
+        /// Test Purpose: Verify unchecked sets are excluded from exercise progress,
+        /// consistent with heatmap and workout analytics behaviour.
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        );
+
+        final testSets = [
+          // Checked set - should be included
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 100.0, reps: 10, checked: true,
+            createdAt: now.subtract(const Duration(days: 5)),
+          ),
+          // Unchecked set - should be excluded
+          _createTestSetFull(
+            id: 's2', exerciseId: 'ex1', workoutId: 'w1',
+            weight: 120.0, reps: 8, checked: false,
+            createdAt: now.subtract(const Duration(days: 5)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [_createTestExercise(id: 'ex1', name: 'Bench Press')],
+          workouts: [_createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 5)))],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex1',
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        expect(result.dataPoints.length, equals(1));
+        // maxWeight should be 100 (from checked set), NOT 120 (from unchecked set)
+        expect(result.dataPoints.first.maxWeight, equals(100.0));
+        expect(result.dataPoints.first.maxReps, equals(10));
+        // totalVolume = 100 * 10 = 1000 (unchecked set excluded)
+        expect(result.dataPoints.first.totalVolume, equals(1000.0));
+      });
+
+      test('finds progress across multiple workouts with the same exercise name', () async {
+        /// Test Purpose: Verify that exercises from different workouts (e.g. after week
+        /// duplication) are matched by name, not exerciseId. Each duplication creates
+        /// a new exercise document with a new ID, so the same exercise done in 3 workouts
+        /// produces 3 different exerciseIds all sharing the same name.
+
+        final now = DateTime.now();
+        final dateRange = DateRange(
+          start: now.subtract(const Duration(days: 60)),
+          end: now,
+        );
+
+        // Three workouts with "Bench Press" each having a different exerciseId
+        // (simulating week duplication which creates new exercise document IDs).
+        final testSets = [
+          // Workout 1 - exerciseId 'ex-w1', 6 weeks ago
+          _createTestSetFull(
+            id: 's1', exerciseId: 'ex-w1', workoutId: 'w1',
+            weight: 60.0, reps: 10, checked: true,
+            createdAt: now.subtract(const Duration(days: 42)),
+          ),
+          // Workout 2 - exerciseId 'ex-w2', 3 weeks ago
+          _createTestSetFull(
+            id: 's2', exerciseId: 'ex-w2', workoutId: 'w2',
+            weight: 70.0, reps: 8, checked: true,
+            createdAt: now.subtract(const Duration(days: 21)),
+          ),
+          // Workout 3 - exerciseId 'ex-w3', 1 week ago (heaviest)
+          _createTestSetFull(
+            id: 's3', exerciseId: 'ex-w3', workoutId: 'w3',
+            weight: 80.0, reps: 6, checked: true,
+            createdAt: now.subtract(const Duration(days: 7)),
+          ),
+          // Different exercise in workout 3 - should not appear in results
+          _createTestSetFull(
+            id: 's4', exerciseId: 'ex-squat', workoutId: 'w3',
+            weight: 100.0, reps: 5, checked: true,
+            createdAt: now.subtract(const Duration(days: 7)),
+          ),
+        ];
+
+        _setupMockFirestoreWithSetsAndExercises(
+          mockFirestoreService,
+          sets: testSets,
+          exercises: [
+            _createTestExercise(id: 'ex-w1', workoutId: 'w1', name: 'Bench Press'),
+            _createTestExercise(id: 'ex-w2', workoutId: 'w2', name: 'Bench Press'),
+            _createTestExercise(id: 'ex-w3', workoutId: 'w3', name: 'Bench Press'),
+            _createTestExercise(id: 'ex-squat', workoutId: 'w3', name: 'Squat'),
+          ],
+          workouts: [
+            _createTestWorkout(id: 'w1', createdAt: now.subtract(const Duration(days: 42))),
+            _createTestWorkout(id: 'w2', createdAt: now.subtract(const Duration(days: 21))),
+            _createTestWorkout(id: 'w3', createdAt: now.subtract(const Duration(days: 7))),
+          ],
+        );
+
+        final result = await analyticsService.getExerciseProgress(
+          userId: 'test_user',
+          exerciseId: 'ex-w1', // Only the first ID is passed (from getLoggedExercises)
+          exerciseName: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          dateRange: dateRange,
+        );
+
+        // All 3 workouts should appear despite different exerciseIds
+        expect(result.dataPoints.length, equals(3));
+        expect(result.isEmpty, isFalse);
+
+        // Data points should be in chronological order with increasing weights
+        expect(result.dataPoints[0].maxWeight, equals(60.0));
+        expect(result.dataPoints[1].maxWeight, equals(70.0));
+        expect(result.dataPoints[2].maxWeight, equals(80.0));
       });
     });
 
@@ -2120,11 +2242,12 @@ Exercise _createTestExercise({
   required String id,
   ExerciseType? exerciseType,
   String workoutId = 'w1',
+  String? name,
 }) {
   final now = DateTime.now();
   return Exercise(
     id: id,
-    name: 'Test Exercise $id',
+    name: name ?? 'Test Exercise $id',
     exerciseType: exerciseType ?? ExerciseType.strength,
     orderIndex: 0,
     createdAt: now,
