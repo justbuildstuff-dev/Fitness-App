@@ -2039,13 +2039,16 @@ void main() {
         final thisMonday = now.subtract(Duration(days: now.weekday - 1));
 
         // Create workouts for 3 consecutive weeks (target = 2 per week)
+        // All workouts use weekMonday as createdAt — placing them on a known-past
+        // date avoids future-date filtering when tests run on a Monday and
+        // adding days would push workouts beyond today's dateRange end.
         final workouts = <Workout>[];
         for (int week = 0; week < 3; week++) {
           final weekMonday = thisMonday.subtract(Duration(days: week * 7));
           for (int day = 0; day < 2; day++) {
             workouts.add(_createTestWorkout(
               id: 'w_${week}_$day',
-              createdAt: weekMonday.add(Duration(days: day)),
+              createdAt: weekMonday,
             ));
           }
         }
@@ -2072,15 +2075,16 @@ void main() {
         // Last week: 1 workout (misses target of 2)
         // 2 weeks ago: 2 workouts (meets target of 2)
         final workouts = <Workout>[
-          // Current week - 3 workouts within Mon-Wed
+          // Current week - 3 workouts all on Monday (adding future days like Tue/Wed
+          // risks filtering when tests run on a Monday and those dates are in the future)
           _createTestWorkout(id: 'w1', createdAt: thisMonday),
-          _createTestWorkout(id: 'w2', createdAt: thisMonday.add(const Duration(days: 1))),
-          _createTestWorkout(id: 'w3', createdAt: thisMonday.add(const Duration(days: 2))),
+          _createTestWorkout(id: 'w2', createdAt: thisMonday),
+          _createTestWorkout(id: 'w3', createdAt: thisMonday),
           // Last week - only 1 workout (below target)
           _createTestWorkout(id: 'w4', createdAt: lastMonday),
-          // 2 weeks ago - meets target
+          // 2 weeks ago - meets target (both on the same Monday)
           _createTestWorkout(id: 'w5', createdAt: twoWeeksAgoMonday),
-          _createTestWorkout(id: 'w6', createdAt: twoWeeksAgoMonday.add(const Duration(days: 1))),
+          _createTestWorkout(id: 'w6', createdAt: twoWeeksAgoMonday),
         ];
 
         _setupMockFirestoreWithWorkoutsOnly(mockFirestoreService, workouts);
@@ -2105,12 +2109,14 @@ void main() {
         final workouts = <Workout>[];
 
         // Old streak: 5 consecutive weeks, starting 20 weeks ago
+        // All workouts use the Monday of each week — avoids future-date filtering
+        // when the test runs on a Monday and adding days would exceed today.
         for (int week = 20; week > 15; week--) {
           final weekMonday = thisMonday.subtract(Duration(days: week * 7));
           for (int day = 0; day < 3; day++) {
             workouts.add(_createTestWorkout(
               id: 'old_${week}_$day',
-              createdAt: weekMonday.add(Duration(days: day)),
+              createdAt: weekMonday,
             ));
           }
         }
@@ -2121,7 +2127,7 @@ void main() {
           for (int day = 0; day < 3; day++) {
             workouts.add(_createTestWorkout(
               id: 'new_${week}_$day',
-              createdAt: weekMonday.add(Duration(days: day)),
+              createdAt: weekMonday,
             ));
           }
         }

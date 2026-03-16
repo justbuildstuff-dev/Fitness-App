@@ -1175,6 +1175,9 @@ class ProgramProvider extends ChangeNotifier {
 
       final setId = await _firestoreService.createSet(set);
 
+      // Invalidate analytics cache — a new set has been added
+      if (setId != null) _analyticsService.clearCache();
+
       // Update local state immediately for responsive UI
       if (setId != null) {
         // Create a new ExerciseSet with the returned ID
@@ -1230,6 +1233,9 @@ class ProgramProvider extends ChangeNotifier {
 
       await _firestoreService.updateSet(updatedSet);
 
+      // Invalidate analytics cache — set data has changed (e.g. checked status)
+      _analyticsService.clearCache();
+
       // Update local state immediately for responsive UI
       // Update _allWorkoutSets if it contains this exercise
       if (_allWorkoutSets.containsKey(updatedSet.exerciseId)) {
@@ -1274,6 +1280,9 @@ class ProgramProvider extends ChangeNotifier {
 
       await _firestoreService.deleteSet(
           _userId!, programId, weekId, workoutId, exerciseId, setId);
+
+      // Invalidate analytics cache — a set has been removed
+      _analyticsService.clearCache();
 
       // Update local state immediately for responsive UI
       // Remove from _allWorkoutSets if it contains this exercise
@@ -1577,6 +1586,12 @@ class ProgramProvider extends ChangeNotifier {
   Future<void> refreshAnalytics() async {
     _analyticsService.clearCache();
     await loadAnalytics();
+  }
+
+  /// Clear the analytics cache without reloading.
+  /// Use this before a targeted re-fetch to force fresh computation.
+  void clearAnalyticsCache() {
+    _analyticsService.clearCache();
   }
 
   // ========================================

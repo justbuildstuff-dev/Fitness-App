@@ -27,6 +27,10 @@ class _TrendsTabState extends State<TrendsTab>
 
   bool _loaded = false;
   bool _loading = false;
+  // Tracks whether the exercise library was ready when we last fetched muscle
+  // group volume. If the library finishes loading after our initial fetch, we
+  // need to re-fetch so exercise names can be resolved to muscle groups.
+  bool _libraryReadyOnLastLoad = false;
   TimeRange _selectedTimeRange = TimeRange.threeMonths;
 
   @override
@@ -42,6 +46,8 @@ class _TrendsTabState extends State<TrendsTab>
     final provider = context.read<ProgramProvider>();
     final exerciseLibrary = context.read<ExerciseLibraryProvider>();
     final dateRange = _selectedTimeRange.toDateRange();
+
+    _libraryReadyOnLastLoad = exerciseLibrary.isLibraryLoaded;
 
     await Future.wait([
       provider.loadWeeklyTrends(dateRange: dateRange),
@@ -64,8 +70,22 @@ class _TrendsTabState extends State<TrendsTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return Consumer<ProgramProvider>(
-      builder: (context, provider, child) {
+    return Consumer2<ProgramProvider, ExerciseLibraryProvider>(
+      builder: (context, provider, exerciseLibrary, child) {
+        // If the exercise library finished loading after our initial data fetch,
+        // the muscle group volume will have been computed with an empty library
+        // (all sets bucketed as "Other"). Re-fetch now that names are resolvable.
+        if (_loaded && !_loading && exerciseLibrary.isLibraryLoaded && !_libraryReadyOnLastLoad) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_loading) {
+              // Clear the stale cache entry (computed with empty library) before
+              // re-fetching so muscle groups are resolved correctly.
+              context.read<ProgramProvider>().clearAnalyticsCache();
+              _loadTrendsData();
+            }
+          });
+        }
+
         return RefreshIndicator(
           onRefresh: () async {
             await provider.refreshAnalytics();
