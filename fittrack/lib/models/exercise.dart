@@ -66,6 +66,8 @@ class Exercise {
   final String workoutId;
   final String weekId;
   final String programId;
+  final String? supersetGroupId; // UUID shared by all exercises in a group; null = standalone
+  final int? groupOrderIndex;   // Position within the group (0-based); null for standalone
 
   Exercise({
     required this.id,
@@ -79,6 +81,8 @@ class Exercise {
     required this.workoutId,
     required this.weekId,
     required this.programId,
+    this.supersetGroupId,
+    this.groupOrderIndex,
   });
 
   /// Convert Exercise to basic Map format (Firebase conversion handled by converter)
@@ -94,6 +98,8 @@ class Exercise {
       'workoutId': workoutId,
       'weekId': weekId,
       'programId': programId,
+      'supersetGroupId': supersetGroupId,
+      'groupOrderIndex': groupOrderIndex,
     };
   }
 
@@ -103,6 +109,9 @@ class Exercise {
     int? orderIndex,
     String? notes,
     DateTime? updatedAt,
+    String? supersetGroupId,
+    int? groupOrderIndex,
+    bool clearSupersetGroup = false, // when true, sets supersetGroupId and groupOrderIndex to null
   }) {
     return Exercise(
       id: id,
@@ -116,6 +125,8 @@ class Exercise {
       workoutId: workoutId,
       weekId: weekId,
       programId: programId,
+      supersetGroupId: clearSupersetGroup ? null : (supersetGroupId ?? this.supersetGroupId),
+      groupOrderIndex: clearSupersetGroup ? null : (groupOrderIndex ?? this.groupOrderIndex),
     );
   }
 
@@ -165,7 +176,9 @@ class Exercise {
         other.userId == userId &&
         other.workoutId == workoutId &&
         other.weekId == weekId &&
-        other.programId == programId;
+        other.programId == programId &&
+        other.supersetGroupId == supersetGroupId &&
+        other.groupOrderIndex == groupOrderIndex;
   }
 
   @override
@@ -182,6 +195,8 @@ class Exercise {
       workoutId,
       weekId,
       programId,
+      supersetGroupId,
+      groupOrderIndex,
     );
   }
 }
