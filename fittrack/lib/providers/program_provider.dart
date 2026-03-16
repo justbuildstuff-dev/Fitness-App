@@ -1579,6 +1579,12 @@ class ProgramProvider extends ChangeNotifier {
     await loadAnalytics();
   }
 
+  /// Clear the analytics cache without reloading.
+  /// Use this before a targeted re-fetch to force fresh computation.
+  void clearAnalyticsCache() {
+    _analyticsService.clearCache();
+  }
+
   // ========================================
   // UTILITY METHODS
   // ========================================
