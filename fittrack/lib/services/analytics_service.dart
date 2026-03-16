@@ -21,9 +21,12 @@ class AnalyticsService {
   // Constructor for testing with dependency injection
   AnalyticsService.withFirestoreService(this._firestoreService);
 
-  // Simple cache to avoid recomputation for short periods
+  // Cache analytics results. Entries are explicitly invalidated whenever workout
+  // data changes (set checked/unchecked, set created, set deleted) via
+  // ProgramProvider, so the time-based expiry is a safety net rather than
+  // the primary invalidation mechanism.
   final Map<String, _CachedAnalytics> _cache = {};
-  static const Duration _cacheValidDuration = Duration(minutes: 5);
+  static const Duration _cacheValidDuration = Duration(hours: 24);
 
   /// Compute workout analytics for a date range
   Future<WorkoutAnalytics> computeWorkoutAnalytics({
