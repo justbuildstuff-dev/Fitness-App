@@ -283,7 +283,9 @@ service cloud.firestore {
         && (data.userId != null && isString(data.userId))
         && (data.workoutId != null && isString(data.workoutId))
         && (data.weekId != null && isString(data.weekId))
-        && (data.programId != null && isString(data.programId));
+        && (data.programId != null && isString(data.programId))
+        && (data.supersetGroupId == null || isString(data.supersetGroupId))
+        && (data.groupOrderIndex == null || isNumber(data.groupOrderIndex));
     }
 
     function validSet(data) {
