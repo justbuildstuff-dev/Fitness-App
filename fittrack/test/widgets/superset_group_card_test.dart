@@ -178,12 +178,14 @@ void main() {
     });
 
     testWidgets('3-dot menu contains Delete Superset option', (tester) async {
-      /// Test Purpose: Verify popup menu shows "Delete Superset" action
+      /// Test Purpose: Verify popup menu shows "Delete Superset" action.
+      /// Uses .first because ExerciseCards also contain a more_vert icon —
+      /// the group header's popup is the first one rendered.
       await tester.pumpWidget(createTestWidget());
       await tester.pump();
 
-      // Open the popup menu
-      await tester.tap(find.byIcon(Icons.more_vert));
+      // The group header's popup is the first more_vert icon rendered
+      await tester.tap(find.byIcon(Icons.more_vert).first);
       await tester.pumpAndSettle();
 
       expect(find.text('Delete Superset'), findsOneWidget);
@@ -198,7 +200,7 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.tap(find.byIcon(Icons.more_vert).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete Superset'));
       await tester.pumpAndSettle();
