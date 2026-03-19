@@ -703,20 +703,19 @@ void main() {
       provider.setError(errorMessage);
       expect(provider.error, equals(errorMessage));
     });
-  });
 
-  group('Superset Group Operations', () {
-    setUp(() {
-      provider.setSelectedProgram(testProgram);
-      provider.setSelectedWeek(testWeek);
-      provider.setSelectedWorkout(testWorkout);
+    group('Superset Group Operations', () {
+      setUp(() {
+        provider.setSelectedProgram(testProgram);
+        provider.setSelectedWeek(testWeek);
+        provider.setSelectedWorkout(testWorkout);
 
-      when(mockFirestoreService.createSupersetWithExercises(any, any, any))
-          .thenAnswer((_) async => ['ex-id-1', 'ex-id-2']);
+        when(mockFirestoreService.createSupersetWithExercises(any, any, any))
+            .thenAnswer((_) async => ['ex-id-1', 'ex-id-2']);
 
-      when(mockFirestoreService.deleteSupersetGroup(any, any, any, any, any))
-          .thenAnswer((_) async {});
-    });
+        when(mockFirestoreService.deleteSupersetGroup(any, any, any, any, any))
+            .thenAnswer((_) async {});
+      });
 
     test('createSuperset calls FirestoreService with shared supersetGroupId', () async {
       /// Test Purpose: Verify createSuperset passes a non-null UUID to the service
@@ -835,7 +834,8 @@ void main() {
         throwsA(isA<Exception>()),
       );
     });
-  });
+    }); // closes group('Superset Group Operations')
+  }); // closes group('ProgramProvider Workout/Exercise Operations')
 }
 
 /// Extension methods to support testing
