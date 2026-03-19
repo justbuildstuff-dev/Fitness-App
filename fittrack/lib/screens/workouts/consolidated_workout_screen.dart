@@ -10,10 +10,12 @@ import '../../models/exercise.dart';
 import '../../models/exercise_set.dart';
 import '../../models/navigation_section.dart';
 import '../../models/templates/templates.dart';
+import '../../utils/workout_item.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/exercise_card.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/save_as_template_menu_item.dart';
+import '../../widgets/superset_group_card.dart';
 import '../exercises/exercise_picker_screen.dart';
 
 /// Consolidated workout screen that displays all exercises and their sets inline
@@ -173,7 +175,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _addExercise(context),
+        onPressed: () => _showAddMenu(context),
         tooltip: 'Add Exercise',
         child: const Icon(Icons.add),
       ),
@@ -221,14 +223,24 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
 
   Widget _buildExercisesList(List<Exercise> exercises) {
     final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final items = groupExercises(exercises);
+
+    // Pre-compute group labels (A, B, C…) for each item so the itemBuilder
+    // can look them up by index without mutable state inside the closure.
+    final groupLabels = <int, String>{};
+    int supersetCount = 0;
+    for (int i = 0; i < items.length; i++) {
+      if (items[i] is SupersetGroup) {
+        groupLabels[i] = computeGroupLabel(supersetCount++);
+      }
+    }
 
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: exercises.length,
-      buildDefaultDragHandles: false, // We use custom visible drag handles in ExerciseCard
-      physics: const AlwaysScrollableScrollPhysics(), // Improve scroll performance
+      itemCount: items.length,
+      buildDefaultDragHandles: false,
+      physics: const AlwaysScrollableScrollPhysics(),
       proxyDecorator: (child, index, animation) {
-        // Animate the dragged item
         return AnimatedBuilder(
           animation: animation,
           builder: (context, child) {
@@ -243,26 +255,192 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
           child: child,
         );
       },
-      onReorder: (oldIndex, newIndex) => _reorderExercises(context, oldIndex, newIndex),
+      onReorder: (oldIndex, newIndex) =>
+          _reorderWorkoutItems(context, items, oldIndex, newIndex),
       itemBuilder: (context, index) {
-        final exercise = exercises[index];
-        final sets = provider.getSetsForExercise(exercise.id);
-        final isAddingSet = _addingSetForExercise.contains(exercise.id);
+        final item = items[index];
 
-        return ExerciseCard(
-          key: ValueKey(exercise.id),
-          exercise: exercise,
-          sets: sets,
-          isReorderEnabled: true, // Show visible drag handle
-          index: index, // Pass index for ReorderableDragStartListener
-          onAddSet: isAddingSet || sets.length >= 10 ? null : () => _addSet(context, exercise),
-          onEditName: () => _editExerciseName(context, exercise),
-          onDelete: () => _deleteExercise(context, exercise),
-          onUpdateSet: (updatedSet) => _updateSet(context, updatedSet),
-          onDeleteSet: (exerciseId, setId) => _deleteSet(context, exerciseId, setId),
-        );
+        if (item is StandaloneExercise) {
+          final exercise = item.exercise;
+          final sets = provider.getSetsForExercise(exercise.id);
+          final isAddingSet = _addingSetForExercise.contains(exercise.id);
+
+          return ExerciseCard(
+            key: ValueKey(exercise.id),
+            exercise: exercise,
+            sets: sets,
+            isReorderEnabled: true,
+            index: index,
+            onAddSet: isAddingSet || sets.length >= 10
+                ? null
+                : () => _addSet(context, exercise),
+            onEditName: () => _editExerciseName(context, exercise),
+            onDelete: () => _deleteExercise(context, exercise),
+            onUpdateSet: (updatedSet) => _updateSet(context, updatedSet),
+            onDeleteSet: (exerciseId, setId) =>
+                _deleteSet(context, exerciseId, setId),
+          );
+        } else {
+          final group = item as SupersetGroup;
+          final groupLabel = groupLabels[index]!;
+          final setsMap = <String, List<ExerciseSet>>{
+            for (final ex in group.exercises)
+              ex.id: provider.getSetsForExercise(ex.id),
+          };
+
+          return SupersetGroupCard(
+            key: ValueKey(group.groupId),
+            groupLabel: groupLabel,
+            exercises: group.exercises,
+            setsMap: setsMap,
+            outerIndex: index,
+            isReorderEnabled: true,
+            onDeleteGroup: () => _deleteSuperset(context, group),
+            onReorderWithinGroup: (oldInner, newInner) =>
+                _reorderWithinGroup(context, group, oldInner, newInner),
+            onAddSet: (exercise) => _addSet(context, exercise),
+            onEditName: (exercise) => _editExerciseName(context, exercise),
+            onUpdateSet: (updatedSet) => _updateSet(context, updatedSet),
+            onDeleteSet: (exerciseId, setId) =>
+                _deleteSet(context, exerciseId, setId),
+          );
+        }
       },
     );
+  }
+
+  Future<void> _reorderWorkoutItems(
+    BuildContext context,
+    List<WorkoutItem> items,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+
+    if (newIndex > oldIndex) newIndex -= 1;
+
+    try {
+      final reordered = List<WorkoutItem>.from(items);
+      final moved = reordered.removeAt(oldIndex);
+      reordered.insert(newIndex, moved);
+
+      // Flatten to exercises in display order and assign new orderIndex values
+      int globalOrder = 0;
+      for (final item in reordered) {
+        if (item is StandaloneExercise) {
+          if (item.exercise.orderIndex != globalOrder) {
+            await provider.updateExercise(
+              item.exercise.copyWith(
+                orderIndex: globalOrder,
+                updatedAt: DateTime.now(),
+              ),
+            );
+          }
+          globalOrder++;
+        } else {
+          final group = item as SupersetGroup;
+          for (final ex in group.exercises) {
+            if (ex.orderIndex != globalOrder) {
+              await provider.updateExercise(
+                ex.copyWith(orderIndex: globalOrder, updatedAt: DateTime.now()),
+              );
+            }
+            globalOrder++;
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reorder: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _reorderWithinGroup(
+    BuildContext context,
+    SupersetGroup group,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    if (newIndex > oldIndex) newIndex -= 1;
+
+    try {
+      final exercises = List<Exercise>.from(group.exercises);
+      final moved = exercises.removeAt(oldIndex);
+      exercises.insert(newIndex, moved);
+
+      for (int i = 0; i < exercises.length; i++) {
+        if (exercises[i].groupOrderIndex != i) {
+          await provider.updateExercise(
+            exercises[i].copyWith(
+              groupOrderIndex: i,
+              updatedAt: DateTime.now(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reorder superset: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _deleteSuperset(BuildContext context, SupersetGroup group) async {
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final exerciseNames = group.exercises.map((e) => e.name).join(', ');
+    final confirmed = await DeleteConfirmationDialog.show(
+      context: context,
+      title: 'Delete Superset',
+      content: 'This will delete all exercises in the superset group:',
+      itemName: exerciseNames,
+      deleteButtonText: 'Delete Superset',
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await provider.deleteSupersetGroup(
+          programId: widget.program.id,
+          weekId: widget.week.id,
+          workoutId: widget.workout.id,
+          supersetGroupId: group.groupId,
+        );
+
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Superset deleted'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete superset: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Future<void> _addSet(BuildContext context, Exercise exercise) async {
@@ -472,45 +650,6 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
     nameController.dispose();
   }
 
-  Future<void> _reorderExercises(BuildContext context, int oldIndex, int newIndex) async {
-    final provider = Provider.of<ProgramProvider>(context, listen: false);
-
-    // Adjust newIndex if moving down the list
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
-
-    try {
-      // Get the current exercises list
-      final exercises = List<Exercise>.from(provider.exercises);
-
-      // Reorder in local list
-      final exercise = exercises.removeAt(oldIndex);
-      exercises.insert(newIndex, exercise);
-
-      // Update orderIndex for all affected exercises
-      for (int i = 0; i < exercises.length; i++) {
-        if (exercises[i].orderIndex != i) {
-          final updatedExercise = exercises[i].copyWith(
-            orderIndex: i,
-            updatedAt: DateTime.now(),
-          );
-          await provider.updateExercise(updatedExercise);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to reorder exercises: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-
   void _deleteExercise(BuildContext context, Exercise exercise) async {
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -688,6 +827,101 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
           ),
         );
       }
+    }
+  }
+
+  void _showAddMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.fitness_center),
+              title: const Text('Add Exercise'),
+              onTap: () {
+                Navigator.pop(context);
+                _addExercise(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: const Text('Add Superset'),
+              subtitle: const Text('Select 2+ exercises to pair together'),
+              onTap: () {
+                Navigator.pop(context);
+                _addSuperset(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _addSuperset(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final provider = Provider.of<ProgramProvider>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final results = await navigator.push<List<Map<String, dynamic>>>(
+      MaterialPageRoute(
+        builder: (context) => const ExercisePickerScreen(isMultiSelect: true),
+      ),
+    );
+
+    if (results == null || !mounted) return;
+
+    if (results.length < 2) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Select at least 2 exercises to create a superset'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final exercises = results
+        .map((r) => (
+              name: r['name'] as String,
+              exerciseType: r['exerciseType'] as ExerciseType,
+            ))
+        .toList();
+    final setCount = (results.first['setCount'] as int?) ?? 3;
+
+    final ids = await provider.createSuperset(
+      programId: widget.program.id,
+      weekId: widget.week.id,
+      workoutId: widget.workout.id,
+      exercises: exercises,
+      setCount: setCount,
+    );
+
+    if (!mounted) return;
+
+    if (ids != null) {
+      await provider.loadAllSetsForWorkout(
+        programId: widget.program.id,
+        weekId: widget.week.id,
+        workoutId: widget.workout.id,
+      );
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Superset added with ${ids.length} exercises'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content:
+              Text('Failed to add superset: ${provider.error ?? "Unknown error"}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
