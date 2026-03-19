@@ -937,4 +937,36 @@ class MockAnalyticsService extends _i1.Mock implements _i11.AnalyticsService {
         ),
         returnValueForMissingStub: null,
       );
+
+  @override
+  _i4.Future<List<String>> createSupersetWithExercises(
+    List<_i9.Exercise>? exercises,
+    String? supersetGroupId,
+    int? setCount,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #createSupersetWithExercises,
+          [exercises, supersetGroupId, setCount],
+        ),
+        returnValue: _i4.Future<List<String>>.value(<String>[]),
+        returnValueForMissingStub: _i4.Future<List<String>>.value(<String>[]),
+      ) as _i4.Future<List<String>>);
+
+  @override
+  _i4.Future<void> deleteSupersetGroup(
+    String? userId,
+    String? programId,
+    String? weekId,
+    String? workoutId,
+    String? supersetGroupId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteSupersetGroup,
+          [userId, programId, weekId, workoutId, supersetGroupId],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 }
