@@ -600,6 +600,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
         exerciseType: exercise.exerciseType,
         orderIndex: exercise.orderIndex,
         notes: exercise.notes,
+        supersetGroupId: exercise.supersetGroupId,
         sets: sets.map((set) => TemplateSet(
           setNumber: set.setNumber,
           reps: set.reps,

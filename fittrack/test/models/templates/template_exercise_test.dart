@@ -98,6 +98,33 @@ void main() {
         expect(exercise.sets, isEmpty);
       });
 
+      test('should parse supersetGroupId when present', () {
+        final map = {
+          'name': 'Squat',
+          'exerciseType': 'strength',
+          'orderIndex': 0,
+          'sets': <Map<String, dynamic>>[],
+          'supersetGroupId': 'group-abc-123',
+        };
+
+        final exercise = TemplateExercise.fromMap(map);
+
+        expect(exercise.supersetGroupId, 'group-abc-123');
+      });
+
+      test('should parse supersetGroupId as null when absent', () {
+        final map = {
+          'name': 'Squat',
+          'exerciseType': 'strength',
+          'orderIndex': 0,
+          'sets': <Map<String, dynamic>>[],
+        };
+
+        final exercise = TemplateExercise.fromMap(map);
+
+        expect(exercise.supersetGroupId, isNull);
+      });
+
       test('should use defaults for missing required fields', () {
         final map = <String, dynamic>{};
 
@@ -160,6 +187,31 @@ void main() {
         expect(map.containsKey('notes'), isFalse);
       });
 
+      test('should include supersetGroupId when set', () {
+        final exercise = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'group-xyz',
+        );
+        final map = exercise.toMap();
+
+        expect(map['supersetGroupId'], 'group-xyz');
+      });
+
+      test('should omit supersetGroupId when null', () {
+        final exercise = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+        );
+        final map = exercise.toMap();
+
+        expect(map.containsKey('supersetGroupId'), isFalse);
+      });
+
       test('fromMap and toMap should be inverses', () {
         final map = sampleExercise.toMap();
         final recreated = TemplateExercise.fromMap(map);
@@ -217,6 +269,45 @@ void main() {
         expect(copy.orderIndex, sampleExercise.orderIndex);
         expect(copy.notes, sampleExercise.notes);
         expect(copy.sets, sampleExercise.sets);
+      });
+
+      test('should copy with new supersetGroupId', () {
+        final exercise = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'original-group',
+        );
+        final updated = exercise.copyWith(supersetGroupId: 'new-group');
+
+        expect(updated.supersetGroupId, 'new-group');
+      });
+
+      test('should preserve supersetGroupId when not specified', () {
+        final exercise = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'existing-group',
+        );
+        final copy = exercise.copyWith(name: 'Updated');
+
+        expect(copy.supersetGroupId, 'existing-group');
+      });
+
+      test('clearSupersetGroupId should set supersetGroupId to null', () {
+        final exercise = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'group-to-clear',
+        );
+        final cleared = exercise.copyWith(clearSupersetGroupId: true);
+
+        expect(cleared.supersetGroupId, isNull);
       });
     });
 
@@ -319,6 +410,61 @@ void main() {
           exerciseType: ExerciseType.strength,
           orderIndex: 0,
           sets: const [TemplateSet(setNumber: 1, reps: 12)],
+        );
+
+        expect(exercise1, isNot(exercise2));
+      });
+
+      test('should not be equal when supersetGroupId differs', () {
+        final exercise1 = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'group-a',
+        );
+        final exercise2 = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'group-b',
+        );
+
+        expect(exercise1, isNot(exercise2));
+      });
+
+      test('should be equal when both supersetGroupIds are null', () {
+        final exercise1 = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+        );
+        final exercise2 = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+        );
+
+        expect(exercise1, exercise2);
+        expect(exercise1.hashCode, exercise2.hashCode);
+      });
+
+      test('should not be equal when supersetGroupId is null vs non-null', () {
+        final exercise1 = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
+          supersetGroupId: 'group-a',
+        );
+        final exercise2 = TemplateExercise(
+          name: 'Test',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 0,
+          sets: const [],
         );
 
         expect(exercise1, isNot(exercise2));
