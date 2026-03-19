@@ -400,6 +400,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               exerciseType: exercise.exerciseType,
               orderIndex: exercise.orderIndex,
               notes: exercise.notes,
+              supersetGroupId: exercise.supersetGroupId,
               sets: sets.map((set) => TemplateSet(
                 setNumber: set.setNumber,
                 reps: set.reps,
