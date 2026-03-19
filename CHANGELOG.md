@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-03-19
+
+### Added
+- **Superset Training Support** - Group exercises into supersets within any workout (#261)
+  - New "Add Superset" option in the workout FAB menu alongside "Add Exercise"
+  - Multi-select exercise picker: choose 2 or more exercises and add them as a grouped superset
+  - Exercises within a superset are labelled A1, A2, A3 etc. for clear visual identification
+  - Superset groups labelled alphabetically (A, B, C…) based on their order in the workout
+  - Superset group card — visually distinct outlined card with coloured header strip and badge
+  - Drag-to-reorder within a superset group (swap which exercise is A1 vs A2)
+  - Drag-to-reorder entire superset groups relative to other groups and standalone exercises
+  - Delete superset group via 3-dot menu with confirmation dialog (cascade-deletes all exercises and sets)
+  - Full set logging within superset exercises — same UX as standalone exercises
+  - Superset group structure preserved when duplicating weeks
+  - Template save/apply preserves superset group membership
+
 ## [1.5.0] - 2026-02-18
 
 ### Added
