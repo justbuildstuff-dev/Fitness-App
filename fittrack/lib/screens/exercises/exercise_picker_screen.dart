@@ -26,14 +26,29 @@ enum ExerciseSource {
 }
 
 /// A screen for browsing and selecting exercises from the library or custom exercises.
-/// Returns the selected exercise data when the user taps "Add to Workout".
+///
+/// In single-select mode (default): tapping an exercise opens the detail bottom
+/// sheet and returns `Map<String, dynamic>` to the caller.
+///
+/// In multi-select mode (`isMultiSelect: true`): tapping an exercise toggles a
+/// checkbox. A bottom bar shows the selection count, a set count stepper, and
+/// an Add button that pops with `List<Map<String, dynamic>>`. The Add button is
+/// disabled until at least 2 exercises are selected.
 class ExercisePickerScreen extends StatefulWidget {
-  /// If true, show the "Create Custom" button for creating new exercises
+  /// If true, show the "Create Custom" button for creating new exercises (single-select only).
   final bool showCreateCustomButton;
+
+  /// When true, enables multi-select mode for superset creation.
+  final bool isMultiSelect;
+
+  /// Default set count used when adding exercises in multi-select mode.
+  final int initialSetCount;
 
   const ExercisePickerScreen({
     super.key,
     this.showCreateCustomButton = true,
+    this.isMultiSelect = false,
+    this.initialSetCount = 3,
   });
 
   @override
@@ -49,6 +64,16 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
   ExerciseType? _selectedExerciseType;
   ExerciseSource _selectedSource = ExerciseSource.all;
 
+  // Multi-select state
+  final Set<String> _selectedIds = {};
+  late int _multiSelectSetCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _multiSelectSetCount = widget.initialSetCount;
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -56,11 +81,51 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
     super.dispose();
   }
 
+  void _toggleSelection(String exerciseId) {
+    setState(() {
+      if (_selectedIds.contains(exerciseId)) {
+        _selectedIds.remove(exerciseId);
+      } else {
+        _selectedIds.add(exerciseId);
+      }
+    });
+  }
+
+  void _confirmMultiSelect(List<dynamic> allResults) {
+    final selected = allResults.where((e) {
+      final id = e is LibraryExercise ? e.id : (e as CustomExercise).id;
+      return _selectedIds.contains(id);
+    }).toList();
+
+    final result = selected.map((exercise) {
+      if (exercise is LibraryExercise) {
+        return {
+          'name': exercise.name,
+          'exerciseType': exercise.exerciseType,
+          'isLibrary': true,
+          'sourceId': exercise.id,
+          'setCount': _multiSelectSetCount,
+        };
+      } else {
+        final custom = exercise as CustomExercise;
+        return {
+          'name': custom.name,
+          'exerciseType': custom.exerciseType,
+          'isLibrary': false,
+          'sourceId': custom.id,
+          'setCount': _multiSelectSetCount,
+        };
+      }
+    }).toList();
+
+    Navigator.of(context).pop(result);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Exercise Library'),
+        title: Text(widget.isMultiSelect ? 'Select Exercises' : 'Exercise Library'),
         elevation: 0,
       ),
       body: Consumer<ExerciseLibraryProvider>(
@@ -126,6 +191,8 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
                 .where((e) => e is CustomExercise)
                 .toList();
           }
+
+          final canAdd = _selectedIds.length >= 2;
 
           return Column(
             children: [
@@ -198,22 +265,48 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
                 child: searchResults.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: EdgeInsets.only(
+                          left: 16.0,
+                          right: 16.0,
+                          bottom: widget.isMultiSelect ? 80 : 0,
+                        ),
                         itemCount: searchResults.length,
                         itemBuilder: (context, index) {
                           final exercise = searchResults[index];
+                          final exerciseId = exercise is LibraryExercise
+                              ? exercise.id
+                              : (exercise as CustomExercise).id;
                           return _ExerciseListTile(
                             exercise: exercise,
-                            onTap: () => _showExerciseDetails(context, exercise),
+                            isMultiSelect: widget.isMultiSelect,
+                            isSelected: _selectedIds.contains(exerciseId),
+                            onTap: widget.isMultiSelect
+                                ? () => _toggleSelection(exerciseId)
+                                : () => _showExerciseDetails(context, exercise),
                           );
                         },
                       ),
               ),
+
+              // Multi-select bottom bar
+              if (widget.isMultiSelect)
+                _MultiSelectBottomBar(
+                  selectedCount: _selectedIds.length,
+                  setCount: _multiSelectSetCount,
+                  canAdd: canAdd,
+                  onDecrement: _multiSelectSetCount > 1
+                      ? () => setState(() => _multiSelectSetCount--)
+                      : null,
+                  onIncrement: _multiSelectSetCount < 10
+                      ? () => setState(() => _multiSelectSetCount++)
+                      : null,
+                  onAdd: canAdd ? () => _confirmMultiSelect(searchResults) : null,
+                ),
             ],
           );
         },
       ),
-      floatingActionButton: widget.showCreateCustomButton
+      floatingActionButton: widget.showCreateCustomButton && !widget.isMultiSelect
           ? FloatingActionButton.extended(
               onPressed: () => _navigateToCreateCustom(context),
               icon: const Icon(Icons.add),
@@ -399,10 +492,14 @@ class _ExercisePickerScreenState extends State<ExercisePickerScreen> {
 class _ExerciseListTile extends StatelessWidget {
   final dynamic exercise;
   final VoidCallback onTap;
+  final bool isMultiSelect;
+  final bool isSelected;
 
   const _ExerciseListTile({
     required this.exercise,
     required this.onTap,
+    this.isMultiSelect = false,
+    this.isSelected = false,
   });
 
   @override
@@ -420,19 +517,27 @@ class _ExerciseListTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
+      color: isMultiSelect && isSelected
+          ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+          : null,
       child: ListTile(
         onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: isLibrary
-              ? Theme.of(context).colorScheme.primaryContainer
-              : Theme.of(context).colorScheme.tertiaryContainer,
-          child: Icon(
-            Icons.fitness_center,
-            color: isLibrary
-                ? Theme.of(context).colorScheme.onPrimaryContainer
-                : Theme.of(context).colorScheme.onTertiaryContainer,
-          ),
-        ),
+        leading: isMultiSelect
+            ? Checkbox(
+                value: isSelected,
+                onChanged: (_) => onTap(),
+              )
+            : CircleAvatar(
+                backgroundColor: isLibrary
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.tertiaryContainer,
+                child: Icon(
+                  Icons.fitness_center,
+                  color: isLibrary
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Theme.of(context).colorScheme.onTertiaryContainer,
+                ),
+              ),
         title: Text(
           name,
           maxLines: 1,
@@ -447,22 +552,112 @@ class _ExerciseListTile extends StatelessWidget {
                     Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
         ),
-        trailing: isLibrary
+        trailing: isMultiSelect
             ? null
-            : Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.tertiaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+            : isLibrary
+                ? null
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Custom',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onTertiaryContainer,
+                          ),
+                    ),
+                  ),
+      ),
+    );
+  }
+}
+
+/// Bottom bar shown in multi-select mode with count, set stepper, and Add button.
+class _MultiSelectBottomBar extends StatelessWidget {
+  final int selectedCount;
+  final int setCount;
+  final bool canAdd;
+  final VoidCallback? onDecrement;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onAdd;
+
+  const _MultiSelectBottomBar({
+    required this.selectedCount,
+    required this.setCount,
+    required this.canAdd,
+    required this.onDecrement,
+    required this.onIncrement,
+    required this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Set count stepper
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: onDecrement,
+                  icon: const Icon(Icons.remove_circle_outline),
+                  color: theme.colorScheme.primary,
+                ),
+                Text(
+                  '$setCount',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  onPressed: onIncrement,
+                  icon: const Icon(Icons.add_circle_outline),
+                  color: theme.colorScheme.primary,
+                ),
+                Text(
+                  'sets each',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+
+            const Spacer(),
+
+            // Add button
+            Tooltip(
+              message: canAdd ? '' : 'Select at least 2 exercises',
+              child: ElevatedButton(
+                onPressed: onAdd,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                 ),
                 child: Text(
-                  'Custom',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onTertiaryContainer,
-                      ),
+                  'Add $selectedCount exercise${selectedCount == 1 ? '' : 's'}',
                 ),
               ),
+            ),
+          ],
+        ),
       ),
     );
   }

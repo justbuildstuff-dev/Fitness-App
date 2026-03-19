@@ -285,8 +285,9 @@ void main() {
       expect(find.text('Squats'), findsOneWidget);
     });
 
-    testWidgets('FAB navigates to exercise picker screen', (tester) async {
-      /// Test Purpose: Verify FAB triggers navigation to exercise library picker
+    testWidgets('FAB shows add menu with exercise and superset options',
+        (tester) async {
+      /// Test Purpose: Verify FAB shows bottom sheet menu with add options
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
@@ -295,6 +296,24 @@ void main() {
       expect(fab, findsOneWidget);
 
       await tester.tap(fab);
+      await tester.pumpAndSettle();
+
+      // Verify the add menu bottom sheet appears
+      expect(find.text('Add Exercise'), findsOneWidget);
+      expect(find.text('Add Superset'), findsOneWidget);
+    });
+
+    testWidgets('FAB Add Exercise navigates to exercise picker screen',
+        (tester) async {
+      /// Test Purpose: Verify "Add Exercise" option navigates to exercise library
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Add Exercise'));
       await tester.pumpAndSettle();
 
       // Verify navigation occurred (ExercisePickerScreen should be pushed)

@@ -10,12 +10,17 @@ class TemplateExercise {
   final String? notes;
   final List<TemplateSet> sets;
 
+  /// Identifies exercises that belong to the same superset group.
+  /// Null means this is a standalone exercise.
+  final String? supersetGroupId;
+
   const TemplateExercise({
     required this.name,
     required this.exerciseType,
     required this.orderIndex,
     this.notes,
     required this.sets,
+    this.supersetGroupId,
   });
 
   /// Creates a TemplateExercise from a Map (JSON deserialization)
@@ -29,6 +34,7 @@ class TemplateExercise {
               ?.map((s) => TemplateSet.fromMap(s as Map<String, dynamic>))
               .toList() ??
           [],
+      supersetGroupId: map['supersetGroupId'] as String?,
     );
   }
 
@@ -48,6 +54,7 @@ class TemplateExercise {
       'orderIndex': orderIndex,
       if (notes != null) 'notes': notes,
       'sets': sets.map((s) => s.toMap()).toList(),
+      if (supersetGroupId != null) 'supersetGroupId': supersetGroupId,
     };
   }
 
@@ -58,6 +65,8 @@ class TemplateExercise {
     int? orderIndex,
     String? notes,
     List<TemplateSet>? sets,
+    String? supersetGroupId,
+    bool clearSupersetGroupId = false,
   }) {
     return TemplateExercise(
       name: name ?? this.name,
@@ -65,6 +74,9 @@ class TemplateExercise {
       orderIndex: orderIndex ?? this.orderIndex,
       notes: notes ?? this.notes,
       sets: sets ?? this.sets,
+      supersetGroupId: clearSupersetGroupId
+          ? null
+          : (supersetGroupId ?? this.supersetGroupId),
     );
   }
 
@@ -82,6 +94,7 @@ class TemplateExercise {
         other.exerciseType != exerciseType ||
         other.orderIndex != orderIndex ||
         other.notes != notes ||
+        other.supersetGroupId != supersetGroupId ||
         other.sets.length != sets.length) {
       return false;
     }
@@ -98,6 +111,7 @@ class TemplateExercise {
       exerciseType,
       orderIndex,
       notes,
+      supersetGroupId,
       Object.hashAll(sets),
     );
   }

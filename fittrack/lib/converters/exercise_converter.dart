@@ -16,6 +16,8 @@ class ExerciseConverter {
       'workoutId': exercise.workoutId,
       'weekId': exercise.weekId,
       'programId': exercise.programId,
+      'supersetGroupId': exercise.supersetGroupId,
+      'groupOrderIndex': exercise.groupOrderIndex,
     };
   }
 
@@ -39,6 +41,8 @@ class ExerciseConverter {
       workoutId: workoutId,
       weekId: weekId,
       programId: programId,
+      supersetGroupId: data['supersetGroupId'] as String?,
+      groupOrderIndex: data['groupOrderIndex'] as int?,
     );
   }
 }

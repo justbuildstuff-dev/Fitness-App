@@ -615,6 +615,9 @@ class FirestoreService {
             'exerciseType': exerciseData['exerciseType'] ?? 'custom',
             'orderIndex': exerciseData['orderIndex'],
             'notes': exerciseData['notes'],
+            // Preserve superset grouping fields
+            'supersetGroupId': exerciseData['supersetGroupId'],
+            'groupOrderIndex': exerciseData['groupOrderIndex'],
             // Fresh timestamps for duplicated exercise
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
@@ -1046,6 +1049,119 @@ class FirestoreService {
     return exerciseRef.id;
   }
 
+  /// Create multiple exercises in a superset group with a specified number of sets each.
+  ///
+  /// All exercises share the same [supersetGroupId]. Returns the list of created
+  /// exercise IDs in the same order as [exercises].
+  Future<List<String>> createSupersetWithExercises(
+    List<Exercise> exercises,
+    String supersetGroupId,
+    int setCount,
+  ) async {
+    const batchLimit = 450;
+    WriteBatch batch = _firestore.batch();
+    int batchCount = 0;
+    final List<Future<void>> pendingCommits = [];
+
+    Future<void> commitBatchIfNeeded() async {
+      if (batchCount == 0) return;
+      final commitFuture = batch.commit();
+      pendingCommits.add(commitFuture);
+      batch = _firestore.batch();
+      batchCount = 0;
+    }
+
+    final List<String> exerciseIds = [];
+
+    for (int ei = 0; ei < exercises.length; ei++) {
+      final exercise = exercises[ei];
+
+      final exerciseRef = _firestore
+          .collection('users')
+          .doc(exercise.userId)
+          .collection('programs')
+          .doc(exercise.programId)
+          .collection('weeks')
+          .doc(exercise.weekId)
+          .collection('workouts')
+          .doc(exercise.workoutId)
+          .collection('exercises')
+          .doc();
+
+      final exerciseWithSuperset = exercise.copyWith(
+        supersetGroupId: supersetGroupId,
+        groupOrderIndex: ei,
+      );
+      final exerciseWithId = Exercise(
+        id: exerciseRef.id,
+        name: exerciseWithSuperset.name,
+        exerciseType: exerciseWithSuperset.exerciseType,
+        orderIndex: exerciseWithSuperset.orderIndex,
+        notes: exerciseWithSuperset.notes,
+        createdAt: exerciseWithSuperset.createdAt,
+        updatedAt: exerciseWithSuperset.updatedAt,
+        userId: exerciseWithSuperset.userId,
+        workoutId: exerciseWithSuperset.workoutId,
+        weekId: exerciseWithSuperset.weekId,
+        programId: exerciseWithSuperset.programId,
+        supersetGroupId: supersetGroupId,
+        groupOrderIndex: ei,
+      );
+
+      batch.set(exerciseRef, ExerciseConverter.toFirestore(exerciseWithId));
+      batchCount++;
+      exerciseIds.add(exerciseRef.id);
+
+      if (batchCount >= batchLimit) await commitBatchIfNeeded();
+
+      // Determine default metric values based on exercise type
+      int? defaultReps;
+      int? defaultDuration;
+      switch (exercise.exerciseType) {
+        case ExerciseType.strength:
+        case ExerciseType.bodyweight:
+          defaultReps = 0;
+          break;
+        case ExerciseType.cardio:
+        case ExerciseType.timeBased:
+          defaultDuration = 0;
+          break;
+        case ExerciseType.custom:
+          defaultReps = 0;
+          break;
+      }
+
+      for (int si = 0; si < setCount; si++) {
+        final setRef = exerciseRef.collection('sets').doc();
+        final set = ExerciseSet(
+          id: setRef.id,
+          setNumber: si + 1,
+          checked: false,
+          weight: null,
+          reps: defaultReps,
+          duration: defaultDuration,
+          distance: null,
+          notes: null,
+          restTime: null,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          userId: exercise.userId,
+          exerciseId: exerciseRef.id,
+          workoutId: exercise.workoutId,
+          weekId: exercise.weekId,
+          programId: exercise.programId,
+        );
+        batch.set(setRef, ExerciseSetConverter.toFirestore(set));
+        batchCount++;
+        if (batchCount >= batchLimit) await commitBatchIfNeeded();
+      }
+    }
+
+    await commitBatchIfNeeded();
+    await Future.wait(pendingCommits);
+    return exerciseIds;
+  }
+
   /// Update an exercise
   Future<void> updateExercise(Exercise exercise) async {
     await _firestore
@@ -1183,6 +1299,66 @@ class FirestoreService {
       await Future.wait(pendingCommits);
     } catch (e) {
       throw Exception('Failed to delete exercise cascade: $e');
+    }
+  }
+
+  /// Delete all exercises (and their sets) belonging to a superset group.
+  ///
+  /// Queries exercises matching [supersetGroupId] and cascade-deletes each one.
+  Future<void> deleteSupersetGroup(
+    String userId,
+    String programId,
+    String weekId,
+    String workoutId,
+    String supersetGroupId,
+  ) async {
+    try {
+      const batchLimit = 450;
+      WriteBatch batch = _firestore.batch();
+      int batchCount = 0;
+      final List<Future<void>> pendingCommits = [];
+
+      Future<void> commitBatchIfNeeded() async {
+        if (batchCount == 0) return;
+        final commitFuture = batch.commit();
+        pendingCommits.add(commitFuture);
+        batch = _firestore.batch();
+        batchCount = 0;
+      }
+
+      Future<void> addDeleteToBatch(DocumentReference ref) async {
+        batch.delete(ref);
+        batchCount++;
+        if (batchCount >= batchLimit) await commitBatchIfNeeded();
+      }
+
+      final exercisesSnap = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('programs')
+          .doc(programId)
+          .collection('weeks')
+          .doc(weekId)
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('exercises')
+          .where('supersetGroupId', isEqualTo: supersetGroupId)
+          .get();
+
+      for (final exerciseDoc in exercisesSnap.docs) {
+        // Delete all sets for this exercise
+        final setsSnap = await exerciseDoc.reference.collection('sets').get();
+        for (final setDoc in setsSnap.docs) {
+          await addDeleteToBatch(setDoc.reference);
+        }
+        // Delete the exercise itself
+        await addDeleteToBatch(exerciseDoc.reference);
+      }
+
+      await commitBatchIfNeeded();
+      await Future.wait(pendingCommits);
+    } catch (e) {
+      throw Exception('Failed to delete superset group: $e');
     }
   }
 

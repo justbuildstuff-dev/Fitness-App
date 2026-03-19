@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../models/program.dart';
 import '../models/week.dart';
 import '../models/workout.dart';
@@ -948,6 +949,93 @@ class ProgramProvider extends ChangeNotifier {
       // Exercises will be automatically updated via the stream
     } catch (e) {
       _programsError = 'Failed to delete exercise: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Create a superset group from a list of exercises.
+  ///
+  /// Assigns a shared [supersetGroupId] UUID and sequential [groupOrderIndex]
+  /// to each exercise, writing them to Firestore in a single batched operation.
+  /// Returns the list of created exercise IDs, or null on failure.
+  Future<List<String>?> createSuperset({
+    required String programId,
+    required String weekId,
+    required String workoutId,
+    required List<({String name, ExerciseType exerciseType})> exercises,
+    int setCount = 3,
+  }) async {
+    if (_userId == null) return null;
+
+    try {
+      _programsError = null;
+      notifyListeners();
+
+      // Generate a single UUID for the entire group
+      final supersetGroupId = const Uuid().v4();
+
+      // Calculate starting orderIndex so the group lands at the end
+      final nextOrderIndex = _exercises.isEmpty
+          ? 0
+          : _exercises.map((e) => e.orderIndex).reduce((a, b) => a > b ? a : b) + 1;
+
+      final exerciseModels = exercises.asMap().entries.map((entry) {
+        final i = entry.key;
+        final ex = entry.value;
+        return Exercise(
+          id: '',
+          name: ex.name.trim(),
+          exerciseType: ex.exerciseType,
+          orderIndex: nextOrderIndex + i,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          userId: _userId!,
+          workoutId: workoutId,
+          weekId: weekId,
+          programId: programId,
+          supersetGroupId: supersetGroupId,
+          groupOrderIndex: i,
+        );
+      }).toList();
+
+      final ids = await _firestoreService.createSupersetWithExercises(
+        exerciseModels,
+        supersetGroupId,
+        setCount,
+      );
+      return ids;
+    } catch (e) {
+      _programsError = 'Failed to create superset: $e';
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Delete all exercises in a superset group (cascade deletes their sets).
+  Future<void> deleteSupersetGroup({
+    required String programId,
+    required String weekId,
+    required String workoutId,
+    required String supersetGroupId,
+  }) async {
+    if (_userId == null) throw Exception('User not authenticated');
+
+    try {
+      _programsError = null;
+      notifyListeners();
+
+      await _firestoreService.deleteSupersetGroup(
+        _userId!,
+        programId,
+        weekId,
+        workoutId,
+        supersetGroupId,
+      );
+
+      // Exercises will be updated via the stream
+    } catch (e) {
+      _programsError = 'Failed to delete superset group: $e';
       notifyListeners();
       rethrow;
     }

@@ -357,4 +357,136 @@ void main() {
       expect(find.text('Number of Sets'), findsOneWidget);
     });
   });
+
+  group('ExercisePickerScreen — multi-select mode', () {
+    late List<LibraryExercise> twoExercises;
+
+    setUp(() {
+      twoExercises = const [
+        LibraryExercise(
+          id: 'lib_bench',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          primaryMuscles: [MuscleGroup.chest],
+        ),
+        LibraryExercise(
+          id: 'lib_squat',
+          name: 'Squat',
+          exerciseType: ExerciseType.strength,
+          primaryMuscles: [MuscleGroup.legs],
+        ),
+      ];
+    });
+
+    Widget createMultiSelectWidget({int initialSetCount = 3}) {
+      return MaterialApp(
+        home: ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+          value: mockProvider,
+          child: ExercisePickerScreen(
+            isMultiSelect: true,
+            initialSetCount: initialSetCount,
+          ),
+        ),
+      );
+    }
+
+    testWidgets('shows "Select Exercises" as title in multi-select mode',
+        (tester) async {
+      /// Test Purpose: Verify AppBar title changes in multi-select mode
+      mockProvider.setLibraryExercises([]);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Exercises'), findsOneWidget);
+    });
+
+    testWidgets('shows checkboxes instead of avatars in multi-select mode',
+        (tester) async {
+      /// Test Purpose: Verify list tiles show checkboxes in multi-select mode
+      mockProvider.setLibraryExercises(twoExercises);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Checkbox), findsNWidgets(2));
+    });
+
+    testWidgets('shows bottom bar in multi-select mode', (tester) async {
+      /// Test Purpose: Verify the multi-select bottom bar is rendered
+      mockProvider.setLibraryExercises(twoExercises);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('sets each'), findsOneWidget);
+    });
+
+    testWidgets('Add button is disabled with fewer than 2 exercises selected',
+        (tester) async {
+      /// Test Purpose: Verify Add button disabled until 2+ exercises selected
+      mockProvider.setLibraryExercises(twoExercises);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      // Initially 0 selected — button shows "Add 0 exercises"
+      final addButton = find.widgetWithText(ElevatedButton, 'Add 0 exercises');
+      expect(addButton, findsOneWidget);
+
+      // The button should be disabled (no onPressed)
+      final button = tester.widget<ElevatedButton>(addButton);
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('selecting 1 exercise keeps Add button disabled', (tester) async {
+      /// Test Purpose: Verify 1 selection is insufficient to enable Add
+      mockProvider.setLibraryExercises(twoExercises);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      // Select first exercise
+      await tester.tap(find.text('Bench Press'));
+      await tester.pumpAndSettle();
+
+      final addButton = find.widgetWithText(ElevatedButton, 'Add 1 exercise');
+      expect(addButton, findsOneWidget);
+
+      final button = tester.widget<ElevatedButton>(addButton);
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('selecting 2 exercises enables Add button', (tester) async {
+      /// Test Purpose: Verify 2+ selections enable the Add button
+      mockProvider.setLibraryExercises(twoExercises);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      // Select both exercises
+      await tester.tap(find.text('Bench Press'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Squat'));
+      await tester.pumpAndSettle();
+
+      final addButton = find.widgetWithText(ElevatedButton, 'Add 2 exercises');
+      expect(addButton, findsOneWidget);
+
+      final button = tester.widget<ElevatedButton>(addButton);
+      expect(button.onPressed, isNotNull);
+    });
+
+    testWidgets('does not open bottom sheet when tapping in multi-select mode',
+        (tester) async {
+      /// Test Purpose: Verify tap toggles selection instead of opening detail sheet
+      mockProvider.setLibraryExercises(twoExercises);
+      await tester.pumpWidget(createMultiSelectWidget());
+      await tester.pumpAndSettle();
+
+      // Tap an exercise — should toggle checkbox, not open bottom sheet
+      await tester.tap(find.text('Bench Press'));
+      await tester.pumpAndSettle();
+
+      // No bottom sheet content (like "Number of Sets" from single-select sheet)
+      expect(find.text('Number of Sets'), findsNothing);
+      // Checkbox should be checked
+      final checkboxes = tester.widgetList<Checkbox>(find.byType(Checkbox));
+      expect(checkboxes.any((c) => c.value == true), isTrue);
+    });
+  });
 }

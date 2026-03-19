@@ -414,6 +414,163 @@ void main() {
       });
     });
 
+    group('Superset Group Fields', () {
+      test('supersetGroupId and groupOrderIndex are null by default', () {
+        /// Test Purpose: Verify new superset fields default to null for backward compatibility
+        final exercise = Exercise(
+          id: 'exercise-1',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
+
+        expect(exercise.supersetGroupId, isNull);
+        expect(exercise.groupOrderIndex, isNull);
+      });
+
+      test('toMap includes supersetGroupId and groupOrderIndex', () {
+        /// Test Purpose: Verify serialization includes superset fields
+        final exercise = Exercise(
+          id: 'exercise-1',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+          supersetGroupId: 'group-uuid-123',
+          groupOrderIndex: 0,
+        );
+
+        final mapData = exercise.toMap();
+        expect(mapData['supersetGroupId'], 'group-uuid-123');
+        expect(mapData['groupOrderIndex'], 0);
+      });
+
+      test('toMap serializes null superset fields correctly', () {
+        /// Test Purpose: Verify null superset fields are serialized as null (not omitted)
+        final exercise = Exercise(
+          id: 'exercise-1',
+          name: 'Squat',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
+
+        final mapData = exercise.toMap();
+        expect(mapData.containsKey('supersetGroupId'), isTrue);
+        expect(mapData['supersetGroupId'], isNull);
+        expect(mapData.containsKey('groupOrderIndex'), isTrue);
+        expect(mapData['groupOrderIndex'], isNull);
+      });
+
+      test('copyWith preserves supersetGroupId when not specified', () {
+        /// Test Purpose: Verify copyWith does not inadvertently clear superset fields
+        final original = Exercise(
+          id: 'exercise-1',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+          supersetGroupId: 'group-uuid-123',
+          groupOrderIndex: 1,
+        );
+
+        final updated = original.copyWith(name: 'Updated Name');
+        expect(updated.supersetGroupId, 'group-uuid-123');
+        expect(updated.groupOrderIndex, 1);
+      });
+
+      test('copyWith with clearSupersetGroup sets both fields to null', () {
+        /// Test Purpose: Verify clearSupersetGroup flag nullifies both superset fields
+        final original = Exercise(
+          id: 'exercise-1',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+          supersetGroupId: 'group-uuid-123',
+          groupOrderIndex: 0,
+        );
+
+        final cleared = original.copyWith(clearSupersetGroup: true);
+        expect(cleared.supersetGroupId, isNull);
+        expect(cleared.groupOrderIndex, isNull);
+      });
+
+      test('copyWith can update supersetGroupId and groupOrderIndex', () {
+        /// Test Purpose: Verify copyWith can assign new superset group values
+        final original = Exercise(
+          id: 'exercise-1',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+        );
+
+        final grouped = original.copyWith(
+          supersetGroupId: 'new-group-uuid',
+          groupOrderIndex: 2,
+        );
+        expect(grouped.supersetGroupId, 'new-group-uuid');
+        expect(grouped.groupOrderIndex, 2);
+      });
+
+      test('equality considers supersetGroupId and groupOrderIndex', () {
+        /// Test Purpose: Verify that superset fields are included in equality check
+        final exercise1 = Exercise(
+          id: 'exercise-1',
+          name: 'Bench Press',
+          exerciseType: ExerciseType.strength,
+          orderIndex: 1,
+          createdAt: testDate,
+          updatedAt: testDate,
+          userId: 'user-123',
+          workoutId: 'workout-1',
+          weekId: 'week-1',
+          programId: 'program-1',
+          supersetGroupId: 'group-uuid-123',
+          groupOrderIndex: 0,
+        );
+
+        final exercise2 = exercise1.copyWith(); // identical copy
+        final exercise3 = exercise1.copyWith(supersetGroupId: 'different-group');
+
+        expect(exercise1, equals(exercise2));
+        expect(exercise1.hashCode, equals(exercise2.hashCode));
+        expect(exercise1, isNot(equals(exercise3)));
+      });
+    });
+
     group('Edge Cases and Error Conditions', () {
       test('handles extremely long exercise names gracefully', () {
         /// Test Purpose: Test boundary conditions for exercise name validation
