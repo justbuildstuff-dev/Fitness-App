@@ -22,11 +22,18 @@ import 'package:http/http.dart' as http;
 class FirebaseEmulatorSetup {
   
   /// Configuration for Firebase emulators
-  /// These settings must match your production Firebase project configuration
-  /// Using 10.0.2.2 to access host machine from Android emulator
-  static const _authEmulatorHost = '10.0.2.2';
+  ///
+  /// Uses 'localhost' for both emulators, which requires `adb reverse` port
+  /// forwarding to be set up in CI before running flutter drive:
+  ///   adb -s emulator-5554 reverse tcp:8080 tcp:8080
+  ///   adb -s emulator-5554 reverse tcp:9099 tcp:9099
+  ///
+  /// This is more reliable than using 10.0.2.2 because gRPC (used by
+  /// Firestore) can have issues with QEMU NAT routing in GitHub Actions,
+  /// while the adb reverse tunnel is a direct TCP connection.
+  static const _authEmulatorHost = 'localhost';
   static const _authEmulatorPort = 9099;
-  static const _firestoreEmulatorHost = '10.0.2.2';  
+  static const _firestoreEmulatorHost = 'localhost';
   static const _firestoreEmulatorPort = 8080;
   static const _emulatorUIPort = 4000;
 
@@ -98,20 +105,30 @@ class FirebaseEmulatorSetup {
     if (_emulatorsConfigured) return;
 
     try {
-      // Configure Auth emulator (gracefully handle if already configured)
+      // Configure Auth emulator (gracefully handle if already configured by main app)
       try {
         FirebaseAuth.instance.useAuthEmulator(_authEmulatorHost, _authEmulatorPort);
+        print('✅ Auth emulator configured: $_authEmulatorHost:$_authEmulatorPort');
       } catch (e) {
-        // Emulator might already be configured by main app
-        print('Auth emulator: ${e.toString().contains('already') ? 'Already configured' : 'Configuration failed: $e'}');
+        if (e.toString().toLowerCase().contains('already')) {
+          print('Auth emulator: Already configured');
+        } else {
+          throw Exception('Failed to configure Auth emulator at $_authEmulatorHost:$_authEmulatorPort — $e\n'
+              'Ensure adb reverse is set up: adb -s emulator-5554 reverse tcp:9099 tcp:9099');
+        }
       }
-      
-      // Configure Firestore emulator (gracefully handle if already configured)
+
+      // Configure Firestore emulator (gracefully handle if already configured by main app)
       try {
         FirebaseFirestore.instance.useFirestoreEmulator(_firestoreEmulatorHost, _firestoreEmulatorPort);
+        print('✅ Firestore emulator configured: $_firestoreEmulatorHost:$_firestoreEmulatorPort');
       } catch (e) {
-        // Emulator might already be configured by main app
-        print('Firestore emulator: ${e.toString().contains('already') ? 'Already configured' : 'Configuration failed: $e'}');
+        if (e.toString().toLowerCase().contains('already')) {
+          print('Firestore emulator: Already configured');
+        } else {
+          throw Exception('Failed to configure Firestore emulator at $_firestoreEmulatorHost:$_firestoreEmulatorPort — $e\n'
+              'Ensure adb reverse is set up: adb -s emulator-5554 reverse tcp:8080 tcp:8080');
+        }
       }
 
       _emulatorsConfigured = true;

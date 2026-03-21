@@ -196,13 +196,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-ndk-
           ${{ runner.os }}-gradle-
-        
+
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
         flutter-version: 3.35.1
-        cache: true
-        
+        cache: false  # Disabled: post-step hashFiles fails on emulator runner due to disk operations
+
     - name: Setup Node.js for Firebase CLI
       uses: actions/setup-node@v4
       with:
@@ -225,10 +225,10 @@ jobs:
     - name: Start Firebase emulators
       run: |
         cd fittrack
-        # Start emulators without project flag to load custom firestore.rules
-        # This ensures our security rules are applied during integration tests
-        # The emulator will use the project from .firebaserc (fitness-app-8505e)
-        firebase emulators:start --only auth,firestore &
+        # Start emulators with explicit project ID to ensure consistent project context.
+        # This ensures our security rules are applied and the emulator accepts requests
+        # from the app (which uses projectId: fitness-app-8505e in firebase_options.dart).
+        firebase emulators:start --only auth,firestore --project fitness-app-8505e &
         echo $! > emulator.pid
         echo "✅ Firebase emulators started with custom security rules"
         
@@ -256,14 +256,14 @@ jobs:
 
         # Final verification with proper endpoints
         echo "🔍 Testing Firestore emulator endpoint..."
-        curl -f http://localhost:8080/v1/projects/demo-project/databases || echo "⚠️  Firestore endpoint not ready"
+        curl -f http://localhost:8080/v1/projects/fitness-app-8505e/databases || echo "⚠️  Firestore endpoint not ready"
         echo "✅ Firestore emulator: localhost:8080"
 
         echo "🔍 Testing Auth emulator endpoint..."
-        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-project || echo "⚠️  Auth endpoint not ready"
+        curl -f http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/fitness-app-8505e || echo "⚠️  Auth endpoint not ready"
         echo "✅ Auth emulator: localhost:9099"
 
-        echo "📱 Android emulator will access via 10.0.2.2:8080 and 10.0.2.2:9099"
+        echo "📱 Android emulator will access Firebase emulators via adb reverse tunnels (localhost:8080 and localhost:9099)"
         echo "✅ Firebase emulators ready for integration testing"
         
         echo "Firebase emulator setup completed - proceeding with tests"
@@ -319,6 +319,16 @@ jobs:
           chmod +x fittrack/scripts/verify_emulator_ready.sh
           ./fittrack/scripts/verify_emulator_ready.sh
 
+          # Set up adb reverse port forwarding so the Android emulator can reach
+          # Firebase emulators via localhost rather than 10.0.2.2.
+          # This is critical: Firestore uses gRPC (HTTP/2) which is unreliable through
+          # QEMU NAT (10.0.2.2) on GitHub Actions Linux, but works reliably via the
+          # direct TCP tunnel created by adb reverse.
+          echo "🔌 Setting up adb reverse port forwarding for Firebase emulators..."
+          adb -s emulator-5554 reverse tcp:8080 tcp:8080 && echo "✅ Firestore port 8080 forwarded" || echo "⚠️  Firestore port forward failed — Firestore emulator may be unreachable"
+          adb -s emulator-5554 reverse tcp:9099 tcp:9099 && echo "✅ Auth port 9099 forwarded" || echo "⚠️  Auth port forward failed — Auth emulator may be unreachable"
+          adb -s emulator-5554 reverse --list
+
           echo "🚀 Running integration tests on Android with flutter drive..." && echo "" > /tmp/integration_test_output.log && echo "Running analytics integration test..." && cd fittrack && (timeout 2400 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/analytics_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && echo "Running workout creation integration test..." && cd fittrack && (timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/workout_creation_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && echo "Running complete workflow integration test..." && cd fittrack && (timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/enhanced_complete_workflow_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && echo "Running cascade delete integration test..." && cd fittrack && (timeout 1200 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/firestore_cascade_delete_integration_test.dart --device-id=emulator-5554 2>&1 | tee -a /tmp/integration_test_output.log) && cd .. && cp /tmp/integration_test_output.log /tmp/last_test_output.log; FINAL_EXIT_CODE=$?; cp /tmp/integration_test_output.log /tmp/last_test_output.log; exit $FINAL_EXIT_CODE
 
     - name: Retry Integration Test on Failure
@@ -358,6 +368,12 @@ jobs:
           # Verify emulator is responsive
           echo "🔍 Checking emulator health..."
           adb -s emulator-5554 shell echo "emulator-ready" 2>/dev/null || (echo "⚠️  Emulator not responding, waiting longer..." && sleep 15)
+
+          # Set up adb reverse port forwarding (same as initial run)
+          echo "🔌 Setting up adb reverse port forwarding for Firebase emulators..."
+          adb -s emulator-5554 reverse tcp:8080 tcp:8080 && echo "✅ Firestore port 8080 forwarded" || echo "⚠️  Firestore port forward failed"
+          adb -s emulator-5554 reverse tcp:9099 tcp:9099 && echo "✅ Auth port 9099 forwarded" || echo "⚠️  Auth port forward failed"
+          adb -s emulator-5554 reverse --list
 
           echo "🚀 Running integration tests on Android with flutter drive..."
 
