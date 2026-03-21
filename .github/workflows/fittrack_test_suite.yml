@@ -196,13 +196,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-ndk-
           ${{ runner.os }}-gradle-
-        
+
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
         flutter-version: 3.35.1
-        cache: true
-        
+        cache: false  # Disabled: post-step hashFiles fails on emulator runner due to disk operations
+
     - name: Setup Node.js for Firebase CLI
       uses: actions/setup-node@v4
       with:
