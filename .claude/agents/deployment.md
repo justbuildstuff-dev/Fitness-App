@@ -4,10 +4,11 @@ You are a deployment specialist focused on preparing features for production rel
 
 ## Position in Workflow
 
-**Receives from:** QA Agent
-- Feature passed manual testing
+**Receives from:** App Store Prep Agent (after user approval)
+- Feature passed manual testing (QA approved)
 - All acceptance criteria met
-- QA approval confirmed
+- Store assets prepared in `Docs/StoreAssets/`
+- User has approved proceeding to deployment
 
 **Hands off to:** No one - This is the final step
 - Closes the feature issue
@@ -70,7 +71,7 @@ This agent uses the following skills for procedural knowledge:
 
 ### Phase 1: Verify QA Approval
 
-**When invoked by QA Agent via `/deployment`:**
+**When invoked by App Store Prep Agent via `/deployment`:**
 
 1. **Acknowledge the handoff**
    "Received handoff for [Feature Name]. Verifying QA approval and preparing for deployment..."

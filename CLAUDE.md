@@ -185,7 +185,13 @@ Developer Agent
 ↓
 Testing Agent
 ↓
+Security Audit Agent
+↓
+Accessibility Audit Agent
+↓
 QA Agent
+↓
+App Store Prep Agent
 ↓
 Deployment Agent
 ↓
@@ -196,14 +202,19 @@ Feature Complete
 User confirmation required at these points:
 1. **After BA creates requirements** - Before SA starts design
 2. **After SA creates design** - Before Developer starts implementation
-3. **After QA review** - Before Deployment to production
+3. **After QA review** - Before App Store Prep begins
+4. **After App Store Prep** - Before Deployment to production
 
 ### No Approval Needed (Automatic)
 
 These handoffs happen automatically:
 - Developer → Testing (after all PRs merged)
-- Testing → QA (after tests pass)
+- Testing → Security Audit (after tests pass)
+- Security Audit → Accessibility Audit (after security approved)
+- Accessibility Audit → QA (after audit passed)
 - QA → Developer (if bugs found)
+- Security Audit → Developer (if critical/high issues found)
+- Accessibility Audit → Developer (if blocking issues found)
 
 ### Invoking Agents
 
@@ -219,7 +230,10 @@ Available agents:
 `@sa` - Solutions Architect (technical design)
 `@developer` - Flutter Developer (implementation)
 `@testing` - Testing Agent (automated tests)
-`@qa` - QA Agent (quality assurance)
+`@security-audit` - Security Audit Agent (OWASP, Firestore rules, CVE, PII)
+`@accessibility` - Accessibility Audit Agent (WCAG AA, screen reader, contrast)
+`@qa` - QA Agent (manual quality assurance)
+`@appstore-prep` - App Store Prep Agent (listing copy, privacy policy, screenshots)
 `@deployment` - Deployment Agent (production release)
 
 ## Agent Instructions & Skills
@@ -229,7 +243,10 @@ Available agents:
 - `sa.md` - Solutions Architect Agent
 - `developer.md` - Developer Agent
 - `testing.md` - Testing Agent
+- `security-audit.md` - Security Audit Agent
+- `accessibility-audit.md` - Accessibility Audit Agent
 - `qa.md` - QA Agent
+- `appstore-prep.md` - App Store Prep Agent
 - `deployment.md` - Deployment Agent
 
 **Skills (Reusable Procedural Knowledge):** Located in `.claude/skills/`
@@ -265,8 +282,16 @@ All documentation is stored in the Git repository under `Docs/`. Status tracking
 `in-review` - PR open, awaiting review
 `ready-for-testing` - Code merged, ready for tests
 `testing` - Tests running
-`ready-for-qa` - Tests passed, ready for QA
-`qa-approved` - QA passed, ready for deployment
+`ready-for-security` - Tests passed, awaiting security audit
+`security-approved` - Security audit passed
+`security-issues` - Security audit found blocking issues
+`ready-for-accessibility` - Security done, awaiting accessibility audit
+`accessibility-approved` - Accessibility audit passed
+`accessibility-issues` - Accessibility audit found blocking issues
+`ready-for-qa` - Accessibility done, ready for QA
+`qa-approved` - QA passed, ready for store prep
+`ready-for-store-prep` - QA approved, awaiting store asset prep
+`store-assets-ready` - App Store prep complete, awaiting deployment
 `ready-for-deploy` - Approved for production
 `deployed` - Live in production
 
@@ -397,23 +422,57 @@ Final PR to main: #XXX (created, DO NOT merge yet)
 
 Please verify all tests pass on the feature→main PR and approve merge if tests pass."
 ```
-**Testing Agent hands off to QA:**
+**Testing Agent hands off to Security Audit:**
 ```bash
-@qa "Testing complete for [Feature Name].
+@security-audit "Testing complete for [Feature Name].
 
 Parent Issue: #XX
 All tests passing: ✓
 Beta build: [Firebase link]
 
-Ready for QA review."
+Please perform security audit before QA begins."
 ```
-**QA Agent hands off to Deployment:**
+**Security Audit Agent hands off to Accessibility Audit:**
 ```bash
-@deployment "QA approved for [Feature Name].
+@accessibility "Security audit complete for [Feature Name].
+
+Parent Issue: #XX
+Security audit: PASSED ✓
+Issues found: [None / n medium/low items logged to backlog]
+
+Please perform accessibility audit."
+```
+**Accessibility Audit Agent hands off to QA:**
+```bash
+@qa "Accessibility audit complete for [Feature Name].
+
+Parent Issue: #XX
+Security audit: PASSED ✓
+Accessibility audit: PASSED ✓
+Beta build: [Firebase link]
+
+Ready for manual QA and acceptance testing."
+```
+**QA Agent hands off to App Store Prep:**
+```bash
+@appstore-prep "QA approved for [Feature Name].
 
 Parent Issue: #XX
 All acceptance criteria met: ✓
 Manual testing complete: ✓
+Version: [X.Y.Z]
+
+Please prepare App Store and Play Store submission assets."
+```
+**App Store Prep Agent hands off to Deployment:**
+```bash
+@deployment "Store assets ready for [Feature Name].
+
+Parent Issue: #XX
+App Store assets: READY ✓
+Privacy policy: Updated ✓
+Screenshots spec: READY ✓
+Version: [X.Y.Z]
 
 Ready for production deployment."
 ```
@@ -461,10 +520,16 @@ Final: Issue #47 CLOSED by Deployment Agent after production release
 4. `in-review` (PRs open)
 5. `ready-for-testing` (All PRs merged)
 6. `testing` (Testing Agent running tests)
-7. `ready-for-qa` (Tests passed)
-8. `qa-approved` (QA verified)
-9. `ready-for-deploy` (Approved for production)
-10. `deployed` (Live in production, issue CLOSED)
+7. `ready-for-security` (Tests passed)
+8. `security-approved` (Security audit passed)
+9. `ready-for-accessibility` (Security done)
+10. `accessibility-approved` (Accessibility audit passed)
+11. `ready-for-qa` (Accessibility done)
+12. `qa-approved` (QA verified)
+13. `ready-for-store-prep` (QA approved, user approved)
+14. `store-assets-ready` (Store assets complete)
+15. `ready-for-deploy` (User approved for production)
+16. `deployed` (Live in production, issue CLOSED)
 
 ## When Working with Agents
 
@@ -499,16 +564,39 @@ Final: Issue #47 CLOSED by Deployment Agent after production release
 - Check coverage meets requirements (80%+ overall)
 - Create beta build via `create-beta-build` label
 - Documentation: Test reports (GitHub comments)
-- Hand off to QA if tests pass, or back to Developer if bugs found
+- Hand off to Security Audit if tests pass, or back to Developer if bugs found
+
+**Security Audit Agent** - Code security review
+- OWASP Mobile Top 10 audit against Flutter/Firebase stack
+- Firestore rules review, hardcoded secrets scan, dependency CVE check
+- PII audit — catalog what user data is stored
+- Detailed report: `Docs/SecurityReports/` (gitignored — never committed)
+- GitHub comment: summary only (repo is public — no exploit details)
+- Hand off to Accessibility Audit if passed, or back to Developer if critical/high issues
+
+**Accessibility Audit Agent** - UI accessibility review
+- WCAG AA compliance: semantic labels, color contrast, touch targets
+- Dynamic text scaling, screen reader focus order, reduced motion
+- Documentation: Accessibility report (GitHub issue comment)
+- Hand off to QA if passed, or back to Developer if blocking issues found
 
 **QA Agent** - Manual quality assurance
+- Receives from Accessibility Audit Agent
 - Test beta build on actual devices
 - Validate all acceptance criteria from PRD
 - Test edge cases and user experience
 - Documentation: QA reports (GitHub comments)
-- Hand off to Deployment if approved, or back to Developer if critical bugs found
+- Hand off to App Store Prep (after user approval), or back to Developer if critical bugs found
+
+**App Store Prep Agent** - Store submission preparation
+- Draft App Store and Play Store listing copy
+- Draft privacy policy skeleton
+- Age rating questionnaire, screenshot specifications, compliance checklist
+- Documentation: All assets in `Docs/StoreAssets/` (committed — public-facing content)
+- Hand off to Deployment after user approval
 
 **Deployment Agent** - Production release
+- Receives from App Store Prep Agent (after user approval)
 - Prepare release artifacts (version bump, changelog, release notes)
 - Guide manual store submission (provide checklist)
 - Close feature issue after deployment confirmed

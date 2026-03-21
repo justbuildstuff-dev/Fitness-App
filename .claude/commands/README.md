@@ -29,26 +29,45 @@ This directory contains slash commands for invoking specialized agents in the Fi
 **When to use:** After implementation, need to run tests
 **Example:**
 ```
-/testing Run full test suite for nutrition tracking feature
+/testing Implementation complete for nutrition tracking. Parent Issue: #45, PR: #46
+```
+
+### `/security-audit` - Security Audit Agent
+**When to use:** After tests pass, before QA begins (automatic handoff from Testing)
+**Example:**
+```
+/security-audit Testing complete for nutrition tracking. Parent Issue: #45, all tests passing.
+```
+
+### `/accessibility-audit` - Accessibility Audit Agent
+**When to use:** After security audit passes (automatic handoff from Security Audit)
+**Example:**
+```
+/accessibility-audit Security audit passed for nutrition tracking. Parent Issue: #45.
 ```
 
 ### `/qa` - QA Agent
-**When to use:** After tests pass, need manual QA verification
+**When to use:** After accessibility audit passes, manual device testing
 **Example:**
 ```
-/qa Verify nutrition tracking feature meets acceptance criteria
+/qa Accessibility audit passed for nutrition tracking. Parent Issue: #45. Beta build: [URL]
+```
+
+### `/appstore-prep` - App Store Prep Agent
+**When to use:** After QA approval and user sign-off, prepare store submission assets
+**Example:**
+```
+/appstore-prep QA approved for nutrition tracking. Parent Issue: #45. Version: 1.7.0
 ```
 
 ### `/deployment` - Deployment Agent
-**When to use:** After QA approval, ready for production
+**When to use:** After store assets ready and user approval, release to production
 **Example:**
 ```
-/deployment Deploy nutrition tracking feature to production
+/deployment Store assets ready for nutrition tracking. Parent Issue: #45. Version: 1.7.0
 ```
 
 ## Workflow
-
-The typical agent flow is:
 
 ```
 User Request
@@ -63,9 +82,17 @@ User Approval
     ↓
 /developer (implement)
     ↓
-/testing (run tests) [automatic]
+/testing (run tests)          ← automatic
     ↓
-/qa (verify quality) [automatic after tests pass]
+/security-audit               ← automatic
+    ↓
+/accessibility-audit          ← automatic
+    ↓
+/qa (manual device testing)   ← automatic
+    ↓
+User Approval
+    ↓
+/appstore-prep                ← automatic after approval
     ↓
 User Approval
     ↓
@@ -74,18 +101,20 @@ User Approval
 
 ## Usage Notes
 
-- You can invoke agents by typing `/agent-name` followed by your request
+- Invoke agents by typing `/agent-name` followed by your request
 - Agents automatically follow the workflow defined in `.claude/agents/`
-- Each agent has specific responsibilities and tools (GitHub, Notion, etc.)
-- Agents will hand off to the next agent when their work is complete
-- Some handoffs require user approval (BA→SA, SA→Developer, QA→Deployment)
-- Other handoffs are automatic (Developer→Testing, Testing→QA)
+- Some handoffs require user approval (BA→SA, SA→Developer, QA→AppStorePrep, AppStorePrep→Deployment)
+- Other handoffs are automatic (Developer→Testing→SecurityAudit→AccessibilityAudit→QA)
 
 ## Agent Files
 
-The full agent instructions are stored in:
-- `.claude/agents/ba.md`
-- `.claude/agents/sa.md`
-- `.claude/agents/developer.md`
-
-Testing, QA, and Deployment agent instructions are embedded in their slash command files until full agent definition files are created.
+Full agent instructions are in `.claude/agents/`:
+- `ba.md` - Business Analyst
+- `sa.md` - Solutions Architect
+- `developer.md` - Flutter Developer
+- `testing.md` - Testing Agent
+- `security-audit.md` - Security Audit Agent
+- `accessibility-audit.md` - Accessibility Audit Agent
+- `qa.md` - QA Agent
+- `appstore-prep.md` - App Store Prep Agent
+- `deployment.md` - Deployment Agent

@@ -41,3 +41,8 @@ key.properties
 **/*.pem
 **/*.p12
 **/*.key
+
+# Private business documents (not for public repo)
+Docs/SecurityReports/
+Docs/Monetization_Strategy.md
+Docs/ProductionReadiness.md
