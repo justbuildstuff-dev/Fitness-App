@@ -16,6 +16,7 @@ import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
+import 'services/onboarding_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +56,9 @@ void main() async {
 
   // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
+
+  // Initialize onboarding state service (must be before runApp)
+  OnboardingService.initialize(prefs);
 
   runApp(FitTrackApp(prefs: prefs));
 }
