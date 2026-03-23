@@ -197,7 +197,11 @@ void main() {
           reason: 'Should show create workout title');
 
         // Step 8: Fill out workout form with all fields
-        
+        // Wait for form to fully render on slow emulators before accessing fields.
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
+
         // Fill workout name
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, 'Upper Body Strength Training');
@@ -304,9 +308,11 @@ void main() {
         await tester.pumpAndSettle();
         
         await tester.tap(find.byType(FloatingActionButton));
-        await tester.pumpAndSettle();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Fill only the required name field
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, 'Quick Workout');
 
@@ -387,6 +393,9 @@ void main() {
           reason: 'Should remain on create workout screen when validation fails');
 
         // Test name too long validation
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         final tooLongName = 'A' * 201; // Exceeds 200 character limit
         await tester.enterText(nameField, tooLongName);
@@ -434,9 +443,11 @@ void main() {
           
           // Tap FAB to create workout
           await tester.tap(find.byType(FloatingActionButton));
-          await tester.pumpAndSettle();
+          await tester.pumpAndSettle(const Duration(seconds: 2));
 
           // Fill workout name
+          expect(find.byType(TextFormField), findsWidgets,
+              reason: 'Workout form must be rendered before entering data');
           final nameField = find.widgetWithText(TextFormField, '').first;
           await tester.enterText(nameField, workoutNames[i]);
 
@@ -493,9 +504,11 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byType(FloatingActionButton));
-        await tester.pumpAndSettle();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         const persistentWorkoutName = 'Persistent Test Workout';
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, persistentWorkoutName);
 
@@ -587,9 +600,11 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byType(FloatingActionButton));
-        await tester.pumpAndSettle();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
 
         const secondUserWorkout = 'Second User Workout';
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, secondUserWorkout);
 

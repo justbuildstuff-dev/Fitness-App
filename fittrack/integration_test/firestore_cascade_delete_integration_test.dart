@@ -12,18 +12,11 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
 import 'package:fittrack/models/cascade_delete_counts.dart';
-
-/// Test configuration for Firebase emulators
-/// Must match the ports used in GitHub Actions workflow
-const String kAuthEmulatorHost = 'localhost';
-const int kAuthEmulatorPort = 9099;
-const String kFirestoreEmulatorHost = 'localhost';
-const int kFirestoreEmulatorPort = 8080;
+import 'firebase_emulator_setup.dart';
 
 void main() {
   group('Firestore Cascade Delete Count Integration Tests', () {
@@ -35,35 +28,10 @@ void main() {
     String? testExerciseId;
 
     setUpAll(() async {
-      // Initialize Flutter binding for Firebase
-      TestWidgetsFlutterBinding.ensureInitialized();
-
-      // Initialize Firebase for testing
-      try {
-        await Firebase.initializeApp(
-          options: const FirebaseOptions(
-            apiKey: 'test-api-key',
-            appId: 'test-app-id',
-            messagingSenderId: 'test-sender-id',
-            projectId: 'fitness-app-8505e',
-          ),
-        );
-      } catch (e) {
-        if (!e.toString().contains('duplicate-app')) {
-          rethrow;
-        }
-      }
-
-      // Configure emulators
-      try {
-        FirebaseAuth.instance.useAuthEmulator(kAuthEmulatorHost, kAuthEmulatorPort);
-        FirebaseFirestore.instance.useFirestoreEmulator(kFirestoreEmulatorHost, kFirestoreEmulatorPort);
-      } catch (e) {
-        // Already configured
-        print('Emulators already configured: $e');
-      }
-
-      print('✅ Firebase emulators configured for integration tests');
+      // Use the shared emulator setup helper to ensure Firebase is correctly
+      // initialised and emulators are reachable before each test suite,
+      // regardless of whether earlier suites already called Firebase.initializeApp.
+      await setupFirebaseEmulators();
     });
 
     setUp(() async {
