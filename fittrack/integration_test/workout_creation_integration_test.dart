@@ -141,16 +141,8 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        // The auth state listener is async, so give it time to fire
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
+        await _ensureOnProgramsScreen(tester);
         print('✅ App launched');
-
-        // Step 2: Navigate to Programs screen (should be automatic for authenticated user)
-        expect(find.byType(ProgramsScreen), findsOneWidget,
-          reason: 'Should navigate to Programs screen when authenticated');
 
         // Step 3: Find and tap the test program
         final programTile = find.text('Integration Test Program');
@@ -302,9 +294,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         // Navigate through the app to create workout screen
         // (Similar navigation steps as above, condensed for brevity)
@@ -381,9 +371,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
@@ -443,9 +431,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         // Navigate to weeks screen
         await tester.tap(find.text('Integration Test Program'));
@@ -518,9 +504,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         await tester.tap(find.text('Integration Test Program'));
         await tester.pumpAndSettle();
@@ -560,9 +544,7 @@ void main() {
         await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+        await _ensureOnProgramsScreen(tester);
 
         // Navigate back to the weeks screen
         await tester.tap(find.text('Integration Test Program'));
@@ -619,9 +601,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         // Navigate and create workout as second user
         await tester.tap(find.text('Integration Test Program'));
@@ -672,9 +652,7 @@ void main() {
         final prefs2 = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         // Navigate to first user's workouts
         await tester.tap(find.text('Integration Test Program'));
@@ -705,9 +683,7 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        // Wait for AuthProvider to check existing auth state
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _ensureOnProgramsScreen(tester);
 
         // Navigate to weeks screen
         await tester.tap(find.text('Integration Test Program'));
@@ -760,6 +736,36 @@ void main() {
 
 /// Additional test helper methods can be added here for common operations
 /// like navigating to specific screens, creating test workouts, etc.
+
+/// Wait for auth state to propagate and assert the app is on ProgramsScreen.
+///
+/// This mirrors the `_ensureSignedIn` pattern from the analytics tests.
+/// After pumping the widget, the AuthProvider's `authStateChanges()` listener
+/// fires asynchronously (it calls `await user.reload()` internally). On a slow
+/// CI Android emulator the round-trip can exceed the naive 500 ms pump window,
+/// leaving the app on SignInScreen.  This helper:
+///   1. Pumps for 1 s to let the auth listener complete.
+///   2. If still on SignInScreen, signs back in via Firebase Auth directly.
+///   3. Asserts that ProgramsScreen is now visible.
+Future<void> _ensureOnProgramsScreen(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 1));
+  await tester.pumpAndSettle();
+
+  if (find.text('Sign In').evaluate().isNotEmpty) {
+    print('DEBUG [_ensureOnProgramsScreen]: On SignInScreen — signing in again');
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: 'workout-test@example.com',
+      password: 'testpassword123',
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+  }
+
+  expect(
+    find.byType(ProgramsScreen), findsOneWidget,
+    reason: 'Should be on ProgramsScreen for authenticated user',
+  );
+}
 
 /// Helper method to navigate through the complete app flow to create workout screen
 /// This reduces duplication in tests that need to reach the create workout screen

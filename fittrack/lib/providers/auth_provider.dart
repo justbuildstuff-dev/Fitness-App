@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   String? _successMessage;
   StreamSubscription<User?>? _authStateSubscription;
+  bool _disposed = false;
 
   User? get user => _user;
   UserProfile? get userProfile => _userProfile;
@@ -47,7 +48,7 @@ class AuthProvider extends ChangeNotifier {
       } else {
         _userProfile = null;
       }
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -242,7 +243,7 @@ class AuthProvider extends ChangeNotifier {
         await _createUserProfile(_user!, _user!.displayName);
         await _loadUserProfile();
       }
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       debugPrint('Error loading user profile: $e');
     }
@@ -295,12 +296,12 @@ class AuthProvider extends ChangeNotifier {
 
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _setError(String error) {
     _error = error;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _clearError() {
@@ -309,7 +310,7 @@ class AuthProvider extends ChangeNotifier {
 
   void _setSuccessMessage(String message) {
     _successMessage = message;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _clearSuccessMessage() {
@@ -318,16 +319,21 @@ class AuthProvider extends ChangeNotifier {
 
   void clearError() {
     _clearError();
-    notifyListeners();
+    _safeNotify();
   }
 
   void clearSuccessMessage() {
     _clearSuccessMessage();
-    notifyListeners();
+    _safeNotify();
+  }
+
+  void _safeNotify() {
+    if (!_disposed) _safeNotify();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _authStateSubscription?.cancel();
     super.dispose();
   }

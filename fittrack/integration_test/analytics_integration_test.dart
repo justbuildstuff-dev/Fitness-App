@@ -243,9 +243,9 @@ void main() {
         // UI displays "Activity Tracker" as the heatmap section header
         expect(find.text('Activity Tracker'), findsOneWidget);
         
-        // Check for workout count
-        final workoutCountFinder = find.textContaining('workouts');
-        expect(workoutCountFinder, findsOneWidget);
+        // Check for set count (heatmap header shows "$totalSets sets")
+        final setCountFinder = find.textContaining('sets');
+        expect(setCountFinder, findsAtLeastNWidgets(1));
         
         // Check for streak information
         expect(find.text('Current Streak'), findsOneWidget);

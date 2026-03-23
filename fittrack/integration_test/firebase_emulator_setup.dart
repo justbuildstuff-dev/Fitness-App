@@ -230,10 +230,14 @@ class FirebaseEmulatorSetup {
       print('✅ Test user created: ${currentUser?.uid ?? 'null'} ($email)');
       print('   Final emailVerified status: ${currentUser?.emailVerified ?? false}');
 
-      if (currentUser?.emailVerified == false) {
-        print('   ⚠️  WARNING: Email NOT verified - tests may fail!');
-        print('   Auth emulator REST API may not have updated the user.');
-        print('   E2E tests will be redirected to EmailVerificationScreen.');
+      if (currentUser?.emailVerified != true) {
+        throw Exception(
+          'Email verification failed for $email after OOB code flow.\n'
+          'AuthWrapper will route to EmailVerificationScreen and all '
+          'navigation-based test assertions will fail.\n'
+          'Check that the Auth emulator is running and the OOB codes '
+          'endpoint (http://$_authEmulatorHost:$_authEmulatorPort/emulator/v1/...) is accessible.',
+        );
       }
 
       return userCredential;
@@ -294,12 +298,20 @@ class FirebaseEmulatorSetup {
             if (applyResponse.statusCode == 200) {
               print('✅ Email verified via OOB code application');
 
-              // Step 4: Reload user to get updated emailVerified status
-              await Future.delayed(const Duration(milliseconds: 100));
+              // Step 4: Allow emulator to propagate the change, then reload user.
+              // The 500 ms delay (up from 100 ms) gives the Auth emulator time to
+              // commit the emailVerified flag before we request a fresh token.
+              await Future.delayed(const Duration(milliseconds: 500));
               await user.reload();
 
+              // Force a full ID-token refresh so the new emailVerified=true claim
+              // is included in the JWT the app will use.  Without this, the cached
+              // token still carries emailVerified=false and AuthWrapper routes the
+              // user to EmailVerificationScreen instead of HomeScreen.
+              await FirebaseAuth.instance.currentUser?.getIdToken(true);
+
               final updatedUser = FirebaseAuth.instance.currentUser;
-              print('   After reload - emailVerified: ${updatedUser?.emailVerified ?? false}');
+              print('   After reload+refresh - emailVerified: ${updatedUser?.emailVerified ?? false}');
             } else {
               print('⚠️  Failed to apply OOB code: ${applyResponse.statusCode} - ${applyResponse.body}');
             }
