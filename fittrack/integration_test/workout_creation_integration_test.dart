@@ -187,6 +187,13 @@ void main() {
 
         await tester.tap(createWorkoutFAB);
         await tester.pumpAndSettle(const Duration(seconds: 1));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
+
         print('✅ Navigated to create workout screen');
 
         // Step 7: Verify we're on create workout screen
@@ -306,9 +313,15 @@ void main() {
         
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle();
-        
+
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         // Fill only the required name field
         expect(find.byType(TextFormField), findsWidgets,
@@ -377,9 +390,15 @@ void main() {
 
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle();
-        
+
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         // Test validation error - try to save without entering name
         await tester.tap(find.text('CREATE'));
@@ -445,6 +464,12 @@ void main() {
           await tester.tap(find.byType(FloatingActionButton));
           await tester.pumpAndSettle(const Duration(seconds: 2));
 
+          // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+          if (find.text('Start Fresh').evaluate().isNotEmpty) {
+            await tester.tap(find.text('Start Fresh'));
+            await tester.pumpAndSettle();
+          }
+
           // Fill workout name
           expect(find.byType(TextFormField), findsWidgets,
               reason: 'Workout form must be rendered before entering data');
@@ -505,6 +530,12 @@ void main() {
 
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         const persistentWorkoutName = 'Persistent Test Workout';
         expect(find.byType(TextFormField), findsWidgets,
@@ -601,6 +632,12 @@ void main() {
 
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         const secondUserWorkout = 'Second User Workout';
         expect(find.byType(TextFormField), findsWidgets,
@@ -734,7 +771,13 @@ Future<void> navigateToCreateWorkoutScreen(
   
   await tester.tap(find.text(testData.weekName));
   await tester.pumpAndSettle();
-  
+
   await tester.tap(find.byType(FloatingActionButton));
   await tester.pumpAndSettle();
+
+  // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+  if (find.text('Start Fresh').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+  }
 }

@@ -512,7 +512,13 @@ Future<void> _createTestWorkoutData(WidgetTester tester) async {
   if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    
+
+    // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+    if (find.text('Start Fresh').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Start Fresh'));
+      await tester.pumpAndSettle();
+    }
+
     // Fill in program details
     await tester.enterText(find.byType(TextFormField).first, 'Test Analytics Program');
     await tester.enterText(find.byType(TextFormField).last, 'Program for analytics testing');
@@ -554,7 +560,13 @@ Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   // Create week
   await tester.tap(find.byType(FloatingActionButton));
   await tester.pumpAndSettle();
-  
+
+  // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+  if (find.text('Start Fresh').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+  }
+
   await tester.enterText(find.byType(TextFormField).first, 'Test Week 1');
   await tester.tap(find.text('CREATE')); // Week screen uses CREATE button
   await tester.pumpAndSettle();
@@ -567,6 +579,12 @@ Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+
+    // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+    if (find.text('Start Fresh').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Start Fresh'));
+      await tester.pumpAndSettle();
+    }
 
     await tester.enterText(find.byType(TextFormField).first, 'Test Workout');
     await tester.tap(find.text('CREATE')); // Workout screen uses CREATE button

@@ -63,6 +63,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 
                 // Email Field
                 TextFormField(
+                  key: const Key('email-field'),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
@@ -85,6 +86,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 
                 // Password Field
                 TextFormField(
+                  key: const Key('password-field'),
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
@@ -164,6 +166,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     return ElevatedButton(
+                      key: const Key('sign-in-button'),
                       onPressed: authProvider.isLoading ? null : _signIn,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
