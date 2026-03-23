@@ -67,10 +67,11 @@ void main() {
     });
 
     Widget createTestWidget() {
-      return MaterialApp(
-        home: ChangeNotifierProvider<ProgramProvider>.value(
-          value: mockProvider,
-          child: const OnboardingWizardScreen(),
+      // Provider above MaterialApp so HomeScreen navigation can access it
+      return ChangeNotifierProvider<ProgramProvider>.value(
+        value: mockProvider,
+        child: const MaterialApp(
+          home: OnboardingWizardScreen(),
         ),
       );
     }
