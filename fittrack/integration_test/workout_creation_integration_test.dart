@@ -137,7 +137,7 @@ void main() {
 
         // Step 1: Launch the app
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -291,7 +291,7 @@ void main() {
 
         // Launch app and navigate to create workout screen
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -364,7 +364,7 @@ void main() {
 
         // Launch app and navigate to create workout screen
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -420,7 +420,7 @@ void main() {
         print('\n📱 Testing multiple workouts creation and management...');
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -489,7 +489,7 @@ void main() {
 
         // First app session - create a workout
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -524,7 +524,7 @@ void main() {
 
         // Simulate app restart by creating new app instance
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         // Reuse prefs variable from earlier in test scope
         await SharedPreferences.getInstance();
 
@@ -584,7 +584,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -631,7 +631,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs2 = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
@@ -664,7 +664,7 @@ void main() {
         print('\n📱 Testing real-time data synchronization...');
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));

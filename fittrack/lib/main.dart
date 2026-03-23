@@ -70,6 +70,10 @@ class FitTrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize OnboardingService here so E2E tests that pump FitTrackApp
+    // directly (bypassing main()) still get proper initialization.
+    OnboardingService.initialize(prefs);
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),

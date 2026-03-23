@@ -91,7 +91,7 @@ void main() {
       print('DEBUG: ===== Starting Test 1 - complete analytics flow with real data =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -168,7 +168,7 @@ void main() {
       // print('DEBUG: ===== Starting Test 2 - analytics personal records detection =====');
 
       // // Initialize SharedPreferences for testing
-      // SharedPreferences.setMockInitialValues({});
+      // SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       // final prefs = await SharedPreferences.getInstance();
       // print('DEBUG: SharedPreferences initialized');
 
@@ -209,7 +209,7 @@ void main() {
       print('DEBUG: ===== Starting Test 3 - analytics heatmap accuracy =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -261,7 +261,7 @@ void main() {
       print('DEBUG: ===== Starting Test 5 - analytics refresh functionality =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -302,7 +302,7 @@ void main() {
       print('DEBUG: ===== Starting Test 6 - analytics error handling =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
