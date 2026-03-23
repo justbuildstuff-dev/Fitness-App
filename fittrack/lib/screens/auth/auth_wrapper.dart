@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/onboarding_service.dart';
 import 'sign_in_screen.dart';
 import 'email_verification_screen.dart';
 import '../home/home_screen.dart';
+import '../onboarding/onboarding_carousel_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -26,6 +28,10 @@ class AuthWrapper extends StatelessWidget {
           // Check email verification
           if (!authProvider.isEmailVerified) {
             return const EmailVerificationScreen();
+          }
+          // Route new users to onboarding before HomeScreen
+          if (!OnboardingService.instance.hasCompletedOnboarding) {
+            return const OnboardingCarouselScreen();
           }
           return const HomeScreen();
         } else {
