@@ -343,22 +343,30 @@ void main() {
 // Helper methods for integration testing
 
 Future<void> _signInWithTestAccount(WidgetTester tester) async {
+  // Wait for the sign-in form to fully render before accessing fields.
+  // On slow emulators the "Sign In" button text becomes visible before the
+  // TextFormField widgets are laid out, causing finder.first to throw
+  // "Bad state: No element".
+  await tester.pumpAndSettle(const Duration(seconds: 2));
+  expect(find.byType(TextFormField), findsWidgets,
+      reason: 'Sign-in form must be visible before entering credentials');
+
   // Enter test email
   await tester.enterText(
-    find.byType(TextFormField).first, 
+    find.byType(TextFormField).first,
     'test@fittrack.com'
   );
-  
+
   // Enter test password
   await tester.enterText(
-    find.byType(TextFormField).last, 
+    find.byType(TextFormField).last,
     'testpassword123'
   );
-  
+
   // Tap sign in
   await tester.tap(find.text('Sign In'));
   await tester.pumpAndSettle();
-  
+
   // Wait for sign in to complete
   await tester.pump(const Duration(seconds: 3));
 }
