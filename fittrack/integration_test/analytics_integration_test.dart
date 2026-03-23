@@ -91,7 +91,7 @@ void main() {
       print('DEBUG: ===== Starting Test 1 - complete analytics flow with real data =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -168,7 +168,7 @@ void main() {
       // print('DEBUG: ===== Starting Test 2 - analytics personal records detection =====');
 
       // // Initialize SharedPreferences for testing
-      // SharedPreferences.setMockInitialValues({});
+      // SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       // final prefs = await SharedPreferences.getInstance();
       // print('DEBUG: SharedPreferences initialized');
 
@@ -209,7 +209,7 @@ void main() {
       print('DEBUG: ===== Starting Test 3 - analytics heatmap accuracy =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -261,7 +261,7 @@ void main() {
       print('DEBUG: ===== Starting Test 5 - analytics refresh functionality =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -302,7 +302,7 @@ void main() {
       print('DEBUG: ===== Starting Test 6 - analytics error handling =====');
 
       // Initialize SharedPreferences for testing
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
       final prefs = await SharedPreferences.getInstance();
       print('DEBUG: SharedPreferences initialized');
 
@@ -343,22 +343,30 @@ void main() {
 // Helper methods for integration testing
 
 Future<void> _signInWithTestAccount(WidgetTester tester) async {
+  // Wait for the sign-in form to fully render before accessing fields.
+  // On slow emulators the "Sign In" button text becomes visible before the
+  // TextFormField widgets are laid out, causing finder.first to throw
+  // "Bad state: No element".
+  await tester.pumpAndSettle(const Duration(seconds: 2));
+  expect(find.byType(TextFormField), findsWidgets,
+      reason: 'Sign-in form must be visible before entering credentials');
+
   // Enter test email
   await tester.enterText(
-    find.byType(TextFormField).first, 
+    find.byType(TextFormField).first,
     'test@fittrack.com'
   );
-  
+
   // Enter test password
   await tester.enterText(
-    find.byType(TextFormField).last, 
+    find.byType(TextFormField).last,
     'testpassword123'
   );
-  
+
   // Tap sign in
   await tester.tap(find.text('Sign In'));
   await tester.pumpAndSettle();
-  
+
   // Wait for sign in to complete
   await tester.pump(const Duration(seconds: 3));
 }
@@ -504,7 +512,13 @@ Future<void> _createTestWorkoutData(WidgetTester tester) async {
   if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    
+
+    // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+    if (find.text('Start Fresh').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Start Fresh'));
+      await tester.pumpAndSettle();
+    }
+
     // Fill in program details
     await tester.enterText(find.byType(TextFormField).first, 'Test Analytics Program');
     await tester.enterText(find.byType(TextFormField).last, 'Program for analytics testing');
@@ -546,7 +560,13 @@ Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   // Create week
   await tester.tap(find.byType(FloatingActionButton));
   await tester.pumpAndSettle();
-  
+
+  // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+  if (find.text('Start Fresh').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+  }
+
   await tester.enterText(find.byType(TextFormField).first, 'Test Week 1');
   await tester.tap(find.text('CREATE')); // Week screen uses CREATE button
   await tester.pumpAndSettle();
@@ -559,6 +579,12 @@ Future<void> _createTestWeekWithWorkouts(WidgetTester tester) async {
   if (find.byType(FloatingActionButton).evaluate().isNotEmpty) {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+
+    // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+    if (find.text('Start Fresh').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Start Fresh'));
+      await tester.pumpAndSettle();
+    }
 
     await tester.enterText(find.byType(TextFormField).first, 'Test Workout');
     await tester.tap(find.text('CREATE')); // Workout screen uses CREATE button

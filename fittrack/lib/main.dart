@@ -16,6 +16,7 @@ import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
+import 'services/onboarding_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,9 @@ void main() async {
   // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
+  // Initialize onboarding state service (must be before runApp)
+  OnboardingService.initialize(prefs);
+
   runApp(FitTrackApp(prefs: prefs));
 }
 
@@ -66,6 +70,10 @@ class FitTrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize OnboardingService here so E2E tests that pump FitTrackApp
+    // directly (bypassing main()) still get proper initialization.
+    OnboardingService.initialize(prefs);
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider(prefs)),

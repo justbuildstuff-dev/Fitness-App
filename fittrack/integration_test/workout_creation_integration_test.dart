@@ -137,7 +137,7 @@ void main() {
 
         // Step 1: Launch the app
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -187,6 +187,13 @@ void main() {
 
         await tester.tap(createWorkoutFAB);
         await tester.pumpAndSettle(const Duration(seconds: 1));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
+
         print('✅ Navigated to create workout screen');
 
         // Step 7: Verify we're on create workout screen
@@ -197,7 +204,11 @@ void main() {
           reason: 'Should show create workout title');
 
         // Step 8: Fill out workout form with all fields
-        
+        // Wait for form to fully render on slow emulators before accessing fields.
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
+
         // Fill workout name
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, 'Upper Body Strength Training');
@@ -287,7 +298,7 @@ void main() {
 
         // Launch app and navigate to create workout screen
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -302,11 +313,19 @@ void main() {
         
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle();
-        
+
         await tester.tap(find.byType(FloatingActionButton));
-        await tester.pumpAndSettle();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         // Fill only the required name field
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, 'Quick Workout');
 
@@ -358,7 +377,7 @@ void main() {
 
         // Launch app and navigate to create workout screen
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -371,9 +390,15 @@ void main() {
 
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle();
-        
+
         await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         // Test validation error - try to save without entering name
         await tester.tap(find.text('CREATE'));
@@ -387,6 +412,9 @@ void main() {
           reason: 'Should remain on create workout screen when validation fails');
 
         // Test name too long validation
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         final tooLongName = 'A' * 201; // Exceeds 200 character limit
         await tester.enterText(nameField, tooLongName);
@@ -411,7 +439,7 @@ void main() {
         print('\n📱 Testing multiple workouts creation and management...');
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -434,9 +462,17 @@ void main() {
           
           // Tap FAB to create workout
           await tester.tap(find.byType(FloatingActionButton));
-          await tester.pumpAndSettle();
+          await tester.pumpAndSettle(const Duration(seconds: 2));
+
+          // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+          if (find.text('Start Fresh').evaluate().isNotEmpty) {
+            await tester.tap(find.text('Start Fresh'));
+            await tester.pumpAndSettle();
+          }
 
           // Fill workout name
+          expect(find.byType(TextFormField), findsWidgets,
+              reason: 'Workout form must be rendered before entering data');
           final nameField = find.widgetWithText(TextFormField, '').first;
           await tester.enterText(nameField, workoutNames[i]);
 
@@ -478,7 +514,7 @@ void main() {
 
         // First app session - create a workout
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -493,9 +529,17 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byType(FloatingActionButton));
-        await tester.pumpAndSettle();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         const persistentWorkoutName = 'Persistent Test Workout';
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, persistentWorkoutName);
 
@@ -511,7 +555,7 @@ void main() {
 
         // Simulate app restart by creating new app instance
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         // Reuse prefs variable from earlier in test scope
         await SharedPreferences.getInstance();
 
@@ -571,7 +615,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -587,9 +631,17 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byType(FloatingActionButton));
-        await tester.pumpAndSettle();
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+        if (find.text('Start Fresh').evaluate().isNotEmpty) {
+          await tester.tap(find.text('Start Fresh'));
+          await tester.pumpAndSettle();
+        }
 
         const secondUserWorkout = 'Second User Workout';
+        expect(find.byType(TextFormField), findsWidgets,
+            reason: 'Workout form must be rendered before entering data');
         final nameField = find.widgetWithText(TextFormField, '').first;
         await tester.enterText(nameField, secondUserWorkout);
 
@@ -616,7 +668,7 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 500));
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs2 = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
@@ -649,7 +701,7 @@ void main() {
         print('\n📱 Testing real-time data synchronization...');
 
         // Initialize SharedPreferences for testing
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
@@ -719,7 +771,13 @@ Future<void> navigateToCreateWorkoutScreen(
   
   await tester.tap(find.text(testData.weekName));
   await tester.pumpAndSettle();
-  
+
   await tester.tap(find.byType(FloatingActionButton));
   await tester.pumpAndSettle();
+
+  // Handle CreateOptionsSheet - tap "Start Fresh" to proceed to form
+  if (find.text('Start Fresh').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Start Fresh'));
+    await tester.pumpAndSettle();
+  }
 }

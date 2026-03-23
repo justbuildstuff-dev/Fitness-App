@@ -6,6 +6,7 @@ import '../../providers/exercise_library_provider.dart';
 import '../../providers/template_provider.dart';
 import 'my_exercises_screen.dart';
 import 'my_templates_screen.dart';
+import '../onboarding/onboarding_wizard_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -309,6 +310,52 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
               ),
+
+              // Get Started Section
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Get Started',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 8.0),
+                child: Card(
+                  margin: EdgeInsets.zero,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      child: Icon(
+                        Icons.play_arrow_outlined,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimaryContainer,
+                      ),
+                    ),
+                    title: const Text('Set Up a New Program'),
+                    subtitle: const Text(
+                        'Follow the guided wizard to create a new training program'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const OnboardingWizardScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
           );
         },

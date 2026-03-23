@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:fittrack/providers/auth_provider.dart' as app;
 import 'package:fittrack/providers/program_provider.dart';
@@ -10,6 +11,8 @@ import 'package:fittrack/screens/auth/auth_wrapper.dart';
 import 'package:fittrack/screens/auth/sign_in_screen.dart';
 import 'package:fittrack/screens/auth/email_verification_screen.dart';
 import 'package:fittrack/screens/home/home_screen.dart';
+import 'package:fittrack/screens/onboarding/onboarding_carousel_screen.dart';
+import 'package:fittrack/services/onboarding_service.dart';
 
 import 'auth_wrapper_test.mocks.dart';
 
@@ -19,12 +22,14 @@ import 'auth_wrapper_test.mocks.dart';
 /// - Loading state display
 /// - Route to SignInScreen when not authenticated
 /// - Route to EmailVerificationScreen when authenticated but not verified
-/// - Route to HomeScreen when authenticated and verified
+/// - Route to HomeScreen when authenticated, verified, and onboarding complete
+/// - Route to OnboardingCarouselScreen when authenticated, verified, onboarding NOT complete
 /// - Null user handling
 ///
 /// If any test fails, it indicates issues with:
 /// - Authentication routing logic
 /// - Email verification flow
+/// - Onboarding routing
 /// - User session management
 @GenerateMocks([app.AuthProvider, User])
 @GenerateNiceMocks([MockSpec<ProgramProvider>()])
@@ -34,7 +39,14 @@ void main() {
     late MockUser mockUser;
     late MockProgramProvider mockProgramProvider;
 
-    setUp(() {
+    setUp(() async {
+      // Initialize OnboardingService with onboarding complete so existing
+      // HomeScreen routing tests are unaffected by the new onboarding check.
+      // Tests that exercise the onboarding-incomplete path set this up themselves.
+      SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
+      final prefs = await SharedPreferences.getInstance();
+      OnboardingService.initialize(prefs);
+
       mockAuthProvider = MockAuthProvider();
       mockUser = MockUser();
       mockProgramProvider = MockProgramProvider();
@@ -130,9 +142,9 @@ void main() {
         reason: 'Should not show HomeScreen until verified');
     });
 
-    testWidgets('routes to HomeScreen when authenticated and verified', (WidgetTester tester) async {
-      /// Test Purpose: Verify verified users see home screen
-      /// Critical for normal app access after verification
+    testWidgets('routes to HomeScreen when authenticated, verified, and onboarding complete', (WidgetTester tester) async {
+      /// Test Purpose: Verify verified users with completed onboarding see home screen
+      /// Critical for normal app access after onboarding
       /// Failure indicates broken main app routing
 
       when(mockAuthProvider.isLoading).thenReturn(false);
@@ -144,11 +156,59 @@ void main() {
       await tester.pump(); // Use pump() to avoid infinite timer timeout
 
       expect(find.byType(HomeScreen), findsOneWidget,
-        reason: 'Should display HomeScreen when authenticated and verified');
+        reason: 'Should display HomeScreen when authenticated, verified, and onboarding complete');
       expect(find.byType(SignInScreen), findsNothing,
         reason: 'Should not show SignInScreen');
       expect(find.byType(EmailVerificationScreen), findsNothing,
         reason: 'Should not show EmailVerificationScreen when verified');
+      expect(find.byType(OnboardingCarouselScreen), findsNothing,
+        reason: 'Should not show OnboardingCarouselScreen when onboarding complete');
+    });
+
+    group('Onboarding routing', () {
+      testWidgets('routes to OnboardingCarouselScreen when onboarding not complete', (WidgetTester tester) async {
+        /// Test Purpose: Verify new users see onboarding carousel before HomeScreen
+        /// Critical for new user experience
+        /// Failure indicates broken onboarding routing
+
+        // Override setUp's complete state — this user has NOT completed onboarding
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        OnboardingService.initialize(prefs);
+
+        when(mockAuthProvider.isLoading).thenReturn(false);
+        when(mockAuthProvider.isAuthenticated).thenReturn(true);
+        when(mockAuthProvider.isEmailVerified).thenReturn(true);
+        when(mockAuthProvider.user).thenReturn(mockUser);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pump();
+
+        expect(find.byType(OnboardingCarouselScreen), findsOneWidget,
+          reason: 'New users should see OnboardingCarouselScreen before HomeScreen');
+        expect(find.byType(HomeScreen), findsNothing,
+          reason: 'Should not show HomeScreen until onboarding complete');
+      });
+
+      testWidgets('routes to HomeScreen when onboarding complete', (WidgetTester tester) async {
+        /// Test Purpose: Verify returning users skip onboarding and go to HomeScreen
+        /// Onboarding must not repeat after completion
+        /// Failure indicates onboarding state not being persisted/read correctly
+
+        // setUp already marks onboarding complete — no override needed
+        when(mockAuthProvider.isLoading).thenReturn(false);
+        when(mockAuthProvider.isAuthenticated).thenReturn(true);
+        when(mockAuthProvider.isEmailVerified).thenReturn(true);
+        when(mockAuthProvider.user).thenReturn(mockUser);
+
+        await tester.pumpWidget(createTestWidget());
+        await tester.pump();
+
+        expect(find.byType(HomeScreen), findsOneWidget,
+          reason: 'Returning users should go directly to HomeScreen');
+        expect(find.byType(OnboardingCarouselScreen), findsNothing,
+          reason: 'Should not show OnboardingCarouselScreen for returning users');
+      });
     });
 
     testWidgets('handles null user gracefully when not authenticated', (WidgetTester tester) async {
@@ -207,6 +267,5 @@ void main() {
       expect(scaffoldFinder, findsOneWidget,
         reason: 'Loading indicator should be within a Scaffold');
     });
-
   });
 }
