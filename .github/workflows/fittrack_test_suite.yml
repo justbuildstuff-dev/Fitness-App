@@ -192,7 +192,7 @@ jobs:
           ~/.gradle/wrapper
           ~/.android/build-cache
           /usr/local/lib/android/sdk/ndk
-        key: ${{ runner.os }}-gradle-ndk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        key: ${{ runner.os }}-gradle-ndk-${{ hashFiles('fittrack/**/*.gradle*', 'fittrack/**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-ndk-
           ${{ runner.os }}-gradle-
@@ -201,7 +201,15 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         flutter-version: 3.35.1
-        cache: false  # Disabled: post-step hashFiles fails on emulator runner due to disk operations
+        cache: false  # Internal cache disabled: uses unscoped ** glob that breaks post-step after emulator runs
+
+    - name: Cache Flutter pub packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.pub-cache
+        key: ${{ runner.os }}-pub-${{ hashFiles('fittrack/pubspec.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pub-
 
     - name: Setup Node.js for Firebase CLI
       uses: actions/setup-node@v4
@@ -635,7 +643,7 @@ jobs:
         echo "Coverage reports available in artifacts." >> test-summary.md
         
     - name: Comment test summary on PR
-      if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+      if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
       with:
         script: |
@@ -661,6 +669,7 @@ jobs:
         fetch-depth: 0
 
     - name: Check for service modifications without integration tests
+      if: github.event_name == 'pull_request'
       run: |
         echo "🔍 Checking for service file modifications..."
 
