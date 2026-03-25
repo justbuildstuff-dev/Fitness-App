@@ -12,6 +12,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
@@ -19,6 +20,8 @@ import 'package:fittrack/models/cascade_delete_counts.dart';
 import 'firebase_emulator_setup.dart';
 
 void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
   group('Firestore Cascade Delete Count Integration Tests', () {
     late FirestoreService firestoreService;
     late String testUserId;

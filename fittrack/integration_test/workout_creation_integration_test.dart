@@ -765,6 +765,19 @@ Future<void> _ensureOnProgramsScreen(WidgetTester tester) async {
     find.byType(ProgramsScreen), findsOneWidget,
     reason: 'Should be on ProgramsScreen for authenticated user',
   );
+
+  // ProgramsScreen is visible but ProgramProvider's Firestore query may still
+  // be in-flight. Poll up to 10 s for the seeded program to appear before
+  // returning, so tests can immediately tap the program tile.
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+    if (find.text('Integration Test Program').evaluate().isNotEmpty) break;
+  }
+
+  expect(
+    find.text('Integration Test Program'), findsOneWidget,
+    reason: 'Seeded program should be visible after Firestore load',
+  );
 }
 
 /// Helper method to navigate through the complete app flow to create workout screen

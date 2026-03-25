@@ -399,11 +399,15 @@ Future<void> _ensureSignedIn(WidgetTester tester) async {
     print('DEBUG: User already authenticated');
   }
 
-  // Wait for home screen to load
-  await tester.pumpAndSettle();
+  // Poll up to 10s for Programs text to appear after sign-in.
+  // AuthProvider loads the user profile from Firestore asynchronously;
+  // pumpAndSettle() alone is not enough to wait for that network round-trip.
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+    if (find.text('Programs').evaluate().isNotEmpty) break;
+  }
   print('DEBUG: Final UI state - Sign In: ${signInButton.evaluate().isNotEmpty}, Programs: ${programsText.evaluate().isNotEmpty}');
 
-  // This is where tests are failing - can't find Programs widget
   expect(find.text('Programs'), findsOneWidget, reason: 'Programs screen should be visible after sign in');
   print('DEBUG: Programs widget verified successfully');
 }
