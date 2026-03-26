@@ -337,62 +337,7 @@ jobs:
           adb -s emulator-5554 reverse tcp:9099 tcp:9099 && echo "✅ Auth port 9099 forwarded" || echo "⚠️  Auth port forward failed — Auth emulator may be unreachable"
           adb -s emulator-5554 reverse --list
 
-          # Run each test suite independently.
-          # android-emulator-runner executes each physical line as a separate sh -c
-          # invocation, so shell variables and 'cd' do NOT persist between lines.
-          # Fix: use '\' line-continuation to group cd + flutter drive + exit capture
-          # into ONE logical sh -c call, and persist exit codes via temp files.
-          echo "🚀 Running integration tests on Android with flutter drive..."
-          echo "" > /tmp/integration_test_output.log
-
-          echo "Running analytics integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 2400 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/analytics_integration_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/analytics_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          echo "Running workout creation integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 1200 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/workout_creation_integration_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/workout_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          echo "Running complete workflow integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 1200 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/enhanced_complete_workflow_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/complete_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          echo "Running cascade delete integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 1200 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/firestore_cascade_delete_integration_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/cascade_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          cp /tmp/integration_test_output.log /tmp/last_test_output.log
-          echo "--- exit codes: analytics=$(cat /tmp/analytics_exit 2>/dev/null) workout=$(cat /tmp/workout_exit 2>/dev/null) complete=$(cat /tmp/complete_exit 2>/dev/null) cascade=$(cat /tmp/cascade_exit 2>/dev/null) ---"
-          [ "$(cat /tmp/analytics_exit 2>/dev/null)" = "0" ] \
-            && [ "$(cat /tmp/workout_exit 2>/dev/null)" = "0" ] \
-            && [ "$(cat /tmp/complete_exit 2>/dev/null)" = "0" ] \
-            && [ "$(cat /tmp/cascade_exit 2>/dev/null)" = "0" ] \
-            && echo "All test suites PASSED" \
-            || (echo "One or more test suites FAILED"; exit 1)
+          bash $GITHUB_WORKSPACE/fittrack/scripts/run_integration_tests.sh 2400 1200 1200 1200
 
     - name: Retry Integration Test on Failure
       if: failure() && steps.integration_test.outcome == 'failure'
@@ -438,57 +383,7 @@ jobs:
           adb -s emulator-5554 reverse tcp:9099 tcp:9099 && echo "✅ Auth port 9099 forwarded" || echo "⚠️  Auth port forward failed"
           adb -s emulator-5554 reverse --list
 
-          echo "🚀 Running integration tests on Android with flutter drive..."
-          echo "" > /tmp/integration_test_output.log
-
-          echo "Running analytics integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 1800 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/analytics_integration_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/analytics_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          echo "Running workout creation integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 900 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/workout_creation_integration_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/workout_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          echo "Running complete workflow integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 900 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/enhanced_complete_workflow_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/complete_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          echo "Running cascade delete integration test..."
-          (cd "$GITHUB_WORKSPACE/fittrack" \
-            && timeout 900 flutter drive \
-              --driver=test_driver/integration_test.dart \
-              --target=integration_test/firestore_cascade_delete_integration_test.dart \
-              --device-id=emulator-5554 > /tmp/current_test.log 2>&1); \
-          echo $? > /tmp/cascade_exit; \
-          cat /tmp/current_test.log 2>/dev/null || true; \
-          cat /tmp/current_test.log >> /tmp/integration_test_output.log 2>/dev/null || true
-
-          cp /tmp/integration_test_output.log /tmp/last_test_output.log
-          echo "--- exit codes: analytics=$(cat /tmp/analytics_exit 2>/dev/null) workout=$(cat /tmp/workout_exit 2>/dev/null) complete=$(cat /tmp/complete_exit 2>/dev/null) cascade=$(cat /tmp/cascade_exit 2>/dev/null) ---"
-          [ "$(cat /tmp/analytics_exit 2>/dev/null)" = "0" ] \
-            && [ "$(cat /tmp/workout_exit 2>/dev/null)" = "0" ] \
-            && [ "$(cat /tmp/complete_exit 2>/dev/null)" = "0" ] \
-            && [ "$(cat /tmp/cascade_exit 2>/dev/null)" = "0" ] \
-            && echo "All test suites PASSED" \
-            || (echo "One or more test suites FAILED"; exit 1)
+          bash $GITHUB_WORKSPACE/fittrack/scripts/run_integration_tests.sh 1800 900 900 900
 
     - name: Analyze Integration Test Failure
       if: steps.integration_test.outcome == 'failure'
