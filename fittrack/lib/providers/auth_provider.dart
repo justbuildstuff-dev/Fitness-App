@@ -44,11 +44,8 @@ class AuthProvider extends ChangeNotifier {
       }
 
       if (_user != null) {
-        await _loadUserProfile();
-        // _loadUserProfile() calls _safeNotify() on completion (success or error).
-        // Awaiting it ensures the Firestore SDK has made at least one authenticated
-        // request before downstream providers (e.g. ProgramProvider) start their
-        // own listeners, preventing spurious PERMISSION_DENIED on the first query.
+        _loadUserProfile(); // unawaited — starts profile load async
+        _safeNotify(); // notify immediately so UI routes to home screen
       } else {
         _userProfile = null;
         _safeNotify();
