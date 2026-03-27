@@ -737,6 +737,7 @@ Future<Program> _createCompleteTestProgram(String userId) async {
     'name': 'Complete Test Program',
     'description': 'Full program for integration testing',
     'userId': userId,
+    'isArchived': false,
     'createdAt': Timestamp.fromDate(now),
     'updatedAt': Timestamp.fromDate(now),
   });
@@ -762,6 +763,7 @@ Future<Program> _createBasicTestProgram(String userId) async {
     'name': 'Basic Test Program',
     'description': 'Simple program for testing',
     'userId': userId,
+    'isArchived': false,
     'createdAt': Timestamp.fromDate(now),
     'updatedAt': Timestamp.fromDate(now),
   });
