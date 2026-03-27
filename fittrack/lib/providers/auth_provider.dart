@@ -44,11 +44,15 @@ class AuthProvider extends ChangeNotifier {
       }
 
       if (_user != null) {
-        _loadUserProfile();
+        await _loadUserProfile();
+        // _loadUserProfile() calls _safeNotify() on completion (success or error).
+        // Awaiting it ensures the Firestore SDK has made at least one authenticated
+        // request before downstream providers (e.g. ProgramProvider) start their
+        // own listeners, preventing spurious PERMISSION_DENIED on the first query.
       } else {
         _userProfile = null;
+        _safeNotify();
       }
-      _safeNotify();
     });
   }
 
@@ -242,10 +246,12 @@ class AuthProvider extends ChangeNotifier {
         // Create profile if it doesn't exist
         await _createUserProfile(_user!, _user!.displayName);
         await _loadUserProfile();
+        return; // recursive call already notified
       }
       _safeNotify();
     } catch (e) {
       debugPrint('Error loading user profile: $e');
+      _safeNotify(); // still notify so UI can react to the error state
     }
   }
 

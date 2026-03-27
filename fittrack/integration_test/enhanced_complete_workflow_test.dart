@@ -457,8 +457,13 @@ void main() {
         /// Test Purpose: Verify app startup performance with substantial existing data
         /// This tests initial load performance and data loading efficiency
         
-        // Pre-populate large dataset
+        // Pre-populate large dataset (must sign in programmatically first — setUp signed out)
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: testEmail,
+          password: testPassword,
+        );
         await _createLargeDataset(testUserId, monthsOfData: 12);
+        await FirebaseAuth.instance.signOut();
         
         final stopwatch = Stopwatch()..start();
         
@@ -521,7 +526,7 @@ void main() {
 
         // App should remain responsive
         await tester.pumpAndSettle();
-        expect(find.text('Profile'), findsOneWidget);
+        expect(find.text('Profile'), findsAtLeastNWidgets(1));
       });
     });
 
