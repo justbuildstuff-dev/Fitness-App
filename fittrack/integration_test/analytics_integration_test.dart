@@ -369,6 +369,11 @@ Future<void> _signInWithTestAccount(WidgetTester tester) async {
 
   // Wait for sign in to complete
   await tester.pump(const Duration(seconds: 3));
+
+  // Force a token refresh so the Firestore SDK has the auth token before any
+  // reads/writes that follow. Without this, Firestore may see a stale
+  // unauthenticated token and return permission-denied on the first request.
+  await FirebaseAuth.instance.currentUser?.getIdToken(true);
 }
 
 Future<void> _ensureSignedIn(WidgetTester tester) async {
@@ -399,10 +404,10 @@ Future<void> _ensureSignedIn(WidgetTester tester) async {
     print('DEBUG: User already authenticated');
   }
 
-  // Poll up to 10s for Programs text to appear after sign-in.
+  // Poll up to 20s for Programs text to appear after sign-in.
   // AuthProvider loads the user profile from Firestore asynchronously;
   // pumpAndSettle() alone is not enough to wait for that network round-trip.
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (find.text('Programs').evaluate().isNotEmpty) break;
   }

@@ -52,26 +52,27 @@ void main() {
     });
 
     setUp(() async {
-      /// Test Purpose: Create fresh test user for each test
-      /// This ensures test isolation and prevents data contamination
+      /// Test Purpose: Create fresh test user for each test and keep them signed in.
       ///
-      /// IMPORTANT: Creates user in Firebase Auth but does NOT sign them in.
-      /// Tests must authenticate through the UI to trigger OOB email verification.
-      /// This matches production authentication flow and security rules.
+      /// IMPORTANT: User stays signed in after setUp so that when pumpWidget starts
+      /// the app, the Firestore SDK's gRPC connection already has a valid auth token.
+      /// This prevents permission-denied on direct Firestore writes that occur shortly
+      /// after pumpWidget (before a UI-based re-auth would propagate to Firestore).
+      ///
+      /// _authenticateTestUser detects BottomNavigationBar and short-circuits, so
+      /// tests that call it remain compatible with this auth-pre-seeding approach.
 
       // Generate UNIQUE email for EACH test to prevent email-already-in-use errors
-      // Use microsecondsSinceEpoch for higher precision than milliseconds
       final timestamp = DateTime.now().microsecondsSinceEpoch;
       testEmail = 'test$timestamp@fittrack.test';
 
-      // Create test user in Firebase Auth (but don't sign them in)
-      // Use OOB code for email verification (required for tests)
+      // Create test user in Firebase Auth with verified email
       await FirebaseEmulatorSetup.createTestUser(
         email: testEmail,
         password: testPassword,
       );
 
-      // Sign in temporarily to get userId and create profile, then sign out
+      // Sign in to get userId and create profile — user stays signed in
       final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: testEmail,
         password: testPassword,
@@ -85,9 +86,9 @@ void main() {
         email: testEmail,
       );
 
-      // Sign out so tests can authenticate through UI
-      await FirebaseAuth.instance.signOut();
-      await Future.delayed(const Duration(milliseconds: 200));
+      // Force a token refresh so the Firestore SDK has a valid auth token cached
+      // before the test body makes any direct Firestore writes.
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
     });
 
     tearDown(() async {
@@ -807,6 +808,10 @@ Future<void> _authenticateTestUser(WidgetTester tester, String email, String pas
     await tester.pump(const Duration(milliseconds: 500));
     if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
   }
+
+  // Force a token refresh so the Firestore SDK has the new auth token before
+  // any direct Firestore writes that follow this call.
+  await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
   final bottomNavAfter = find.byType(BottomNavigationBar);
   if (bottomNavAfter.evaluate().isEmpty) {

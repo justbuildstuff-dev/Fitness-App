@@ -118,6 +118,10 @@ void main() {
           password: 'testpassword123',
         );
       }
+      // Force a token refresh so the Firestore SDK has a valid auth token before
+      // pumpWidget. Without this, the Firestore gRPC connection may use a stale
+      // unauthenticated credential and return permission-denied on the first write.
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
     });
 
     group('Complete Workout Creation Workflow', () {
@@ -757,8 +761,17 @@ Future<void> _ensureOnProgramsScreen(WidgetTester tester) async {
       email: 'workout-test@example.com',
       password: 'testpassword123',
     );
+    // Force token refresh so Firestore SDK has auth token before UI renders
+    await FirebaseAuth.instance.currentUser?.getIdToken(true);
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
+  }
+
+  // Poll for ProgramsScreen — auth state propagation to the widget tree is
+  // async and may lag behind pumpWidget on a slow CI emulator.
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+    if (find.byType(ProgramsScreen).evaluate().isNotEmpty) break;
   }
 
   expect(
