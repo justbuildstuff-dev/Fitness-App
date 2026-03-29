@@ -221,6 +221,8 @@ void main() {
           'exerciseType': 'strength',
           'orderIndex': 0,
           'notes': null,
+          'supersetGroupId': null,
+          'groupOrderIndex': null,
           'userId': testUserId,
           'weekId': weeks.first.id,
           'programId': programs.first.id,
@@ -243,6 +245,10 @@ void main() {
             'weight': (135 + i * 10).toDouble(),
             'checked': false,
             'notes': null,
+            'restTime': null,
+            'duration': null,
+            'distance': null,
+            'completedAt': null,
             'userId': testUserId,
             'exerciseId': exerciseRef.id,
             'workoutId': workouts.first.id,
@@ -737,7 +743,11 @@ void main() {
         );
         final testUserId2 = userCredential2.user!.uid;
         await FirebaseAuth.instance.signOut();
-        await Future.delayed(const Duration(milliseconds: 200));
+        // Flush the queued auth state changes (user2 in, user2 out) through the
+        // widget before the UI sign-in, so they don't interfere with the
+        // subsequent pumpAndSettle after _authenticateTestUser.
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
 
         await _authenticateTestUser(tester, testEmail2, testPassword);
         await tester.pumpAndSettle(const Duration(seconds: 2));
@@ -745,6 +755,12 @@ void main() {
         // Verify second user cannot see first user's data
         await tester.tap(find.text('Programs'));
         await tester.pumpAndSettle();
+
+        // Wait for user2's program list to fully load (should be empty)
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.text('No Programs Yet').evaluate().isNotEmpty) break;
+        }
 
         expect(find.text(user1Program.name), findsNothing);
         // Empty state heading is 'No Programs Yet' (from programs_screen.dart)
