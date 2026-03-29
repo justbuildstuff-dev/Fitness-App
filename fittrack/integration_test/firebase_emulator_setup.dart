@@ -206,11 +206,34 @@ class FirebaseEmulatorSetup {
     }
 
     try {
-      // Create test user account
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential;
+
+      try {
+        // Create test user account
+        userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          // On CI retry runs the emulator retains data from the first run.
+          // Sign in with existing credentials instead of failing.
+          print('ℹ️  Test user $email already exists (CI retry?) — signing in instead');
+          userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          // The user was verified during the first run; confirm and return.
+          final existingUser = FirebaseAuth.instance.currentUser;
+          await existingUser?.reload();
+          if (FirebaseAuth.instance.currentUser?.emailVerified != true) {
+            throw Exception('Existing test user $email has unverified email');
+          }
+          print('✅ Test user signed in (existing): ${existingUser?.uid ?? 'null'} ($email)');
+          return userCredential;
+        }
+        rethrow;
+      }
 
       // Verify user was created successfully
       if (userCredential.user == null) {

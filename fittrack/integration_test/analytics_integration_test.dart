@@ -343,37 +343,26 @@ void main() {
 // Helper methods for integration testing
 
 Future<void> _signInWithTestAccount(WidgetTester tester) async {
-  // Wait for the sign-in form to fully render before accessing fields.
-  // On slow emulators the "Sign In" button text becomes visible before the
-  // TextFormField widgets are laid out, causing finder.first to throw
-  // "Bad state: No element".
-  await tester.pumpAndSettle(const Duration(seconds: 2));
-  expect(find.byType(TextFormField), findsWidgets,
-      reason: 'Sign-in form must be visible before entering credentials');
-
-  // Enter test email
-  await tester.enterText(
-    find.byType(TextFormField).first,
-    'test@fittrack.com'
+  // Sign in directly via Firebase Auth SDK to avoid tapping the UI button.
+  //
+  // Tapping the "Sign In" button via tester.tap() can silently fail on tests
+  // 4-5 because Flutter's Navigator wraps the snapshot widgets used during
+  // page transitions in RenderIgnorePointer, which causes tap() to derive an
+  // offset that "would not hit test".  Signing in through the SDK bypasses
+  // the pointer-event layer entirely and triggers AuthProvider's
+  // authStateChanges() listener, which then routes the app to HomeScreen.
+  await FirebaseAuth.instance.signInWithEmailAndPassword(
+    email: 'test@fittrack.com',
+    password: 'testpassword123',
   );
-
-  // Enter test password
-  await tester.enterText(
-    find.byType(TextFormField).last,
-    'testpassword123'
-  );
-
-  // Tap sign in
-  await tester.tap(find.text('Sign In'));
-  await tester.pumpAndSettle();
-
-  // Wait for sign in to complete
-  await tester.pump(const Duration(seconds: 3));
 
   // Force a token refresh so the Firestore SDK has the auth token before any
-  // reads/writes that follow. Without this, Firestore may see a stale
-  // unauthenticated token and return permission-denied on the first request.
+  // reads/writes that follow.
   await FirebaseAuth.instance.currentUser?.getIdToken(true);
+
+  // Give AuthProvider time to handle the auth state change and rebuild UI.
+  await tester.pump(const Duration(seconds: 2));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _ensureSignedIn(WidgetTester tester) async {

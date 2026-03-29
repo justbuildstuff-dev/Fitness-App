@@ -122,6 +122,23 @@ void main() {
       // pumpWidget. Without this, the Firestore gRPC connection may use a stale
       // unauthenticated credential and return permission-denied on the first write.
       await FirebaseAuth.instance.currentUser?.getIdToken(true);
+
+      // Delete all workouts from the shared test week before each test so that:
+      //  • 'No Workouts Yet' empty state is reliable (real-time sync test)
+      //  • Workout count assertions (e.g. '3') aren't skewed by previous tests
+      //  • Data from earlier tests doesn't appear in later test navigation
+      final workoutsRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(testData.userId)
+          .collection('programs')
+          .doc(testData.programId)
+          .collection('weeks')
+          .doc(testData.weekId)
+          .collection('workouts');
+      final existing = await workoutsRef.get();
+      for (final doc in existing.docs) {
+        await doc.reference.delete();
+      }
     });
 
     group('Complete Workout Creation Workflow', () {
@@ -475,8 +492,8 @@ void main() {
           await tester.pumpAndSettle();
         }
 
-        // Wait for the list to refresh with all created workouts
-        for (var i = 0; i < 20; i++) {
+        // Wait for the Firestore stream to deliver all created workouts (up to 20 s).
+        for (var i = 0; i < 40; i++) {
           await tester.pump(const Duration(milliseconds: 500));
           if (find.text(workoutNames.last).evaluate().isNotEmpty) break;
         }
@@ -563,8 +580,8 @@ void main() {
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
-        // Wait for Firestore stream to deliver the workout list after restart
-        for (var i = 0; i < 20; i++) {
+        // Wait for Firestore stream to deliver the workout list after restart (up to 20 s).
+        for (var i = 0; i < 40; i++) {
           await tester.pump(const Duration(milliseconds: 500));
           if (find.text(persistentWorkoutName).evaluate().isNotEmpty) break;
         }
@@ -617,7 +634,11 @@ void main() {
         final prefs = await SharedPreferences.getInstance();
 
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        await _ensureOnProgramsScreen(tester);
+        await _ensureOnProgramsScreen(
+          tester,
+          email: 'second-user@example.com',
+          password: 'testpassword456',
+        );
 
         // Navigate and create workout as second user
         await tester.tap(find.text('Integration Test Program'));
@@ -758,30 +779,40 @@ void main() {
 /// This mirrors the `_ensureSignedIn` pattern from the analytics tests.
 /// After pumping the widget, the AuthProvider's `authStateChanges()` listener
 /// fires asynchronously (it calls `await user.reload()` internally). On a slow
-/// CI Android emulator the round-trip can exceed the naive 500 ms pump window,
+/// CI Android emulator the round-trip can exceed the naive pump window,
 /// leaving the app on SignInScreen.  This helper:
-///   1. Pumps for 1 s to let the auth listener complete.
-///   2. If still on SignInScreen, signs back in via Firebase Auth directly.
-///   3. Asserts that ProgramsScreen is now visible.
-Future<void> _ensureOnProgramsScreen(WidgetTester tester) async {
-  await tester.pump(const Duration(seconds: 1));
+///   1. Pumps for 3 s to let the auth listener complete.
+///   2. If still on SignInScreen, signs back in via Firebase Auth directly
+///      using the supplied [email]/[password] credentials.
+///   3. Polls up to 20 s for ProgramsScreen to appear.
+///   4. Polls up to 20 s for the seeded 'Integration Test Program' to appear.
+///
+/// Pass [email] and [password] when calling from a test that has signed in as
+/// a user other than the default 'workout-test@example.com' (e.g. the
+/// isolation test that operates as 'second-user@example.com').
+Future<void> _ensureOnProgramsScreen(
+  WidgetTester tester, {
+  String email = 'workout-test@example.com',
+  String password = 'testpassword123',
+}) async {
+  await tester.pump(const Duration(seconds: 3));
   await tester.pumpAndSettle();
 
   if (find.text('Sign In').evaluate().isNotEmpty) {
-    print('DEBUG [_ensureOnProgramsScreen]: On SignInScreen — signing in again');
+    print('DEBUG [_ensureOnProgramsScreen]: On SignInScreen — signing in as $email');
     await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: 'workout-test@example.com',
-      password: 'testpassword123',
+      email: email,
+      password: password,
     );
     // Force token refresh so Firestore SDK has auth token before UI renders
     await FirebaseAuth.instance.currentUser?.getIdToken(true);
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
   }
 
   // Poll for ProgramsScreen — auth state propagation to the widget tree is
-  // async and may lag behind pumpWidget on a slow CI emulator.
-  for (var i = 0; i < 20; i++) {
+  // async and may lag behind pumpWidget on a slow CI emulator (up to 20 s).
+  for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (find.byType(ProgramsScreen).evaluate().isNotEmpty) break;
   }
@@ -792,9 +823,9 @@ Future<void> _ensureOnProgramsScreen(WidgetTester tester) async {
   );
 
   // ProgramsScreen is visible but ProgramProvider's Firestore query may still
-  // be in-flight. Poll up to 10 s for the seeded program to appear before
+  // be in-flight. Poll up to 20 s for the seeded program to appear before
   // returning, so tests can immediately tap the program tile.
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (find.text('Integration Test Program').evaluate().isNotEmpty) break;
   }

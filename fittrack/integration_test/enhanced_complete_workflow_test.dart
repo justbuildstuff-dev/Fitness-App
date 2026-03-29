@@ -329,11 +329,13 @@ void main() {
         }
         expect(find.text('Week 1'), findsOneWidget);
 
-        // Tap the PopupMenuButton on the week card (trailing three-dot icon)
-        // The week card's popup is the last PopupMenuButton (AppBar's is first)
+        // Tap the PopupMenuButton on the week card (trailing three-dot icon).
+        // find.byType(PopupMenuButton) matches PopupMenuButton<dynamic> at
+        // runtime, but _WeekCard uses PopupMenuButton<String>, so we must use
+        // a predicate that checks via the `is` operator instead.
         await tester.tap(find.descendant(
           of: find.byType(Card),
-          matching: find.byType(PopupMenuButton),
+          matching: find.byWidgetPredicate((w) => w is PopupMenuButton),
         ));
         await tester.pumpAndSettle();
 
