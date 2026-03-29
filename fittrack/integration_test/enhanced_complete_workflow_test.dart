@@ -736,20 +736,21 @@ void main() {
           password: testPassword,
         );
 
-        // Sign in temporarily to get userId2, then sign out so UI auth starts fresh
+        // Sign in user2 programmatically to obtain their userId
         final userCredential2 = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: testEmail2,
           password: testPassword,
         );
         final testUserId2 = userCredential2.user!.uid;
-        await FirebaseAuth.instance.signOut();
-        // Flush the queued auth state changes (user2 in, user2 out) through the
-        // widget before the UI sign-in, so they don't interfere with the
-        // subsequent pumpAndSettle after _authenticateTestUser.
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle();
+        // Pre-warm the Firestore auth token so writes succeed immediately
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
-        await _authenticateTestUser(tester, testEmail2, testPassword);
+        // Pump a completely fresh widget with user2 already authenticated.
+        // This tears down user1's entire widget tree — including any
+        // IndexedStack-cached pages (e.g. ProgramsScreen) — so no stale
+        // rendered state from user1's session survives into user2's view.
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
         // Verify second user cannot see first user's data
