@@ -475,6 +475,12 @@ void main() {
           await tester.pumpAndSettle();
         }
 
+        // Wait for the list to refresh with all created workouts
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.text(workoutNames.last).evaluate().isNotEmpty) break;
+        }
+
         // Verify all workouts appear in the list
         for (final name in workoutNames) {
           expect(find.text(name), findsOneWidget,
@@ -556,6 +562,12 @@ void main() {
         
         await tester.tap(find.text('Integration Test Week'));
         await tester.pumpAndSettle(const Duration(seconds: 2));
+
+        // Wait for Firestore stream to deliver the workout list after restart
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.text(persistentWorkoutName).evaluate().isNotEmpty) break;
+        }
 
         // Verify workout data persisted across restart
         expect(find.text(persistentWorkoutName), findsOneWidget,

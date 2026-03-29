@@ -220,6 +220,7 @@ void main() {
           'name': 'Bench Press',
           'exerciseType': 'strength',
           'orderIndex': 0,
+          'notes': null,
           'userId': testUserId,
           'weekId': weeks.first.id,
           'programId': programs.first.id,
@@ -241,6 +242,7 @@ void main() {
             'reps': 8 + i,
             'weight': (135 + i * 10).toDouble(),
             'checked': false,
+            'notes': null,
             'userId': testUserId,
             'exerciseId': exerciseRef.id,
             'workoutId': workouts.first.id,
@@ -291,6 +293,7 @@ void main() {
             .add({
           'name': 'Week 1',
           'order': 1,
+          'notes': null,
           'userId': testUserId,
           'programId': sourceProgram.id,
           'createdAt': Timestamp.now(),
@@ -443,6 +446,7 @@ void main() {
             .add({
           'name': 'Test Week',
           'order': 1,
+          'notes': null,
           'userId': testUserId,
           'programId': program.id,
           'createdAt': Timestamp.now(),
@@ -886,6 +890,7 @@ Future<Workout> _createBasicTestWorkout(String userId, String programId) async {
       .add({
     'name': 'Test Week',
     'order': 0,
+    'notes': null,
     'userId': userId,
     'programId': programId,
     'createdAt': Timestamp.fromDate(now),
