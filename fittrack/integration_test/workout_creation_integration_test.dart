@@ -625,6 +625,8 @@ void main() {
           email: 'second-user@example.com',
           password: 'testpassword456',
         );
+        // Force token refresh so Firestore SDK has auth credentials before pumpWidget
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
         // Wait for sign-in to complete and propagate to providers
         await Future.delayed(const Duration(milliseconds: 500));
@@ -680,6 +682,8 @@ void main() {
           email: 'workout-test@example.com',
           password: 'testpassword123',
         );
+        // Force token refresh so Firestore SDK has auth credentials before pumpWidget
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
         // Wait for sign-in to complete and propagate to providers
         await Future.delayed(const Duration(milliseconds: 500));

@@ -341,10 +341,17 @@ void main() {
 
         // Select 'Duplicate' from the popup menu
         await tester.tap(find.text('Duplicate'));
-        await tester.pumpAndSettle(const Duration(seconds: 5)); // Duplication takes time
+        // Poll for the snackbar — pumpAndSettle(5s) would pump through the
+        // entire snackbar lifecycle (show + auto-dismiss animation) so the
+        // assertion would run *after* the snackbar is already gone.
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.text('Week duplicated successfully!').evaluate().isNotEmpty) break;
+        }
 
-        // Verify success snackbar appeared
+        // Verify success snackbar appeared (assert before it auto-dismisses)
         expect(find.text('Week duplicated successfully!'), findsOneWidget);
+        await tester.pumpAndSettle(); // allow snackbar to fully dismiss
 
         // Verify both weeks now exist in Firestore
         final weeks = await FirestoreService.instance.getWeeks(testUserId, sourceProgram.id).first;
@@ -752,8 +759,12 @@ void main() {
         // IndexedStack-cached pages (e.g. ProgramsScreen) — so no stale
         // rendered state from user1's session survives into user2's view.
         await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        // Poll for BottomNavigationBar — AuthProvider.authStateChanges() is async
+        // and may lag pump(500ms)+pumpAndSettle(2s) on a slow CI emulator.
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
+        }
 
         // Verify second user cannot see first user's data
         await tester.tap(find.text('Programs'));
