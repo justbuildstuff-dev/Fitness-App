@@ -52,20 +52,28 @@ void main() {
         await FirebaseEmulatorSetup.initializeFirebaseForTesting();
         print('✅ Firebase emulators initialized');
 
-        // Step 2: Clear any stale Firestore data from a previous CI run.
-        // The emulator persists between the first attempt and the retry, so
-        // without this a second setUpAll would seed a duplicate
-        // "Integration Test Program" for the same fixed user email, causing
-        // findsOneWidget assertions to fail on the retry.
-        await FirebaseEmulatorSetup.clearEmulatorData();
-        print('✅ Firestore emulator data cleared');
-
-        // Step 3: Create test user account for authentication
+        // Step 2: Create test user account for authentication
         testUser = await FirebaseEmulatorSetup.createTestUser(
           email: 'workout-test@example.com',
           password: 'testpassword123',
         );
         print('✅ Test user created: ${testUser.user!.uid}');
+
+        // Step 3: Delete any pre-existing programs for this user.
+        // On CI retry runs the emulator retains data from the first attempt.
+        // Without this cleanup, seedTestData would create a second
+        // "Integration Test Program", causing findsOneWidget assertions to fail.
+        final existingPrograms = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(testUser.user!.uid)
+            .collection('programs')
+            .get();
+        for (final doc in existingPrograms.docs) {
+          await doc.reference.delete();
+        }
+        if (existingPrograms.docs.isNotEmpty) {
+          print('✅ Removed ${existingPrograms.docs.length} stale program(s) for test user');
+        }
 
         // Step 4: Seed baseline test data (program and week)
         testData = await FirebaseEmulatorSetup.seedTestData(testUser.user!.uid);
@@ -617,6 +625,18 @@ void main() {
           password: 'testpassword456',
         );
 
+        // Delete any pre-existing programs for the second user (CI retry guard).
+        // createTestUser leaves us signed in as secondUser, so the delete is
+        // authorized. This prevents duplicate "Integration Test Program" tiles.
+        final existingSecondUserPrograms = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(secondUser.user!.uid)
+            .collection('programs')
+            .get();
+        for (final doc in existingSecondUserPrograms.docs) {
+          await doc.reference.delete();
+        }
+
         // Seed data for second user
         final secondUserData = await FirebaseEmulatorSetup.seedTestData(
           secondUser.user!.uid);
@@ -822,6 +842,14 @@ Future<void> _ensureOnProgramsScreen(
     );
     // Force token refresh so Firestore SDK has auth token before UI renders
     await FirebaseAuth.instance.currentUser?.getIdToken(true);
+    // Warm up the Firestore gRPC connection after a user switch.
+    // After signIn the SDK's internal token cache can lag; this ensures the
+    // new user's credentials are propagated before ProgramProvider's first
+    // stream request fires, preventing PERMISSION_DENIED → permanent error.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await FirebaseEmulatorSetup.warmupFirestoreConnection(uid);
+    }
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
   }

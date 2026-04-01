@@ -766,35 +766,34 @@ void main() {
         // of getting PERMISSION_DENIED and entering a permanent error state.
         await FirebaseEmulatorSetup.warmupFirestoreConnection(testUserId2);
 
-        // DO NOT call pumpWidget here. A second pumpWidget creates a new widget
-        // tree, but in-flight Firestore stream callbacks from the first tree's
-        // ProgramProvider(user1.uid) survive disposal and deliver user1's data
-        // into user2's view. Instead, pump within the existing Widget Tree A:
-        // user2 is already signed in, so AuthProvider.authStateChanges() will
-        // fire and transition the UI to user2's session naturally.
-        // The warmup above also gives user1's listener extra time to receive
-        // PERMISSION_DENIED and self-cancel before the widget tree updates.
-        await tester.pump(const Duration(seconds: 2));
-        await tester.pumpAndSettle();
-        // Poll for BottomNavigationBar — AuthProvider.authStateChanges() is async
-        // and may lag on a slow CI emulator.
+        // Launch a fresh widget tree for user2. This guarantees ProgramProvider
+        // starts clean with user2's userId — no residual listener or data from
+        // user1's session can leak in. The warmup above confirmed user2's gRPC
+        // token is already propagated, so ProgramProvider's first stream
+        // request succeeds immediately.
+        SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
+        final prefs2 = await SharedPreferences.getInstance();
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
+
+        // Poll for HomeScreen (BottomNavigationBar) — AuthProvider.authStateChanges()
+        // fires async: user2 is signed in, but user.reload() + _safeNotify() take time.
         for (var i = 0; i < 40; i++) {
           await tester.pump(const Duration(milliseconds: 500));
           if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
         }
 
-        // Verify second user cannot see first user's data
+        // Navigate to Programs tab
         await tester.tap(find.text('Programs'));
         await tester.pumpAndSettle();
 
-        // Wait for user2's program list to fully load (should be empty)
+        // Wait for user2's program list to load (should be empty)
         for (var i = 0; i < 20; i++) {
           await tester.pump(const Duration(milliseconds: 500));
           if (find.text('No Programs Yet').evaluate().isNotEmpty) break;
         }
 
+        // Verify user1's data is completely absent in user2's fresh widget tree
         expect(find.text(user1Program.name), findsNothing);
-        // Empty state heading is 'No Programs Yet' (from programs_screen.dart)
         expect(find.text('No Programs Yet'), findsOneWidget);
 
         // Create data for second user
@@ -806,13 +805,7 @@ void main() {
           if (find.text(user2Program.name).evaluate().isNotEmpty) break;
         }
 
-        // Verify only second user's data is visible.
-        // Poll for user1's program to be absent before asserting — any
-        // residual snapshot from user1's cancelled listener must drain.
-        for (var i = 0; i < 20; i++) {
-          await tester.pump(const Duration(milliseconds: 500));
-          if (find.text(user1Program.name).evaluate().isEmpty) break;
-        }
+        // Verify only second user's data is visible
         expect(find.text(user2Program.name), findsOneWidget);
         expect(find.text(user1Program.name), findsNothing);
       });
