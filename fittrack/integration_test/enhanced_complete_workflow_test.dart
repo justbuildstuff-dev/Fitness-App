@@ -754,13 +754,16 @@ void main() {
         // Pre-warm the Firestore auth token so writes succeed immediately
         await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
-        // Pump a completely fresh widget with user2 already authenticated.
-        // This tears down user1's entire widget tree — including any
-        // IndexedStack-cached pages (e.g. ProgramsScreen) — so no stale
-        // rendered state from user1's session survives into user2's view.
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        // DO NOT call pumpWidget here. A second pumpWidget creates a new widget
+        // tree, but in-flight Firestore stream callbacks from the first tree's
+        // ProgramProvider(user1.uid) survive disposal and deliver user1's data
+        // into user2's view. Instead, pump within the existing Widget Tree A:
+        // user2 is already signed in, so AuthProvider.authStateChanges() will
+        // fire and transition the UI to user2's session naturally.
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
         // Poll for BottomNavigationBar — AuthProvider.authStateChanges() is async
-        // and may lag pump(500ms)+pumpAndSettle(2s) on a slow CI emulator.
+        // and may lag on a slow CI emulator.
         for (var i = 0; i < 40; i++) {
           await tester.pump(const Duration(milliseconds: 500));
           if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
