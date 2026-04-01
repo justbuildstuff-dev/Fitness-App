@@ -46,20 +46,28 @@ void main() {
     /// This runs once at the start of the entire test suite
     setUpAll(() async {
       print('\n🚀 Setting up Firebase emulators for integration tests...');
-      
+
       try {
         // Step 1: Initialize Firebase emulators with production-equivalent config
         await FirebaseEmulatorSetup.initializeFirebaseForTesting();
         print('✅ Firebase emulators initialized');
 
-        // Step 2: Create test user account for authentication
+        // Step 2: Clear any stale Firestore data from a previous CI run.
+        // The emulator persists between the first attempt and the retry, so
+        // without this a second setUpAll would seed a duplicate
+        // "Integration Test Program" for the same fixed user email, causing
+        // findsOneWidget assertions to fail on the retry.
+        await FirebaseEmulatorSetup.clearEmulatorData();
+        print('✅ Firestore emulator data cleared');
+
+        // Step 3: Create test user account for authentication
         testUser = await FirebaseEmulatorSetup.createTestUser(
           email: 'workout-test@example.com',
           password: 'testpassword123',
         );
         print('✅ Test user created: ${testUser.user!.uid}');
 
-        // Step 3: Seed baseline test data (program and week)
+        // Step 4: Seed baseline test data (program and week)
         testData = await FirebaseEmulatorSetup.seedTestData(testUser.user!.uid);
         print('✅ Test data seeded: $testData');
 
@@ -630,6 +638,12 @@ void main() {
 
         // Wait for sign-in to complete and propagate to providers
         await Future.delayed(const Duration(milliseconds: 500));
+
+        // Warm up the Firestore gRPC connection before creating the widget tree.
+        // After a user switch, the SDK's internal token cache can lag behind the
+        // Auth state. Without this, ProgramProvider's first stream request uses a
+        // stale/null token → PERMISSION_DENIED → permanent error state → test timeout.
+        await FirebaseEmulatorSetup.warmupFirestoreConnection(secondUser.user!.uid);
 
         // Initialize SharedPreferences for testing
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});

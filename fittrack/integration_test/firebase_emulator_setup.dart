@@ -399,6 +399,49 @@ class FirebaseEmulatorSetup {
     }
   }
 
+  /// Warm up the Firestore gRPC connection for [userId] after a sign-in.
+  ///
+  /// After signInWithEmailAndPassword + getIdToken(true) there is a window
+  /// where the Firestore SDK's internal token cache still holds the previous
+  /// (or null) credential. Calling pumpWidget inside that window starts a
+  /// ProgramProvider stream that immediately gets PERMISSION_DENIED and enters
+  /// a permanent error state, causing _ensureOnProgramsScreen to time out.
+  ///
+  /// This method performs a simple authenticated read with retry until the
+  /// connection is confirmed warm, guaranteeing pumpWidget can safely follow.
+  static Future<void> warmupFirestoreConnection(String userId) async {
+    for (var attempt = 0; attempt < 10; attempt++) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+        print('✅ Firestore connection warmed up for $userId (attempt ${attempt + 1})');
+        return;
+      } catch (e) {
+        if (e.toString().contains('permission-denied')) {
+          print('⏳ Firestore warmup attempt ${attempt + 1}: permission-denied, retrying...');
+          await Future.delayed(const Duration(milliseconds: 500));
+        } else {
+          rethrow;
+        }
+      }
+    }
+    throw Exception(
+      'warmupFirestoreConnection: Firestore still denying access after 10 attempts '
+      '(5 s). Check that the emulator is running and the user is authenticated.',
+    );
+  }
+
+  /// Clear all data from Firestore emulator via the emulator HTTP API.
+  ///
+  /// Use this at the start of setUpAll in test suites that use fixed user
+  /// emails — it prevents duplicate seeded documents on CI retry runs where
+  /// the emulator is reused between the first attempt and the retry.
+  ///
+  /// Safe to call only against emulators (never production).
+  static Future<void> clearEmulatorData() => _clearFirestoreData();
+
   /// Clear all data from Firestore emulator
   ///
   /// This ensures each test suite starts with a clean database state,
@@ -408,23 +451,17 @@ class FirebaseEmulatorSetup {
   /// This is safe because we're using emulators, not production.
   static Future<void> _clearFirestoreData() async {
     try {
-      // Use emulator HTTP API to clear data (bypasses security rules)
-      // This is the recommended approach for test cleanup with emulators
-      // Documentation: https://firebase.google.com/docs/emulator-suite/connect_firestore#clear_your_database_between_tests
-
-      // Note: The actual HTTP clear is not implemented here because:
-      // 1. Each test creates unique users (microsecond timestamps)
-      // 2. Emulators are destroyed after test run
-      // 3. Data doesn't persist between test runs
-      // 4. Attempting to query/delete through security rules causes PERMISSION_DENIED
-
-      // If we needed to clear data, we would use HTTP:
-      // final response = await http.delete(
-      //   Uri.parse('http://localhost:8080/emulator/v1/projects/$projectId/databases/(default)/documents'),
-      // );
-
-      print('✅ Firestore test data cleared (emulators will be destroyed after tests)');
-
+      final response = await http.delete(
+        Uri.parse(
+          'http://$_firestoreEmulatorHost:$_firestoreEmulatorPort'
+          '/emulator/v1/projects/fitness-app-8505e/databases/(default)/documents',
+        ),
+      );
+      if (response.statusCode == 200) {
+        print('✅ Firestore emulator data cleared');
+      } else {
+        print('⚠️  Firestore clear returned ${response.statusCode}: ${response.body}');
+      }
     } catch (e) {
       print('⚠️  Failed to clear Firestore data: $e');
     }

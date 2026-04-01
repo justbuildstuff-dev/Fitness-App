@@ -704,6 +704,12 @@ void main() {
         await _authenticateTestUser(tester, testEmail, testPassword);
         await tester.pumpAndSettle(const Duration(seconds: 2));
 
+        // Warm up the Firestore gRPC connection after re-auth.
+        // _authenticateTestUser calls getIdToken(true), but the gRPC token
+        // cache can still lag. Warmup ensures ProgramProvider's first stream
+        // request has a valid token so it doesn't enter a permanent error state.
+        await FirebaseEmulatorSetup.warmupFirestoreConnection(testUserId);
+
         // Verify data is still accessible
         await tester.tap(find.text('Programs'));
         // Poll for Firestore stream to deliver the program list after re-auth
@@ -754,12 +760,20 @@ void main() {
         // Pre-warm the Firestore auth token so writes succeed immediately
         await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
+        // Warm up the Firestore gRPC connection for user2 before the widget
+        // tree transitions. This confirms the gRPC connection has user2's
+        // token, so ProgramProvider's first stream request succeeds instead
+        // of getting PERMISSION_DENIED and entering a permanent error state.
+        await FirebaseEmulatorSetup.warmupFirestoreConnection(testUserId2);
+
         // DO NOT call pumpWidget here. A second pumpWidget creates a new widget
         // tree, but in-flight Firestore stream callbacks from the first tree's
         // ProgramProvider(user1.uid) survive disposal and deliver user1's data
         // into user2's view. Instead, pump within the existing Widget Tree A:
         // user2 is already signed in, so AuthProvider.authStateChanges() will
         // fire and transition the UI to user2's session naturally.
+        // The warmup above also gives user1's listener extra time to receive
+        // PERMISSION_DENIED and self-cancel before the widget tree updates.
         await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();
         // Poll for BottomNavigationBar — AuthProvider.authStateChanges() is async
@@ -792,7 +806,13 @@ void main() {
           if (find.text(user2Program.name).evaluate().isNotEmpty) break;
         }
 
-        // Verify only second user's data is visible
+        // Verify only second user's data is visible.
+        // Poll for user1's program to be absent before asserting — any
+        // residual snapshot from user1's cancelled listener must drain.
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 500));
+          if (find.text(user1Program.name).evaluate().isEmpty) break;
+        }
         expect(find.text(user2Program.name), findsOneWidget);
         expect(find.text(user1Program.name), findsNothing);
       });
