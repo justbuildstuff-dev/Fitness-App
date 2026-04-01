@@ -810,65 +810,102 @@ void main() {
 /// Additional test helper methods can be added here for common operations
 /// like navigating to specific screens, creating test workouts, etc.
 
-/// Wait for auth state to propagate and assert the app is on ProgramsScreen.
+/// Wait for auth state to propagate and navigate to the Programs tab.
 ///
-/// This mirrors the `_ensureSignedIn` pattern from the analytics tests.
-/// After pumping the widget, the AuthProvider's `authStateChanges()` listener
-/// fires asynchronously (it calls `await user.reload()` internally). On a slow
-/// CI Android emulator the round-trip can exceed the naive pump window,
-/// leaving the app on SignInScreen.  This helper:
-///   1. Pumps for 3 s to let the auth listener complete.
-///   2. If still on SignInScreen, signs back in via Firebase Auth directly
-///      using the supplied [email]/[password] credentials.
-///   3. Polls up to 20 s for ProgramsScreen to appear.
-///   4. Polls up to 20 s for the seeded 'Integration Test Program' to appear.
+/// Handles ALL routing states that AuthWrapper can produce after pumpWidget:
+///   - SignInScreen  → signs in directly via FirebaseAuth
+///   - EmailVerificationScreen → signs out + re-signs-in to get fresh verified token
+///   - HomeScreen (any tab) → taps 'Programs' bottom-nav label to reach Programs tab
 ///
-/// Pass [email] and [password] when calling from a test that has signed in as
-/// a user other than the default 'workout-test@example.com' (e.g. the
-/// isolation test that operates as 'second-user@example.com').
+/// Uses `find.text('Programs')` (bottom-nav label) instead of
+/// `find.byType(ProgramsScreen)` because `find.byType` can be unreliable when
+/// the app is briefly on EmailVerificationScreen during `user.reload()` inside
+/// the `authStateChanges` listener. The bottom-nav label is present in every
+/// HomeScreen tab and provides a more robust signal.
+///
+/// Pass [email] and [password] when signing in as a user other than the default
+/// 'workout-test@example.com' (e.g. the isolation test with 'second-user@...').
 Future<void> _ensureOnProgramsScreen(
   WidgetTester tester, {
   String email = 'workout-test@example.com',
   String password = 'testpassword123',
 }) async {
-  await tester.pump(const Duration(seconds: 3));
-  await tester.pumpAndSettle();
+  // Let auth state settle after pumpWidget. The AuthProvider's authStateChanges
+  // listener calls `await user.reload()` which is a real network call; give it
+  // up to 5 s before checking the routing state.
+  await tester.pump(const Duration(seconds: 5));
 
-  if (find.text('Sign In').evaluate().isNotEmpty) {
-    print('DEBUG [_ensureOnProgramsScreen]: On SignInScreen — signing in as $email');
+  Future<void> _doSignIn() async {
+    print('DEBUG [_ensureOnProgramsScreen]: Signing in as $email');
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
-    // Force token refresh so Firestore SDK has auth token before UI renders
     await FirebaseAuth.instance.currentUser?.getIdToken(true);
-    // Warm up the Firestore gRPC connection after a user switch.
-    // After signIn the SDK's internal token cache can lag; this ensures the
-    // new user's credentials are propagated before ProgramProvider's first
-    // stream request fires, preventing PERMISSION_DENIED → permanent error.
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       await FirebaseEmulatorSetup.warmupFirestoreConnection(uid);
     }
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
   }
 
-  // Poll for ProgramsScreen — auth state propagation to the widget tree is
-  // async and may lag behind pumpWidget on a slow CI emulator (up to 20 s).
+  // Check current routing state and recover if needed.
+  final onSignIn = find.text('Sign In').evaluate().isNotEmpty;
+  final onVerify = find.text('Verify Email').evaluate().isNotEmpty;
+  final onHome   = find.text('Programs').evaluate().isNotEmpty;
+
+  print('DEBUG [_ensureOnProgramsScreen]: signIn=$onSignIn verify=$onVerify home=$onHome');
+
+  if (onSignIn) {
+    // AuthWrapper is on SignInScreen — just sign in.
+    await _doSignIn();
+  } else if (onVerify) {
+    // AuthWrapper is on EmailVerificationScreen.
+    // user.reload() returned emailVerified=false (stale token / emulator lag).
+    // Fix: sign out and sign back in, which forces a fresh auth exchange that
+    // picks up the emailVerified=true flag set by _setEmailVerifiedInEmulator.
+    print('DEBUG [_ensureOnProgramsScreen]: On EmailVerificationScreen — re-signing in');
+    await FirebaseAuth.instance.signOut();
+    await Future.delayed(const Duration(milliseconds: 300));
+    await _doSignIn();
+  } else if (!onHome) {
+    // Neither SignIn, Verify, nor HomeScreen detected — still loading or an
+    // unexpected routing state. Give it up to 10 more seconds to settle, then
+    // check again and sign in if needed.
+    print('DEBUG [_ensureOnProgramsScreen]: Unknown state — waiting up to 10 s');
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      if (find.text('Sign In').evaluate().isNotEmpty ||
+          find.text('Verify Email').evaluate().isNotEmpty ||
+          find.text('Programs').evaluate().isNotEmpty) break;
+    }
+    if (find.text('Sign In').evaluate().isNotEmpty) {
+      await _doSignIn();
+    } else if (find.text('Verify Email').evaluate().isNotEmpty) {
+      print('DEBUG [_ensureOnProgramsScreen]: On EmailVerificationScreen (2nd check) — re-signing in');
+      await FirebaseAuth.instance.signOut();
+      await Future.delayed(const Duration(milliseconds: 300));
+      await _doSignIn();
+    }
+  }
+
+  // Poll up to 20 s for HomeScreen (bottom-nav 'Programs' label) to appear.
   for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 500));
-    if (find.byType(ProgramsScreen).evaluate().isNotEmpty) break;
+    if (find.text('Programs').evaluate().isNotEmpty) break;
   }
 
   expect(
-    find.byType(ProgramsScreen), findsOneWidget,
-    reason: 'Should be on ProgramsScreen for authenticated user',
+    find.text('Programs'), findsOneWidget,
+    reason: 'HomeScreen bottom-nav should be visible for authenticated user',
   );
 
-  // ProgramsScreen is visible but ProgramProvider's Firestore query may still
-  // be in-flight. Poll up to 20 s for the seeded program to appear before
-  // returning, so tests can immediately tap the program tile.
+  // Explicitly tap 'Programs' bottom-nav label to ensure the Programs tab is
+  // active (we may be on Analytics or Profile if the last test navigated away).
+  await tester.tap(find.text('Programs'));
+  await tester.pump(const Duration(milliseconds: 500));
+
+  // Poll up to 20 s for the seeded program to appear.
   for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (find.text('Integration Test Program').evaluate().isNotEmpty) break;

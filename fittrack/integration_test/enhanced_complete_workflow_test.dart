@@ -782,6 +782,26 @@ void main() {
           if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
         }
 
+        // Recovery: if user.reload() returned stale emailVerified=false, AuthWrapper
+        // routes to EmailVerificationScreen instead of HomeScreen. Sign out + direct
+        // Firebase re-sign-in forces a fresh token exchange with emailVerified=true.
+        if (find.byType(BottomNavigationBar).evaluate().isEmpty &&
+            find.text('Verify Email').evaluate().isNotEmpty) {
+          print('DEBUG [isolation test]: EmailVerificationScreen detected for user2 — re-signing in');
+          await FirebaseAuth.instance.signOut();
+          await Future.delayed(const Duration(milliseconds: 300));
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: testEmail2,
+            password: testPassword,
+          );
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
+          await FirebaseEmulatorSetup.warmupFirestoreConnection(testUserId2);
+          for (var i = 0; i < 20; i++) {
+            await tester.pump(const Duration(milliseconds: 500));
+            if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
+          }
+        }
+
         // Navigate to Programs tab
         await tester.tap(find.text('Programs'));
         await tester.pumpAndSettle();
@@ -854,9 +874,32 @@ Future<void> _authenticateTestUser(WidgetTester tester, String email, String pas
   // Firebase Auth sign-in is async: authStateChanges() fires, user.reload() runs,
   // user profile is loaded from Firestore — these network calls are not awaited by
   // pumpAndSettle(). We must poll for the UI to actually settle.
+  //
+  // Recovery: if AuthProvider.authStateChanges calls user.reload() and gets a stale
+  // emailVerified=false, AuthWrapper routes to EmailVerificationScreen. Detect this
+  // and recover via sign-out + direct Firebase re-sign-in to force a fresh token.
+  var emailVerifyRecovered = false;
   for (var i = 0; i < 20; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
+    if (!emailVerifyRecovered && find.text('Verify Email').evaluate().isNotEmpty) {
+      print('DEBUG [_authenticateTestUser]: EmailVerificationScreen detected — re-signing in directly');
+      await FirebaseAuth.instance.signOut();
+      await Future.delayed(const Duration(milliseconds: 300));
+      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) await FirebaseEmulatorSetup.warmupFirestoreConnection(uid);
+      await tester.pump(const Duration(seconds: 2));
+      emailVerifyRecovered = true;
+    }
+  }
+  // If recovery was triggered, give an extra polling window for BottomNavBar to appear.
+  if (emailVerifyRecovered) {
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+      if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
+    }
   }
 
   // Force a token refresh so the Firestore SDK has the new auth token before
