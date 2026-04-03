@@ -134,6 +134,12 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
       return;
     }
 
+    // Mark onboarding complete as soon as a program exists. If the app is
+    // force-closed after this point, AuthWrapper will route to HomeScreen
+    // instead of re-showing the carousel (fixes bug #427).
+    await OnboardingService.instance.markComplete();
+    if (!mounted) return;
+
     setState(() {
       _programId = programId;
       _programName = _programNameController.text.trim();
