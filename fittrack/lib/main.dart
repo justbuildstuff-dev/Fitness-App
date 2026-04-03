@@ -17,6 +17,7 @@ import 'providers/weight_unit_provider.dart';
 import 'providers/exercise_library_provider.dart';
 import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
+import 'services/app_analytics_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
@@ -170,6 +171,7 @@ class FitTrackApp extends StatelessWidget {
                 elevation: 0,
               ),
             ),
+            navigatorObservers: [AppAnalyticsService.instance.observer],
             home: const AuthWrapper(),
           );
         },

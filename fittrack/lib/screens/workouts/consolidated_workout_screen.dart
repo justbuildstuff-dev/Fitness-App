@@ -2,6 +2,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
+import '../../services/app_analytics_service.dart';
 import '../../providers/template_provider.dart';
 import '../../models/program.dart';
 import '../../models/week.dart';
@@ -45,6 +46,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AppAnalyticsService.instance.logWorkoutStarted();
     // Load exercises and all sets when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadWorkoutData();

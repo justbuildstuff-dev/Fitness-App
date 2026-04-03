@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/app_analytics_service.dart';
 import '../home/home_screen.dart';
 import 'pro_info_placeholder_screen.dart';
 
@@ -6,10 +7,23 @@ import 'pro_info_placeholder_screen.dart';
 ///
 /// The wizard (task #415) calls [OnboardingService.markComplete()] and then
 /// navigates here passing the created [programName].
-class OnboardingCompletionScreen extends StatelessWidget {
+class OnboardingCompletionScreen extends StatefulWidget {
   final String? programName;
 
   const OnboardingCompletionScreen({super.key, this.programName});
+
+  @override
+  State<OnboardingCompletionScreen> createState() =>
+      _OnboardingCompletionScreenState();
+}
+
+class _OnboardingCompletionScreenState
+    extends State<OnboardingCompletionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppAnalyticsService.instance.logOnboardingCompleted();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +53,7 @@ class OnboardingCompletionScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "Your program '${programName ?? 'your program'}' is ready. Time to log your first workout.",
+                  "Your program '${widget.programName ?? 'your program'}' is ready. Time to log your first workout.",
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
