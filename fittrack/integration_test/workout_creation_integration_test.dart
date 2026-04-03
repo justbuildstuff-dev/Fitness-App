@@ -586,7 +586,7 @@ void main() {
         // Reuse prefs variable from earlier in test scope
         await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs, key: UniqueKey()));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate back to the weeks screen
@@ -724,7 +724,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs2 = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2));
+        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2, key: UniqueKey()));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate to first user's workouts
