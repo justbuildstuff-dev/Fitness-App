@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,6 +36,20 @@ void main() async {
           throw Exception('Firebase initialization timed out after 10 seconds. Check your internet connection and Firebase configuration.');
         },
       );
+
+      // Disable Crashlytics in debug builds to keep the production dashboard clean
+      if (kDebugMode) {
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+      }
+
+      // Pass all uncaught Flutter framework errors to Crashlytics
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+      // Pass all uncaught async/platform errors to Crashlytics
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
     } catch (e) {
       debugPrint('Firebase initialization error: $e');
       // Run app with error state - AuthProvider will handle the error gracefully
@@ -60,7 +77,10 @@ void main() async {
   // Initialize onboarding state service (must be before runApp)
   OnboardingService.initialize(prefs);
 
-  runApp(FitTrackApp(prefs: prefs));
+  runZonedGuarded(
+    () => runApp(FitTrackApp(prefs: prefs)),
+    (error, stack) => FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
+  );
 }
 
 class FitTrackApp extends StatelessWidget {
