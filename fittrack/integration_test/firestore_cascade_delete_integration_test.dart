@@ -12,6 +12,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fittrack/services/firestore_service.dart';
@@ -19,6 +20,8 @@ import 'package:fittrack/models/cascade_delete_counts.dart';
 import 'firebase_emulator_setup.dart';
 
 void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
   group('Firestore Cascade Delete Count Integration Tests', () {
     late FirestoreService firestoreService;
     late String testUserId;
@@ -116,7 +119,9 @@ void main() {
         'name': 'Exercise 1',
         'orderIndex': 1,
         'exerciseType': 'strength',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,
@@ -137,6 +142,7 @@ void main() {
           'notes': null,
           'setNumber': i + 1,
           'checked': false,
+          'completedAt': null,
           'createdAt': now,
           'updatedAt': now,
           'userId': testUserId,
@@ -151,7 +157,9 @@ void main() {
         'name': 'Exercise 2',
         'orderIndex': 2,
         'exerciseType': 'strength',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,
@@ -172,6 +180,7 @@ void main() {
           'notes': null,
           'setNumber': i + 1,
           'checked': false,
+          'completedAt': null,
           'createdAt': now,
           'updatedAt': now,
           'userId': testUserId,
@@ -199,7 +208,9 @@ void main() {
         'name': 'Exercise 3',
         'orderIndex': 1,
         'exerciseType': 'strength',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,
@@ -219,6 +230,7 @@ void main() {
         'notes': null,
         'setNumber': 1,
         'checked': false,
+        'completedAt': null,
         'createdAt': now,
         'updatedAt': now,
         'userId': testUserId,
@@ -297,7 +309,9 @@ void main() {
         'name': 'Exercise 1',
         'orderIndex': 1,
         'exerciseType': 'strength',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,
@@ -317,6 +331,7 @@ void main() {
           'notes': null,
           'setNumber': i + 1,
           'checked': false,
+          'completedAt': null,
           'createdAt': now,
           'updatedAt': now,
           'userId': testUserId,
@@ -332,7 +347,9 @@ void main() {
         'name': 'Exercise 2',
         'orderIndex': 2,
         'exerciseType': 'cardio',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,
@@ -352,6 +369,7 @@ void main() {
           'notes': null,
           'setNumber': i + 1,
           'checked': false,
+          'completedAt': null,
           'createdAt': now,
           'updatedAt': now,
           'userId': testUserId,
@@ -427,7 +445,9 @@ void main() {
         'name': 'Test Exercise',
         'orderIndex': 1,
         'exerciseType': 'strength',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,
@@ -449,6 +469,7 @@ void main() {
           'notes': null,
           'setNumber': i + 1,
           'checked': false,
+          'completedAt': null,
           'createdAt': now,
           'updatedAt': now,
           'userId': testUserId,
@@ -562,7 +583,9 @@ void main() {
         'name': 'Empty Exercise',
         'orderIndex': 1,
         'exerciseType': 'strength',
-        'notes': '',
+        'notes': null,
+        'supersetGroupId': null,
+        'groupOrderIndex': null,
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
         'userId': testUserId,

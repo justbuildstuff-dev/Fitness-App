@@ -206,11 +206,34 @@ class FirebaseEmulatorSetup {
     }
 
     try {
-      // Create test user account
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential;
+
+      try {
+        // Create test user account
+        userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          // On CI retry runs the emulator retains data from the first run.
+          // Sign in with existing credentials instead of failing.
+          print('ℹ️  Test user $email already exists (CI retry?) — signing in instead');
+          userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          // The user was verified during the first run; confirm and return.
+          final existingUser = FirebaseAuth.instance.currentUser;
+          await existingUser?.reload();
+          if (FirebaseAuth.instance.currentUser?.emailVerified != true) {
+            throw Exception('Existing test user $email has unverified email');
+          }
+          print('✅ Test user signed in (existing): ${existingUser?.uid ?? 'null'} ($email)');
+          return userCredential;
+        }
+        rethrow;
+      }
 
       // Verify user was created successfully
       if (userCredential.user == null) {
@@ -230,10 +253,14 @@ class FirebaseEmulatorSetup {
       print('✅ Test user created: ${currentUser?.uid ?? 'null'} ($email)');
       print('   Final emailVerified status: ${currentUser?.emailVerified ?? false}');
 
-      if (currentUser?.emailVerified == false) {
-        print('   ⚠️  WARNING: Email NOT verified - tests may fail!');
-        print('   Auth emulator REST API may not have updated the user.');
-        print('   E2E tests will be redirected to EmailVerificationScreen.');
+      if (currentUser?.emailVerified != true) {
+        throw Exception(
+          'Email verification failed for $email after OOB code flow.\n'
+          'AuthWrapper will route to EmailVerificationScreen and all '
+          'navigation-based test assertions will fail.\n'
+          'Check that the Auth emulator is running and the OOB codes '
+          'endpoint (http://$_authEmulatorHost:$_authEmulatorPort/emulator/v1/...) is accessible.',
+        );
       }
 
       return userCredential;
@@ -294,12 +321,20 @@ class FirebaseEmulatorSetup {
             if (applyResponse.statusCode == 200) {
               print('✅ Email verified via OOB code application');
 
-              // Step 4: Reload user to get updated emailVerified status
-              await Future.delayed(const Duration(milliseconds: 100));
+              // Step 4: Allow emulator to propagate the change, then reload user.
+              // The 500 ms delay (up from 100 ms) gives the Auth emulator time to
+              // commit the emailVerified flag before we request a fresh token.
+              await Future.delayed(const Duration(milliseconds: 500));
               await user.reload();
 
+              // Force a full ID-token refresh so the new emailVerified=true claim
+              // is included in the JWT the app will use.  Without this, the cached
+              // token still carries emailVerified=false and AuthWrapper routes the
+              // user to EmailVerificationScreen instead of HomeScreen.
+              await FirebaseAuth.instance.currentUser?.getIdToken(true);
+
               final updatedUser = FirebaseAuth.instance.currentUser;
-              print('   After reload - emailVerified: ${updatedUser?.emailVerified ?? false}');
+              print('   After reload+refresh - emailVerified: ${updatedUser?.emailVerified ?? false}');
             } else {
               print('⚠️  Failed to apply OOB code: ${applyResponse.statusCode} - ${applyResponse.body}');
             }
@@ -364,6 +399,49 @@ class FirebaseEmulatorSetup {
     }
   }
 
+  /// Warm up the Firestore gRPC connection for [userId] after a sign-in.
+  ///
+  /// After signInWithEmailAndPassword + getIdToken(true) there is a window
+  /// where the Firestore SDK's internal token cache still holds the previous
+  /// (or null) credential. Calling pumpWidget inside that window starts a
+  /// ProgramProvider stream that immediately gets PERMISSION_DENIED and enters
+  /// a permanent error state, causing _ensureOnProgramsScreen to time out.
+  ///
+  /// This method performs a simple authenticated read with retry until the
+  /// connection is confirmed warm, guaranteeing pumpWidget can safely follow.
+  static Future<void> warmupFirestoreConnection(String userId) async {
+    for (var attempt = 0; attempt < 10; attempt++) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+        print('✅ Firestore connection warmed up for $userId (attempt ${attempt + 1})');
+        return;
+      } catch (e) {
+        if (e.toString().contains('permission-denied')) {
+          print('⏳ Firestore warmup attempt ${attempt + 1}: permission-denied, retrying...');
+          await Future.delayed(const Duration(milliseconds: 500));
+        } else {
+          rethrow;
+        }
+      }
+    }
+    throw Exception(
+      'warmupFirestoreConnection: Firestore still denying access after 10 attempts '
+      '(5 s). Check that the emulator is running and the user is authenticated.',
+    );
+  }
+
+  /// Clear all data from Firestore emulator via the emulator HTTP API.
+  ///
+  /// Use this at the start of setUpAll in test suites that use fixed user
+  /// emails — it prevents duplicate seeded documents on CI retry runs where
+  /// the emulator is reused between the first attempt and the retry.
+  ///
+  /// Safe to call only against emulators (never production).
+  static Future<void> clearEmulatorData() => _clearFirestoreData();
+
   /// Clear all data from Firestore emulator
   ///
   /// This ensures each test suite starts with a clean database state,
@@ -373,23 +451,17 @@ class FirebaseEmulatorSetup {
   /// This is safe because we're using emulators, not production.
   static Future<void> _clearFirestoreData() async {
     try {
-      // Use emulator HTTP API to clear data (bypasses security rules)
-      // This is the recommended approach for test cleanup with emulators
-      // Documentation: https://firebase.google.com/docs/emulator-suite/connect_firestore#clear_your_database_between_tests
-
-      // Note: The actual HTTP clear is not implemented here because:
-      // 1. Each test creates unique users (microsecond timestamps)
-      // 2. Emulators are destroyed after test run
-      // 3. Data doesn't persist between test runs
-      // 4. Attempting to query/delete through security rules causes PERMISSION_DENIED
-
-      // If we needed to clear data, we would use HTTP:
-      // final response = await http.delete(
-      //   Uri.parse('http://localhost:8080/emulator/v1/projects/$projectId/databases/(default)/documents'),
-      // );
-
-      print('✅ Firestore test data cleared (emulators will be destroyed after tests)');
-
+      final response = await http.delete(
+        Uri.parse(
+          'http://$_firestoreEmulatorHost:$_firestoreEmulatorPort'
+          '/emulator/v1/projects/fitness-app-8505e/databases/(default)/documents',
+        ),
+      );
+      if (response.statusCode == 200) {
+        print('✅ Firestore emulator data cleared');
+      } else {
+        print('⚠️  Firestore clear returned ${response.statusCode}: ${response.body}');
+      }
     } catch (e) {
       print('⚠️  Failed to clear Firestore data: $e');
     }

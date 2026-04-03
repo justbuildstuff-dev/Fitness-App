@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   String? _successMessage;
   StreamSubscription<User?>? _authStateSubscription;
+  bool _disposed = false;
 
   User? get user => _user;
   UserProfile? get userProfile => _userProfile;
@@ -43,11 +44,12 @@ class AuthProvider extends ChangeNotifier {
       }
 
       if (_user != null) {
-        _loadUserProfile();
+        _loadUserProfile(); // unawaited — starts profile load async
+        _safeNotify(); // notify immediately so UI routes to home screen
       } else {
         _userProfile = null;
+        _safeNotify();
       }
-      notifyListeners();
     });
   }
 
@@ -241,10 +243,12 @@ class AuthProvider extends ChangeNotifier {
         // Create profile if it doesn't exist
         await _createUserProfile(_user!, _user!.displayName);
         await _loadUserProfile();
+        return; // recursive call already notified
       }
-      notifyListeners();
+      _safeNotify();
     } catch (e) {
       debugPrint('Error loading user profile: $e');
+      _safeNotify(); // still notify so UI can react to the error state
     }
   }
 
@@ -295,12 +299,12 @@ class AuthProvider extends ChangeNotifier {
 
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _setError(String error) {
     _error = error;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _clearError() {
@@ -309,7 +313,7 @@ class AuthProvider extends ChangeNotifier {
 
   void _setSuccessMessage(String message) {
     _successMessage = message;
-    notifyListeners();
+    _safeNotify();
   }
 
   void _clearSuccessMessage() {
@@ -318,16 +322,21 @@ class AuthProvider extends ChangeNotifier {
 
   void clearError() {
     _clearError();
-    notifyListeners();
+    _safeNotify();
   }
 
   void clearSuccessMessage() {
     _clearSuccessMessage();
-    notifyListeners();
+    _safeNotify();
+  }
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _authStateSubscription?.cancel();
     super.dispose();
   }

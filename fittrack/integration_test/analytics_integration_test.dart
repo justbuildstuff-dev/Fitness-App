@@ -243,9 +243,9 @@ void main() {
         // UI displays "Activity Tracker" as the heatmap section header
         expect(find.text('Activity Tracker'), findsOneWidget);
         
-        // Check for workout count
-        final workoutCountFinder = find.textContaining('workouts');
-        expect(workoutCountFinder, findsOneWidget);
+        // Check for set count (heatmap header shows "$totalSets sets")
+        final setCountFinder = find.textContaining('sets');
+        expect(setCountFinder, findsAtLeastNWidgets(1));
         
         // Check for streak information
         expect(find.text('Current Streak'), findsOneWidget);
@@ -343,32 +343,26 @@ void main() {
 // Helper methods for integration testing
 
 Future<void> _signInWithTestAccount(WidgetTester tester) async {
-  // Wait for the sign-in form to fully render before accessing fields.
-  // On slow emulators the "Sign In" button text becomes visible before the
-  // TextFormField widgets are laid out, causing finder.first to throw
-  // "Bad state: No element".
-  await tester.pumpAndSettle(const Duration(seconds: 2));
-  expect(find.byType(TextFormField), findsWidgets,
-      reason: 'Sign-in form must be visible before entering credentials');
-
-  // Enter test email
-  await tester.enterText(
-    find.byType(TextFormField).first,
-    'test@fittrack.com'
+  // Sign in directly via Firebase Auth SDK to avoid tapping the UI button.
+  //
+  // Tapping the "Sign In" button via tester.tap() can silently fail on tests
+  // 4-5 because Flutter's Navigator wraps the snapshot widgets used during
+  // page transitions in RenderIgnorePointer, which causes tap() to derive an
+  // offset that "would not hit test".  Signing in through the SDK bypasses
+  // the pointer-event layer entirely and triggers AuthProvider's
+  // authStateChanges() listener, which then routes the app to HomeScreen.
+  await FirebaseAuth.instance.signInWithEmailAndPassword(
+    email: 'test@fittrack.com',
+    password: 'testpassword123',
   );
 
-  // Enter test password
-  await tester.enterText(
-    find.byType(TextFormField).last,
-    'testpassword123'
-  );
+  // Force a token refresh so the Firestore SDK has the auth token before any
+  // reads/writes that follow.
+  await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
-  // Tap sign in
-  await tester.tap(find.text('Sign In'));
+  // Give AuthProvider time to handle the auth state change and rebuild UI.
+  await tester.pump(const Duration(seconds: 2));
   await tester.pumpAndSettle();
-
-  // Wait for sign in to complete
-  await tester.pump(const Duration(seconds: 3));
 }
 
 Future<void> _ensureSignedIn(WidgetTester tester) async {
@@ -399,11 +393,15 @@ Future<void> _ensureSignedIn(WidgetTester tester) async {
     print('DEBUG: User already authenticated');
   }
 
-  // Wait for home screen to load
-  await tester.pumpAndSettle();
+  // Poll up to 20s for Programs text to appear after sign-in.
+  // AuthProvider loads the user profile from Firestore asynchronously;
+  // pumpAndSettle() alone is not enough to wait for that network round-trip.
+  for (var i = 0; i < 40; i++) {
+    await tester.pump(const Duration(milliseconds: 500));
+    if (find.text('Programs').evaluate().isNotEmpty) break;
+  }
   print('DEBUG: Final UI state - Sign In: ${signInButton.evaluate().isNotEmpty}, Programs: ${programsText.evaluate().isNotEmpty}');
 
-  // This is where tests are failing - can't find Programs widget
   expect(find.text('Programs'), findsOneWidget, reason: 'Programs screen should be visible after sign in');
   print('DEBUG: Programs widget verified successfully');
 }
