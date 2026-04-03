@@ -820,8 +820,9 @@ void main() {
         expect(find.text(user1Program.name), findsNothing);
         expect(find.text('No Programs Yet'), findsOneWidget);
 
-        // Create data for second user
-        final user2Program = await _createBasicTestProgram(testUserId2);
+        // Create data for second user — use a distinct name so we can assert
+        // user1Program.name is absent even after user2's program is visible.
+        final user2Program = await _createBasicTestProgram(testUserId2, name: 'Second User Program');
 
         // Poll for Firestore stream to deliver the new program to the UI
         for (var i = 0; i < 20; i++) {
@@ -964,7 +965,7 @@ Future<Program> _createCompleteTestProgram(String userId) async {
   );
 }
 
-Future<Program> _createBasicTestProgram(String userId) async {
+Future<Program> _createBasicTestProgram(String userId, {String name = 'Basic Test Program'}) async {
   /// Create a basic test program and persist it to Firestore.
   /// Returns a Program with the real Firestore-assigned ID.
   final now = DateTime.now();
@@ -973,7 +974,7 @@ Future<Program> _createBasicTestProgram(String userId) async {
       .doc(userId)
       .collection('programs')
       .add({
-    'name': 'Basic Test Program',
+    'name': name,
     'description': 'Simple program for testing',
     'userId': userId,
     'isArchived': false,
@@ -982,7 +983,7 @@ Future<Program> _createBasicTestProgram(String userId) async {
   });
   return Program(
     id: docRef.id,
-    name: 'Basic Test Program',
+    name: name,
     description: 'Simple program for testing',
     createdAt: now,
     updatedAt: now,
