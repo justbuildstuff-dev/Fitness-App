@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 import '../converters/user_profile_converter.dart';
+import '../services/app_analytics_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth;
@@ -87,6 +88,7 @@ class AuthProvider extends ChangeNotifier {
 
         // Set success message
         _setSuccessMessage('Account created! Please check your email to verify your account.');
+        AppAnalyticsService.instance.logSignUp();
         return true;
       }
       return false;
@@ -117,6 +119,7 @@ class AuthProvider extends ChangeNotifier {
       // Update last login time
       if (_user != null) {
         await _updateLastLogin();
+        AppAnalyticsService.instance.logLogin();
       }
     } on FirebaseAuthException catch (e) {
       _setError(_getAuthErrorMessage(e));
@@ -132,6 +135,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
       
+      AppAnalyticsService.instance.logSignOut();
       await _auth.signOut();
       _userProfile = null;
     } catch (e) {

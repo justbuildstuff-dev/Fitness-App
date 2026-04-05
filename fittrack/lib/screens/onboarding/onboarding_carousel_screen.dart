@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/app_analytics_service.dart';
 import '../../services/onboarding_service.dart';
 import '../home/home_screen.dart';
 import 'onboarding_wizard_screen.dart';
@@ -49,6 +50,12 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
           'Up to 3 programs, unlimited weeks and workouts, full set tracking, and basic analytics — no payment required.',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    AppAnalyticsService.instance.logOnboardingStarted();
+  }
 
   @override
   void dispose() {

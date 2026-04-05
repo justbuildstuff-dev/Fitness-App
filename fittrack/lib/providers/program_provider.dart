@@ -13,6 +13,7 @@ import '../models/custom_exercise.dart';
 import '../models/library_exercise.dart';
 import '../services/firestore_service.dart';
 import '../services/analytics_service.dart';
+import '../services/app_analytics_service.dart';
 
 class ProgramProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
@@ -279,6 +280,7 @@ class ProgramProvider extends ChangeNotifier {
       );
 
       final programId = await _firestoreService.createProgram(program);
+      if (programId != null) AppAnalyticsService.instance.logProgramCreated();
       return programId;
     } catch (e) {
       _programsError = 'Failed to create program: $e';
@@ -1320,6 +1322,8 @@ class ProgramProvider extends ChangeNotifier {
       );
 
       await _firestoreService.updateSet(updatedSet);
+
+      if (updatedSet.checked) AppAnalyticsService.instance.logSetCompleted();
 
       // Invalidate analytics cache — set data has changed (e.g. checked status)
       _analyticsService.clearCache();
