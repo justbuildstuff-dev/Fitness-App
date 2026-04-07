@@ -830,8 +830,11 @@ jobs:
         flutter pub outdated --json
 
     - name: Dependency vulnerability audit (CVE check)
-      run: dart pub audit
-      working-directory: fittrack
+      uses: google/osv-scanner-action/osv-scanner-action@v2.3.5
+      with:
+        scan-args: |-
+          --lockfile=fittrack/pubspec.lock
+        upload-sarif: false
 
     - name: Validate Firebase configuration
       run: |
