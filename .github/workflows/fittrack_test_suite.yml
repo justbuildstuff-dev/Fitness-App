@@ -828,7 +828,14 @@ jobs:
         cd fittrack
         # Check for outdated packages
         flutter pub outdated --json
-        
+
+    - name: Dependency vulnerability audit (CVE check)
+      uses: google/osv-scanner-action/osv-scanner-action@v2.3.5
+      with:
+        scan-args: |-
+          --lockfile=fittrack/pubspec.lock
+        upload-sarif: false
+
     - name: Validate Firebase configuration
       run: |
         cd fittrack
