@@ -828,7 +828,11 @@ jobs:
         cd fittrack
         # Check for outdated packages
         flutter pub outdated --json
-        
+
+    - name: Dependency vulnerability audit (CVE check)
+      run: dart pub audit
+      working-directory: fittrack
+
     - name: Validate Firebase configuration
       run: |
         cd fittrack
