@@ -44,5 +44,5 @@ key.properties
 
 # Private business documents (not for public repo)
 Docs/SecurityReports/
-Docs/Monetization_Strategy.md
+Docs/Monetization*.md
 Docs/ProductionReadiness.md
