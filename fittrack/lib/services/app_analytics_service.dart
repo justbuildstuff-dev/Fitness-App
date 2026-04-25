@@ -86,6 +86,11 @@ class AppAnalyticsService {
   Future<void> logSetCompleted() =>
       _log(() => _analytics.logEvent(name: 'set_completed'));
 
+  /// Fired when review prompt eligibility conditions are met and the native
+  /// review request is about to be triggered.
+  Future<void> logReviewPromptTriggered() =>
+      _log(() => _analytics.logEvent(name: 'review_prompt_triggered'));
+
   // ---------------------------------------------------------------------------
   // Internal helper
   // ---------------------------------------------------------------------------

@@ -68,6 +68,11 @@ void main() {
       verify(mockAnalytics.logEvent(name: 'set_completed')).called(1);
     });
 
+    test('logReviewPromptTriggered fires review_prompt_triggered event', () async {
+      await service.logReviewPromptTriggered();
+      verify(mockAnalytics.logEvent(name: 'review_prompt_triggered')).called(1);
+    });
+
     test('analytics failures are swallowed and do not throw', () async {
       when(mockAnalytics.logEvent(
               name: anyNamed('name'),
