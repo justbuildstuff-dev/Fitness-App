@@ -33,6 +33,9 @@ dependencies:
   uuid: ^4.2.1
   shared_preferences: ^2.2.2
   
+  # In-app review
+  in_app_review: ^2.0.9
+
   # Export functionality
   csv: ^6.0.0
   path_provider: ^2.1.2

@@ -18,6 +18,7 @@ import 'providers/exercise_library_provider.dart';
 import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 import 'services/app_analytics_service.dart';
+import 'services/app_review_service.dart';
 import 'services/firestore_service.dart';
 import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
@@ -78,6 +79,9 @@ void main() async {
   // Initialize onboarding state service (must be before runApp)
   OnboardingService.initialize(prefs);
 
+  // Initialize review service — records first-launch date on first run
+  AppReviewService.initialize(prefs);
+
   runZonedGuarded(
     () => runApp(OverloadApp(prefs: prefs)),
     (error, stack) => FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
@@ -91,9 +95,10 @@ class OverloadApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize OnboardingService here so E2E tests that pump OverloadApp
+    // Initialize services here so E2E tests that pump OverloadApp
     // directly (bypassing main()) still get proper initialization.
     OnboardingService.initialize(prefs);
+    AppReviewService.initialize(prefs);
 
     return MultiProvider(
       providers: [
