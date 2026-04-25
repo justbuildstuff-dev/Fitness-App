@@ -18,7 +18,7 @@ dependencies:
   firebase_storage: ^13.0.1
   firebase_crashlytics: ^5.0.1
   firebase_analytics: ^12.0.1
-  firebase_messaging: ^15.1.0
+  firebase_messaging: ^16.0.1
 
   # State Management
   provider: ^6.1.1
