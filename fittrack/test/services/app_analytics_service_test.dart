@@ -73,6 +73,22 @@ void main() {
       verify(mockAnalytics.logEvent(name: 'review_prompt_triggered')).called(1);
     });
 
+    test('logLifecycleNotificationScheduled fires lifecycle_notification_scheduled event', () async {
+      await service.logLifecycleNotificationScheduled('lifecycle_activation');
+      verify(mockAnalytics.logEvent(
+        name: 'lifecycle_notification_scheduled',
+        parameters: {'trigger': 'lifecycle_activation'},
+      )).called(1);
+    });
+
+    test('logLifecycleNotificationOpened fires lifecycle_notification_opened event', () async {
+      await service.logLifecycleNotificationOpened('route:workouts');
+      verify(mockAnalytics.logEvent(
+        name: 'lifecycle_notification_opened',
+        parameters: {'payload': 'route:workouts'},
+      )).called(1);
+    });
+
     test('analytics failures are swallowed and do not throw', () async {
       when(mockAnalytics.logEvent(
               name: anyNamed('name'),

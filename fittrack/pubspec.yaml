@@ -18,6 +18,7 @@ dependencies:
   firebase_storage: ^13.0.1
   firebase_crashlytics: ^5.0.1
   firebase_analytics: ^12.0.1
+  firebase_messaging: ^15.1.0
 
   # State Management
   provider: ^6.1.1
@@ -27,7 +28,8 @@ dependencies:
   
   # Local Notifications
   flutter_local_notifications: ^19.4.1
-  
+  timezone: ^0.9.4
+
   # Utilities
   intl: ^0.20.2
   uuid: ^4.2.1
