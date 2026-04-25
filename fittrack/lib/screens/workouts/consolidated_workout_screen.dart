@@ -17,6 +17,7 @@ import '../../utils/workout_item.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/exercise_card.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../../widgets/pr_notification_banner.dart';
 import '../../widgets/save_as_template_menu_item.dart';
 import '../../widgets/superset_group_card.dart';
 import '../exercises/exercise_picker_screen.dart';
@@ -523,6 +524,22 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+      return;
+    }
+
+    // Show PR banner when user checks off a set (the natural "set done" moment)
+    if (updatedSet.checked && mounted) {
+      final exercises = provider.exercises;
+      final exercise = exercises.cast<Exercise?>().firstWhere(
+        (e) => e?.id == updatedSet.exerciseId,
+        orElse: () => null,
+      );
+      if (exercise != null) {
+        final pr = await provider.checkForPersonalRecord(updatedSet, exercise);
+        if (pr != null && context.mounted) {
+          PRNotificationBanner.show(context, pr);
+        }
       }
     }
   }
