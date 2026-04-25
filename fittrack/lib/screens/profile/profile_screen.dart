@@ -116,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 32),
               Center(
                 child: Text(
-                  'FitTrack v1.0.0',
+                  'Overload v1.6.0',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),

@@ -79,19 +79,19 @@ void main() async {
   OnboardingService.initialize(prefs);
 
   runZonedGuarded(
-    () => runApp(FitTrackApp(prefs: prefs)),
+    () => runApp(OverloadApp(prefs: prefs)),
     (error, stack) => FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
   );
 }
 
-class FitTrackApp extends StatelessWidget {
+class OverloadApp extends StatelessWidget {
   final SharedPreferences prefs;
 
-  const FitTrackApp({super.key, required this.prefs});
+  const OverloadApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
-    // Initialize OnboardingService here so E2E tests that pump FitTrackApp
+    // Initialize OnboardingService here so E2E tests that pump OverloadApp
     // directly (bypassing main()) still get proper initialization.
     OnboardingService.initialize(prefs);
 
@@ -146,7 +146,7 @@ class FitTrackApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'FitTrack',
+            title: 'Overload',
             debugShowCheckedModeBanner: false,
             themeMode: themeProvider.currentThemeMode,
             theme: ThemeData(

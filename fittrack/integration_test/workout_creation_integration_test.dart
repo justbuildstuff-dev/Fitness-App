@@ -177,7 +177,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(tester);
         print('✅ App launched');
 
@@ -330,7 +330,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate through the app to create workout screen
@@ -407,7 +407,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(tester);
 
         await tester.tap(find.text('Integration Test Program'));
@@ -467,7 +467,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate to weeks screen
@@ -546,7 +546,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(tester);
 
         await tester.tap(find.text('Integration Test Program'));
@@ -586,7 +586,7 @@ void main() {
         // Reuse prefs variable from earlier in test scope
         await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs, key: UniqueKey()));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs, key: UniqueKey()));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate back to the weeks screen
@@ -669,7 +669,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(
           tester,
           email: 'second-user@example.com',
@@ -724,7 +724,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs2 = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2, key: UniqueKey()));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs2, key: UniqueKey()));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate to first user's workouts
@@ -755,7 +755,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await _ensureOnProgramsScreen(tester);
 
         // Navigate to weeks screen

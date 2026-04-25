@@ -34,7 +34,7 @@ import 'firebase_emulator_setup.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   
-  group('FitTrack Complete Workflow Integration Tests', () {
+  group('Overload Complete Workflow Integration Tests', () {
     late String testUserId;
     late String testEmail;
     late String testPassword;
@@ -133,7 +133,7 @@ void main() {
           SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
           final prefs = await SharedPreferences.getInstance();
 
-          await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+          await tester.pumpWidget(app.OverloadApp(prefs: prefs));
           await tester.pump(const Duration(milliseconds: 500));
           await tester.pumpAndSettle();
 
@@ -283,7 +283,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -368,7 +368,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -408,7 +408,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -445,7 +445,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -522,7 +522,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -570,7 +570,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -604,7 +604,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -642,7 +642,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -686,7 +686,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -735,7 +735,7 @@ void main() {
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs = await SharedPreferences.getInstance();
 
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pumpAndSettle();
 
@@ -777,7 +777,7 @@ void main() {
         // request succeeds immediately.
         SharedPreferences.setMockInitialValues({'fittrack_onboarding_complete': true});
         final prefs2 = await SharedPreferences.getInstance();
-        await tester.pumpWidget(app.FitTrackApp(prefs: prefs2, key: UniqueKey()));
+        await tester.pumpWidget(app.OverloadApp(prefs: prefs2, key: UniqueKey()));
 
         // Poll for HomeScreen (BottomNavigationBar) — AuthProvider.authStateChanges()
         // fires async: user2 is signed in, but user.reload() + _safeNotify() take time.

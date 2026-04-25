@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Placeholder destination for the "Explore FitTrack Pro →" link on the
+/// Placeholder destination for the "Explore Overload Pro →" link on the
 /// completion screen. Will be replaced when the monetization/paywall
 /// feature is implemented.
 class ProInfoPlaceholderScreen extends StatelessWidget {
@@ -13,7 +13,7 @@ class ProInfoPlaceholderScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FitTrack Pro'),
+        title: const Text('Overload Pro'),
       ),
       body: Center(
         child: Padding(
@@ -36,7 +36,7 @@ class ProInfoPlaceholderScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'FitTrack Pro will unlock unlimited programs, full analytics history, and more.',
+                'Overload Pro will unlock unlimited programs, full analytics history, and more.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
