@@ -446,7 +446,7 @@ class _WeeksScreenState extends State<WeeksScreen> {
     );
     // User has returned from the workout screen — a good moment to prompt for
     // a review. The service checks eligibility and guards against repetition.
-    AppReviewService.instance.maybeRequestReview();
+    AppReviewService.tryMaybeRequestReview();
   }
 
   void _handleMenuAction(BuildContext context, String action) async {

@@ -48,7 +48,7 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     AppAnalyticsService.instance.logWorkoutStarted();
-    AppReviewService.instance.recordWorkoutStarted();
+    AppReviewService.tryRecordWorkoutStarted();
     // Load exercises and all sets when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadWorkoutData();

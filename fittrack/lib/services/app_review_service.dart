@@ -43,6 +43,18 @@ class AppReviewService {
     _instance = AppReviewService._internal(prefs, InAppReview.instance);
   }
 
+  /// Null-safe wrapper for use in widget code.
+  ///
+  /// Widget tests that don't go through [main] or [OverloadApp] never call
+  /// [initialize], so [_instance] is null. These static helpers no-op
+  /// in that case instead of throwing.
+  static void tryRecordWorkoutStarted() => _instance?.recordWorkoutStarted();
+
+  /// Null-safe wrapper for use in widget code. See [tryRecordWorkoutStarted].
+  static void tryMaybeRequestReview() {
+    _instance?.maybeRequestReview();
+  }
+
   void _recordFirstLaunchIfNeeded() {
     if (_prefs.getString(_firstLaunchKey) == null) {
       _prefs.setString(_firstLaunchKey, DateTime.now().toIso8601String());
