@@ -82,7 +82,7 @@ class _OnboardingCompletionScreenState
                     );
                   },
                   child: Text(
-                    'Explore FitTrack Pro →',
+                    'Explore Overload Pro →',
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),

@@ -96,8 +96,8 @@ void main() {
       print('DEBUG: SharedPreferences initialized');
 
       // Launch the app
-      print('DEBUG: Pumping FitTrackApp widget...');
-      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Pumping OverloadApp widget...');
+      await tester.pumpWidget(app.OverloadApp(prefs: prefs));
       print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
 
       // CRITICAL: Wait for AuthProvider's async auth state listener to fire
@@ -172,8 +172,8 @@ void main() {
       // final prefs = await SharedPreferences.getInstance();
       // print('DEBUG: SharedPreferences initialized');
 
-      // print('DEBUG: Pumping FitTrackApp widget...');
-      // await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      // print('DEBUG: Pumping OverloadApp widget...');
+      // await tester.pumpWidget(app.OverloadApp(prefs: prefs));
       // print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
 
       // // CRITICAL: Wait for AuthProvider's async auth state listener to fire
@@ -214,8 +214,8 @@ void main() {
       print('DEBUG: SharedPreferences initialized');
 
       // Launch the app
-      print('DEBUG: Pumping FitTrackApp widget...');
-      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Pumping OverloadApp widget...');
+      await tester.pumpWidget(app.OverloadApp(prefs: prefs));
       print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
 
       // CRITICAL: Wait for AuthProvider's async auth state listener to fire
@@ -266,8 +266,8 @@ void main() {
       print('DEBUG: SharedPreferences initialized');
 
       // Launch the app
-      print('DEBUG: Pumping FitTrackApp widget...');
-      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Pumping OverloadApp widget...');
+      await tester.pumpWidget(app.OverloadApp(prefs: prefs));
       print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
 
       // CRITICAL: Wait for AuthProvider's async auth state listener to fire
@@ -307,8 +307,8 @@ void main() {
       print('DEBUG: SharedPreferences initialized');
 
       // Launch the app
-      print('DEBUG: Pumping FitTrackApp widget...');
-      await tester.pumpWidget(app.FitTrackApp(prefs: prefs));
+      print('DEBUG: Pumping OverloadApp widget...');
+      await tester.pumpWidget(app.OverloadApp(prefs: prefs));
       print('DEBUG: Widget pumped, waiting for AuthProvider to check auth state...');
 
       // CRITICAL: Wait for AuthProvider's async auth state listener to fire
