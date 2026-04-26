@@ -56,6 +56,7 @@ void main() {
           showPreviews: AppleShowPreviewSetting.always,
           sound: AppleNotificationSetting.enabled,
           timeSensitive: AppleNotificationSetting.notSupported,
+          providesAppNotificationSettings: AppleNotificationSetting.notSupported,
         ));
     when(mockMessaging.getToken()).thenAnswer((_) async => 'fake-fcm-token');
   });

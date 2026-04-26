@@ -68,18 +68,10 @@ void main() {
           showPreviews: AppleShowPreviewSetting.always,
           sound: AppleNotificationSetting.enabled,
           timeSensitive: AppleNotificationSetting.notSupported,
+          providesAppNotificationSettings: AppleNotificationSetting.notSupported,
         ));
     when(mockMessaging.getToken()).thenAnswer((_) async => 'fake-fcm-token');
   });
-
-  Future<LifecycleNotificationService> makeService({
-    Map<String, Object> prefsValues = const {},
-  }) async {
-    SharedPreferences.setMockInitialValues(prefsValues);
-    final prefs = await SharedPreferences.getInstance();
-    return LifecycleNotificationService.forTest(
-        prefs, mockNotifications, mockMessaging);
-  }
 
   const installDateKey = 'overload_lifecycle_install_date';
   const lastWorkoutDateKey = 'overload_lifecycle_last_workout_date';
