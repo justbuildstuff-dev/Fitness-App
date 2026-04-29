@@ -73,9 +73,9 @@ void main() {
       await tester.pumpWidget(buildCompletion(programName: 'Test'));
       await tester.pump();
 
-      expect(find.widgetWithText(TextButton, 'Explore FitTrack Pro →'), findsOneWidget,
+      expect(find.widgetWithText(TextButton, 'Explore Overload Pro →'), findsOneWidget,
           reason: 'Pro link must be a TextButton, not ElevatedButton or FilledButton');
-      expect(find.widgetWithText(ElevatedButton, 'Explore FitTrack Pro →'), findsNothing,
+      expect(find.widgetWithText(ElevatedButton, 'Explore Overload Pro →'), findsNothing,
           reason: 'Pro link must NOT be an ElevatedButton');
     });
 
@@ -86,7 +86,7 @@ void main() {
       await tester.pumpWidget(buildCompletion(programName: 'Test'));
       await tester.pump();
 
-      await tester.tap(find.widgetWithText(TextButton, 'Explore FitTrack Pro →'));
+      await tester.tap(find.widgetWithText(TextButton, 'Explore Overload Pro →'));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProInfoPlaceholderScreen), findsOneWidget,
@@ -106,7 +106,7 @@ void main() {
   });
 
   group('ProInfoPlaceholderScreen', () {
-    testWidgets('renders AppBar with FitTrack Pro title', (WidgetTester tester) async {
+    testWidgets('renders AppBar with Overload Pro title', (WidgetTester tester) async {
       /// Test Purpose: Verify placeholder screen has correct title
       /// Failure indicates title missing or incorrect
 
@@ -115,8 +115,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('FitTrack Pro'), findsOneWidget,
-          reason: 'AppBar should display "FitTrack Pro"');
+      expect(find.text('Overload Pro'), findsOneWidget,
+          reason: 'AppBar should display "Overload Pro"');
     });
 
     testWidgets('renders coming soon message', (WidgetTester tester) async {

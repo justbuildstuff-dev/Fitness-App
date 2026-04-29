@@ -18,9 +18,12 @@ import 'providers/exercise_library_provider.dart';
 import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 import 'services/app_analytics_service.dart';
+import 'services/app_review_service.dart';
 import 'services/firestore_service.dart';
+import 'services/lifecycle_notification_service.dart';
 import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
+import 'services/returning_user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,22 +81,38 @@ void main() async {
   // Initialize onboarding state service (must be before runApp)
   OnboardingService.initialize(prefs);
 
+  // Initialize review service — records first-launch date on first run
+  AppReviewService.initialize(prefs);
+
+  // Initialize lifecycle notification service and evaluate triggers for this launch
+  await LifecycleNotificationService.initialize(prefs);
+  LifecycleNotificationService.tryOnAppLaunch().catchError((e) {
+    debugPrint('Lifecycle notification onAppLaunch error: $e');
+  });
+
+  // Initialize returning user service — detects 30+ day inactivity on home screen
+  ReturningUserService.initialize(prefs);
+
   runZonedGuarded(
-    () => runApp(FitTrackApp(prefs: prefs)),
+    () => runApp(OverloadApp(prefs: prefs)),
     (error, stack) => FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
   );
 }
 
-class FitTrackApp extends StatelessWidget {
+class OverloadApp extends StatelessWidget {
   final SharedPreferences prefs;
 
-  const FitTrackApp({super.key, required this.prefs});
+  const OverloadApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
-    // Initialize OnboardingService here so E2E tests that pump FitTrackApp
+    // Initialize services here so E2E tests that pump OverloadApp
     // directly (bypassing main()) still get proper initialization.
     OnboardingService.initialize(prefs);
+    AppReviewService.initialize(prefs);
+    // LifecycleNotificationService.initialize is intentionally NOT called here —
+    // it is async (sets up FCM listeners) and must run before runApp in main().
+    // E2E tests that need lifecycle notifications should call initialize() directly.
 
     return MultiProvider(
       providers: [
@@ -146,7 +165,7 @@ class FitTrackApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'FitTrack',
+            title: 'Overload',
             debugShowCheckedModeBanner: false,
             themeMode: themeProvider.currentThemeMode,
             theme: ThemeData(
