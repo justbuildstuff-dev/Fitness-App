@@ -307,6 +307,22 @@ class FirestoreService {
             .toList());
   }
 
+  /// One-shot fetch of all weeks for a program (no subscription).
+  /// Used when week order is needed without setting up a listener.
+  Future<List<Week>> getWeeksOnce(String userId, String programId) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('programs')
+        .doc(programId)
+        .collection('weeks')
+        .orderBy('order')
+        .get();
+    return snapshot.docs
+        .map((doc) => WeekConverter.fromFirestore(doc, programId: programId))
+        .toList();
+  }
+
   /// Get a specific week
   Stream<Week?> getWeek(String userId, String programId, String weekId) {
     return _firestore

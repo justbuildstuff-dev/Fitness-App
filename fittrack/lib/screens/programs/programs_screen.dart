@@ -11,6 +11,7 @@ import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/create_options_sheet.dart';
 import '../templates/template_picker_screen.dart';
 import '../templates/template_preview_sheet.dart';
+import '../../widgets/returning_user_banner.dart';
 import 'program_detail_screen.dart';
 import 'create_program_screen.dart';
 
@@ -88,21 +89,28 @@ class ProgramsScreen extends StatelessWidget {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              programProvider.loadPrograms();
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: programProvider.programs.length,
-              itemBuilder: (context, index) {
-                final program = programProvider.programs[index];
-                return _ProgramCard(
-                  program: program,
-                  onTap: () => _navigateToProgram(context, program),
-                );
-              },
-            ),
+          return Column(
+            children: [
+              const ReturningUserBanner(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    programProvider.loadPrograms();
+                  },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: programProvider.programs.length,
+                    itemBuilder: (context, index) {
+                      final program = programProvider.programs[index];
+                      return _ProgramCard(
+                        program: program,
+                        onTap: () => _navigateToProgram(context, program),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),

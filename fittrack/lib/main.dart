@@ -23,6 +23,7 @@ import 'services/firestore_service.dart';
 import 'services/lifecycle_notification_service.dart';
 import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
+import 'services/returning_user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,6 +89,9 @@ void main() async {
   LifecycleNotificationService.tryOnAppLaunch().catchError((e) {
     debugPrint('Lifecycle notification onAppLaunch error: $e');
   });
+
+  // Initialize returning user service — detects 30+ day inactivity on home screen
+  ReturningUserService.initialize(prefs);
 
   runZonedGuarded(
     () => runApp(OverloadApp(prefs: prefs)),
