@@ -894,7 +894,7 @@ Future<void> _authenticateTestUser(WidgetTester tester, String email, String pas
   await tester.tap(find.byKey(const Key('sign-in-button')));
   await tester.pumpAndSettle();
 
-  // Poll up to 10s for BottomNavigationBar (HomeScreen) to appear.
+  // Poll up to 20s for BottomNavigationBar (HomeScreen) to appear.
   // Firebase Auth sign-in is async: authStateChanges() fires, user.reload() runs,
   // user profile is loaded from Firestore — these network calls are not awaited by
   // pumpAndSettle(). We must poll for the UI to actually settle.
@@ -903,7 +903,7 @@ Future<void> _authenticateTestUser(WidgetTester tester, String email, String pas
   // emailVerified=false, AuthWrapper routes to EmailVerificationScreen. Detect this
   // and recover via sign-out + direct Firebase re-sign-in to force a fresh token.
   var emailVerifyRecovered = false;
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 500));
     if (find.byType(BottomNavigationBar).evaluate().isNotEmpty) break;
     if (!emailVerifyRecovered && find.text('Verify Email').evaluate().isNotEmpty) {
@@ -932,7 +932,7 @@ Future<void> _authenticateTestUser(WidgetTester tester, String email, String pas
 
   final bottomNavAfter = find.byType(BottomNavigationBar);
   if (bottomNavAfter.evaluate().isEmpty) {
-    print('WARNING: Sign-in attempted but not on HomeScreen after 10s');
+    print('WARNING: Sign-in attempted but not on HomeScreen after 20s');
   } else {
     print('DEBUG: Successfully authenticated');
   }

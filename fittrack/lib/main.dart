@@ -20,6 +20,7 @@ import 'screens/auth/auth_wrapper.dart';
 import 'services/app_analytics_service.dart';
 import 'services/app_review_service.dart';
 import 'services/firestore_service.dart';
+import 'services/lifecycle_notification_service.dart';
 import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
 
@@ -82,6 +83,12 @@ void main() async {
   // Initialize review service — records first-launch date on first run
   AppReviewService.initialize(prefs);
 
+  // Initialize lifecycle notification service and evaluate triggers for this launch
+  await LifecycleNotificationService.initialize(prefs);
+  LifecycleNotificationService.tryOnAppLaunch().catchError((e) {
+    debugPrint('Lifecycle notification onAppLaunch error: $e');
+  });
+
   runZonedGuarded(
     () => runApp(OverloadApp(prefs: prefs)),
     (error, stack) => FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
@@ -99,6 +106,9 @@ class OverloadApp extends StatelessWidget {
     // directly (bypassing main()) still get proper initialization.
     OnboardingService.initialize(prefs);
     AppReviewService.initialize(prefs);
+    // LifecycleNotificationService.initialize is intentionally NOT called here —
+    // it is async (sets up FCM listeners) and must run before runApp in main().
+    // E2E tests that need lifecycle notifications should call initialize() directly.
 
     return MultiProvider(
       providers: [

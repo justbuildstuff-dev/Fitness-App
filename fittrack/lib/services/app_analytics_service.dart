@@ -92,6 +92,26 @@ class AppAnalyticsService {
       _log(() => _analytics.logEvent(name: 'review_prompt_triggered'));
 
   // ---------------------------------------------------------------------------
+  // Lifecycle notification events
+  // ---------------------------------------------------------------------------
+
+  /// Fired when a lifecycle notification is scheduled (local or FCM).
+  /// [trigger] is the channel ID / trigger label, e.g. 'lifecycle_activation'.
+  Future<void> logLifecycleNotificationScheduled(String trigger) =>
+      _log(() => _analytics.logEvent(
+            name: 'lifecycle_notification_scheduled',
+            parameters: {'trigger': trigger},
+          ));
+
+  /// Fired when the user taps a lifecycle notification to open the app.
+  /// [payload] is the notification's deep-link payload string.
+  Future<void> logLifecycleNotificationOpened(String payload) =>
+      _log(() => _analytics.logEvent(
+            name: 'lifecycle_notification_opened',
+            parameters: {'payload': payload},
+          ));
+
+  // ---------------------------------------------------------------------------
   // Internal helper
   // ---------------------------------------------------------------------------
 
