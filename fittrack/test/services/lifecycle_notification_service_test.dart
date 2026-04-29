@@ -241,17 +241,13 @@ void main() {
     test('sets d1 flag on first launch at day >= 1', () async {
       final oneDayAgo =
           DateTime.now().subtract(const Duration(days: 1)).toIso8601String();
-      final s = await makeService(
-          prefsValues: {'overload_lifecycle_install_date': oneDayAgo});
       SharedPreferences.setMockInitialValues(
           {'overload_lifecycle_install_date': oneDayAgo});
       final prefs = await SharedPreferences.getInstance();
-      LifecycleNotificationService.forTest(prefs, mockNotifications, mockMessaging)
-          .onAppLaunch();
-      // Allow async prefs write to complete
-      await Future.microtask(() {});
+      final s = LifecycleNotificationService.forTest(
+          prefs, mockNotifications, mockMessaging);
+      await s.onAppLaunch();
       expect(prefs.getBool(d1Key), isTrue);
-      s.toString(); // suppress unused warning
     });
 
     test('does not set d1 flag when install is today', () async {
