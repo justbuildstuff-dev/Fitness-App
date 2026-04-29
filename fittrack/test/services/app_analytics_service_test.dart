@@ -89,6 +89,55 @@ void main() {
       )).called(1);
     });
 
+    test('logOnboardingSkipped fires onboarding_skipped event', () async {
+      await service.logOnboardingSkipped();
+      verify(mockAnalytics.logEvent(name: 'onboarding_skipped')).called(1);
+    });
+
+    test('logProgramSetupSkipped fires program_setup_skipped event', () async {
+      await service.logProgramSetupSkipped();
+      verify(mockAnalytics.logEvent(name: 'program_setup_skipped')).called(1);
+    });
+
+    test('logFirstWorkoutLogged fires first_workout_logged with days_since_install', () async {
+      await service.logFirstWorkoutLogged(3);
+      verify(mockAnalytics.logEvent(
+        name: 'first_workout_logged',
+        parameters: {'days_since_install': 3},
+      )).called(1);
+    });
+
+    test('logWorkoutMilestone fires workout_milestone with count', () async {
+      await service.logWorkoutMilestone(5);
+      verify(mockAnalytics.logEvent(
+        name: 'workout_milestone',
+        parameters: {'workout_count': 5},
+      )).called(1);
+    });
+
+    test('logDayOneSession fires day_1_session event', () async {
+      await service.logDayOneSession();
+      verify(mockAnalytics.logEvent(name: 'day_1_session')).called(1);
+    });
+
+    test('logDaySevenSession fires day_7_session event', () async {
+      await service.logDaySevenSession();
+      verify(mockAnalytics.logEvent(name: 'day_7_session')).called(1);
+    });
+
+    test('logDayThirtySession fires day_30_session event', () async {
+      await service.logDayThirtySession();
+      verify(mockAnalytics.logEvent(name: 'day_30_session')).called(1);
+    });
+
+    test('logUserReactivated fires user_reactivated with days_since_last_workout', () async {
+      await service.logUserReactivated(14);
+      verify(mockAnalytics.logEvent(
+        name: 'user_reactivated',
+        parameters: {'days_since_last_workout': 14},
+      )).called(1);
+    });
+
     test('analytics failures are swallowed and do not throw', () async {
       when(mockAnalytics.logEvent(
               name: anyNamed('name'),

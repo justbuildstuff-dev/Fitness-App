@@ -69,7 +69,13 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     );
   }
 
+  void _skipCarouselToWizard() {
+    AppAnalyticsService.instance.logOnboardingSkipped();
+    _navigateToWizard();
+  }
+
   Future<void> _skipToApp() async {
+    AppAnalyticsService.instance.logOnboardingSkipped();
     await OnboardingService.instance.markComplete();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
@@ -98,7 +104,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
         automaticallyImplyLeading: false,
         actions: [
           TextButton(
-            onPressed: _navigateToWizard,
+            onPressed: _skipCarouselToWizard,
             child: const Text('Skip'),
           ),
         ],

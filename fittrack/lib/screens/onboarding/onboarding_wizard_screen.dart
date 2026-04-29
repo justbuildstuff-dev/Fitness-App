@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/exercise.dart';
 import '../../providers/program_provider.dart';
+import '../../services/app_analytics_service.dart';
 import '../../services/onboarding_service.dart';
 import '../home/home_screen.dart';
 import 'onboarding_completion_screen.dart';
@@ -81,6 +82,7 @@ class _OnboardingWizardScreenState extends State<OnboardingWizardScreen> {
   // ─── Navigation ────────────────────────────────────────────────────────────
 
   Future<void> _onSkip() async {
+    AppAnalyticsService.instance.logProgramSetupSkipped();
     await OnboardingService.instance.markComplete();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
