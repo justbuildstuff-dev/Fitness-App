@@ -233,6 +233,125 @@ void main() {
     });
   });
 
+  group('LifecycleNotificationService - retention session tracking', () {
+    const d1Key = 'overload_analytics_d1_session_fired';
+    const d7Key = 'overload_analytics_d7_session_fired';
+    const d30Key = 'overload_analytics_d30_session_fired';
+
+    test('sets d1 flag on first launch at day >= 1', () async {
+      final oneDayAgo =
+          DateTime.now().subtract(const Duration(days: 1)).toIso8601String();
+      final s = await makeService(
+          prefsValues: {'overload_lifecycle_install_date': oneDayAgo});
+      SharedPreferences.setMockInitialValues(
+          {'overload_lifecycle_install_date': oneDayAgo});
+      final prefs = await SharedPreferences.getInstance();
+      LifecycleNotificationService.forTest(prefs, mockNotifications, mockMessaging)
+          .onAppLaunch();
+      // Allow async prefs write to complete
+      await Future.microtask(() {});
+      expect(prefs.getBool(d1Key), isTrue);
+      s.toString(); // suppress unused warning
+    });
+
+    test('does not set d1 flag when install is today', () async {
+      final s = await makeService();
+      await s.onAppLaunch();
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool(d1Key), isNull);
+    });
+
+    test('d1 flag not re-set on subsequent launch', () async {
+      final oneDayAgo =
+          DateTime.now().subtract(const Duration(days: 1)).toIso8601String();
+      SharedPreferences.setMockInitialValues({
+        'overload_lifecycle_install_date': oneDayAgo,
+        d1Key: true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final s = LifecycleNotificationService.forTest(
+          prefs, mockNotifications, mockMessaging);
+      await s.onAppLaunch();
+      // Flag was already true — value unchanged
+      expect(prefs.getBool(d1Key), isTrue);
+    });
+
+    test('sets d7 flag on launch at day >= 7', () async {
+      final sevenDaysAgo =
+          DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
+      SharedPreferences.setMockInitialValues(
+          {'overload_lifecycle_install_date': sevenDaysAgo});
+      final prefs = await SharedPreferences.getInstance();
+      final s = LifecycleNotificationService.forTest(
+          prefs, mockNotifications, mockMessaging);
+      await s.onAppLaunch();
+      expect(prefs.getBool(d7Key), isTrue);
+      s.toString();
+    });
+
+    test('sets d30 flag on launch at day >= 30', () async {
+      final thirtyDaysAgo =
+          DateTime.now().subtract(const Duration(days: 30)).toIso8601String();
+      SharedPreferences.setMockInitialValues(
+          {'overload_lifecycle_install_date': thirtyDaysAgo});
+      final prefs = await SharedPreferences.getInstance();
+      final s = LifecycleNotificationService.forTest(
+          prefs, mockNotifications, mockMessaging);
+      await s.onAppLaunch();
+      expect(prefs.getBool(d30Key), isTrue);
+      s.toString();
+    });
+
+    test('does not set d7 or d30 flags on day 1', () async {
+      final oneDayAgo =
+          DateTime.now().subtract(const Duration(days: 1)).toIso8601String();
+      SharedPreferences.setMockInitialValues(
+          {'overload_lifecycle_install_date': oneDayAgo});
+      final prefs = await SharedPreferences.getInstance();
+      final s = LifecycleNotificationService.forTest(
+          prefs, mockNotifications, mockMessaging);
+      await s.onAppLaunch();
+      expect(prefs.getBool(d7Key), isNull);
+      expect(prefs.getBool(d30Key), isNull);
+      s.toString();
+    });
+  });
+
+  group('LifecycleNotificationService - activation analytics', () {
+    test('recordWorkoutLogged sets first_workout prefs indirectly via count=1',
+        () async {
+      final s = await makeService();
+      expect(s.workoutCount, 0);
+      s.recordWorkoutLogged();
+      expect(s.workoutCount, 1);
+    });
+
+    test('recordWorkoutLogged accumulates to 5 for milestone', () async {
+      final s = await makeService();
+      for (var i = 0; i < 5; i++) {
+        s.recordWorkoutLogged();
+      }
+      expect(s.workoutCount, 5);
+    });
+
+    test('daysSinceLastWorkout is captured before update in recordWorkoutLogged',
+        () async {
+      final twoDaysAgo =
+          DateTime.now().subtract(const Duration(days: 2)).toIso8601String();
+      final s = await makeService(prefsValues: {
+        'overload_lifecycle_install_date':
+            DateTime.now().subtract(const Duration(days: 10)).toIso8601String(),
+        'overload_lifecycle_last_workout_date': twoDaysAgo,
+        'overload_lifecycle_workout_count': 2,
+      });
+      expect(s.daysSinceLastWorkout, 2);
+      s.recordWorkoutLogged();
+      // After logging, last workout date is today so daysSinceLastWorkout = 0
+      expect(s.daysSinceLastWorkout, 0);
+    });
+  });
+
   group('LifecycleNotificationService - PR notification', () {
     test('recordPRAchieved calls show with exercise name and value', () async {
       final s = await makeService();

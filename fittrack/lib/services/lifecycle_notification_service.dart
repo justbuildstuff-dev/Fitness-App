@@ -27,6 +27,11 @@ class LifecycleNotificationService {
   static const String _permissionRequestedKey = 'overload_notif_permission_requested';
   static const String _fcmTokenKey = 'overload_fcm_token';
 
+  // Analytics dedup flags — set once so session events fire only on first qualifying launch.
+  static const String _d1FiredKey = 'overload_analytics_d1_session_fired';
+  static const String _d7FiredKey = 'overload_analytics_d7_session_fired';
+  static const String _d30FiredKey = 'overload_analytics_d30_session_fired';
+
   // Stable IDs — scheduling with the same ID replaces any existing notification
   // of that type so only one of each trigger is ever queued.
   static const int _day1NotifId = 1001;
@@ -148,6 +153,7 @@ class LifecycleNotificationService {
   Future<void> onAppLaunch() async {
     await _scheduleActivationNotifications();
     await _scheduleRetentionNotifications();
+    _logRetentionSessions();
   }
 
   /// Call when the user completes a workout session.
@@ -155,9 +161,23 @@ class LifecycleNotificationService {
   /// Increments the workout count, cancels activation nudges, and resets the
   /// inactivity window to today.
   void recordWorkoutLogged() {
+    // Capture inactivity window BEFORE updating last workout date.
+    final inactivityDays = daysSinceLastWorkout;
     final count = (_prefs.getInt(_workoutCountKey) ?? 0) + 1;
     _prefs.setInt(_workoutCountKey, count);
     _prefs.setString(_lastWorkoutDateKey, DateTime.now().toIso8601String());
+
+    // Activation milestone events.
+    if (count == 1) {
+      AppAnalyticsService.instance.logFirstWorkoutLogged(daysSinceInstall);
+    }
+    if (count == 5) {
+      AppAnalyticsService.instance.logWorkoutMilestone(5);
+    }
+    // Reactivation: only meaningful after the first workout (count > 1).
+    if (count > 1 && inactivityDays >= 10) {
+      AppAnalyticsService.instance.logUserReactivated(inactivityDays);
+    }
 
     // User has engaged — cancel first-workout activation nudges.
     _localNotifications.cancel(_day1NotifId);
@@ -227,6 +247,24 @@ class LifecycleNotificationService {
   }
 
   bool get permissionRequested => _prefs.getBool(_permissionRequestedKey) ?? false;
+
+  // ─── Retention session analytics ────────────────────────────────────────────
+
+  void _logRetentionSessions() {
+    final days = daysSinceInstall;
+    if (days >= 1 && !(_prefs.getBool(_d1FiredKey) ?? false)) {
+      _prefs.setBool(_d1FiredKey, true);
+      AppAnalyticsService.instance.logDayOneSession();
+    }
+    if (days >= 7 && !(_prefs.getBool(_d7FiredKey) ?? false)) {
+      _prefs.setBool(_d7FiredKey, true);
+      AppAnalyticsService.instance.logDaySevenSession();
+    }
+    if (days >= 30 && !(_prefs.getBool(_d30FiredKey) ?? false)) {
+      _prefs.setBool(_d30FiredKey, true);
+      AppAnalyticsService.instance.logDayThirtySession();
+    }
+  }
 
   // ─── Scheduling ─────────────────────────────────────────────────────────────
 
