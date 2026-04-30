@@ -452,6 +452,40 @@ class ProgramProvider extends ChangeNotifier {
     }
   }
 
+  /// Creates the next week in [programId] without requiring it to be selected.
+  ///
+  /// Fetches the existing weeks via a one-shot Firestore read to determine the
+  /// correct order, then names the week "Week N". Returns the new week ID, or
+  /// null on failure.
+  Future<String?> createWeekForProgram({required String programId}) async {
+    if (_userId == null) return null;
+    try {
+      final existingWeeks =
+          await _firestoreService.getWeeksOnce(_userId!, programId);
+      final nextOrder = existingWeeks.isEmpty
+          ? 1
+          : existingWeeks
+                  .map((w) => w.order)
+                  .reduce((a, b) => a > b ? a : b) +
+              1;
+      final week = Week(
+        id: '',
+        name: 'Week $nextOrder',
+        order: nextOrder,
+        notes: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        userId: _userId!,
+        programId: programId,
+      );
+      return await _firestoreService.createWeek(week);
+    } catch (e) {
+      _programsError = 'Failed to create week: $e';
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// Update a week
   Future<bool> updateWeek(Week week) async {
     try {

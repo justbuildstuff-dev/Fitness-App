@@ -86,6 +86,81 @@ class AppAnalyticsService {
   Future<void> logSetCompleted() =>
       _log(() => _analytics.logEvent(name: 'set_completed'));
 
+  /// Fired when review prompt eligibility conditions are met and the native
+  /// review request is about to be triggered.
+  Future<void> logReviewPromptTriggered() =>
+      _log(() => _analytics.logEvent(name: 'review_prompt_triggered'));
+
+  // ---------------------------------------------------------------------------
+  // Onboarding skip events
+  // ---------------------------------------------------------------------------
+
+  Future<void> logOnboardingSkipped() =>
+      _log(() => _analytics.logEvent(name: 'onboarding_skipped'));
+
+  Future<void> logProgramSetupSkipped() =>
+      _log(() => _analytics.logEvent(name: 'program_setup_skipped'));
+
+  // ---------------------------------------------------------------------------
+  // Activation milestone events
+  // ---------------------------------------------------------------------------
+
+  /// Fired the first time a user logs a workout.
+  /// [daysSinceInstall] allows cohort analysis (did they work out on day 0, 1, etc.)
+  Future<void> logFirstWorkoutLogged(int daysSinceInstall) =>
+      _log(() => _analytics.logEvent(
+            name: 'first_workout_logged',
+            parameters: {'days_since_install': daysSinceInstall},
+          ));
+
+  /// Fired when a workout count milestone is reached (e.g., 5th workout).
+  Future<void> logWorkoutMilestone(int count) =>
+      _log(() => _analytics.logEvent(
+            name: 'workout_milestone',
+            parameters: {'workout_count': count},
+          ));
+
+  // ---------------------------------------------------------------------------
+  // Retention cohort events
+  // ---------------------------------------------------------------------------
+
+  Future<void> logDayOneSession() =>
+      _log(() => _analytics.logEvent(name: 'day_1_session'));
+
+  Future<void> logDaySevenSession() =>
+      _log(() => _analytics.logEvent(name: 'day_7_session'));
+
+  Future<void> logDayThirtySession() =>
+      _log(() => _analytics.logEvent(name: 'day_30_session'));
+
+  /// Fired when a user logs a workout after 10+ days of inactivity.
+  /// [daysSinceLastWorkout] is captured before the new workout resets the clock.
+  Future<void> logUserReactivated(int daysSinceLastWorkout) =>
+      _log(() => _analytics.logEvent(
+            name: 'user_reactivated',
+            parameters: {'days_since_last_workout': daysSinceLastWorkout},
+          ));
+
+  // ---------------------------------------------------------------------------
+  // Lifecycle notification events
+  // ---------------------------------------------------------------------------
+
+  /// Fired when a lifecycle notification is scheduled (local or FCM).
+  /// [trigger] is the channel ID / trigger label, e.g. 'lifecycle_activation'.
+  Future<void> logLifecycleNotificationScheduled(String trigger) =>
+      _log(() => _analytics.logEvent(
+            name: 'lifecycle_notification_scheduled',
+            parameters: {'trigger': trigger},
+          ));
+
+  /// Fired when the user taps a lifecycle notification to open the app.
+  /// [payload] is the notification's deep-link payload string.
+  Future<void> logLifecycleNotificationOpened(String payload) =>
+      _log(() => _analytics.logEvent(
+            name: 'lifecycle_notification_opened',
+            parameters: {'payload': payload},
+          ));
+
   // ---------------------------------------------------------------------------
   // Internal helper
   // ---------------------------------------------------------------------------

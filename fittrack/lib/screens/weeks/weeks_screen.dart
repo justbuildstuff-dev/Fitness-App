@@ -7,6 +7,8 @@ import '../../models/week.dart';
 import '../../models/workout.dart';
 import '../../models/navigation_section.dart';
 import '../../models/templates/templates.dart';
+import '../../services/app_review_service.dart';
+import '../../services/lifecycle_notification_service.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
@@ -433,8 +435,8 @@ class _WeeksScreenState extends State<WeeksScreen> {
     );
   }
 
-  void _navigateToWorkout(BuildContext context, Workout workout) {
-    Navigator.of(context).push(
+  Future<void> _navigateToWorkout(BuildContext context, Workout workout) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ConsolidatedWorkoutScreen(
           program: widget.program,
@@ -443,6 +445,10 @@ class _WeeksScreenState extends State<WeeksScreen> {
         ),
       ),
     );
+    // User has returned from the workout screen — a good moment to prompt for
+    // a review and to request notification permission (if not yet asked).
+    AppReviewService.tryMaybeRequestReview();
+    LifecycleNotificationService.tryRequestPermissionIfEligible();
   }
 
   void _handleMenuAction(BuildContext context, String action) async {
