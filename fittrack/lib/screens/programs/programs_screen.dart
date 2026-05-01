@@ -12,6 +12,8 @@ import '../../widgets/create_options_sheet.dart';
 import '../templates/template_picker_screen.dart';
 import '../templates/template_preview_sheet.dart';
 import '../../widgets/returning_user_banner.dart';
+import '../../providers/subscription_provider.dart';
+import '../subscription/paywall_screen.dart';
 import 'program_detail_screen.dart';
 import 'create_program_screen.dart';
 
@@ -125,6 +127,17 @@ class ProgramsScreen extends StatelessWidget {
   }
 
   void _navigateToCreateProgram(BuildContext context) async {
+    final sub = context.read<SubscriptionProvider>();
+    final programCount = context.read<ProgramProvider>().programs.length;
+    if (sub.isFree && programCount >= sub.maxPrograms) {
+      PaywallScreen.show(
+        context,
+        headline: 'Unlock unlimited programs',
+        subtext: 'You\'ve reached the free plan limit of ${sub.maxPrograms} programs.',
+      );
+      return;
+    }
+
     final option = await CreateOptionsSheet.show(
       context,
       itemType: 'Program',
@@ -192,6 +205,14 @@ class ProgramsScreen extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right),
               ),
               onSelect: (template) async {
+                final sub = context.read<SubscriptionProvider>();
+                if (sub.isFree && template.isPrebuilt) {
+                  PaywallScreen.show(
+                    context,
+                    headline: 'Access 6+ expert program templates',
+                  );
+                  return;
+                }
                 // Show preview sheet
                 final confirmed = await ProgramTemplatePreviewSheet.show(
                   context,

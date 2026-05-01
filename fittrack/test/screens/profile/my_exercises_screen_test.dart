@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:fittrack/screens/profile/my_exercises_screen.dart';
 import 'package:fittrack/providers/exercise_library_provider.dart';
+import 'package:fittrack/providers/subscription_provider.dart';
 import 'package:fittrack/models/custom_exercise.dart';
 import 'package:fittrack/models/library_exercise.dart';
 import 'package:fittrack/models/muscle_group.dart';
@@ -103,16 +104,28 @@ class MockExerciseLibraryProvider extends ChangeNotifier
 
 void main() {
   late MockExerciseLibraryProvider mockProvider;
+  late SubscriptionProvider subProvider;
 
   setUp(() {
     mockProvider = MockExerciseLibraryProvider();
+    subProvider = SubscriptionProvider();
+  });
+
+  tearDown(() {
+    mockProvider.dispose();
+    subProvider.dispose();
   });
 
   Widget createTestWidget() {
-    return MaterialApp(
-      home: ChangeNotifierProvider<ExerciseLibraryProvider>.value(
-        value: mockProvider,
-        child: const MyExercisesScreen(),
+    // SubscriptionProvider wraps MaterialApp so any paywall modal bottom sheets
+    // can access it through the root navigator's overlay.
+    return ChangeNotifierProvider<SubscriptionProvider>.value(
+      value: subProvider,
+      child: MaterialApp(
+        home: ChangeNotifierProvider<ExerciseLibraryProvider>.value(
+          value: mockProvider,
+          child: const MyExercisesScreen(),
+        ),
       ),
     );
   }
@@ -191,7 +204,9 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      expect(find.text('2/$maxCustomExercises exercises'), findsOneWidget);
+      // Limit comes from SubscriptionProvider (5 for free tier), not the old
+      // ExerciseLibraryProvider constant.
+      expect(find.text('2/${subProvider.maxCustomExercises} exercises'), findsOneWidget);
     });
 
     testWidgets('should display FAB when can create more', (tester) async {
