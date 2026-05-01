@@ -9,10 +9,12 @@ Widget _buildSubject({
   required SubscriptionProvider sub,
   required Widget child,
 }) {
-  return MaterialApp(
-    home: ChangeNotifierProvider<SubscriptionProvider>.value(
-      value: sub,
-      child: Scaffold(body: child),
+  // Provider must wrap MaterialApp so modal bottom sheets inherit it through
+  // the root navigator's overlay (showModalBottomSheet creates a new route).
+  return ChangeNotifierProvider<SubscriptionProvider>.value(
+    value: sub,
+    child: MaterialApp(
+      home: Scaffold(body: child),
     ),
   );
 }
@@ -111,9 +113,14 @@ void main() {
         ),
       );
 
-      // Child is present (blurred behind overlay) but wrapped in IgnorePointer
+      // Child is present (blurred behind overlay) but wrapped in IgnorePointer.
+      // Filter to ignoring:true because Flutter's framework adds IgnorePointer(ignoring:false)
+      // nodes internally (e.g. Scaffold focus management).
       expect(find.text('Premium Content'), findsOneWidget);
-      expect(find.byType(IgnorePointer), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is IgnorePointer && w.ignoring),
+        findsOneWidget,
+      );
     });
 
     testWidgets('tapping Upgrade to Pro opens PaywallScreen', (tester) async {
@@ -188,7 +195,12 @@ void main() {
         ),
       );
 
-      expect(find.byType(IgnorePointer), findsNothing);
+      // Only check for IgnorePointer with ignoring:true — framework internal nodes
+      // (ignoring:false) are present in both free and pro trees.
+      expect(
+        find.byWidgetPredicate((w) => w is IgnorePointer && w.ignoring),
+        findsNothing,
+      );
     });
   });
 
