@@ -10,13 +10,17 @@ import '../models/subscription.dart';
 class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._();
 
-  final FirebaseFirestore _firestore;
+  // Null means "use FirebaseFirestore.instance" — resolved lazily so the
+  // static singleton can be constructed in tests without Firebase initialised.
+  final FirebaseFirestore? _injectedFirestore;
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
-  SubscriptionService._() : _firestore = FirebaseFirestore.instance;
+  SubscriptionService._() : _injectedFirestore = null;
 
   @visibleForTesting
   SubscriptionService.forTest(FirebaseFirestore firestore)
-      : _firestore = firestore;
+      : _injectedFirestore = firestore;
 
   static const String monthlyId = 'fittrack_pro_monthly';
   static const String annualId = 'fittrack_pro_annual';
