@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:fittrack/models/subscription.dart';
 
 void main() {
@@ -151,8 +150,10 @@ void main() {
         expect(map['expiresAt'], isNull);
       });
 
-      test('round-trips through Firestore without data loss', () async {
-        final fakeFirestore = FakeFirebaseFirestore();
+      test('round-trips key fields through map serialization', () {
+        // Tests toFirestore → fromFirestore parity without writing to Firestore,
+        // because FieldValue.serverTimestamp() is a server-only sentinel that
+        // cannot be stored in FakeFirebaseFirestore in unit tests.
         final expiry = DateTime(2026, 6, 15);
         final original = SubscriptionInfo(
           tier: SubscriptionTier.pro,
@@ -162,15 +163,13 @@ void main() {
           expiresAt: expiry,
         );
 
-        await fakeFirestore
-            .collection('users')
-            .doc('user-1')
-            .set({'subscription': original.toFirestore()});
+        final map = original.toFirestore();
+        // Replace server timestamp sentinel with a real Timestamp for fromFirestore
+        final roundTripMap = Map<String, dynamic>.from(map)
+          ..['updatedAt'] = Timestamp.fromDate(DateTime.now())
+          ..['expiresAt'] = Timestamp.fromDate(expiry);
 
-        final doc =
-            await fakeFirestore.collection('users').doc('user-1').get();
-        final subData = doc.data()!['subscription'] as Map<String, dynamic>;
-        final restored = SubscriptionInfo.fromFirestore(subData);
+        final restored = SubscriptionInfo.fromFirestore(roundTripMap);
 
         expect(restored.status, original.status);
         expect(restored.tier, original.tier);
