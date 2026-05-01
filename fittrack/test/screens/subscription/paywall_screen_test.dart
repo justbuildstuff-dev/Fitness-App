@@ -154,11 +154,13 @@ void main() {
     });
 
     testWidgets('show() opens modal bottom sheet', (tester) async {
+      // Provider must wrap MaterialApp so showModalBottomSheet can access it
+      // through the root navigator's overlay (a separate route from home).
       await tester.pumpWidget(
-        MaterialApp(
-          home: ChangeNotifierProvider<SubscriptionProvider>.value(
-            value: sub,
-            child: Builder(
+        ChangeNotifierProvider<SubscriptionProvider>.value(
+          value: sub,
+          child: MaterialApp(
+            home: Builder(
               builder: (context) => Scaffold(
                 body: ElevatedButton(
                   onPressed: () => PaywallScreen.show(
