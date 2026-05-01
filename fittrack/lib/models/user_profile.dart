@@ -7,6 +7,8 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime? lastLogin;
   final Map<String, dynamic>? settings;
+  // Read-only from client — set via Firebase Console only. Blocked by Firestore rules on client write.
+  final bool isProOverride;
 
   UserProfile({
     required this.id,
@@ -15,6 +17,7 @@ class UserProfile {
     required this.createdAt,
     this.lastLogin,
     this.settings,
+    this.isProOverride = false,
   });
 
   factory UserProfile.fromFirestore(DocumentSnapshot doc) {
@@ -24,10 +27,11 @@ class UserProfile {
       displayName: data['displayName'],
       email: data['email'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      lastLogin: data['lastLogin'] != null 
-          ? (data['lastLogin'] as Timestamp).toDate() 
+      lastLogin: data['lastLogin'] != null
+          ? (data['lastLogin'] as Timestamp).toDate()
           : null,
       settings: data['settings'] as Map<String, dynamic>?,
+      isProOverride: (data['isProOverride'] as bool?) ?? false,
     );
   }
 
@@ -54,6 +58,7 @@ class UserProfile {
       createdAt: createdAt,
       lastLogin: lastLogin ?? this.lastLogin,
       settings: settings ?? this.settings,
+      isProOverride: isProOverride,
     );
   }
 }

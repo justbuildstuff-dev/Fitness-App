@@ -22,8 +22,12 @@ class UserProfileConverter {
       displayName: data['displayName'],
       email: data['email'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      lastLogin: data['lastLogin'] != null ? (data['lastLogin'] as Timestamp).toDate() : null,
+      lastLogin: data['lastLogin'] != null
+          ? (data['lastLogin'] as Timestamp).toDate()
+          : null,
       settings: data['settings'],
+      // isProOverride is read-only from client — never written back to Firestore
+      isProOverride: (data['isProOverride'] as bool?) ?? false,
     );
   }
 }

@@ -38,6 +38,12 @@ dependencies:
   # In-app review
   in_app_review: ^2.0.9
 
+  # In-app purchases
+  in_app_purchase: ^3.2.0
+
+  # URL launcher (subscription management deep links)
+  url_launcher: ^6.2.0
+
   # Export functionality
   csv: ^6.0.0
   path_provider: ^2.1.2
