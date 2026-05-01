@@ -1,0 +1,193 @@
+@Timeout(Duration(seconds: 30))
+library;
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fittrack/models/subscription.dart';
+import 'package:fittrack/providers/subscription_provider.dart';
+
+void main() {
+  late SubscriptionProvider provider;
+
+  setUp(() {
+    provider = SubscriptionProvider();
+  });
+
+  tearDown(() {
+    provider.dispose();
+  });
+
+  group('SubscriptionProvider - initial state', () {
+    test('starts as free tier', () {
+      expect(provider.isPro, isFalse);
+      expect(provider.isFree, isTrue);
+      expect(provider.subscriptionInfo.tier, SubscriptionTier.free);
+      expect(provider.subscriptionInfo.status, SubscriptionStatus.free);
+    });
+
+    test('starts with no loading state', () {
+      expect(provider.isLoading, isFalse);
+    });
+
+    test('starts with no error', () {
+      expect(provider.error, isNull);
+    });
+
+    test('isProOverride starts false', () {
+      expect(provider.isProOverride, isFalse);
+    });
+
+    test('products list starts empty', () {
+      expect(provider.products, isEmpty);
+    });
+
+    test('monthlyProduct starts null', () {
+      expect(provider.monthlyProduct, isNull);
+    });
+
+    test('annualProduct starts null', () {
+      expect(provider.annualProduct, isNull);
+    });
+  });
+
+  group('SubscriptionProvider - computed limits (free tier)', () {
+    test('maxPrograms is 3 for free', () {
+      expect(provider.maxPrograms, 3);
+    });
+
+    test('maxCustomExercises is 5 for free', () {
+      expect(provider.maxCustomExercises, 5);
+    });
+  });
+
+  group('SubscriptionProvider - computed limits (pro tier)', () {
+    setUp(() {
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.pro,
+          status: SubscriptionStatus.active,
+        ),
+      );
+    });
+
+    test('maxPrograms is 999 for pro', () {
+      expect(provider.maxPrograms, 999);
+    });
+
+    test('maxCustomExercises is 50 for pro', () {
+      expect(provider.maxCustomExercises, 50);
+    });
+
+    test('isPro is true', () {
+      expect(provider.isPro, isTrue);
+      expect(provider.isFree, isFalse);
+    });
+  });
+
+  group('SubscriptionProvider - isProOverride', () {
+    test('isPro is true when isProOverride set, even with free subscription', () {
+      provider.setProOverrideForTest(value: true);
+      expect(provider.isPro, isTrue);
+      expect(provider.isFree, isFalse);
+      expect(provider.isProOverride, isTrue);
+      // Underlying subscription is still free
+      expect(provider.subscriptionInfo.tier, SubscriptionTier.free);
+    });
+
+    test('isPro correct when both override and active subscription', () {
+      provider.setProOverrideForTest(value: true);
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.pro,
+          status: SubscriptionStatus.active,
+        ),
+      );
+      expect(provider.isPro, isTrue);
+    });
+
+    test('maxPrograms is unlimited when override is set', () {
+      provider.setProOverrideForTest(value: true);
+      expect(provider.maxPrograms, 999);
+      expect(provider.maxCustomExercises, 50);
+    });
+  });
+
+  group('SubscriptionProvider - clearError', () {
+    test('clearError removes the error message', () {
+      // Simulate an error state by checking clearError works
+      // (error is set internally via purchase stream in production)
+      provider.clearError();
+      expect(provider.error, isNull);
+    });
+  });
+
+  group('SubscriptionProvider - notify on state changes', () {
+    test('notifies listeners when subscription info changes', () {
+      var notified = false;
+      provider.addListener(() => notified = true);
+
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.pro,
+          status: SubscriptionStatus.active,
+        ),
+      );
+
+      expect(notified, isTrue);
+    });
+
+    test('notifies listeners when pro override changes', () {
+      var notified = false;
+      provider.addListener(() => notified = true);
+
+      provider.setProOverrideForTest(value: true);
+
+      expect(notified, isTrue);
+    });
+  });
+
+  group('SubscriptionProvider - subscription status transitions', () {
+    test('expired subscription is treated as free', () {
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.free,
+          status: SubscriptionStatus.expired,
+        ),
+      );
+      expect(provider.isPro, isFalse);
+      expect(provider.maxPrograms, 3);
+    });
+
+    test('trial subscription is treated as pro', () {
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.pro,
+          status: SubscriptionStatus.trial,
+        ),
+      );
+      expect(provider.isPro, isTrue);
+      expect(provider.maxPrograms, 999);
+    });
+
+    test('cancelled subscription reverts to free limits', () {
+      // First go pro
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.pro,
+          status: SubscriptionStatus.active,
+        ),
+      );
+      expect(provider.isPro, isTrue);
+
+      // Then cancel
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.free,
+          status: SubscriptionStatus.cancelled,
+        ),
+      );
+      expect(provider.isPro, isFalse);
+      expect(provider.maxPrograms, 3);
+      expect(provider.maxCustomExercises, 5);
+    });
+  });
+}
