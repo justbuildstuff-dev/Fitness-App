@@ -205,6 +205,14 @@ class ProgramsScreen extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right),
               ),
               onSelect: (template) async {
+                final sub = context.read<SubscriptionProvider>();
+                if (sub.isFree && template.isPrebuilt) {
+                  PaywallScreen.show(
+                    context,
+                    headline: 'Access 6+ expert program templates',
+                  );
+                  return;
+                }
                 // Show preview sheet
                 final confirmed = await ProgramTemplatePreviewSheet.show(
                   context,
