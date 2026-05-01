@@ -40,10 +40,16 @@ service cloud.firestore {
       allow list: if isAdmin(); // admins may list users (support only)
 
       // Creation: only the authenticated user may create their own profile document
-      allow create: if isSignedIn() && request.auth.uid == userId && validUserProfile(request.resource.data);
+      // isProOverride is admin-only — clients cannot set it on create
+      allow create: if isSignedIn() && request.auth.uid == userId
+                    && validUserProfile(request.resource.data)
+                    && (isAdmin() || !request.resource.data.keys().hasAny(['isProOverride']));
 
       // Updates: owner or admin
-      allow update: if (isOwner(userId) || isAdmin()) && validUserProfile(request.resource.data);
+      // isProOverride is admin-only — clients cannot change it
+      allow update: if (isOwner(userId) || isAdmin())
+                    && validUserProfile(request.resource.data)
+                    && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isProOverride']));
 
       // Deletion: admin only (safer than letting users delete their top-level node)
       allow delete: if isAdmin();
@@ -239,7 +245,8 @@ service cloud.firestore {
         && (data.email == null || isString(data.email))
         && (data.createdAt != null && isTimestamp(data.createdAt))
         && (data.lastLogin == null || isTimestamp(data.lastLogin))
-        && (data.settings == null || data.settings is map);
+        && (data.settings == null || data.settings is map)
+        && (data.subscription == null || data.subscription is map);
     }
 
     function validProgram(data) {
