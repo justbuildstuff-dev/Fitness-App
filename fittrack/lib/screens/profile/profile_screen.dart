@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/subscription_provider.dart';
 import '../../models/navigation_section.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../subscription/paywall_screen.dart';
+import '../subscription/subscription_management_screen.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -68,8 +71,37 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               
-              // Menu Items
+              // Subscription entry
               const SizedBox(height: 16),
+              Consumer<SubscriptionProvider>(
+                builder: (context, sub, _) {
+                  if (sub.isPro) {
+                    return _MenuItem(
+                      icon: Icons.workspace_premium,
+                      title: 'Overload Pro',
+                      subtitle: sub.isProOverride ? 'Developer access' : 'Active subscription',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SubscriptionManagementScreen(),
+                        ),
+                      ),
+                    );
+                  }
+                  return _MenuItem(
+                    icon: Icons.workspace_premium_outlined,
+                    title: 'Upgrade to Overload Pro',
+                    subtitle: 'Unlimited programs, full analytics & more',
+                    onTap: () => PaywallScreen.show(
+                      context,
+                      headline: 'Unlock Overload Pro',
+                      subtext: 'Everything you need to train smarter.',
+                    ),
+                  );
+                },
+              ),
+
+              // Menu Items
               _MenuItem(
                 icon: Icons.person_outline,
                 title: 'Edit Profile',
@@ -164,6 +196,7 @@ class ProfileScreen extends StatelessWidget {
 class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback onTap;
   final Color? textColor;
   final Color? iconColor;
@@ -172,6 +205,7 @@ class _MenuItem extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.onTap,
+    this.subtitle,
     this.textColor,
     this.iconColor,
   });
@@ -190,6 +224,14 @@ class _MenuItem extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+            )
+          : null,
       trailing: Icon(
         Icons.chevron_right,
         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
