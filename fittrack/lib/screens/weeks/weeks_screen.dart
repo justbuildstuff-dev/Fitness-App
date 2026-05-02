@@ -10,9 +10,11 @@ import '../../models/templates/templates.dart';
 import '../../services/app_review_service.dart';
 import '../../services/lifecycle_notification_service.dart';
 import '../../services/firestore_service.dart';
+import '../../providers/subscription_provider.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/create_options_sheet.dart';
+import '../subscription/paywall_screen.dart';
 import '../templates/template_picker_screen.dart';
 import '../templates/template_preview_sheet.dart';
 import '../workouts/create_workout_screen.dart';
@@ -525,6 +527,16 @@ class _WeeksScreenState extends State<WeeksScreen> {
   }
 
   void _saveWeekAsTemplate(BuildContext context) async {
+    final sub = context.read<SubscriptionProvider>();
+    if (sub.isFree) {
+      PaywallScreen.show(
+        context,
+        headline: 'That workout\'s good enough to save.',
+        subtext: 'Pro gives you unlimited custom templates.',
+      );
+      return;
+    }
+
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
 

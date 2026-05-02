@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/exercise_library_provider.dart';
+import '../../providers/subscription_provider.dart';
 import '../../models/custom_exercise.dart';
 import '../exercises/custom_exercise_form_screen.dart';
+import '../subscription/paywall_screen.dart';
 
 /// Screen for managing the user's custom exercises.
 /// Accessible from the Profile/Settings screen.
@@ -16,8 +18,10 @@ class MyExercisesScreen extends StatelessWidget {
         title: const Text('My Exercises'),
         elevation: 0,
       ),
-      body: Consumer<ExerciseLibraryProvider>(
-        builder: (context, provider, child) {
+      body: Consumer2<ExerciseLibraryProvider, SubscriptionProvider>(
+        builder: (context, provider, sub, child) {
+          final limit = sub.maxCustomExercises;
+          final atLimit = provider.customExerciseCount >= limit;
           if (provider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -71,7 +75,7 @@ class MyExercisesScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${provider.customExerciseCount}/$maxCustomExercises exercises',
+                      '${provider.customExerciseCount}/$limit exercises',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context)
                                 .colorScheme
@@ -79,7 +83,7 @@ class MyExercisesScreen extends StatelessWidget {
                                 .withValues(alpha: 0.6),
                           ),
                     ),
-                    if (provider.canCreateCustomExercise)
+                    if (!atLimit)
                       TextButton.icon(
                         onPressed: () => _navigateToCreate(context),
                         icon: const Icon(Icons.add, size: 18),
@@ -108,11 +112,10 @@ class MyExercisesScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: Consumer<ExerciseLibraryProvider>(
-        builder: (context, provider, child) {
-          if (!provider.canCreateCustomExercise) {
-            return const SizedBox.shrink();
-          }
+      floatingActionButton: Consumer2<ExerciseLibraryProvider, SubscriptionProvider>(
+        builder: (context, provider, sub, child) {
+          final atLimit = provider.customExerciseCount >= sub.maxCustomExercises;
+          if (atLimit) return const SizedBox.shrink();
           return FloatingActionButton(
             onPressed: () => _navigateToCreate(context),
             child: const Icon(Icons.add),
@@ -175,6 +178,16 @@ class MyExercisesScreen extends StatelessWidget {
   }
 
   void _navigateToCreate(BuildContext context) {
+    final sub = context.read<SubscriptionProvider>();
+    final provider = context.read<ExerciseLibraryProvider>();
+    if (sub.isFree && provider.customExerciseCount >= sub.maxCustomExercises) {
+      PaywallScreen.show(
+        context,
+        headline: 'Build your full exercise library.',
+        subtext: 'Create up to 50 custom exercises with Pro.',
+      );
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const CustomExerciseFormScreen(),

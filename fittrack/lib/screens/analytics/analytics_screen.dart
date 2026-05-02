@@ -5,6 +5,7 @@ import '../../providers/program_provider.dart';
 import '../../services/analytics_service.dart';
 import '../../widgets/error_display.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
+import '../../widgets/pro_gate_widget.dart';
 import 'components/overview_tab.dart';
 import 'components/exercise_tab.dart';
 import 'components/trends_tab.dart';
@@ -115,8 +116,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             body: TabBarView(
               children: [
                 OverviewTab(analyticsService: widget.analyticsService),
-                const ExerciseTab(),
-                const TrendsTab(),
+                const ProGateWidget(
+                  paywallHeadline: 'Every rep tells a story.',
+                  paywallSubtext: 'Track exercise progress, 1RM trends, and volume over time.',
+                  child: ExerciseTab(),
+                ),
+                const ProGateWidget(
+                  paywallHeadline: 'Your PR history is in there.',
+                  paywallSubtext: 'Unlock your full training history — all time.',
+                  child: TrendsTab(),
+                ),
               ],
             ),
             bottomNavigationBar: const GlobalBottomNavBar(

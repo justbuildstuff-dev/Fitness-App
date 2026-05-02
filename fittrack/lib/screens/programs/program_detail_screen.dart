@@ -7,9 +7,11 @@ import '../../models/week.dart';
 import '../../models/navigation_section.dart';
 import '../../models/templates/templates.dart';
 import '../../services/firestore_service.dart';
+import '../../providers/subscription_provider.dart';
 import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/create_options_sheet.dart';
+import '../subscription/paywall_screen.dart';
 import '../templates/template_picker_screen.dart';
 import '../templates/template_preview_sheet.dart';
 import '../weeks/weeks_screen.dart';
@@ -334,6 +336,16 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
   }
 
   void _saveProgramAsTemplate(BuildContext context) async {
+    final sub = context.read<SubscriptionProvider>();
+    if (sub.isFree) {
+      PaywallScreen.show(
+        context,
+        headline: 'That workout\'s good enough to save.',
+        subtext: 'Pro gives you unlimited custom templates.',
+      );
+      return;
+    }
+
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
     final firestoreService = FirestoreService.instance;

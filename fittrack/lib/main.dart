@@ -15,6 +15,7 @@ import 'providers/program_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/weight_unit_provider.dart';
 import 'providers/exercise_library_provider.dart';
+import 'providers/subscription_provider.dart';
 import 'providers/template_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 import 'services/app_analytics_service.dart';
@@ -160,6 +161,10 @@ class OverloadApp extends StatelessWidget {
             // The provider constructor handles auto-loading data when userId is set
             return TemplateProvider(userId);
           },
+        ),
+        ChangeNotifierProxyProvider<app_auth.AuthProvider, SubscriptionProvider>(
+          create: (_) => SubscriptionProvider(),
+          update: (_, auth, sub) => sub!..update(auth),
         ),
       ],
       child: Consumer<ThemeProvider>(

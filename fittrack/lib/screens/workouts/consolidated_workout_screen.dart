@@ -19,9 +19,11 @@ import '../../widgets/delete_confirmation_dialog.dart';
 import '../../widgets/exercise_card.dart';
 import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/pr_notification_banner.dart';
+import '../../providers/subscription_provider.dart';
 import '../../widgets/save_as_template_menu_item.dart';
 import '../../widgets/superset_group_card.dart';
 import '../exercises/exercise_picker_screen.dart';
+import '../subscription/paywall_screen.dart';
 
 /// Consolidated workout screen that displays all exercises and their sets inline
 /// Replaces the separate WorkoutDetailScreen and ExerciseDetailScreen with a single unified view
@@ -753,6 +755,16 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
   }
 
   void _saveAsTemplate(BuildContext context) {
+    final sub = context.read<SubscriptionProvider>();
+    if (sub.isFree) {
+      PaywallScreen.show(
+        context,
+        headline: 'That workout\'s good enough to save.',
+        subtext: 'Pro gives you unlimited custom templates.',
+      );
+      return;
+    }
+
     final programProvider = Provider.of<ProgramProvider>(context, listen: false);
     final exercises = programProvider.exercises;
 
