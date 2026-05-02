@@ -72,7 +72,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Overload Pro'), findsOneWidget);
-      expect(find.text('Unlock unlimited programs'), findsOneWidget);
+      expect(find.textContaining('Serious lifters run more'), findsOneWidget);
     });
 
     testWidgets('paywall subtext shows free limit', (tester) async {
@@ -86,7 +86,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('free plan limit of 3 programs'),
+        find.textContaining('Unlock unlimited programs with Pro'),
         findsOneWidget,
       );
     });

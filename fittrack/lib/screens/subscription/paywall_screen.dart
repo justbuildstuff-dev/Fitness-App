@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/subscription_provider.dart';
 
 /// Paywall modal bottom sheet shown when a user hits a feature gate.
@@ -116,6 +117,7 @@ class PaywallScreen extends StatelessWidget {
                   _PlanCard(
                     label: 'Annual',
                     badge: 'RECOMMENDED',
+                    savings: 'Save 52% vs monthly',
                     price: sub.annualProduct?.price ?? '\$39.99/year',
                     detail: 'Billed annually · 14-day free trial',
                     isRecommended: true,
@@ -162,13 +164,49 @@ class PaywallScreen extends StatelessWidget {
                   child: const Text('Already subscribed? Restore purchases'),
                 ),
 
-                // Legal footnote
-                Text(
-                  'By subscribing you agree to our Terms of Service and Privacy Policy.',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                  textAlign: TextAlign.center,
+                // Legal footnote with tappable links
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    Text(
+                      'By subscribing you agree to our ',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _launchUrl('https://overloadapp.com/terms'),
+                      child: Text(
+                        'Terms of Service',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      ' and ',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _launchUrl('https://overloadapp.com/privacy'),
+                      child: Text(
+                        'Privacy Policy',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '.',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -176,6 +214,13 @@ class PaywallScreen extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+Future<void> _launchUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
 
@@ -193,6 +238,7 @@ const List<String> _benefits = [
 class _PlanCard extends StatelessWidget {
   final String label;
   final String? badge;
+  final String? savings;
   final String price;
   final String detail;
   final bool isRecommended;
@@ -201,6 +247,7 @@ class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.label,
     this.badge,
+    this.savings,
     required this.price,
     required this.detail,
     required this.isRecommended,
@@ -262,6 +309,16 @@ class _PlanCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                  if (savings != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      savings!,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   Text(
                     detail,

@@ -181,7 +181,11 @@ class MyExercisesScreen extends StatelessWidget {
     final sub = context.read<SubscriptionProvider>();
     final provider = context.read<ExerciseLibraryProvider>();
     if (sub.isFree && provider.customExerciseCount >= sub.maxCustomExercises) {
-      PaywallScreen.show(context, headline: 'Create up to 50 custom exercises');
+      PaywallScreen.show(
+        context,
+        headline: 'Build your full exercise library.',
+        subtext: 'Create up to 50 custom exercises with Pro.',
+      );
       return;
     }
     Navigator.of(context).push(

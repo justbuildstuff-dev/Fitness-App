@@ -757,7 +757,11 @@ class _ConsolidatedWorkoutScreenState extends State<ConsolidatedWorkoutScreen>
   void _saveAsTemplate(BuildContext context) {
     final sub = context.read<SubscriptionProvider>();
     if (sub.isFree) {
-      PaywallScreen.show(context, headline: 'Save your best workouts as templates');
+      PaywallScreen.show(
+        context,
+        headline: 'That workout\'s good enough to save.',
+        subtext: 'Pro gives you unlimited custom templates.',
+      );
       return;
     }
 
