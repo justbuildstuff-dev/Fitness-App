@@ -117,11 +117,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 OverviewTab(analyticsService: widget.analyticsService),
                 const ProGateWidget(
-                  paywallHeadline: 'Track every rep\'s progress',
+                  paywallHeadline: 'Every rep tells a story.',
+                  paywallSubtext: 'Track exercise progress, 1RM trends, and volume over time.',
                   child: ExerciseTab(),
                 ),
                 const ProGateWidget(
-                  paywallHeadline: 'See your full training history',
+                  paywallHeadline: 'Your PR history is in there.',
+                  paywallSubtext: 'Unlock your full training history — all time.',
                   child: TrendsTab(),
                 ),
               ],

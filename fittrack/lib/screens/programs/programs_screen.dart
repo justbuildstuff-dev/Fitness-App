@@ -132,8 +132,8 @@ class ProgramsScreen extends StatelessWidget {
     if (sub.isFree && programCount >= sub.maxPrograms) {
       PaywallScreen.show(
         context,
-        headline: 'Unlock unlimited programs',
-        subtext: 'You\'ve reached the free plan limit of ${sub.maxPrograms} programs.',
+        headline: 'You\'ve built 3 programs. Serious lifters run more.',
+        subtext: 'Unlock unlimited programs with Pro.',
       );
       return;
     }
@@ -209,7 +209,8 @@ class ProgramsScreen extends StatelessWidget {
                 if (sub.isFree && template.isPrebuilt) {
                   PaywallScreen.show(
                     context,
-                    headline: 'Access 6+ expert program templates',
+                    headline: 'Start with an expert-built program.',
+                    subtext: '6+ structured programs included with Pro.',
                   );
                   return;
                 }
