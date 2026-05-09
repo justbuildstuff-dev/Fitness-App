@@ -373,6 +373,8 @@ class SettingsScreen extends StatelessWidget {
         return const Color(0xFF7C3AED);
       case ColorSchemeType.crimsonPower:
         return const Color(0xFFDC143C);
+      case ColorSchemeType.acidGreen:
+        return const Color(0xFF39FF14);
     }
   }
 
@@ -386,6 +388,8 @@ class SettingsScreen extends StatelessWidget {
         return 'Electric Purple';
       case ColorSchemeType.crimsonPower:
         return 'Crimson Power';
+      case ColorSchemeType.acidGreen:
+        return 'Acid Green';
     }
   }
 }

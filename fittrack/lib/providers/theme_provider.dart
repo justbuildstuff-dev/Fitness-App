@@ -7,6 +7,7 @@ enum ColorSchemeType {
   energeticOrange,
   electricPurple,
   crimsonPower,
+  acidGreen,
 }
 
 class ThemeProvider extends ChangeNotifier {
@@ -95,6 +96,8 @@ class ThemeProvider extends ChangeNotifier {
         return const Color(0xFF7C3AED);
       case ColorSchemeType.crimsonPower:
         return const Color(0xFFDC143C);
+      case ColorSchemeType.acidGreen:
+        return const Color(0xFF39FF14);
     }
   }
 }
