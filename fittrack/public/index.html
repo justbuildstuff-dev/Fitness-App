@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overload — Structured Strength Tracker</title>
+  <meta name="description" content="The workout tracker for people who actually program their training. Program → Week → Workout → Exercise → Set. No ads. No data selling.">
+  <meta property="og:title" content="Overload — Structured Strength Tracker">
+  <meta property="og:description" content="Build structured programs. Track every set. See whether your training is actually working.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#111111">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ── Navigation ─────────────────────────────────── -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="nav-logo">Overload</a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#structure">How it works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/support">Support</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+      <li>
+        <!-- TODO: Replace # with App Store URL when live -->
+        <a href="#" class="nav-cta">Get the app</a>
+      </li>
+    </ul>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ── Hero ───────────────────────────────────────── -->
+<section class="hero">
+  <div class="container">
+    <span class="label">Structured Strength Tracker</span>
+    <h1 class="hero-heading">The workout tracker for people who actually program their training.</h1>
+    <p class="hero-body">
+      Build structured programs across multiple weeks. Track every set — weight, reps, duration, distance.
+      See your strength trends over time. Free to start. No ads. No data selling.
+    </p>
+    <div class="hero-actions">
+      <!-- TODO: Replace # with App Store URL when live -->
+      <a href="#" class="btn btn-primary">↓ Download for iOS</a>
+      <a href="#" class="btn">↓ Download for Android</a>
+    </div>
+    <p class="hero-note">Free tier available. No account required to explore.</p>
+  </div>
+</section>
+
+<!-- ── Structure ──────────────────────────────────── -->
+<section class="section" id="structure">
+  <div class="container">
+    <span class="label">Why it's different</span>
+    <h2 class="section-heading">Your training isn't flat.<br>Your app shouldn't be either.</h2>
+    <p class="section-body">
+      Other trackers give you a list of workouts. Overload organises training the way serious lifters actually think — by program, block, and week. Every session has context.
+    </p>
+
+    <div class="structure-grid">
+      <div>
+        <p style="font-size:0.9375rem; color:var(--text-2); line-height:1.75; margin-bottom:24px;">
+          Strong, Hevy, and most other trackers store workouts flat — there's no concept of a training block or a week. You can't duplicate a week, run progressive overload cycles, or see how your program has evolved over months.
+        </p>
+        <p style="font-size:0.9375rem; color:var(--text-2); line-height:1.75; margin-bottom:24px;">
+          Overload's hierarchy mirrors the way coaches and intermediate lifters think: a <strong style="color:var(--text)">Program</strong> contains <strong style="color:var(--text)">Weeks</strong>. Each Week contains <strong style="color:var(--text)">Workouts</strong>. Each Workout contains <strong style="color:var(--text)">Exercises</strong> with individual <strong style="color:var(--text)">Sets</strong>.
+        </p>
+        <p style="font-size:0.9375rem; color:var(--text-2); line-height:1.75;">
+          Duplicate a week with one tap. Load next week with slightly heavier weights. That's progressive overload — and Overload is built around it.
+        </p>
+      </div>
+
+      <pre class="tree-block" aria-label="Program hierarchy example"><span class="tl">Push / Pull / Legs</span>  <span class="num">· program</span>
+<span class="num">├──</span> <span class="ac">Week 1</span>  <span class="num">· strength block</span>
+<span class="num">│   ├──</span> <span class="tl">Monday</span>  <span class="num">· Push</span>
+<span class="num">│   │   ├──</span> Bench Press      <span class="num">5 × 5  @ 80kg</span>
+<span class="num">│   │   ├──</span> Overhead Press   <span class="num">4 × 6  @ 50kg</span>
+<span class="num">│   │   └──</span> Tricep Pushdown  <span class="num">3 × 12 @ 25kg</span>
+<span class="num">│   └──</span> <span class="tl">Wednesday</span>  <span class="num">· Pull</span>
+<span class="num">│       ├──</span> Deadlift         <span class="num">3 × 5  @ 140kg</span>
+<span class="num">│       └──</span> Pull-ups         <span class="num">4 × 8</span>
+<span class="num">└──</span> <span class="ac">Week 2</span>  <span class="num">· +2.5kg across the board</span>
+    <span class="num">└──</span> <span class="tl">Monday</span>  <span class="num">· Push</span>
+        <span class="num">├──</span> Bench Press      <span class="num">5 × 5  @ 82.5kg</span>
+        <span class="num">├──</span> Overhead Press   <span class="num">4 × 6  @ 52.5kg</span>
+        <span class="num">└──</span> Tricep Pushdown  <span class="num">3 × 12 @ 27.5kg</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Logging ─────────────────────────────────────── -->
+<section class="section" id="logging">
+  <div class="container">
+    <span class="label">Workout logging</span>
+    <h2 class="section-heading">Every set. One screen.</h2>
+    <p class="section-body">
+      All your exercises and sets in a single scrollable view. Tap to edit weight and reps inline.
+      Check off sets as you go. No tapping in and out of nested screens.
+    </p>
+    <ul class="feat-list" style="margin-top:36px;">
+      <li>Inline weight and rep editing</li>
+      <li>5 exercise types: strength, cardio, bodyweight, time-based, custom</li>
+      <li>Completion toggles lock sets as you go</li>
+      <li>Drag to reorder exercises mid-workout</li>
+      <li>Set notes and rest time tracking</li>
+      <li>Save workouts as reusable templates</li>
+      <li>Full offline support — no connection required</li>
+      <li>10 custom exercises free, 50 with Pro</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── Analytics ──────────────────────────────────── -->
+<section class="section" id="analytics">
+  <div class="container">
+    <span class="label">Analytics</span>
+    <h2 class="section-heading">See whether your training is actually working.</h2>
+
+    <div class="analytics-grid">
+      <div class="heatmap-block">
+        <p class="heatmap-inner-label">Training consistency · 12 weeks</p>
+        <div class="heatmap-dots" aria-label="Sample training heatmap showing 12 weeks of workout activity"><span class="dh"> M </span><span class="dh"> T </span><span class="dh"> W </span><span class="dh"> T </span><span class="dh"> F </span><span class="dh"> S </span><span class="dh"> S</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="off"> · </span><span class="off"> ·</span>
+<span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="on"> ● </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span>
+<span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> · </span><span class="on"> ● </span><span class="on"> ● </span><span class="off"> ·</span></div>
+        <div class="heatmap-stats">
+          <div>
+            <span class="hm-stat-value">57</span>
+            <span class="hm-stat-label">Sessions</span>
+          </div>
+          <div>
+            <span class="hm-stat-value">68%</span>
+            <span class="hm-stat-label">Consistency</span>
+          </div>
+          <div>
+            <span class="hm-stat-value">5</span>
+            <span class="hm-stat-label">Day streak</span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="analytics-points">
+        <li>
+          <p class="ap-title">Activity heatmap</p>
+          <p class="ap-body">A full-year view of your training frequency. See gaps, streaks, and patterns. Know whether you're actually consistent — not just whether it feels like you are.</p>
+        </li>
+        <li>
+          <p class="ap-title">Personal records</p>
+          <p class="ap-body">Every PR across every exercise, tracked automatically. Weight, reps, estimated 1RM, volume — you pick what matters.</p>
+        </li>
+        <li>
+          <p class="ap-title">Exercise progress charts <span class="pro-tag">Pro</span></p>
+          <p class="ap-body">Per-exercise history showing estimated 1RM trends over time. See exactly which lifts are moving and which have stalled.</p>
+        </li>
+        <li>
+          <p class="ap-title">Volume trends <span class="pro-tag">Pro</span></p>
+          <p class="ap-body">Weekly training volume by muscle group. Built for lifters running periodised programs where volume is a meaningful variable.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── Programs ────────────────────────────────────── -->
+<section class="section" id="programs">
+  <div class="container">
+    <span class="label">Pre-built programs</span>
+    <h2 class="section-heading">Start with structure.</h2>
+    <p class="section-body">
+      Five expert-structured programs ready to load. Each is built as a proper multi-week program with exercises, sets, and rep schemes — not a flat list of exercises.
+      Available with Overload Pro.
+    </p>
+
+    <div class="programs-table" style="margin-top:40px;">
+      <div class="program-row">
+        <p class="prog-name">Push / Pull / Legs</p>
+        <p class="prog-desc">Classic 6-day PPL split. Chest, shoulders, triceps / Back, biceps / Quads, hamstrings, glutes.</p>
+        <p class="prog-split">6 days · hypertrophy</p>
+      </div>
+      <div class="program-row">
+        <p class="prog-name">Upper / Lower Split</p>
+        <p class="prog-desc">Four-day upper/lower split. Ideal for intermediate lifters balancing frequency and volume.</p>
+        <p class="prog-split">4 days · strength</p>
+      </div>
+      <div class="program-row">
+        <p class="prog-name">Full Body 3-Day</p>
+        <p class="prog-desc">Three full-body sessions per week. Higher frequency approach for efficient strength and mass gain.</p>
+        <p class="prog-split">3 days · strength</p>
+      </div>
+      <div class="program-row">
+        <p class="prog-name">5×5 Strength</p>
+        <p class="prog-desc">Compound-focused strength building. Squat, deadlift, press — five sets of five across three sessions.</p>
+        <p class="prog-split">3 days · powerlifting</p>
+      </div>
+      <div class="program-row">
+        <p class="prog-name">Bro Split</p>
+        <p class="prog-desc">Five-day bodypart split. One muscle group per session. High volume, classic hypertrophy approach.</p>
+        <p class="prog-split">5 days · hypertrophy</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── For Who ─────────────────────────────────────── -->
+<section class="section" id="for-who">
+  <div class="container">
+    <span class="label">Who it's for</span>
+    <h2 class="section-heading">We don't try to be for everyone.</h2>
+    <p class="section-body">
+      Overload is built for a specific type of lifter. If that's not you, one of the bigger apps will serve you better.
+    </p>
+
+    <div class="for-who-grid">
+      <div class="for-col">
+        <h3>This is for you if</h3>
+        <ul class="for-list yes">
+          <li>You follow a structured program and have for at least a few months</li>
+          <li>You track progressive overload — same exercises, heavier each week</li>
+          <li>You run multi-week blocks: strength, hypertrophy, deload</li>
+          <li>You want to see whether your 1RM is actually moving</li>
+          <li>You've been frustrated that other apps flatten your program into a list</li>
+          <li>You care about your data and don't want it sold to advertisers</li>
+        </ul>
+      </div>
+      <div class="for-col">
+        <h3>This is probably not for you if</h3>
+        <ul class="for-list no">
+          <li>You want an AI to generate your workouts</li>
+          <li>You're just starting out and following YouTube videos casually</li>
+          <li>You want social features — following friends, sharing workouts</li>
+          <li>You need Apple Health or wearable integration right now</li>
+          <li>You're looking for a calorie tracker or step counter</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ─────────────────────────────────────── -->
+<section class="section" id="pricing">
+  <div class="container">
+    <span class="label">Pricing</span>
+    <h2 class="section-heading">Free to start. Pro when you're ready.</h2>
+    <p class="section-body">
+      The free tier is genuinely useful. You're not being squeezed into upgrading — the limits exist to keep the infrastructure sustainable.
+    </p>
+
+    <div class="pricing-wrap">
+      <div class="pricing-col">
+        <span class="pricing-tier-label">Free</span>
+        <p class="pricing-price">$0</p>
+        <p class="pricing-alt">No credit card. No trial expiry.</p>
+        <ul class="pricing-items">
+          <li>Up to 3 programs</li>
+          <li>Unlimited workouts, exercises, and sets</li>
+          <li>All 5 exercise types</li>
+          <li>Up to 10 custom exercises</li>
+          <li>Save up to 3 workout templates</li>
+          <li>Personal records tracking</li>
+          <li>Activity heatmap</li>
+          <li>Full offline support</li>
+        </ul>
+      </div>
+      <div class="pricing-col">
+        <span class="pricing-tier-label">Pro</span>
+        <p class="pricing-price">$6.99 <sub>/ month</sub></p>
+        <p class="pricing-alt">or $39.99/year — <strong>save 52%</strong></p>
+        <ul class="pricing-items">
+          <li>Everything in Free</li>
+          <li>Unlimited programs</li>
+          <li>Up to 50 custom exercises</li>
+          <li>Unlimited saved templates</li>
+          <li>All 5 pre-built programs</li>
+          <li>Exercise progress charts</li>
+          <li>Estimated 1RM tracking</li>
+          <li>Full analytics history and volume trends</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Privacy Promise ─────────────────────────────── -->
+<section class="section privacy-section" id="privacy">
+  <div class="container">
+    <span class="label">Your data</span>
+    <h2 class="section-heading">No ads. No data selling. No surveillance.</h2>
+
+    <div class="privacy-trio">
+      <div class="privacy-item">
+        <h3>No advertising</h3>
+        <p>Overload has no ad network, no ad SDK, and no plans to add one. Revenue comes from Pro subscriptions — that's the only business model.</p>
+      </div>
+      <div class="privacy-item">
+        <h3>Your data stays yours</h3>
+        <p>Your workout data is stored privately in your account. It's never shared with third parties, sold, or used to train models. It's yours.</p>
+      </div>
+      <div class="privacy-item">
+        <h3>Delete means delete</h3>
+        <p>Delete your account and all your data is gone within 30 days. No "soft delete" that keeps your data on our servers indefinitely.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:40px; font-size:0.875rem; color:var(--text-3);">
+      Read the full <a href="/privacy" style="color:var(--text-2); text-decoration:underline; text-underline-offset:2px;">Privacy Policy</a> and <a href="/terms" style="color:var(--text-2); text-decoration:underline; text-underline-offset:2px;">Terms of Service</a>.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<!-- ── Footer ──────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-logo">Overload</span>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy</a></li>
+        <li><a href="/terms">Terms</a></li>
+        <li><a href="/support">Support</a></li>
+      </ul>
+      <p class="footer-copy">© 2026 Overload. Overload is not a medical device and does not provide medical advice.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+  toggle.addEventListener('click', () => links.classList.toggle('open'));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-inner')) links.classList.remove('open');
+  });
+</script>
+</body>
+</html>
