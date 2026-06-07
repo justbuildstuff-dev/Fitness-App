@@ -3,7 +3,9 @@
 **Effective Date:** [To be set before submission]  
 **Last Updated:** May 2026
 
-> **Founder action required:** This draft must be reviewed by a lawyer before submission. It must be hosted at a public URL before you can submit to either store. Recommended: publish to https://overloadapp.com/privacy (or GitHub Pages as a fallback). The App Store and Play Store require a live URL — a file in the repo is not sufficient.
+> **Status:** Live at https://fitness-app-8505e.web.app/privacy — this URL satisfies both App Store and Play Store requirements. When a custom domain is connected, update to https://overloadapp.com/privacy and update the in-app paywall links accordingly.
+> 
+> **Note:** This document reflects the policy content. The authoritative hosted version is the live HTML page linked above.
 
 ---
 
@@ -17,7 +19,7 @@ We do not sell your data. We do not use your data for advertising. Your fitness 
 
 ## 2. Who We Are
 
-The App is operated by [Founder full name / company name]. Contact: [contact email address].
+The App is operated by justbuildstuff.dev. Contact: justbuildstuff.dev@gmail.com.
 
 ---
 
@@ -144,8 +146,7 @@ We will update this policy when our data practices change materially. We will no
 
 If you have questions, requests, or complaints about your data or this policy:
 
-**Email:** [contact email — e.g., privacy@overloadapp.com]  
-**Address:** [Your registered address or country of operation]
+**Email:** justbuildstuff.dev@gmail.com
 
 We aim to respond to all data-related requests within 30 days.
 

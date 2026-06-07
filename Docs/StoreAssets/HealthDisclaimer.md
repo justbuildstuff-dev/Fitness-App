@@ -52,15 +52,6 @@ Progressive overload works best when applied consistently and safely.
 
 ## 4. Terms of Service — Note
 
-*The app currently links to Terms of Service at https://overloadapp.com/terms from the paywall footnote. A draft Terms of Service document is needed before launch. It should cover at minimum:*
+*The Terms of Service is live at https://fitness-app-8505e.web.app/terms and is linked from the paywall footnote in-app. It covers acceptance of terms, service description, subscriptions and billing, user conduct, intellectual property, health disclaimer, liability limitation, and governing law (Queensland, Australia).*
 
-- Acceptance of terms
-- Description of service (workout tracking app; not medical device)
-- User responsibilities (provide accurate information; not use for harmful purposes)
-- Subscription terms (billing, cancellation, refunds — defer to Apple/Google policies)
-- Limitation of liability (app not liable for injuries, data loss)
-- Disclaimer of warranties
-- Governing law and jurisdiction
-- Contact information
-
-*Recommendation: Use a lawyer or a reputable Terms of Service generator (Iubenda, Termly) as a starting point. Host at https://overloadapp.com/terms before submission.*
+*When a custom domain (overloadapp.com) is connected, update the in-app links and this document to reflect the new URL.*

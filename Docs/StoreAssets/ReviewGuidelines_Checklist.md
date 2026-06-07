@@ -28,7 +28,7 @@ Reference: https://developer.apple.com/app-store/review/guidelines/
 - [ ] Cancellation instructions accessible to users (Settings app → Subscriptions)
 - [ ] No misleading subscription traps or dark patterns (can dismiss paywall, free tier remains functional)
 - [ ] In-app purchase products set up correctly in App Store Connect with correct pricing tiers
-- [ ] Privacy policy URL is live and accessible before submission
+- [x] Privacy policy URL is live at https://fitness-app-8505e.web.app/privacy ✓
 
 **Subscription disclosure on paywall must include:**
 > "$6.99/month or $39.99/year. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Cancel anytime in your device subscription settings."
@@ -42,8 +42,8 @@ Reference: https://developer.apple.com/app-store/review/guidelines/
 - [ ] Supports both light and dark mode (app has explicit theme switcher)
 
 ### 5. Legal (Guidelines 5.1–5.5)
-- [ ] Privacy policy is live at a public URL before submission
-- [ ] Privacy policy accurately describes all data collected (email, workout data, analytics events)
+- [x] Privacy policy is live at https://fitness-app-8505e.web.app/privacy ✓
+- [x] Privacy policy accurately describes all data collected (email, workout data, analytics events) ✓
 - [ ] App name "Overload" does not infringe any registered trademark in the fitness/software category — **verify with a trademark search before submission**
 - [ ] No copyrighted content used without licence (exercise names are generic; pre-built program names are generic fitness terms)
 - [ ] App Store Privacy Nutrition Label completed accurately in App Store Connect
@@ -75,7 +75,7 @@ Reference: https://play.google.com/about/developer-content-policy/
 
 ### Privacy & Data Safety
 - [ ] Data Safety form completed accurately in Play Console (see AgeRating_Questionnaire.md for data inventory)
-- [ ] Privacy policy URL is live and accessible before submission
+- [x] Privacy policy URL is live at https://fitness-app-8505e.web.app/privacy ✓
 - [ ] All data types collected are declared — email, fitness data, usage events, crash logs, FCM tokens
 - [ ] App requests only necessary permissions (expected: POST_NOTIFICATIONS for push notifications)
 

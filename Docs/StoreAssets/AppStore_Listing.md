@@ -106,7 +106,10 @@ workout,lifting,powerlifting,progressive overload,PR,sets,periodization,exercise
 *(To be added by founder — create support@ email or GitHub Discussions page)*
 
 ## Marketing URL (optional)
-*(To be added — https://overloadapp.com when live)*
+```
+https://fitness-app-8505e.web.app
+```
+*(Update to https://overloadapp.com when custom domain is connected)*
 
 ## Copyright
 ```
