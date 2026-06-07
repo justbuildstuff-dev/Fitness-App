@@ -49,4 +49,7 @@ node_modules/
 package-lock.json
 scripts/package.json
 
+# Firebase CLI cache
+.firebase/
+
 # CI trigger

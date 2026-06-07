@@ -12,6 +12,7 @@
     }
   ],
   "hosting": {
+    "site": "fitness-app-8505e",
     "public": "public",
     "ignore": [
       "firebase.json",
