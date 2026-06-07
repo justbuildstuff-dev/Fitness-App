@@ -175,7 +175,7 @@ class PaywallScreen extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => _launchUrl('https://overloadapp.com/terms'),
+                      onTap: () => _launchUrl('https://fitness-app-8505e.web.app/terms'),
                       child: Text(
                         'Terms of Service',
                         style: textTheme.bodySmall?.copyWith(
@@ -191,7 +191,7 @@ class PaywallScreen extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => _launchUrl('https://overloadapp.com/privacy'),
+                      onTap: () => _launchUrl('https://fitness-app-8505e.web.app/privacy'),
                       child: Text(
                         'Privacy Policy',
                         style: textTheme.bodySmall?.copyWith(
