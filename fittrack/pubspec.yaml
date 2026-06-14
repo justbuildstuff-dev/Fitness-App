@@ -26,28 +26,13 @@ dependencies:
   # UI Components
   cupertino_icons: ^1.0.2
   
-  # Local Notifications
-  flutter_local_notifications: ^19.4.1
-  timezone: ^0.10.0
-
   # Utilities
   intl: ^0.20.2
   uuid: ^4.2.1
   shared_preferences: ^2.2.2
-  
-  # In-app review
-  in_app_review: ^2.0.9
 
-  # In-app purchases
-  in_app_purchase: ^3.2.0
-
-  # URL launcher (subscription management deep links)
+  # URL launcher
   url_launcher: ^6.2.0
-
-  # Export functionality
-  csv: ^6.0.0
-  path_provider: ^2.1.2
-  share_plus: ^11.1.0
 
 dev_dependencies:
   flutter_test:

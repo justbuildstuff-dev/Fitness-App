@@ -2,43 +2,20 @@
 library;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:fittrack/services/lifecycle_notification_service.dart';
 
 import 'lifecycle_notification_service_test.mocks.dart';
 
-@GenerateMocks([FlutterLocalNotificationsPlugin, FirebaseMessaging])
+@GenerateMocks([FirebaseMessaging])
 void main() {
-  late MockFlutterLocalNotificationsPlugin mockNotifications;
   late MockFirebaseMessaging mockMessaging;
 
-  setUpAll(() {
-    tz_data.initializeTimeZones();
-  });
-
   setUp(() async {
-    mockNotifications = MockFlutterLocalNotificationsPlugin();
     mockMessaging = MockFirebaseMessaging();
-
-    when(mockNotifications.initialize(
-      any,
-      onDidReceiveNotificationResponse:
-          anyNamed('onDidReceiveNotificationResponse'),
-    )).thenAnswer((_) async => true);
-    when(mockNotifications.cancel(any)).thenAnswer((_) async {});
-    when(mockNotifications.show(any, any, any, any,
-            payload: anyNamed('payload')))
-        .thenAnswer((_) async {});
-    when(mockNotifications.zonedSchedule(
-      any, any, any, any, any,
-      androidScheduleMode: anyNamed('androidScheduleMode'),
-      payload: anyNamed('payload'),
-    )).thenAnswer((_) async {});
 
     when(mockMessaging.requestPermission(
       alert: anyNamed('alert'),
@@ -66,8 +43,7 @@ void main() {
   }) async {
     SharedPreferences.setMockInitialValues(prefsValues);
     final prefs = await SharedPreferences.getInstance();
-    return LifecycleNotificationService.forTest(
-        prefs, mockNotifications, mockMessaging);
+    return LifecycleNotificationService.forTest(prefs, mockMessaging);
   }
 
   group('LifecycleNotificationService - install date', () {
@@ -125,13 +101,6 @@ void main() {
       s.recordWorkoutLogged();
       expect(s.lastWorkoutDate, isNotNull);
     });
-
-    test('recordWorkoutLogged cancels day-1 and day-3 notifications', () async {
-      final s = await makeService();
-      s.recordWorkoutLogged();
-      verify(mockNotifications.cancel(1001)).called(1);
-      verify(mockNotifications.cancel(1002)).called(1);
-    });
   });
 
   group('LifecycleNotificationService - daysSinceLastWorkout', () {
@@ -156,80 +125,18 @@ void main() {
     });
   });
 
-  group('LifecycleNotificationService - onAppLaunch scheduling', () {
-    test('schedules day-1 notification when install is today and no workouts',
-        () async {
+  group('LifecycleNotificationService - onAppLaunch analytics', () {
+    test('does not throw on fresh install', () async {
       final s = await makeService();
-      await s.onAppLaunch();
-      verify(mockNotifications.zonedSchedule(
-        1001, any, any, any, any,
-        androidScheduleMode: anyNamed('androidScheduleMode'),
-        payload: anyNamed('payload'),
-      )).called(1);
+      await expectLater(s.onAppLaunch(), completes);
     });
 
-    test('schedules day-3 notification when install is today and no workouts',
-        () async {
-      final s = await makeService();
-      await s.onAppLaunch();
-      verify(mockNotifications.zonedSchedule(
-        1002, any, any, any, any,
-        androidScheduleMode: anyNamed('androidScheduleMode'),
-        payload: anyNamed('payload'),
-      )).called(1);
-    });
-
-    test('cancels activation notifications when workouts > 0', () async {
+    test('does not throw with existing workout history', () async {
       final s = await makeService(prefsValues: {
         'overload_lifecycle_workout_count': 2,
-        'overload_lifecycle_install_date':
-            DateTime.now().toIso8601String(),
+        'overload_lifecycle_install_date': DateTime.now().toIso8601String(),
       });
-      await s.onAppLaunch();
-      verify(mockNotifications.cancel(1001)).called(1);
-      verify(mockNotifications.cancel(1002)).called(1);
-      verifyNever(mockNotifications.zonedSchedule(
-        1001, any, any, any, any,
-        androidScheduleMode: anyNamed('androidScheduleMode'),
-        payload: anyNamed('payload'),
-      ));
-    });
-
-    test('schedules day-10 retention notification from install date', () async {
-      final s = await makeService();
-      await s.onAppLaunch();
-      verify(mockNotifications.zonedSchedule(
-        1003, any, any, any, any,
-        androidScheduleMode: anyNamed('androidScheduleMode'),
-        payload: anyNamed('payload'),
-      )).called(1);
-    });
-
-    test('schedules day-30 retention notification from install date', () async {
-      final s = await makeService();
-      await s.onAppLaunch();
-      verify(mockNotifications.zonedSchedule(
-        1004, any, any, any, any,
-        androidScheduleMode: anyNamed('androidScheduleMode'),
-        payload: anyNamed('payload'),
-      )).called(1);
-    });
-
-    test('does not schedule day-10 when already past 10 days since last workout',
-        () async {
-      final elevenDaysAgo =
-          DateTime.now().subtract(const Duration(days: 11)).toIso8601String();
-      final s = await makeService(prefsValues: {
-        'overload_lifecycle_install_date': elevenDaysAgo,
-        'overload_lifecycle_last_workout_date': elevenDaysAgo,
-        'overload_lifecycle_workout_count': 3,
-      });
-      await s.onAppLaunch();
-      verifyNever(mockNotifications.zonedSchedule(
-        1003, any, any, any, any,
-        androidScheduleMode: anyNamed('androidScheduleMode'),
-        payload: anyNamed('payload'),
-      ));
+      await expectLater(s.onAppLaunch(), completes);
     });
   });
 
@@ -244,8 +151,7 @@ void main() {
       SharedPreferences.setMockInitialValues(
           {'overload_lifecycle_install_date': oneDayAgo});
       final prefs = await SharedPreferences.getInstance();
-      final s = LifecycleNotificationService.forTest(
-          prefs, mockNotifications, mockMessaging);
+      final s = LifecycleNotificationService.forTest(prefs, mockMessaging);
       await s.onAppLaunch();
       expect(prefs.getBool(d1Key), isTrue);
     });
@@ -266,10 +172,8 @@ void main() {
         d1Key: true,
       });
       final prefs = await SharedPreferences.getInstance();
-      final s = LifecycleNotificationService.forTest(
-          prefs, mockNotifications, mockMessaging);
+      final s = LifecycleNotificationService.forTest(prefs, mockMessaging);
       await s.onAppLaunch();
-      // Flag was already true — value unchanged
       expect(prefs.getBool(d1Key), isTrue);
     });
 
@@ -279,11 +183,9 @@ void main() {
       SharedPreferences.setMockInitialValues(
           {'overload_lifecycle_install_date': sevenDaysAgo});
       final prefs = await SharedPreferences.getInstance();
-      final s = LifecycleNotificationService.forTest(
-          prefs, mockNotifications, mockMessaging);
+      final s = LifecycleNotificationService.forTest(prefs, mockMessaging);
       await s.onAppLaunch();
       expect(prefs.getBool(d7Key), isTrue);
-      s.toString();
     });
 
     test('sets d30 flag on launch at day >= 30', () async {
@@ -292,11 +194,9 @@ void main() {
       SharedPreferences.setMockInitialValues(
           {'overload_lifecycle_install_date': thirtyDaysAgo});
       final prefs = await SharedPreferences.getInstance();
-      final s = LifecycleNotificationService.forTest(
-          prefs, mockNotifications, mockMessaging);
+      final s = LifecycleNotificationService.forTest(prefs, mockMessaging);
       await s.onAppLaunch();
       expect(prefs.getBool(d30Key), isTrue);
-      s.toString();
     });
 
     test('does not set d7 or d30 flags on day 1', () async {
@@ -305,18 +205,15 @@ void main() {
       SharedPreferences.setMockInitialValues(
           {'overload_lifecycle_install_date': oneDayAgo});
       final prefs = await SharedPreferences.getInstance();
-      final s = LifecycleNotificationService.forTest(
-          prefs, mockNotifications, mockMessaging);
+      final s = LifecycleNotificationService.forTest(prefs, mockMessaging);
       await s.onAppLaunch();
       expect(prefs.getBool(d7Key), isNull);
       expect(prefs.getBool(d30Key), isNull);
-      s.toString();
     });
   });
 
   group('LifecycleNotificationService - activation analytics', () {
-    test('recordWorkoutLogged sets first_workout prefs indirectly via count=1',
-        () async {
+    test('recordWorkoutLogged increments count from 0 to 1', () async {
       final s = await makeService();
       expect(s.workoutCount, 0);
       s.recordWorkoutLogged();
@@ -331,8 +228,7 @@ void main() {
       expect(s.workoutCount, 5);
     });
 
-    test('daysSinceLastWorkout is captured before update in recordWorkoutLogged',
-        () async {
+    test('daysSinceLastWorkout resets to 0 after recordWorkoutLogged', () async {
       final twoDaysAgo =
           DateTime.now().subtract(const Duration(days: 2)).toIso8601String();
       final s = await makeService(prefsValues: {
@@ -343,22 +239,7 @@ void main() {
       });
       expect(s.daysSinceLastWorkout, 2);
       s.recordWorkoutLogged();
-      // After logging, last workout date is today so daysSinceLastWorkout = 0
       expect(s.daysSinceLastWorkout, 0);
-    });
-  });
-
-  group('LifecycleNotificationService - PR notification', () {
-    test('recordPRAchieved calls show with exercise name and value', () async {
-      final s = await makeService();
-      await s.recordPRAchieved('Bench Press', '100kg');
-      verify(mockNotifications.show(
-        argThat(greaterThanOrEqualTo(2000)),
-        'New PR: Bench Press',
-        argThat(contains('100kg')),
-        any,
-        payload: anyNamed('payload'),
-      )).called(1);
     });
   });
 
@@ -405,13 +286,12 @@ void main() {
       await s.requestPermissionIfEligible();
       expect(s.permissionRequested, isTrue);
 
-      // Re-initialise from same prefs
-      SharedPreferences.setMockInitialValues(
-          {'overload_lifecycle_workout_count': 1,
-           'overload_notif_permission_requested': true});
+      SharedPreferences.setMockInitialValues({
+        'overload_lifecycle_workout_count': 1,
+        'overload_notif_permission_requested': true,
+      });
       final prefs2 = await SharedPreferences.getInstance();
-      final s2 = LifecycleNotificationService.forTest(
-          prefs2, mockNotifications, mockMessaging);
+      final s2 = LifecycleNotificationService.forTest(prefs2, mockMessaging);
       expect(s2.permissionRequested, isTrue,
           reason: 'Permission flag must survive re-initialisation');
     });

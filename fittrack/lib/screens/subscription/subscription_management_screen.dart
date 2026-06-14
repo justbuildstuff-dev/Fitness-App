@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,9 +7,8 @@ import '../../providers/subscription_provider.dart';
 class SubscriptionManagementScreen extends StatelessWidget {
   const SubscriptionManagementScreen({super.key});
 
-  static const _iosManageUrl = 'https://apps.apple.com/account/subscriptions';
-  static const _androidManageUrl =
-      'https://play.google.com/store/account/subscriptions';
+  // Placeholder — replaced with Stripe Customer Portal URL in Task #480.
+  static const _manageUrl = 'https://billing.stripe.com/p/login/placeholder';
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +129,7 @@ class SubscriptionManagementScreen extends StatelessWidget {
   }
 
   Future<void> _openManageSubscription() async {
-    final url = Platform.isIOS ? _iosManageUrl : _androidManageUrl;
-    final uri = Uri.parse(url);
+    final uri = Uri.parse(_manageUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
