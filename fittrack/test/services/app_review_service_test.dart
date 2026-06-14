@@ -1,39 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:in_app_review/in_app_review.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fittrack/services/app_review_service.dart';
-
-import 'app_review_service_test.mocks.dart';
 
 /// Unit tests for AppReviewService.
 ///
 /// Verifies eligibility logic, workout count persistence, first-launch tracking,
-/// and that the native review API is only called when all conditions are met.
+/// and that the hasBeenRequested flag is set when conditions are met.
 ///
-/// AppAnalyticsService.instance is called inside maybeRequestReview() but its
-/// failures are silently swallowed — no Firebase setup required here.
-@GenerateMocks([InAppReview])
+/// InAppReview has been removed (web platform). The eligibility gate and
+/// analytics event persist; the actual review dialog is a no-op.
 void main() {
-  late MockInAppReview mockReview;
-
   const firstLaunchKey = 'overload_first_launch_date';
   const workoutCountKey = 'overload_workout_count';
   const reviewRequestedKey = 'overload_review_requested';
-
-  setUp(() {
-    mockReview = MockInAppReview();
-    when(mockReview.isAvailable()).thenAnswer((_) async => true);
-    when(mockReview.requestReview()).thenAnswer((_) async {});
-  });
 
   Future<AppReviewService> makeService({
     Map<String, Object> prefsValues = const {},
   }) async {
     SharedPreferences.setMockInitialValues(prefsValues);
     final prefs = await SharedPreferences.getInstance();
-    return AppReviewService.forTest(prefs, mockReview);
+    return AppReviewService.forTest(prefs);
   }
 
   Future<AppReviewService> eligibleService() => makeService(prefsValues: {
@@ -138,24 +124,25 @@ void main() {
   });
 
   group('maybeRequestReview', () {
-    test('calls isAvailable and requestReview when eligible', () async {
+    test('sets hasBeenRequested when eligible', () async {
       final s = await eligibleService();
       await s.maybeRequestReview();
-      verify(mockReview.isAvailable()).called(1);
-      verify(mockReview.requestReview()).called(1);
+      expect(s.hasBeenRequested, isTrue);
     });
 
-    test('does not call requestReview when ineligible', () async {
+    test('does not set hasBeenRequested when ineligible', () async {
       final s = await makeService(); // 0 workouts, 0 days
       await s.maybeRequestReview();
-      verifyNever(mockReview.requestReview());
+      expect(s.hasBeenRequested, isFalse);
     });
 
-    test('does not call requestReview a second time in the same session', () async {
+    test('does not set flag twice in the same session', () async {
       final s = await eligibleService();
       await s.maybeRequestReview();
+      // After first call, isEligible is false (hasBeenRequested=true);
+      // calling again must not throw and flag stays true
       await s.maybeRequestReview();
-      verify(mockReview.requestReview()).called(1);
+      expect(s.hasBeenRequested, isTrue);
     });
 
     test('marks hasBeenRequested true and persists to SharedPreferences', () async {
@@ -166,21 +153,12 @@ void main() {
       expect(prefs.getBool(reviewRequestedKey), isTrue);
     });
 
-    test('does not call requestReview when platform is unavailable', () async {
-      when(mockReview.isAvailable()).thenAnswer((_) async => false);
+    test('isEligible becomes false after first call', () async {
       final s = await eligibleService();
+      expect(s.isEligible, isTrue);
       await s.maybeRequestReview();
-      verify(mockReview.isAvailable()).called(1);
-      verifyNever(mockReview.requestReview());
-    });
-
-    test('does not set hasBeenRequested flag when platform is unavailable',
-        () async {
-      when(mockReview.isAvailable()).thenAnswer((_) async => false);
-      final s = await eligibleService();
-      await s.maybeRequestReview();
-      expect(s.hasBeenRequested, isFalse,
-          reason: 'Flag should only be set after a successful request call');
+      expect(s.isEligible, isFalse,
+          reason: 'Once requested, should not be eligible again');
     });
   });
 }

@@ -1,17 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import '../models/subscription.dart';
 
-/// Singleton that wraps InAppPurchase for product queries, purchase flow,
-/// and syncing subscription status to/from Firestore.
+/// Manages subscription billing via the Firebase Stripe Extension.
 ///
-/// Purchase stream handling and state management live in [SubscriptionProvider].
+/// The Firebase Stripe Extension syncs Stripe subscription state to Firestore
+/// under `customers/{userId}/subscriptions`. Checkout sessions are created by
+/// writing to `customers/{userId}/checkout_sessions`; the extension populates
+/// the Stripe Checkout URL asynchronously.
 class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._();
 
-  // Null means "use FirebaseFirestore.instance" — resolved lazily so the
-  // static singleton can be constructed in tests without Firebase initialised.
+  // Stripe Price IDs — set these after creating products in the Stripe Dashboard.
+  // Format: price_XXXXXXXXXXXXXXXXXXXXXXXX
+  static const String monthlyPriceId = 'price_monthly_placeholder';
+  static const String annualPriceId = 'price_annual_placeholder';
+  static const String lifetimePriceId = 'price_lifetime_placeholder';
+
+  // Stripe Customer Portal shareable link — configured in Stripe Dashboard →
+  // Settings → Billing → Customer Portal.
+  static const String stripePortalUrl =
+      'https://billing.stripe.com/p/login/placeholder';
+
   final FirebaseFirestore? _injectedFirestore;
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
@@ -22,69 +32,70 @@ class SubscriptionService {
   SubscriptionService.forTest(FirebaseFirestore firestore)
       : _injectedFirestore = firestore;
 
-  static const String monthlyId = 'fittrack_pro_monthly';
-  static const String annualId = 'fittrack_pro_annual';
-  static const Set<String> productIds = {monthlyId, annualId};
-
-  List<ProductDetails> _products = [];
-
-  List<ProductDetails> get products => List.unmodifiable(_products);
-
-  ProductDetails? get monthlyProduct =>
-      _products.cast<ProductDetails?>().firstWhere(
-            (p) => p?.id == monthlyId,
-            orElse: () => null,
-          );
-
-  ProductDetails? get annualProduct =>
-      _products.cast<ProductDetails?>().firstWhere(
-            (p) => p?.id == annualId,
-            orElse: () => null,
-          );
-
-  Stream<List<PurchaseDetails>> get purchaseStream =>
-      InAppPurchase.instance.purchaseStream;
-
-  /// Initialises the IAP plugin and loads product details from the store.
-  /// Returns false if the store is unavailable (e.g. no network, simulator).
-  Future<bool> initialize() async {
-    final available = await InAppPurchase.instance.isAvailable();
-    if (!available) return false;
-    final response =
-        await InAppPurchase.instance.queryProductDetails(productIds);
-    _products = response.productDetails;
-    return true;
-  }
-
-  Future<void> buySubscription(ProductDetails product) async {
-    final param = PurchaseParam(productDetails: product);
-    await InAppPurchase.instance.buyNonConsumable(purchaseParam: param);
-  }
-
-  Future<void> restorePurchases() async {
-    await InAppPurchase.instance.restorePurchases();
-  }
-
-  Future<void> completePurchase(PurchaseDetails purchase) async {
-    if (purchase.pendingCompletePurchase) {
-      await InAppPurchase.instance.completePurchase(purchase);
-    }
-  }
-
-  /// Writes the subscription map to the user's Firestore document.
-  Future<void> syncToFirestore(String userId, SubscriptionInfo info) async {
-    await _firestore
-        .collection('users')
+  /// Real-time stream of active Stripe subscriptions for [userId].
+  /// Emits [SubscriptionInfo.free] when no active/trialing subscriptions exist.
+  Stream<SubscriptionInfo> subscriptionStream(String userId) {
+    return _firestore
+        .collection('customers')
         .doc(userId)
-        .update({'subscription': info.toFirestore()});
+        .collection('subscriptions')
+        .where('status', whereIn: ['active', 'trialing'])
+        .snapshots()
+        .map((snapshot) {
+          if (snapshot.docs.isEmpty) return SubscriptionInfo.free();
+          return SubscriptionInfo.fromStripeFirestore(
+              snapshot.docs.first.data());
+        });
   }
 
-  /// Loads the subscription map from the user's Firestore document.
-  /// Returns null if no subscription data exists yet.
-  Future<SubscriptionInfo?> loadFromFirestore(String userId) async {
-    final doc = await _firestore.collection('users').doc(userId).get();
-    final data = doc.data()?['subscription'] as Map<String, dynamic>?;
-    if (data == null) return null;
-    return SubscriptionInfo.fromFirestore(data);
+  /// One-shot read of subscription status for [userId].
+  /// Returns [SubscriptionInfo.free] when no active subscriptions exist.
+  Future<SubscriptionInfo> loadFromFirestore(String userId) async {
+    final snapshot = await _firestore
+        .collection('customers')
+        .doc(userId)
+        .collection('subscriptions')
+        .where('status', whereIn: ['active', 'trialing'])
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return SubscriptionInfo.free();
+    return SubscriptionInfo.fromStripeFirestore(snapshot.docs.first.data());
+  }
+
+  /// Creates a Stripe Checkout session and returns the hosted Checkout URL.
+  ///
+  /// Writes a session document to `customers/{userId}/checkout_sessions`;
+  /// the Firebase Stripe Extension creates the Stripe session and writes back
+  /// the `url` field. Throws if the extension returns an error or times out.
+  Future<String> createCheckoutSession({
+    required String userId,
+    required String priceId,
+    required String successUrl,
+    required String cancelUrl,
+  }) async {
+    final sessionRef = await _firestore
+        .collection('customers')
+        .doc(userId)
+        .collection('checkout_sessions')
+        .add({
+      'price': priceId,
+      'success_url': successUrl,
+      'cancel_url': cancelUrl,
+      'mode': priceId == lifetimePriceId ? 'payment' : 'subscription',
+      'allow_promotion_codes': true,
+    });
+
+    // Extension populates 'url' (or 'error') asynchronously — wait up to 10s.
+    final snapshot = await sessionRef
+        .snapshots()
+        .firstWhere((snap) =>
+            snap.data()?['url'] != null || snap.data()?['error'] != null)
+        .timeout(const Duration(seconds: 10));
+
+    final error = snapshot.data()?['error'] as String?;
+    if (error != null) throw Exception('Stripe checkout error: $error');
+
+    return snapshot.data()!['url'] as String;
   }
 }

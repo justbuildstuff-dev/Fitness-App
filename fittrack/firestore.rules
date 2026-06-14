@@ -392,5 +392,29 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // -----------------------
+    // Stripe Extension — customers collection
+    // Written by the Firebase Stripe Extension (admin SDK / webhooks).
+    // Clients may read their own subscription data and create checkout sessions.
+    // -----------------------
+    match /customers/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Extension writes via admin SDK
+
+      match /checkout_sessions/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /subscriptions/{subscriptionId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Extension writes via admin SDK
+      }
+
+      match /payments/{paymentId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Extension writes via admin SDK
+      }
+    }
+
   } // end match /databases
 }

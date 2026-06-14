@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../services/subscription_service.dart';
 
 /// Paywall modal bottom sheet shown when a user hits a feature gate.
 ///
@@ -118,12 +120,19 @@ class PaywallScreen extends StatelessWidget {
                     label: 'Annual',
                     badge: 'RECOMMENDED',
                     savings: 'Save 52% vs monthly',
-                    price: sub.annualProduct?.price ?? '\$39.99/year',
+                    price: '\$39.99/year',
                     detail: 'Billed annually · 14-day free trial',
                     isRecommended: true,
                     onTap: () {
                       Navigator.of(context).pop();
-                      sub.purchaseAnnual();
+                      final userId =
+                          context.read<AuthProvider>().user?.uid;
+                      if (userId != null) {
+                        context
+                            .read<SubscriptionProvider>()
+                            .startCheckout(
+                                userId, SubscriptionService.annualPriceId);
+                      }
                     },
                   ),
                   const SizedBox(height: 12),
@@ -131,12 +140,39 @@ class PaywallScreen extends StatelessWidget {
                   // Monthly plan card
                   _PlanCard(
                     label: 'Monthly',
-                    price: sub.monthlyProduct?.price ?? '\$6.99/month',
+                    price: '\$6.99/month',
                     detail: '14-day free trial',
                     isRecommended: false,
                     onTap: () {
                       Navigator.of(context).pop();
-                      sub.purchaseMonthly();
+                      final userId =
+                          context.read<AuthProvider>().user?.uid;
+                      if (userId != null) {
+                        context
+                            .read<SubscriptionProvider>()
+                            .startCheckout(
+                                userId, SubscriptionService.monthlyPriceId);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Lifetime plan card
+                  _PlanCard(
+                    label: 'Lifetime',
+                    price: '\$59.99',
+                    detail: 'One-time purchase · No recurring fees',
+                    isRecommended: false,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      final userId =
+                          context.read<AuthProvider>().user?.uid;
+                      if (userId != null) {
+                        context
+                            .read<SubscriptionProvider>()
+                            .startCheckout(
+                                userId, SubscriptionService.lifetimePriceId);
+                      }
                     },
                   ),
                 ],
@@ -153,17 +189,6 @@ class PaywallScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Restore purchases
-                TextButton(
-                  onPressed: sub.isLoading
-                      ? null
-                      : () {
-                          Navigator.of(context).pop();
-                          sub.restorePurchases();
-                        },
-                  child: const Text('Already subscribed? Restore purchases'),
-                ),
-
                 // Legal footnote with tappable links
                 Wrap(
                   alignment: WrapAlignment.center,
@@ -175,7 +200,8 @@ class PaywallScreen extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => _launchUrl('https://fitness-app-8505e.web.app/terms'),
+                      onTap: () =>
+                          _launchUrl('https://fitness-app-8505e.web.app/terms'),
                       child: Text(
                         'Terms of Service',
                         style: textTheme.bodySmall?.copyWith(
@@ -191,7 +217,8 @@ class PaywallScreen extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => _launchUrl('https://fitness-app-8505e.web.app/privacy'),
+                      onTap: () => _launchUrl(
+                          'https://fitness-app-8505e.web.app/privacy'),
                       child: Text(
                         'Privacy Policy',
                         style: textTheme.bodySmall?.copyWith(
