@@ -16,115 +16,216 @@ void main() {
     service = SubscriptionService.forTest(fakeFirestore);
   });
 
-  group('SubscriptionService - product getters', () {
-    test('monthlyProduct returns null before initialization', () {
-      expect(service.monthlyProduct, isNull);
+  group('SubscriptionService - Stripe Price ID constants', () {
+    test('monthlyPriceId is set', () {
+      expect(SubscriptionService.monthlyPriceId, isNotEmpty);
     });
 
-    test('annualProduct returns null before initialization', () {
-      expect(service.annualProduct, isNull);
+    test('annualPriceId is set', () {
+      expect(SubscriptionService.annualPriceId, isNotEmpty);
     });
 
-    test('products is empty before initialization', () {
-      expect(service.products, isEmpty);
+    test('lifetimePriceId is set', () {
+      expect(SubscriptionService.lifetimePriceId, isNotEmpty);
+    });
+
+    test('stripePortalUrl starts with https', () {
+      expect(SubscriptionService.stripePortalUrl, startsWith('https://'));
     });
   });
 
   group('SubscriptionService - loadFromFirestore', () {
-    test('returns null when user document has no subscription field', () async {
-      await fakeFirestore.collection('users').doc('user-1').set({
-        'displayName': 'Test User',
-        'email': 'test@example.com',
-        'createdAt': Timestamp.now(),
-      });
-
+    test('returns SubscriptionInfo.free when no subscriptions exist', () async {
       final result = await service.loadFromFirestore('user-1');
-      expect(result, isNull);
-    });
-
-    test('returns null when user document does not exist', () async {
-      final result = await service.loadFromFirestore('nonexistent-user');
-      expect(result, isNull);
-    });
-
-    test('returns SubscriptionInfo.free() for free status', () async {
-      await fakeFirestore.collection('users').doc('user-1').set({
-        'subscription': {
-          'status': 'free',
-          'productId': null,
-          'platform': null,
-          'expiresAt': null,
-          'updatedAt': Timestamp.now(),
-        },
-      });
-
-      final result = await service.loadFromFirestore('user-1');
-      expect(result, isNotNull);
-      expect(result!.status, SubscriptionStatus.free);
       expect(result.isPro, isFalse);
+      expect(result.status, SubscriptionStatus.free);
     });
 
-    test('returns pro SubscriptionInfo for active status', () async {
+    test('returns pro when active Stripe subscription exists', () async {
       final expiry = DateTime(2027, 1, 1);
-      await fakeFirestore.collection('users').doc('user-1').set({
-        'subscription': {
-          'status': 'active',
-          'productId': 'fittrack_pro_annual',
-          'platform': 'ios',
-          'expiresAt': Timestamp.fromDate(expiry),
-          'updatedAt': Timestamp.now(),
-        },
+      await fakeFirestore
+          .collection('customers')
+          .doc('user-1')
+          .collection('subscriptions')
+          .doc('sub-1')
+          .set({
+        'status': 'active',
+        'items': [
+          {
+            'price': {'id': SubscriptionService.annualPriceId}
+          }
+        ],
+        'current_period_end': Timestamp.fromDate(expiry),
       });
 
       final result = await service.loadFromFirestore('user-1');
-      expect(result, isNotNull);
-      expect(result!.status, SubscriptionStatus.active);
-      expect(result.tier, SubscriptionTier.pro);
       expect(result.isPro, isTrue);
-      expect(result.productId, 'fittrack_pro_annual');
-      expect(result.platform, 'ios');
+      expect(result.tier, SubscriptionTier.pro);
+      expect(result.status, SubscriptionStatus.active);
+      expect(result.productId, SubscriptionService.annualPriceId);
+      expect(result.platform, 'web');
       expect(result.expiresAt, expiry);
     });
 
-    test('returns pro SubscriptionInfo for trial status', () async {
-      await fakeFirestore.collection('users').doc('user-1').set({
-        'subscription': {
-          'status': 'trial',
-          'productId': 'fittrack_pro_monthly',
-          'platform': 'android',
-          'expiresAt': null,
-          'updatedAt': Timestamp.now(),
-        },
+    test('returns pro when trialing Stripe subscription exists', () async {
+      await fakeFirestore
+          .collection('customers')
+          .doc('user-2')
+          .collection('subscriptions')
+          .doc('sub-trial')
+          .set({
+        'status': 'trialing',
+        'items': [
+          {
+            'price': {'id': SubscriptionService.monthlyPriceId}
+          }
+        ],
+        'current_period_end': null,
       });
 
-      final result = await service.loadFromFirestore('user-1');
-      expect(result!.tier, SubscriptionTier.pro);
+      final result = await service.loadFromFirestore('user-2');
       expect(result.isPro, isTrue);
+      expect(result.tier, SubscriptionTier.pro);
     });
 
-    test('returns free tier for expired status', () async {
-      await fakeFirestore.collection('users').doc('user-1').set({
-        'subscription': {
-          'status': 'expired',
-          'productId': 'fittrack_pro_monthly',
-          'platform': 'ios',
-          'expiresAt': Timestamp.fromDate(DateTime(2025, 1, 1)),
-          'updatedAt': Timestamp.now(),
-        },
+    test('returns free when only cancelled subscription exists', () async {
+      await fakeFirestore
+          .collection('customers')
+          .doc('user-3')
+          .collection('subscriptions')
+          .doc('sub-cancelled')
+          .set({
+        'status': 'canceled',
+        'items': [],
+        'current_period_end': null,
       });
 
-      final result = await service.loadFromFirestore('user-1');
-      expect(result!.tier, SubscriptionTier.free);
+      final result = await service.loadFromFirestore('user-3');
       expect(result.isPro, isFalse);
     });
   });
 
-  group('SubscriptionService - product ID constants', () {
-    test('product IDs match expected store identifiers', () {
-      expect(SubscriptionService.monthlyId, 'fittrack_pro_monthly');
-      expect(SubscriptionService.annualId, 'fittrack_pro_annual');
-      expect(SubscriptionService.productIds,
-          containsAll(['fittrack_pro_monthly', 'fittrack_pro_annual']));
+  group('SubscriptionService - subscriptionStream', () {
+    test('emits SubscriptionInfo.free when no subscriptions', () async {
+      final stream = service.subscriptionStream('user-stream');
+      final info = await stream.first;
+      expect(info.isPro, isFalse);
+    });
+
+    test('emits pro info when active subscription added', () async {
+      final stream = service.subscriptionStream('user-stream-2');
+
+      await fakeFirestore
+          .collection('customers')
+          .doc('user-stream-2')
+          .collection('subscriptions')
+          .doc('sub-1')
+          .set({
+        'status': 'active',
+        'items': [
+          {
+            'price': {'id': SubscriptionService.annualPriceId}
+          }
+        ],
+        'current_period_end': null,
+      });
+
+      final info = await stream.first;
+      expect(info.isPro, isTrue);
+    });
+  });
+
+  group('SubscriptionService - createCheckoutSession', () {
+    test('writes checkout session document with correct fields', () async {
+      // Simulate extension responding with a url immediately
+      fakeFirestore
+          .collection('customers')
+          .doc('user-checkout')
+          .collection('checkout_sessions')
+          .snapshots()
+          .listen((snap) async {
+        for (final doc in snap.docs) {
+          if (doc.data()['price'] != null && doc.data()['url'] == null) {
+            await doc.reference.update({'url': 'https://checkout.stripe.com/test'});
+          }
+        }
+      });
+
+      final url = await service.createCheckoutSession(
+        userId: 'user-checkout',
+        priceId: SubscriptionService.annualPriceId,
+        successUrl: 'https://fittrack-app.web.app/?checkout=success',
+        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+      );
+
+      expect(url, 'https://checkout.stripe.com/test');
+
+      // Verify session document was written with correct fields
+      final sessions = await fakeFirestore
+          .collection('customers')
+          .doc('user-checkout')
+          .collection('checkout_sessions')
+          .get();
+      expect(sessions.docs.length, 1);
+      final data = sessions.docs.first.data();
+      expect(data['price'], SubscriptionService.annualPriceId);
+      expect(data['mode'], 'subscription');
+      expect(data['allow_promotion_codes'], isTrue);
+    });
+
+    test('uses payment mode for lifetime price ID', () async {
+      fakeFirestore
+          .collection('customers')
+          .doc('user-lifetime')
+          .collection('checkout_sessions')
+          .snapshots()
+          .listen((snap) async {
+        for (final doc in snap.docs) {
+          if (doc.data()['price'] != null && doc.data()['url'] == null) {
+            await doc.reference.update({'url': 'https://checkout.stripe.com/lifetime'});
+          }
+        }
+      });
+
+      await service.createCheckoutSession(
+        userId: 'user-lifetime',
+        priceId: SubscriptionService.lifetimePriceId,
+        successUrl: 'https://fittrack-app.web.app/?checkout=success',
+        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+      );
+
+      final sessions = await fakeFirestore
+          .collection('customers')
+          .doc('user-lifetime')
+          .collection('checkout_sessions')
+          .get();
+      expect(sessions.docs.first.data()['mode'], 'payment');
+    });
+
+    test('throws when extension returns error', () async {
+      fakeFirestore
+          .collection('customers')
+          .doc('user-error')
+          .collection('checkout_sessions')
+          .snapshots()
+          .listen((snap) async {
+        for (final doc in snap.docs) {
+          if (doc.data()['price'] != null && doc.data()['error'] == null) {
+            await doc.reference
+                .update({'error': 'No such price: bad_price_id'});
+          }
+        }
+      });
+
+      expect(
+        () => service.createCheckoutSession(
+          userId: 'user-error',
+          priceId: 'bad_price_id',
+          successUrl: 'https://fittrack-app.web.app/?checkout=success',
+          cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+        ),
+        throwsA(isA<Exception>()),
+      );
     });
   });
 }

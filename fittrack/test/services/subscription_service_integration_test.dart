@@ -1,12 +1,8 @@
 /// Integration tests for SubscriptionService.
 ///
-/// SubscriptionService has two concerns:
-///   1. InAppPurchase interactions (platform channel — cannot be tested in CI)
-///   2. Firestore read/write of the subscription map
-///
-/// These tests cover concern (2) using FakeFirebaseFirestore, verifying that
-/// loadFromFirestore correctly deserialises subscription data across all status
-/// values and that a missing/absent subscription field returns null.
+/// Tests the full Stripe-via-Firestore subscription lifecycle using
+/// FakeFirebaseFirestore, verifying that subscription reads, stream emissions,
+/// and checkout session creation all behave correctly end-to-end.
 
 @Timeout(Duration(seconds: 30))
 library;
@@ -26,108 +22,183 @@ void main() {
     service = SubscriptionService.forTest(fakeFirestore);
   });
 
-  group('SubscriptionService - Firestore lifecycle', () {
-    test('loadFromFirestore returns null for document with no subscription',
-        () async {
-      await fakeFirestore.collection('users').doc('u1').set({
-        'displayName': 'Joel',
-        'createdAt': Timestamp.now(),
-      });
-
-      expect(await service.loadFromFirestore('u1'), isNull);
+  group('SubscriptionService - subscription read lifecycle', () {
+    test('new user has no subscription — returns free', () async {
+      final result = await service.loadFromFirestore('new-user');
+      expect(result.isPro, isFalse);
+      expect(result.tier, SubscriptionTier.free);
     });
 
-    test('loadFromFirestore returns null for non-existent document', () async {
-      expect(await service.loadFromFirestore('no-such-user'), isNull);
-    });
-
-    test(
-        'loadFromFirestore returns correct SubscriptionInfo for active pro subscription',
-        () async {
-      final expiry = DateTime(2027, 6, 30);
-      await fakeFirestore.collection('users').doc('u2').set({
-        'subscription': {
-          'status': 'active',
-          'productId': 'fittrack_pro_annual',
-          'platform': 'ios',
-          'expiresAt': Timestamp.fromDate(expiry),
-          'updatedAt': Timestamp.now(),
-        },
+    test('active subscription transitions user to pro', () async {
+      await fakeFirestore
+          .collection('customers')
+          .doc('user-a')
+          .collection('subscriptions')
+          .doc('sub-1')
+          .set({
+        'status': 'active',
+        'items': [
+          {
+            'price': {'id': SubscriptionService.annualPriceId}
+          }
+        ],
+        'current_period_end': Timestamp.fromDate(DateTime(2027, 12, 31)),
       });
 
-      final info = await service.loadFromFirestore('u2');
+      final result = await service.loadFromFirestore('user-a');
 
-      expect(info, isNotNull);
-      expect(info!.isPro, isTrue);
-      expect(info.tier, SubscriptionTier.pro);
-      expect(info.status, SubscriptionStatus.active);
-      expect(info.productId, 'fittrack_pro_annual');
-      expect(info.platform, 'ios');
-      expect(info.expiresAt, expiry);
+      expect(result.isPro, isTrue);
+      expect(result.status, SubscriptionStatus.active);
+      expect(result.productId, SubscriptionService.annualPriceId);
+      expect(result.platform, 'web');
+      expect(result.expiresAt, DateTime(2027, 12, 31));
     });
 
-    test('loadFromFirestore returns free tier for expired subscription',
-        () async {
-      await fakeFirestore.collection('users').doc('u3').set({
-        'subscription': {
-          'status': 'expired',
-          'productId': 'fittrack_pro_monthly',
-          'platform': 'android',
-          'expiresAt': Timestamp.fromDate(DateTime(2025, 1, 1)),
-          'updatedAt': Timestamp.now(),
-        },
+    test('expired/cancelled subscription returns free tier', () async {
+      await fakeFirestore
+          .collection('customers')
+          .doc('user-b')
+          .collection('subscriptions')
+          .doc('sub-old')
+          .set({
+        'status': 'canceled',
+        'items': [],
+        'current_period_end': Timestamp.fromDate(DateTime(2025, 1, 1)),
       });
 
-      final info = await service.loadFromFirestore('u3');
-
-      expect(info!.isPro, isFalse);
-      expect(info.tier, SubscriptionTier.free);
-      expect(info.status, SubscriptionStatus.expired);
-    });
-
-    test('loadFromFirestore handles trial status as pro', () async {
-      await fakeFirestore.collection('users').doc('u4').set({
-        'subscription': {
-          'status': 'trial',
-          'productId': 'fittrack_pro_monthly',
-          'platform': 'android',
-          'expiresAt': null,
-          'updatedAt': Timestamp.now(),
-        },
-      });
-
-      final info = await service.loadFromFirestore('u4');
-
-      expect(info!.isPro, isTrue);
-      expect(info.tier, SubscriptionTier.pro);
-      expect(info.status, SubscriptionStatus.trial);
+      final result = await service.loadFromFirestore('user-b');
+      expect(result.isPro, isFalse);
     });
 
     test('multiple users have independent subscription state', () async {
-      await fakeFirestore.collection('users').doc('free-user').set({
-        'subscription': {
-          'status': 'free',
-          'productId': null,
-          'platform': null,
-          'expiresAt': null,
-          'updatedAt': Timestamp.now(),
-        },
-      });
-      await fakeFirestore.collection('users').doc('pro-user').set({
-        'subscription': {
-          'status': 'active',
-          'productId': 'fittrack_pro_annual',
-          'platform': 'ios',
-          'expiresAt': Timestamp.fromDate(DateTime(2027, 1, 1)),
-          'updatedAt': Timestamp.now(),
-        },
+      await fakeFirestore
+          .collection('customers')
+          .doc('free-user')
+          .collection('subscriptions')
+          .get(); // no documents
+
+      await fakeFirestore
+          .collection('customers')
+          .doc('pro-user')
+          .collection('subscriptions')
+          .doc('sub-1')
+          .set({
+        'status': 'active',
+        'items': [
+          {
+            'price': {'id': SubscriptionService.monthlyPriceId}
+          }
+        ],
+        'current_period_end': Timestamp.fromDate(DateTime(2027, 1, 1)),
       });
 
-      final freeInfo = await service.loadFromFirestore('free-user');
-      final proInfo = await service.loadFromFirestore('pro-user');
+      final freeResult = await service.loadFromFirestore('free-user');
+      final proResult = await service.loadFromFirestore('pro-user');
 
-      expect(freeInfo!.isPro, isFalse);
-      expect(proInfo!.isPro, isTrue);
+      expect(freeResult.isPro, isFalse);
+      expect(proResult.isPro, isTrue);
+    });
+  });
+
+  group('SubscriptionService - checkout session lifecycle', () {
+    test('checkout session document is written with required fields', () async {
+      // Simulate extension: write url when session created
+      fakeFirestore
+          .collection('customers')
+          .doc('user-checkout')
+          .collection('checkout_sessions')
+          .snapshots()
+          .listen((snap) async {
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          if (data['price'] != null && data['url'] == null && data['error'] == null) {
+            await doc.reference
+                .update({'url': 'https://checkout.stripe.com/session-xyz'});
+          }
+        }
+      });
+
+      final url = await service.createCheckoutSession(
+        userId: 'user-checkout',
+        priceId: SubscriptionService.annualPriceId,
+        successUrl: 'https://fittrack-app.web.app/?checkout=success',
+        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+      );
+
+      expect(url, 'https://checkout.stripe.com/session-xyz');
+
+      final sessions = await fakeFirestore
+          .collection('customers')
+          .doc('user-checkout')
+          .collection('checkout_sessions')
+          .get();
+
+      final data = sessions.docs.first.data();
+      expect(data['price'], SubscriptionService.annualPriceId);
+      expect(data['success_url'],
+          'https://fittrack-app.web.app/?checkout=success');
+      expect(data['cancel_url'],
+          'https://fittrack-app.web.app/?checkout=cancelled');
+      expect(data['mode'], 'subscription');
+      expect(data['allow_promotion_codes'], isTrue);
+    });
+
+    test('lifetime plan uses payment mode', () async {
+      fakeFirestore
+          .collection('customers')
+          .doc('user-lifetime')
+          .collection('checkout_sessions')
+          .snapshots()
+          .listen((snap) async {
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          if (data['price'] != null && data['url'] == null && data['error'] == null) {
+            await doc.reference.update({'url': 'https://checkout.stripe.com/lifetime'});
+          }
+        }
+      });
+
+      await service.createCheckoutSession(
+        userId: 'user-lifetime',
+        priceId: SubscriptionService.lifetimePriceId,
+        successUrl: 'https://fittrack-app.web.app/?checkout=success',
+        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+      );
+
+      final sessions = await fakeFirestore
+          .collection('customers')
+          .doc('user-lifetime')
+          .collection('checkout_sessions')
+          .get();
+      expect(sessions.docs.first.data()['mode'], 'payment');
+    });
+  });
+
+  group('SubscriptionService - stream lifecycle', () {
+    test('stream emits free before any subscriptions exist', () async {
+      final info = await service.subscriptionStream('stream-user-1').first;
+      expect(info.isPro, isFalse);
+    });
+
+    test('stream emits pro after active subscription written', () async {
+      await fakeFirestore
+          .collection('customers')
+          .doc('stream-user-2')
+          .collection('subscriptions')
+          .doc('sub-1')
+          .set({
+        'status': 'active',
+        'items': [
+          {
+            'price': {'id': SubscriptionService.annualPriceId}
+          }
+        ],
+        'current_period_end': null,
+      });
+
+      final info =
+          await service.subscriptionStream('stream-user-2').first;
+      expect(info.isPro, isTrue);
     });
   });
 }

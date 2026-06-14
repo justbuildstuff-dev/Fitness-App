@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../models/subscription.dart';
 import '../../providers/subscription_provider.dart';
 
 class SubscriptionManagementScreen extends StatelessWidget {
   const SubscriptionManagementScreen({super.key});
-
-  // Placeholder — replaced with Stripe Customer Portal URL in Task #480.
-  static const _manageUrl = 'https://billing.stripe.com/p/login/placeholder';
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +26,8 @@ class SubscriptionManagementScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.primaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
+              border: Border.all(
+                  color: colorScheme.primary.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,34 +71,14 @@ class SubscriptionManagementScreen extends StatelessWidget {
 
           if (!sub.isProOverride) ...[
             FilledButton.icon(
-              onPressed: () => _openManageSubscription(),
+              onPressed: () => sub.openCustomerPortal(),
               icon: const Icon(Icons.open_in_new, size: 18),
               label: const Text('Manage subscription'),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
-            const SizedBox(height: 12),
           ],
-
-          OutlinedButton(
-            onPressed: sub.isLoading
-                ? null
-                : () {
-                    Navigator.of(context).pop();
-                    sub.restorePurchases();
-                  },
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: sub.isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Restore purchases'),
-          ),
 
           if (sub.error != null) ...[
             const SizedBox(height: 12),
@@ -119,6 +96,7 @@ class SubscriptionManagementScreen extends StatelessWidget {
   String _planLabel(SubscriptionInfo info) {
     if (info.productId?.contains('annual') == true) return 'Annual plan';
     if (info.productId?.contains('monthly') == true) return 'Monthly plan';
+    if (info.productId?.contains('lifetime') == true) return 'Lifetime access';
     return 'Active subscription';
   }
 
@@ -126,12 +104,5 @@ class SubscriptionManagementScreen extends StatelessWidget {
     if (info.expiresAt == null) return '';
     final d = info.expiresAt!;
     return 'Renews ${d.day}/${d.month}/${d.year}';
-  }
-
-  Future<void> _openManageSubscription() async {
-    final uri = Uri.parse(_manageUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
   }
 }
