@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "fitness-app-8505e"
+  },
+  "targets": {
+    "fitness-app-8505e": {
+      "hosting": {
+        "marketing": ["fitness-app-8505e"],
+        "app": ["fittrack-app"]
+      }
+    }
   }
 }
