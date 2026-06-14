@@ -118,7 +118,7 @@ class PaywallScreen extends StatelessWidget {
                     label: 'Annual',
                     badge: 'RECOMMENDED',
                     savings: 'Save 52% vs monthly',
-                    price: sub.annualProduct?.price ?? '\$39.99/year',
+                    price: '\$39.99/year',
                     detail: 'Billed annually · 14-day free trial',
                     isRecommended: true,
                     onTap: () {
@@ -131,7 +131,7 @@ class PaywallScreen extends StatelessWidget {
                   // Monthly plan card
                   _PlanCard(
                     label: 'Monthly',
-                    price: sub.monthlyProduct?.price ?? '\$6.99/month',
+                    price: '\$6.99/month',
                     detail: '14-day free trial',
                     isRecommended: false,
                     onTap: () {
