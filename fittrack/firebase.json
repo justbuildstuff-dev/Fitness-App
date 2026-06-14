@@ -11,28 +11,58 @@
       ]
     }
   ],
-  "hosting": {
-    "site": "fitness-app-8505e",
-    "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false,
-    "404": "404.html",
-    "headers": [
-      {
-        "source": "**",
-        "headers": [
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "X-Frame-Options", "value": "DENY" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-        ]
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "target": "marketing",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "404": "404.html",
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            { "key": "X-Content-Type-Options", "value": "nosniff" },
+            { "key": "X-Frame-Options", "value": "DENY" },
+            { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "app",
+      "public": "build/web",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        { "source": "**", "destination": "/index.html" }
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            { "key": "X-Content-Type-Options", "value": "nosniff" },
+            { "key": "X-Frame-Options", "value": "DENY" },
+            { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+          ]
+        },
+        {
+          "source": "/flutter_service_worker.js",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache" }
+          ]
+        }
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
