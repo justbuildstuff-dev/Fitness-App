@@ -6,12 +6,15 @@ on:
       - main
     paths:
       - 'fittrack/public/**'
+      - 'fittrack/lib/**'
+      - 'fittrack/web/**'
+      - 'fittrack/pubspec.yaml'
       - 'fittrack/firebase.json'
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to Firebase Hosting
+  deploy-marketing:
+    name: Deploy Marketing Site
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -19,11 +22,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to Firebase Hosting
+      - name: Deploy marketing site to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: fitness-app-8505e
+          target: marketing
+          channelId: live
+          entryPoint: ./fittrack
+
+  deploy-pwa:
+    name: Build and Deploy PWA
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.35.1
+          cache: true
+
+      - name: Install dependencies
+        run: |
+          cd fittrack
+          flutter pub get
+
+      - name: Build Flutter web
+        run: |
+          cd fittrack
+          flutter build web --release
+
+      - name: Deploy PWA to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: fitness-app-8505e
+          target: app
           channelId: live
           entryPoint: ./fittrack
