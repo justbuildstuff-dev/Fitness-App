@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/subscription.dart';
 import '../providers/auth_provider.dart';
 import '../services/subscription_service.dart';
 
-/// Manages subscription state and exposes computed limits used throughout
-/// the app to gate premium features.
+/// Manages subscription state sourced from the Firebase Stripe Extension.
 ///
-/// IAP purchase stream removed for PWA transition. Subscription status is
-/// loaded from Firestore on sign-in. Full Stripe billing is added in Task #480.
+/// Listens to `customers/{userId}/subscriptions` in real time and exposes
+/// computed limits used throughout the app to gate premium features.
 ///
 /// Registered as a [ChangeNotifierProxyProvider] so it reacts to auth state
 /// changes — resetting when the user signs out and re-initialising when they
@@ -17,6 +18,7 @@ class SubscriptionProvider extends ChangeNotifier {
   bool _isProOverride = false;
   bool _isLoading = false;
   String? _error;
+  StreamSubscription<SubscriptionInfo>? _subscriptionStream;
   bool _disposed = false;
 
   // --- Public getters ---
@@ -30,14 +32,6 @@ class SubscriptionProvider extends ChangeNotifier {
 
   int get maxPrograms => isPro ? 999 : 3;
   int get maxCustomExercises => isPro ? 50 : 5;
-
-  // Stub product getters — replaced with Stripe price data in Task #480.
-  List<Map<String, dynamic>> get products =>
-      SubscriptionService.instance.products;
-  Map<String, dynamic>? get monthlyProduct =>
-      SubscriptionService.instance.monthlyProduct;
-  Map<String, dynamic>? get annualProduct =>
-      SubscriptionService.instance.annualProduct;
 
   // --- ProxyProvider update ---
 
@@ -55,19 +49,58 @@ class SubscriptionProvider extends ChangeNotifier {
   // --- Initialisation ---
 
   Future<void> _initialize(String userId) async {
-    final cached =
-        await SubscriptionService.instance.loadFromFirestore(userId);
-    if (cached != null) {
-      _subscriptionInfo = cached;
+    // Load cached status immediately so the UI has a value before stream fires.
+    final cached = await SubscriptionService.instance.loadFromFirestore(userId);
+    _subscriptionInfo = cached;
+    _safeNotify();
+
+    // Start real-time listener for live Stripe webhook updates.
+    _subscriptionStream?.cancel();
+    _subscriptionStream =
+        SubscriptionService.instance.subscriptionStream(userId).listen(
+      (info) {
+        _subscriptionInfo = info;
+        _safeNotify();
+      },
+      onError: (_) {}, // silent — cached value remains valid
+    );
+  }
+
+  // --- Stripe Checkout ---
+
+  /// Redirects the browser to a Stripe Checkout session for [priceId].
+  /// Returns true if the URL launched successfully.
+  Future<bool> startCheckout(String userId, String priceId) async {
+    _error = null;
+    _isLoading = true;
+    _safeNotify();
+    try {
+      final url = await SubscriptionService.instance.createCheckoutSession(
+        userId: userId,
+        priceId: priceId,
+        successUrl:
+            'https://fittrack-app.web.app/?checkout=success',
+        cancelUrl:
+            'https://fittrack-app.web.app/?checkout=cancelled',
+      );
+      final uri = Uri.parse(url);
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      _isLoading = false;
       _safeNotify();
+      return launched;
+    } catch (e) {
+      _error = 'Could not start checkout. Please try again.';
+      _isLoading = false;
+      _safeNotify();
+      return false;
     }
   }
 
-  // --- Purchase action stubs (replaced by Stripe checkout in Task #480) ---
-
-  Future<void> purchaseMonthly() async {}
-  Future<void> purchaseAnnual() async {}
-  Future<void> restorePurchases() async {}
+  /// Opens the Stripe Customer Portal for subscription management.
+  Future<void> openCustomerPortal() async {
+    final uri = Uri.parse(SubscriptionService.stripePortalUrl);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   void clearError() {
     _error = null;
@@ -93,6 +126,8 @@ class SubscriptionProvider extends ChangeNotifier {
     _isProOverride = false;
     _isLoading = false;
     _error = null;
+    _subscriptionStream?.cancel();
+    _subscriptionStream = null;
     _safeNotify();
   }
 
@@ -103,6 +138,7 @@ class SubscriptionProvider extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _subscriptionStream?.cancel();
     super.dispose();
   }
 }

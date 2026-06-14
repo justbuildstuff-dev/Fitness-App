@@ -51,4 +51,22 @@ class SubscriptionInfo {
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
     );
   }
+
+  /// Deserialises a subscription document written by the Firebase Stripe Extension.
+  /// The extension uses 'active' and 'trialing' as active status values.
+  factory SubscriptionInfo.fromStripeFirestore(Map<String, dynamic> data) {
+    final statusStr = data['status'] as String? ?? 'unknown';
+    final isActive = statusStr == 'active' || statusStr == 'trialing';
+    final items = data['items'] as List?;
+    final priceId =
+        items != null && items.isNotEmpty ? items.first?['price']?['id'] as String? : null;
+    final periodEnd = (data['current_period_end'] as Timestamp?)?.toDate();
+    return SubscriptionInfo(
+      tier: isActive ? SubscriptionTier.pro : SubscriptionTier.free,
+      status: isActive ? SubscriptionStatus.active : SubscriptionStatus.unknown,
+      productId: priceId,
+      platform: 'web',
+      expiresAt: periodEnd,
+    );
+  }
 }

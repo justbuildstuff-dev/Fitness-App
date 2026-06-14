@@ -76,7 +76,7 @@ void main() {
       expect(find.text('You have reached the free plan limit.'), findsNothing);
     });
 
-    testWidgets('renders Annual and Monthly plan labels', (tester) async {
+    testWidgets('renders Annual, Monthly and Lifetime plan labels', (tester) async {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -86,6 +86,7 @@ void main() {
 
       expect(find.text('Annual'), findsOneWidget);
       expect(find.text('Monthly'), findsOneWidget);
+      expect(find.text('Lifetime'), findsOneWidget);
     });
 
     testWidgets('renders RECOMMENDED badge on annual plan', (tester) async {
@@ -99,7 +100,7 @@ void main() {
       expect(find.text('RECOMMENDED'), findsOneWidget);
     });
 
-    testWidgets('renders restore purchases button', (tester) async {
+    testWidgets('renders Lifetime plan with one-time purchase detail', (tester) async {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -107,7 +108,8 @@ void main() {
         ),
       );
 
-      expect(find.text('Already subscribed? Restore purchases'), findsOneWidget);
+      expect(find.text('Lifetime'), findsOneWidget);
+      expect(find.text('One-time purchase · No recurring fees'), findsOneWidget);
     });
 
     testWidgets('renders benefits list', (tester) async {
@@ -123,8 +125,8 @@ void main() {
     });
 
     testWidgets('shows loading indicator when isLoading is true', (tester) async {
-      // isLoading is true after purchaseMonthly/Annual starts but before
-      // the stream responds — simulate via provider state observation
+      // isLoading is true after startCheckout is called but before the
+      // Stripe checkout URL is returned — simulate via provider state observation
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -183,8 +185,8 @@ void main() {
     });
   });
 
-  group('PaywallScreen - fallback prices', () {
-    testWidgets('shows fallback price when products not loaded', (tester) async {
+  group('PaywallScreen - plan prices', () {
+    testWidgets('renders hardcoded Stripe prices', (tester) async {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -194,6 +196,7 @@ void main() {
 
       expect(find.text(r'$39.99/year'), findsOneWidget);
       expect(find.text(r'$6.99/month'), findsOneWidget);
+      expect(find.text(r'$59.99'), findsOneWidget);
     });
   });
 
