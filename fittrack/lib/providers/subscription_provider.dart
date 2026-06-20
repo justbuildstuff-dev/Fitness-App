@@ -79,9 +79,9 @@ class SubscriptionProvider extends ChangeNotifier {
         userId: userId,
         priceId: priceId,
         successUrl:
-            'https://overload.web.app/?checkout=success',
+            'https://overload-workouts.web.app/?checkout=success',
         cancelUrl:
-            'https://overload.web.app/?checkout=cancelled',
+            'https://overload-workouts.web.app/?checkout=cancelled',
       );
       final uri = Uri.parse(url);
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
