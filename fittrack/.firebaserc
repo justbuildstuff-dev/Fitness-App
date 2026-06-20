@@ -6,7 +6,7 @@
     "fitness-app-8505e": {
       "hosting": {
         "marketing": ["fitness-app-8505e"],
-        "app": ["fittrack-app"]
+        "app": ["overload"]
       }
     }
   }

@@ -79,9 +79,9 @@ class SubscriptionProvider extends ChangeNotifier {
         userId: userId,
         priceId: priceId,
         successUrl:
-            'https://fittrack-app.web.app/?checkout=success',
+            'https://overload.web.app/?checkout=success',
         cancelUrl:
-            'https://fittrack-app.web.app/?checkout=cancelled',
+            'https://overload.web.app/?checkout=cancelled',
       );
       final uri = Uri.parse(url);
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
