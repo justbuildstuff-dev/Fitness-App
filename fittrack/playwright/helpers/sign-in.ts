@@ -14,15 +14,18 @@ import { Page } from '@playwright/test';
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/');
 
-  // Wait for Flutter's rendering host to appear (confirms the engine has started).
-  await page.waitForSelector('flt-glass-pane', { timeout: 30_000 });
+  // Wait for Flutter's CanvasKit <canvas> to be visible — this is the reliable
+  // "app has painted" signal. flt-glass-pane and flt-semantics-host exist in the
+  // shadow DOM but have CSS that makes them appear "hidden" to Playwright even
+  // when the app is rendering correctly.
+  await page.locator('canvas').first().waitFor({ state: 'visible', timeout: 45_000 });
 
-  // With --force-renderer-accessibility in launchOptions, Chromium tells Flutter
-  // to enable its flt-semantics overlay automatically. Pressing Tab is an additional
-  // trigger for emitting the first accessibility event, ensuring the tree is live.
+  // --force-renderer-accessibility (in playwright.config.ts launchOptions) tells
+  // Chromium to expose the accessibility tree, which causes Flutter to populate
+  // flt-semantics nodes automatically. Tab additionally focuses the first field.
   await page.keyboard.press('Tab');
 
-  // Wait for the semantics tree to become visible (has at least one flt-semantics child).
+  // Wait for at least one flt-semantics node (confirms semantics tree is live)
   await page.waitForSelector('flt-semantics', { timeout: 20_000 });
 
   // Click the Email field and fill it. Flutter creates a real <input> in the text editing
