@@ -26,6 +26,8 @@ import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
 import 'services/returning_user_service.dart';
 
+const bool _kUseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -61,6 +63,16 @@ void main() async {
     }
   } else {
     debugPrint('Firebase already initialized (likely by integration tests), skipping initialization');
+  }
+
+  if (_kUseEmulator) {
+    try {
+      await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+      debugPrint('[Emulator] Connected to local Firebase emulators');
+    } catch (e) {
+      debugPrint('[Emulator] Warning: $e');
+    }
   }
 
   // Enable Firestore offline persistence (spec requirement from Section 11)
