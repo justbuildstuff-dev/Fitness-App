@@ -680,7 +680,10 @@ jobs:
     - name: Install Playwright dependencies
       run: |
         cd fittrack/playwright
-        npm ci
+        # npm install used instead of npm ci because no package-lock.json is committed.
+        # package-lock.json is gitignored (Windows SSL prevents local generation);
+        # version is pinned in package.json via ^semver so installs are stable.
+        npm install
 
     - name: Install Playwright browsers
       run: |
