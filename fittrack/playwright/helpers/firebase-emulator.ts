@@ -17,13 +17,15 @@ export async function createTestUser(email: string, password: string): Promise<s
   }
   const data = await res.json() as { localId: string };
 
-  // Mark email as verified — localId must be in the URL path, not the body
+  // Mark email as verified via identitytoolkit accounts:update.
+  // In the Auth emulator, passing localId (admin-style) bypasses the auth check
+  // that production would require. This is the correct emulator approach.
   const oobRes = await fetch(
-    `${AUTH_URL}/emulator/v1/projects/${PROJECT_ID}/accounts/${data.localId}`,
+    `${AUTH_URL}/identitytoolkit.googleapis.com/v1/accounts:update?key=fake-api-key`,
     {
-      method: 'PATCH',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailVerified: true }),
+      body: JSON.stringify({ localId: data.localId, emailVerified: true }),
     }
   );
   if (!oobRes.ok) {
