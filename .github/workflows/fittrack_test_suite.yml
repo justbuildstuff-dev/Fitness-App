@@ -635,6 +635,125 @@ jobs:
         pkill -f "firebase" || true
         pkill -f "java.*firestore" || true
 
+  # Playwright E2E browser tests against compiled Flutter web PWA output.
+  # Non-blocking: continue-on-error:true and NOT in all-tests-passed needs.
+  # Failures create one GitHub issue listing all defects (see playwright/scripts/report-failures.sh).
+  playwright-e2e:
+    name: Playwright E2E (PWA Browser Tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 3.35.1
+        cache: true
+
+    - name: Install Flutter dependencies
+      run: |
+        cd fittrack
+        flutter pub get
+
+    - name: Build Flutter web
+      run: |
+        cd fittrack
+        # --web-renderer html was removed in Flutter 3.24+; CanvasKit is the default.
+        # Playwright interacts via Flutter's flt-semantics accessibility overlay.
+        flutter build web --release \
+          --dart-define=USE_EMULATOR=true \
+          --dart-define=SKIP_ONBOARDING=true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Firebase CLI
+      run: npm install -g firebase-tools
+
+    - name: Install Playwright dependencies
+      run: |
+        cd fittrack/playwright
+        npm ci
+
+    - name: Install Playwright browsers
+      run: |
+        cd fittrack/playwright
+        npx playwright install --with-deps chromium
+
+    - name: Start Firebase emulators
+      run: |
+        cd fittrack
+        firebase emulators:start --only auth,firestore --project fitness-app-8505e &
+        echo $! > emulator.pid
+
+    - name: Wait for Firebase emulators
+      run: |
+        echo "Waiting for Firestore emulator on localhost:8080..."
+        timeout 60 bash -c 'until curl -sf http://localhost:8080 > /dev/null; do sleep 2; done'
+        echo "Waiting for Auth emulator on localhost:9099..."
+        timeout 60 bash -c 'until curl -sf http://localhost:9099 > /dev/null; do sleep 2; done'
+        echo "✅ Firebase emulators ready"
+
+    - name: Start Flutter web server
+      run: |
+        npx serve@14 -s fittrack/build/web -l 3000 &
+        timeout 30 bash -c 'until curl -sf http://localhost:3000 > /dev/null; do sleep 1; done'
+        echo "✅ Flutter web server running on http://localhost:3000"
+
+    - name: Run Playwright E2E tests
+      id: playwright
+      run: |
+        cd fittrack/playwright
+        npx playwright test
+
+    - name: Upload Playwright artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-screenshots
+        path: |
+          fittrack/playwright/test-results/
+          fittrack/playwright/playwright-report/
+        retention-days: 90
+        if-no-files-found: ignore
+
+    - name: Report results to PR
+      if: always() && github.event_name == 'pull_request'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cd fittrack
+        if [ -f playwright/scripts/report-failures.sh ]; then
+          bash playwright/scripts/report-failures.sh \
+            "${{ github.event.number }}" \
+            "${{ github.run_id }}" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        else
+          STATUS="${{ steps.playwright.outcome }}"
+          if [ "$STATUS" = "success" ]; then
+            gh pr comment "${{ github.event.number }}" --body "✅ Playwright E2E: all tests passed — [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          else
+            gh pr comment "${{ github.event.number }}" --body "⚠️ Playwright E2E: one or more tests failed — [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          fi
+        fi
+
+    - name: Stop Firebase emulators
+      if: always()
+      run: |
+        cd fittrack
+        if [ -f emulator.pid ]; then
+          kill $(cat emulator.pid) || true
+          rm emulator.pid
+        fi
+        pkill -f "firebase" || true
+
   # Aggregate results and generate reports
   test-summary:
     name: Test Summary Report
