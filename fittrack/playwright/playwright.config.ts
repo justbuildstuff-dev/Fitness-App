@@ -16,6 +16,12 @@ export default defineConfig({
     screenshot: 'on',
     trace: 'on-first-retry',
     video: 'on-first-retry',
+    // Force Chromium to expose its accessibility tree to all web content.
+    // Without this, headless Chromium disables accessibility APIs, so Flutter
+    // never activates its flt-semantics overlay even after a Tab keypress.
+    launchOptions: {
+      args: ['--force-renderer-accessibility'],
+    },
   },
   globalSetup: './global-setup.ts',
   globalTeardown: './global-teardown.ts',

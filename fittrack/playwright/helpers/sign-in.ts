@@ -14,13 +14,16 @@ import { Page } from '@playwright/test';
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/');
 
-  // Activate Flutter's accessibility semantics tree (required for CanvasKit renderer).
-  // Flutter only enables the flt-semantics overlay when it detects accessibility use;
-  // pressing Tab is the most reliable trigger in headless Chromium.
+  // Wait for Flutter's rendering host to appear (confirms the engine has started).
+  await page.waitForSelector('flt-glass-pane', { timeout: 30_000 });
+
+  // With --force-renderer-accessibility in launchOptions, Chromium tells Flutter
+  // to enable its flt-semantics overlay automatically. Pressing Tab is an additional
+  // trigger for emitting the first accessibility event, ensuring the tree is live.
   await page.keyboard.press('Tab');
 
-  // Wait for the sign-in form to be rendered and accessible
-  await page.waitForSelector('flt-semantics-host', { timeout: 20_000 });
+  // Wait for the semantics tree to become visible (has at least one flt-semantics child).
+  await page.waitForSelector('flt-semantics', { timeout: 20_000 });
 
   // Click the Email field and fill it. Flutter creates a real <input> in the text editing
   // host when focused. We target by ARIA role since Flutter sets aria-label from labelText.
