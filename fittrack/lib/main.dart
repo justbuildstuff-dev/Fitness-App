@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -27,9 +28,23 @@ import 'services/onboarding_service.dart';
 import 'services/returning_user_service.dart';
 
 const bool _kUseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+const bool _kForceSemantics = bool.fromEnvironment('FORCE_SEMANTICS', defaultValue: false);
+
+// Kept alive for the app's lifetime when FORCE_SEMANTICS=true.
+// Dropping this reference would disable semantics — never garbage collect it.
+// ignore: unused_element
+SemanticsHandle? _semanticsHandle;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Force Flutter to always populate its flt-semantics accessibility tree.
+  // Required for Playwright E2E tests in headless CI — neither a Tab keypress
+  // nor --force-renderer-accessibility reliably triggers Flutter's semantics
+  // engine in headless Chromium. Only used when built with FORCE_SEMANTICS=true.
+  if (_kForceSemantics) {
+    _semanticsHandle = SemanticsBinding.instance.ensureSemantics();
+  }
 
   // Initialize Firebase with timeout to prevent indefinite hangs
   // Skip if already initialized (e.g., by integration tests)

@@ -667,7 +667,8 @@ jobs:
         # Playwright interacts via Flutter's flt-semantics accessibility overlay.
         flutter build web --release \
           --dart-define=USE_EMULATOR=true \
-          --dart-define=SKIP_ONBOARDING=true
+          --dart-define=SKIP_ONBOARDING=true \
+          --dart-define=FORCE_SEMANTICS=true
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
