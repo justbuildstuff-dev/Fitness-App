@@ -78,7 +78,12 @@ export async function seedFirestoreDoc(
   const url = `${FIRESTORE_URL}/v1/projects/${PROJECT_ID}/databases/(default)/documents/${collectionPath}/${docId}`;
   const res = await fetch(url, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      // 'owner' is the Firebase emulator admin bypass token — skips security rules
+      // (same role the Admin SDK occupies in production).
+      'Authorization': 'Bearer owner',
+    },
     body: JSON.stringify({ fields: firestoreFields }),
   });
   if (!res.ok) {
