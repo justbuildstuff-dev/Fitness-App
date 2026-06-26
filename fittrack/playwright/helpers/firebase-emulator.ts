@@ -3,8 +3,8 @@ const FIRESTORE_URL = 'http://localhost:8080';
 const PROJECT_ID = 'fitness-app-8505e';
 
 export async function createTestUser(email: string, password: string): Promise<string> {
-  // Create user via Auth emulator REST API
-  const res = await fetch(
+  // Step 1: Create user
+  const signUpRes = await fetch(
     `${AUTH_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`,
     {
       method: 'POST',
@@ -12,27 +12,41 @@ export async function createTestUser(email: string, password: string): Promise<s
       body: JSON.stringify({ email, password, returnSecureToken: true }),
     }
   );
-  if (!res.ok) {
-    throw new Error(`createTestUser failed: ${await res.text()}`);
+  if (!signUpRes.ok) {
+    throw new Error(`createTestUser failed: ${await signUpRes.text()}`);
   }
-  const data = await res.json() as { localId: string };
+  const { localId, idToken } = await signUpRes.json() as { localId: string; idToken: string };
 
-  // Mark email as verified via identitytoolkit accounts:update.
-  // In the Auth emulator, passing localId (admin-style) bypasses the auth check
-  // that production would require. This is the correct emulator approach.
+  // Step 2: Request email verification OOB code.
+  // In the Auth emulator, sendOobCode returns the oobCode directly in the response
+  // body (no actual email is sent), enabling programmatic email verification.
   const oobRes = await fetch(
+    `${AUTH_URL}/identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=fake-api-key`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestType: 'VERIFY_EMAIL', idToken }),
+    }
+  );
+  if (!oobRes.ok) {
+    throw new Error(`sendOobCode failed: ${await oobRes.text()}`);
+  }
+  const { oobCode } = await oobRes.json() as { oobCode: string };
+
+  // Step 3: Confirm email verification
+  const confirmRes = await fetch(
     `${AUTH_URL}/identitytoolkit.googleapis.com/v1/accounts:update?key=fake-api-key`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ localId: data.localId, emailVerified: true }),
+      body: JSON.stringify({ oobCode }),
     }
   );
-  if (!oobRes.ok) {
-    throw new Error(`setEmailVerified failed: ${await oobRes.text()}`);
+  if (!confirmRes.ok) {
+    throw new Error(`confirmEmailVerification failed: ${await confirmRes.text()}`);
   }
 
-  return data.localId;
+  return localId;
 }
 
 export async function seedFirestoreDoc(
