@@ -86,25 +86,35 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // reliable in headless CI than clicking the flt-semantics button element.
   await page.keyboard.press('Enter');
 
-  // Wait 4s for Flutter to navigate to HomeScreen, then dump every [aria-label] element
-  // so CI output shows the exact DOM structure. This diagnostic is kept permanently so
-  // we can see what labels are available on HomeScreen in any future failure.
+  // Diagnostics: after 4s, dump the raw flt-semantics DOM attributes and Playwright's
+  // computed accessibility tree. Flutter web does NOT write aria-label as HTML attributes —
+  // labels are exposed only through the browser's DevTools Protocol accessibility tree.
+  // These logs reveal the real DOM structure so we can write the correct locators.
   await page.waitForTimeout(4_000);
-  const ariaSnapshot = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('[aria-label]'))
-      .map(el => `${el.tagName.toLowerCase()}[role=${el.getAttribute('role')}]="${el.getAttribute('aria-label')}"`)
-      .join(' | ')
-  );
-  console.log(`[E2E][aria-snapshot] ${ariaSnapshot || '(none found)'}`);
 
-  // Confirm we are on HomeScreen. Three selectors are tried simultaneously with a CSS
-  // comma-OR; the first to appear wins:
-  //   1. [aria-label="My Programs"]   — AppBar title (Flutter Semantics(header:true) label)
-  //   2. [aria-label="Analytics"]     — BottomNavBar "Analytics" tab (confirmed by analytics test)
-  //   3. [aria-label="Programs"]      — BottomNavBar "Programs" tab
-  // Firestore Listen/channel requests appearing in prior CI runs confirmed the app DOES
-  // reach HomeScreen; the original failure was a selector mismatch, not a navigation issue.
-  await page.locator('[aria-label="My Programs"], [aria-label="Analytics"], [aria-label="Programs"]')
-    .first()
-    .waitFor({ state: 'attached', timeout: 26_000 });
+  const fltAttrs = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('flt-semantics'))
+      .slice(0, 25)
+      .map(el => {
+        const attrs: string[] = [];
+        for (const attr of Array.from(el.attributes)) {
+          attrs.push(`${attr.name}="${attr.value}"`);
+        }
+        return attrs.join(' ') || '(no-attrs)';
+      })
+      .join(' || ')
+  );
+  console.log(`[E2E][flt-semantics-attrs] ${fltAttrs || '(none found)'}`);
+
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
+  const axTree = await page.accessibility.snapshot({ interestingOnly: true });
+  console.log(`[E2E][ax-tree] ${JSON.stringify(axTree)?.substring(0, 2000) ?? '(null)'}`);
+
+  // Confirm sign-in succeeded by waiting for the SignInScreen email textbox to become
+  // detached. Flutter removes flt-semantics nodes when widgets leave the widget tree, so
+  // the email input's semantic node disappears the moment the route transitions to HomeScreen.
+  // This is more reliable than any positive selector because it does not depend on knowing
+  // the exact aria-label or role Flutter assigns to HomeScreen elements.
+  await page.getByRole('textbox', { name: /email/i })
+    .waitFor({ state: 'detached', timeout: 26_000 });
 }
