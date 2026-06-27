@@ -36,25 +36,33 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // render. Wait for any node to confirm the app has painted and semantics are active.
   await page.waitForSelector('flt-semantics', { timeout: 45_000 });
 
-  // Log all Firebase Auth emulator requests/responses so CI output shows what the
-  // browser actually sends. Helps diagnose any remaining network issues.
+  // Log all Firebase emulator requests/responses (Auth :9099 and Firestore :8080)
+  // so CI output shows exactly what the browser sends and whether any requests hang.
   page.on('request', req => {
-    if (req.url().includes('localhost:9099')) {
-      const path = req.url().split('?')[0].replace(/^.*localhost:9099/, '');
+    const url = req.url();
+    if (url.includes('localhost:9099')) {
+      const path = url.split('?')[0].replace(/^.*localhost:9099/, '');
       console.log(`[E2E][auth-req] ${req.method()} ${path}`);
+    } else if (url.includes('localhost:8080')) {
+      const path = url.split('?')[0].replace(/^.*localhost:8080/, '');
+      console.log(`[E2E][firestore-req] ${req.method()} ${path}`);
     }
   });
   page.on('response', async resp => {
-    if (resp.url().includes('localhost:9099')) {
-      const path = resp.url().split('?')[0].replace(/^.*localhost:9099/, '');
+    const url = resp.url();
+    if (url.includes('localhost:9099')) {
+      const path = url.split('?')[0].replace(/^.*localhost:9099/, '');
       const status = resp.status();
       let body = '';
       try {
         const text = await resp.text();
-        // Truncate to avoid flooding logs; error bodies are usually < 200 chars.
         body = text.length > 200 ? text.substring(0, 200) + '…' : text;
       } catch { /* response body already consumed */ }
       console.log(`[E2E][auth-res] ${status} ${path} — ${body}`);
+    } else if (url.includes('localhost:8080')) {
+      const path = url.split('?')[0].replace(/^.*localhost:8080/, '');
+      const status = resp.status();
+      console.log(`[E2E][firestore-res] ${status} ${path}`);
     }
   });
 

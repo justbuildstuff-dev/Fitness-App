@@ -124,9 +124,13 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
-      // Update last login time
+      // Update last login time.
+      // Fire-and-forget: _updateLastLogin() writes a non-critical timestamp to
+      // Firestore. Awaiting it would block _setLoading(false) in the finally
+      // block if the Firestore connection to the emulator is slow or hangs in
+      // headless CI — keeping isLoading=true indefinitely and blocking navigation.
       if (_user != null) {
-        await _updateLastLogin();
+        _updateLastLogin(); // unawaited intentionally
         AppAnalyticsService.instance.logLogin();
       }
     } on FirebaseAuthException catch (e) {
