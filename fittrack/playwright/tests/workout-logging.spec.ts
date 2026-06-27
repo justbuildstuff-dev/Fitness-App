@@ -10,6 +10,25 @@ const WEEK_NAME = 'Week 1';
 const WORKOUT_NAME = 'E2E Workout';
 const EXERCISE_NAME = 'Bench Press';
 
+/**
+ * Tap a Flutter flt-semantics list tile by text content.
+ *
+ * Flutter ListTile widgets with onTap render as flt-semantics[flt-tappable] but
+ * may have role="listitem" (not role="button") — so getByRole('button', { name })
+ * never resolves and times out. Selecting by [flt-tappable] + hasText is role-agnostic
+ * and finds the tappable container regardless of its ARIA role.
+ *
+ * dispatchEvent('click') is used instead of .click() to avoid Playwright's outer
+ * actionability retry loop: after Flutter navigation the semantic tree rebuilds,
+ * which invalidates the element reference and causes .click() to re-find and
+ * re-click indefinitely until the 60-second test timeout fires.
+ */
+async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
+  await page.locator('flt-semantics[flt-tappable]', { hasText: text })
+    .first()
+    .dispatchEvent('click');
+}
+
 test.describe('Workout Set Logging', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, EMAIL, PASSWORD);
@@ -18,23 +37,15 @@ test.describe('Workout Set Logging', () => {
   test('navigates to seeded workout and checks off a set', async ({ page }, testInfo) => {
     // --- NAVIGATE TO WORKOUT ---
     // Programs screen shows the seeded E2E Test Program.
-    // All Flutter flt-semantics[role="button"] clicks use dispatchEvent('click')
-    // rather than .click(): Playwright's .click() has an outer retry loop that
-    // re-fires when the flt-semantics tree rebuilds after Flutter navigation. Each
-    // click triggers a route change (pushState), which invalidates the element
-    // reference, causing Playwright to re-find and re-click indefinitely until the
-    // 60-second test timeout fires. dispatchEvent fires the DOM 'click' event once
-    // without retry; Flutter's flt-tappable addEventListener('click') handler fires
-    // and triggers the Dart tap callback exactly once.
-    await page.getByRole('button', { name: PROGRAM_NAME }).dispatchEvent('click');
+    await tapListTile(page, PROGRAM_NAME);
     await expect(page.getByText(WEEK_NAME)).toBeVisible({ timeout: 10_000 });
 
     // Navigate into Week 1
-    await page.getByRole('button', { name: WEEK_NAME }).dispatchEvent('click');
+    await tapListTile(page, WEEK_NAME);
     await expect(page.getByText(WORKOUT_NAME)).toBeVisible({ timeout: 10_000 });
 
     // Navigate into E2E Workout
-    await page.getByRole('button', { name: WORKOUT_NAME }).dispatchEvent('click');
+    await tapListTile(page, WORKOUT_NAME);
     await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-workout-open.png` });
@@ -65,14 +76,12 @@ test.describe('Workout Set Logging', () => {
 
     // --- VERIFY PERSISTENCE ---
     // Reload the page and navigate back to verify the checked state persisted.
-    // After reload, wait for the Programs screen to appear, then navigate using
-    // getByRole('button') so we click the tappable list-tile (not the text node).
     await page.reload();
     await page.waitForSelector('flt-semantics', { timeout: 20_000 });
     await expect(page.getByText('My Programs')).toBeVisible({ timeout: 20_000 });
-    await page.getByRole('button', { name: PROGRAM_NAME }).dispatchEvent('click');
-    await page.getByRole('button', { name: WEEK_NAME }).dispatchEvent('click');
-    await page.getByRole('button', { name: WORKOUT_NAME }).dispatchEvent('click');
+    await tapListTile(page, PROGRAM_NAME);
+    await tapListTile(page, WEEK_NAME);
+    await tapListTile(page, WORKOUT_NAME);
     await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });
 
     // The checkbox should still be checked after reload

@@ -27,7 +27,17 @@ test.describe('Analytics Screen', () => {
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-analytics-loaded.png` });
 
-    // Verify at least one tab is visible (Overview, Exercise, or Trends)
+    // Wait up to 10s for at least one analytics tab to appear (Overview / Exercise / Trends).
+    // These tabs render slightly after the screen header, so isVisible() (which is
+    // immediate) would return false if called right after dispatchEvent. Using waitFor
+    // gives Flutter time to complete the route transition and render tab widgets.
+    await page.getByText('Overview')
+      .or(page.getByText('Exercise'))
+      .or(page.getByText('Trends'))
+      .first()
+      .waitFor({ state: 'visible', timeout: 10_000 })
+      .catch(() => {});
+
     const hasOverviewTab = await page.getByText('Overview').isVisible().catch(() => false);
     const hasExerciseTab = await page.getByText('Exercise').isVisible().catch(() => false);
     const hasTrendsTab = await page.getByText('Trends').isVisible().catch(() => false);
