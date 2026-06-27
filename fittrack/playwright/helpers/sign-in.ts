@@ -86,35 +86,19 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // reliable in headless CI than clicking the flt-semantics button element.
   await page.keyboard.press('Enter');
 
-  // Diagnostics: after 4s, dump the raw flt-semantics DOM attributes and Playwright's
-  // computed accessibility tree. Flutter web does NOT write aria-label as HTML attributes —
-  // labels are exposed only through the browser's DevTools Protocol accessibility tree.
-  // These logs reveal the real DOM structure so we can write the correct locators.
-  await page.waitForTimeout(4_000);
-
-  const fltAttrs = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('flt-semantics'))
-      .slice(0, 25)
-      .map(el => {
-        const attrs: string[] = [];
-        for (const attr of Array.from(el.attributes)) {
-          attrs.push(`${attr.name}="${attr.value}"`);
-        }
-        return attrs.join(' ') || '(no-attrs)';
-      })
-      .join(' || ')
-  );
-  console.log(`[E2E][flt-semantics-attrs] ${fltAttrs || '(none found)'}`);
-
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
-  const axTree = await page.accessibility.snapshot({ interestingOnly: true });
-  console.log(`[E2E][ax-tree] ${JSON.stringify(axTree)?.substring(0, 2000) ?? '(null)'}`);
-
-  // Confirm sign-in succeeded by waiting for the SignInScreen email textbox to become
-  // detached. Flutter removes flt-semantics nodes when widgets leave the widget tree, so
-  // the email input's semantic node disappears the moment the route transitions to HomeScreen.
-  // This is more reliable than any positive selector because it does not depend on knowing
-  // the exact aria-label or role Flutter assigns to HomeScreen elements.
-  await page.getByRole('textbox', { name: /email/i })
-    .waitFor({ state: 'detached', timeout: 26_000 });
+  // Confirm HomeScreen by waiting for the active bottom-nav tab.
+  //
+  // Flutter web does NOT write aria-label as HTML attributes (confirmed: querySelectorAll
+  // '[aria-label]' returns 0 results on HomeScreen). Accessible names go through the
+  // browser DevTools Protocol only. BUT: flt-semantics elements DO carry other HTML
+  // attributes — role, tabindex, aria-current, flt-tappable.
+  //
+  // CI diagnostic dump confirmed the BottomNavigationBar renders as:
+  //   flt-semantics[role="button"][aria-current="true"]   — Programs (selected)
+  //   flt-semantics[role="button"][aria-current="false"]  — Analytics
+  //   flt-semantics[role="button"][aria-current="false"]  — Profile
+  //
+  // aria-current="true" is absent on SignInScreen and appears immediately when HomeScreen
+  // renders, making it the correct positive confirmation that sign-in succeeded.
+  await page.locator('[aria-current="true"]').waitFor({ state: 'attached', timeout: 30_000 });
 }
