@@ -86,8 +86,25 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // reliable in headless CI than clicking the flt-semantics button element.
   await page.keyboard.press('Enter');
 
-  // Flutter puts text in aria-label, not as DOM text content — getByText() never matches
-  // flt-semantics elements. Use an attribute selector instead.
-  // state:'attached' because flt-semantics elements can be CSS-clipped while still in DOM.
-  await page.locator('[aria-label="My Programs"]').waitFor({ state: 'attached', timeout: 30_000 });
+  // Wait 4s for Flutter to navigate to HomeScreen, then dump every [aria-label] element
+  // so CI output shows the exact DOM structure. This diagnostic is kept permanently so
+  // we can see what labels are available on HomeScreen in any future failure.
+  await page.waitForTimeout(4_000);
+  const ariaSnapshot = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[aria-label]'))
+      .map(el => `${el.tagName.toLowerCase()}[role=${el.getAttribute('role')}]="${el.getAttribute('aria-label')}"`)
+      .join(' | ')
+  );
+  console.log(`[E2E][aria-snapshot] ${ariaSnapshot || '(none found)'}`);
+
+  // Confirm we are on HomeScreen. Three selectors are tried simultaneously with a CSS
+  // comma-OR; the first to appear wins:
+  //   1. [aria-label="My Programs"]   — AppBar title (Flutter Semantics(header:true) label)
+  //   2. [aria-label="Analytics"]     — BottomNavBar "Analytics" tab (confirmed by analytics test)
+  //   3. [aria-label="Programs"]      — BottomNavBar "Programs" tab
+  // Firestore Listen/channel requests appearing in prior CI runs confirmed the app DOES
+  // reach HomeScreen; the original failure was a selector mismatch, not a navigation issue.
+  await page.locator('[aria-label="My Programs"], [aria-label="Analytics"], [aria-label="Programs"]')
+    .first()
+    .waitFor({ state: 'attached', timeout: 26_000 });
 }
