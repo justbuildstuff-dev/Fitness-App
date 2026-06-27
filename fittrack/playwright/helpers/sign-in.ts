@@ -29,8 +29,13 @@ export async function signIn(page: Page, email: string, password: string): Promi
   await page.getByRole('textbox', { name: /email/i }).click();
   await page.keyboard.type(email);
 
-  // Tab moves Flutter focus to the password field (obscureText:true → type="password")
+  // Tab moves Flutter focus to the password field asynchronously (Dart→JS bridge).
+  // Typing immediately after Tab races with Flutter's focus change — partial password
+  // characters land in the email field before focus transfers.
+  // Wait for the password editing input to appear before typing; that confirms Flutter
+  // has finished processing Tab and focused the password field.
   await page.keyboard.press('Tab');
+  await page.locator('input[type="password"]').waitFor({ timeout: 10_000 });
   await page.keyboard.type(password);
 
   // Click Sign In button (flt-semantics with role="button" and aria-label="Sign In")
