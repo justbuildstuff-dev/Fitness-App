@@ -14,11 +14,13 @@ test.describe('Analytics Screen', () => {
     // so the Analytics Pro gate is open.
 
     // Navigate to Analytics via bottom navigation tab.
-    // Flutter web renders BottomNavigationBar items as flt-semantics[role="button"].
-    // getByText() finds a child text node that has pointer-events:none — not clickable.
-    // getByRole('button', { name }) uses the accessibility tree's computed accessible
-    // name (which IS "Analytics") and clicks the tappable parent button element.
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    // getByRole finds node-30 (flt-semantics[role="button"][aria-current="false"]).
+    // Use dispatchEvent('click') rather than .click(): Playwright's .click() enters a
+    // 60-second retry loop when Flutter rebuilds the flt-semantics tree after navigation
+    // (route pushState causes the outer actionability loop to retry indefinitely).
+    // dispatchEvent fires the DOM 'click' event directly; Flutter's flt-tappable
+    // addEventListener('click') handler fires and triggers the Dart tap callback.
+    await page.getByRole('button', { name: 'Analytics' }).dispatchEvent('click');
 
     // The Analytics screen should load without crash or blank screen
     await expect(page.getByText('Analytics').first()).toBeVisible({ timeout: 15_000 });

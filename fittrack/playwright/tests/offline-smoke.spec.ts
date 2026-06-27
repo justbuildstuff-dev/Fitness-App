@@ -15,10 +15,12 @@ test.describe('PWA Offline Smoke', () => {
     await signIn(page, EMAIL, PASSWORD);
 
     // Verify HomeScreen is loaded — check AppBar title text OR active nav tab.
-    // Using .or() so the assertion passes if EITHER indicator is visible, making
-    // it robust across mobile (aria-current set) and desktop (text node visible).
+    // .or() with .first() avoids strict-mode violations when both locators match:
+    // CI shows [aria-current="true"] (nav button) AND <h2>My Programs</h2> (title)
+    // are both visible simultaneously, so without .first() toBeVisible() would fail
+    // with "resolved to 2 elements".
     await expect(
-      page.locator('[aria-current="true"]').or(page.getByText('My Programs'))
+      page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
     ).toBeVisible({ timeout: 15_000 });
 
     // Wait for the service worker to activate and claim this page.
@@ -76,7 +78,7 @@ test.describe('PWA Offline Smoke', () => {
     // offline reload (e.g. renderer crash navigated to chrome-error://).
     await page.reload({ timeout: 20_000 }).catch(() => {});
     await expect(
-      page.locator('[aria-current="true"]').or(page.getByText('My Programs'))
+      page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
     ).toBeVisible({ timeout: 20_000 });
 
     await page.screenshot({ path: `test-results/${testInfo.title}/04-reconnected.png` }).catch(() => {});
