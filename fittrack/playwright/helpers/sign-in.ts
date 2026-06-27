@@ -9,32 +9,35 @@ import { Page } from '@playwright/test';
  * (SemanticsBinding.instance.ensureSemantics() at startup), so flt-semantics nodes
  * are populated immediately — no Tab press or Chromium flag required.
  *
- * Text editing fields: Flutter's text editing host creates real <input> elements in
- * <flt-text-editing-host> when a field is focused. The password field uses type="password".
+ * IMPORTANT — filling Flutter text fields:
+ * locator.fill() dispatches `input` events on the flt-semantics element, which Flutter
+ * does not translate to text controller changes. The correct sequence is:
+ *   1. click() the flt-semantics textbox — Flutter focuses the field and creates a real
+ *      <input> in <flt-text-editing-host> to receive keyboard input.
+ *   2. page.keyboard.type(text) — keyboard events route to the focused DOM element
+ *      (the flt-text-editing-host input), which Flutter DOES read.
  */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/');
 
-  // The web build is compiled with --dart-define=FORCE_SEMANTICS=true, which calls
-  // SemanticsBinding.instance.ensureSemantics() at startup. This means flt-semantics
-  // nodes are populated as soon as Flutter first renders — no Tab press required.
-  // Wait for at least one node to confirm the app has rendered and semantics are live.
+  // FORCE_SEMANTICS=true at build time ensures flt-semantics nodes are live from first
+  // render. Wait for any node to confirm the app has painted and semantics are active.
   await page.waitForSelector('flt-semantics', { timeout: 45_000 });
 
-  // Click the Email field and fill it. Flutter creates a real <input> in the text editing
-  // host when focused. We target by ARIA role since Flutter sets aria-label from labelText.
-  const emailField = page.getByRole('textbox', { name: /email/i });
-  await emailField.waitFor({ timeout: 10_000 });
-  await emailField.fill(email);
+  // Click email field → Flutter focuses it, creates flt-text-editing-host <input>.
+  // Then type via keyboard — goes to the focused flt-text-editing-host input.
+  await page.getByRole('textbox', { name: /email/i }).click();
+  await page.keyboard.type(email);
 
-  // Fill password field — obscureText:true renders the editing input as type="password"
-  const passwordInput = page.locator('input[type="password"]');
-  await passwordInput.waitFor({ timeout: 10_000 });
-  await passwordInput.fill(password);
+  // Tab moves Flutter focus to the password field (obscureText:true → type="password")
+  await page.keyboard.press('Tab');
+  await page.keyboard.type(password);
 
-  // Click the Sign In button (exposed via flt-semantics role="button")
+  // Click Sign In button (flt-semantics with role="button" and aria-label="Sign In")
   await page.getByRole('button', { name: /sign in/i }).click();
 
-  // Wait for the home screen — "My Programs" text in the semantics tree confirms sign-in
-  await page.getByText('My Programs').waitFor({ timeout: 25_000 });
+  // Flutter puts text in aria-label, not as DOM text content — getByText() never matches
+  // flt-semantics elements. Use an attribute selector instead.
+  // state:'attached' because flt-semantics elements can be CSS-clipped while still in DOM.
+  await page.locator('[aria-label="My Programs"]').waitFor({ state: 'attached', timeout: 25_000 });
 }

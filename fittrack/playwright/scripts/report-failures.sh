@@ -37,7 +37,12 @@ if [ ! -f "$RESULTS_FILE" ]; then
 fi
 
 # ─── Parse results via jq ────────────────────────────────────────────────────
-TOTAL=$(jq '.stats.expected // 0' "$RESULTS_FILE")
+# stats.expected = tests that ran as expected (passed / expected failures)
+# stats.unexpected = tests that did NOT run as expected (actual failures)
+# TOTAL is the count of all tests that ran — used to distinguish "crash" (0 ran)
+# from "failures" (>0 ran but some failed). stats.expected alone equals 0 when
+# ALL tests fail, which was incorrectly triggering the crash guard.
+TOTAL=$(jq '(.stats.expected // 0) + (.stats.unexpected // 0) + (.stats.flaky // 0)' "$RESULTS_FILE")
 PASSED=$(jq '.stats.expected // 0' "$RESULTS_FILE")
 FAILED=$(jq '.stats.unexpected // 0' "$RESULTS_FILE")
 SKIPPED=$(jq '.stats.skipped // 0' "$RESULTS_FILE")
