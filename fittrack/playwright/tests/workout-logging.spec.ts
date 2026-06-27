@@ -17,16 +17,19 @@ test.describe('Workout Set Logging', () => {
 
   test('navigates to seeded workout and checks off a set', async ({ page }, testInfo) => {
     // --- NAVIGATE TO WORKOUT ---
-    // Programs screen shows the seeded E2E Test Program
-    await page.getByText(PROGRAM_NAME).click();
+    // Programs screen shows the seeded E2E Test Program.
+    // Use getByRole('button') to find the tappable list-tile element via the
+    // accessibility tree. getByText().click() fails because Flutter text nodes
+    // inside list tiles have pointer-events:none — only the parent button is clickable.
+    await page.getByRole('button', { name: PROGRAM_NAME }).click();
     await expect(page.getByText(WEEK_NAME)).toBeVisible({ timeout: 10_000 });
 
     // Navigate into Week 1
-    await page.getByText(WEEK_NAME).click();
+    await page.getByRole('button', { name: WEEK_NAME }).click();
     await expect(page.getByText(WORKOUT_NAME)).toBeVisible({ timeout: 10_000 });
 
     // Navigate into E2E Workout
-    await page.getByText(WORKOUT_NAME).click();
+    await page.getByRole('button', { name: WORKOUT_NAME }).click();
     await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-workout-open.png` });
@@ -53,12 +56,15 @@ test.describe('Workout Set Logging', () => {
     await page.screenshot({ path: `test-results/${testInfo.title}/03-set-checked.png` });
 
     // --- VERIFY PERSISTENCE ---
-    // Reload the page and navigate back to verify the checked state persisted
+    // Reload the page and navigate back to verify the checked state persisted.
+    // After reload, wait for the Programs screen to appear, then navigate using
+    // getByRole('button') so we click the tappable list-tile (not the text node).
     await page.reload();
-    await page.waitForSelector('text=My Programs', { timeout: 20_000 });
-    await page.getByText(PROGRAM_NAME).click();
-    await page.getByText(WEEK_NAME).click();
-    await page.getByText(WORKOUT_NAME).click();
+    await page.waitForSelector('flt-semantics', { timeout: 20_000 });
+    await expect(page.getByText('My Programs')).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('button', { name: PROGRAM_NAME }).click();
+    await page.getByRole('button', { name: WEEK_NAME }).click();
+    await page.getByRole('button', { name: WORKOUT_NAME }).click();
     await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });
 
     // The checkbox should still be checked after reload

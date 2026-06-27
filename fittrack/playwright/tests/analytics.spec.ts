@@ -13,8 +13,12 @@ test.describe('Analytics Screen', () => {
     // The test user has isProOverride:true seeded in global-setup,
     // so the Analytics Pro gate is open.
 
-    // Navigate to Analytics via bottom navigation tab
-    await page.getByText('Analytics', { exact: true }).click();
+    // Navigate to Analytics via bottom navigation tab.
+    // Flutter web renders BottomNavigationBar items as flt-semantics[role="button"].
+    // getByText() finds a child text node that has pointer-events:none — not clickable.
+    // getByRole('button', { name }) uses the accessibility tree's computed accessible
+    // name (which IS "Analytics") and clicks the tappable parent button element.
+    await page.getByRole('button', { name: 'Analytics' }).click();
 
     // The Analytics screen should load without crash or blank screen
     await expect(page.getByText('Analytics').first()).toBeVisible({ timeout: 15_000 });

@@ -118,6 +118,7 @@ class ProgramsScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateProgram(context),
+        tooltip: 'Add',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: const GlobalBottomNavBar(
