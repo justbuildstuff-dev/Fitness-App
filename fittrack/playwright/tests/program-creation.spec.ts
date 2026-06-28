@@ -11,20 +11,24 @@ const WORKOUT_NAME = 'E2E Push Day';
 /**
  * Tap a Flutter flt-semantics list tile by text content.
  *
- * Flutter ListTile widgets with onTap render as flt-semantics[flt-tappable] but
- * may have role="listitem" (not role="button") — so getByRole('button', { name })
- * never resolves and times out. Selecting by [flt-tappable] + hasText is role-agnostic
- * and finds the tappable container regardless of its ARIA role.
+ * Strategy: wait for the text element to be visible (handles async Firestore loading),
+ * then dispatch a click on it. The click event bubbles up to the flt-tappable
+ * ListTile container's click listener, triggering the Dart onTap callback.
  *
- * dispatchEvent('click') is used instead of .click() to avoid Playwright's outer
- * actionability retry loop: after Flutter navigation the semantic tree rebuilds,
- * which invalidates the element reference and causes .click() to re-find and
- * re-click indefinitely until the 60-second test timeout fires.
+ * Using getByText instead of locator('flt-semantics[flt-tappable]', { hasText }) because
+ * ListTile widgets with trailing IconButtons (edit/delete) may not get flt-tappable on
+ * their outer semantics container — Flutter may omit it when interactive children are
+ * present. getByText finds the title text flt-semantics directly; dispatchEvent('click')
+ * bubbles to whichever ancestor has the click listener.
+ *
+ * dispatchEvent is used instead of .click() to avoid Playwright's actionability retry
+ * loop: after Flutter navigation the semantics tree rebuilds, which invalidates element
+ * references and causes .click() to retry indefinitely until the 60-second timeout.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
-  await page.locator('flt-semantics[flt-tappable]', { hasText: text })
-    .first()
-    .dispatchEvent('click');
+  const el = page.getByText(text).first();
+  await el.waitFor({ state: 'visible', timeout: 15_000 });
+  await el.dispatchEvent('click');
 }
 
 /**
@@ -34,10 +38,17 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
  * Flutter web creates a real DOM <input> inside <flt-text-editing-host> when a
  * text field is focused. Without this wait, keyboard.type() may fire before the
  * input element is ready, causing some or all characters to be dropped.
+ *
+ * dispatchEvent('click') is used instead of .click(): on screens reached via Flutter
+ * navigation (pushState), flt-glass-pane covers the semantics overlay. Playwright's
+ * .click() dispatches a pointer event through the glass-pane which intercepts it before
+ * Flutter can process focus, so no flt-text-editing-host <input> is created.
+ * dispatchEvent fires the DOM 'click' event directly on the flt-semantics textbox node,
+ * bypassing the glass-pane interception, and Flutter creates the editing host normally.
  */
 async function fillTextField(page: import('@playwright/test').Page, text: string): Promise<void> {
-  await page.getByRole('textbox').first().click();
-  await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 5_000 });
+  await page.getByRole('textbox').first().dispatchEvent('click');
+  await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 10_000 });
   await page.keyboard.type(text);
 }
 

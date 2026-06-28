@@ -13,20 +13,24 @@ const EXERCISE_NAME = 'Bench Press';
 /**
  * Tap a Flutter flt-semantics list tile by text content.
  *
- * Flutter ListTile widgets with onTap render as flt-semantics[flt-tappable] but
- * may have role="listitem" (not role="button") — so getByRole('button', { name })
- * never resolves and times out. Selecting by [flt-tappable] + hasText is role-agnostic
- * and finds the tappable container regardless of its ARIA role.
+ * Strategy: wait for the text element to be visible (handles async Firestore loading),
+ * then dispatch a click on it. The click event bubbles up to the flt-tappable
+ * ListTile container's click listener, triggering the Dart onTap callback.
  *
- * dispatchEvent('click') is used instead of .click() to avoid Playwright's outer
- * actionability retry loop: after Flutter navigation the semantic tree rebuilds,
- * which invalidates the element reference and causes .click() to re-find and
- * re-click indefinitely until the 60-second test timeout fires.
+ * Using getByText instead of locator('flt-semantics[flt-tappable]', { hasText }) because
+ * ListTile widgets with trailing IconButtons (edit/delete) may not get flt-tappable on
+ * their outer semantics container — Flutter may omit it when interactive children are
+ * present. getByText finds the title text flt-semantics directly; dispatchEvent('click')
+ * bubbles to whichever ancestor has the click listener.
+ *
+ * dispatchEvent is used instead of .click() to avoid Playwright's actionability retry
+ * loop: after Flutter navigation the semantics tree rebuilds, which invalidates element
+ * references and causes .click() to retry indefinitely until the 60-second timeout.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
-  await page.locator('flt-semantics[flt-tappable]', { hasText: text })
-    .first()
-    .dispatchEvent('click');
+  const el = page.getByText(text).first();
+  await el.waitFor({ state: 'visible', timeout: 15_000 });
+  await el.dispatchEvent('click');
 }
 
 test.describe('Workout Set Logging', () => {
