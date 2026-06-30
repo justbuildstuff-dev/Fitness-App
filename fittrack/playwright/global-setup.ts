@@ -37,6 +37,7 @@ export default async function globalSetup(): Promise<void> {
     name: 'E2E Test Program',
     createdAt: new Date().toISOString(),
     weekCount: 1,
+    isArchived: false,  // Required: getPrograms() queries .where('isArchived', isEqualTo: false)
   });
 
   await seedFirestoreDoc(`users/${uid}/programs/${programId}/weeks/${weekId}`, {

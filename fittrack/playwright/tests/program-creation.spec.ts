@@ -39,15 +39,21 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
  * text field is focused. Without this wait, keyboard.type() may fire before the
  * input element is ready, causing some or all characters to be dropped.
  *
- * dispatchEvent('click') is used instead of .click(): on screens reached via Flutter
- * navigation (pushState), flt-glass-pane covers the semantics overlay. Playwright's
- * .click() dispatches a pointer event through the glass-pane which intercepts it before
- * Flutter can process focus, so no flt-text-editing-host <input> is created.
- * dispatchEvent fires the DOM 'click' event directly on the flt-semantics textbox node,
- * bypassing the glass-pane interception, and Flutter creates the editing host normally.
+ * .click() is used (not dispatchEvent): Flutter text fields are NOT flt-tappable — they
+ * rely on pointer events routed through flt-glass-pane (not DOM click listeners). A DOM
+ * 'click' event dispatched directly on the flt-semantics textbox has no listener and
+ * never reaches Flutter's gesture system.
+ *
+ * waitForTimeout(400) before click: Flutter route animations run ~300ms by default.
+ * If we click during an animation, Flutter's gesture recognizer suppresses the tap.
+ * Waiting 400ms after the screen text becomes visible ensures the animation has settled.
  */
 async function fillTextField(page: import('@playwright/test').Page, text: string): Promise<void> {
-  await page.getByRole('textbox').first().dispatchEvent('click');
+  const textbox = page.getByRole('textbox').first();
+  await textbox.waitFor({ state: 'visible', timeout: 10_000 });
+  // Wait for Flutter route animation to finish before sending pointer events.
+  await page.waitForTimeout(400);
+  await textbox.click();
   await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 10_000 });
   await page.keyboard.type(text);
 }

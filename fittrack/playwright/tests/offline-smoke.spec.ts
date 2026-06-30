@@ -10,9 +10,10 @@ test.describe('PWA Offline Smoke', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'PWA service worker only in Chromium');
 
   test('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
-    // Extend timeout: sign-in (~8s) + SW wait (30s) + offline phase (15s) + reconnect
-    // check (20s) exceeds the default 60s. 120s gives headroom for all phases.
-    test.setTimeout(120_000);
+    // Extend timeout: sign-in (~3s) + HomeScreen wait (15s) + SW wait (30s) +
+    // offline phase (15s) + reconnect reload (20s) + HomeScreen check (20s) = ~103s.
+    // 150s gives comfortable headroom for CI variability.
+    test.setTimeout(150_000);
 
     // --- WARM THE SERVICE WORKER CACHE ---
     // Sign in first to ensure the service worker has cached the app shell.

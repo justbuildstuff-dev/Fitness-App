@@ -114,12 +114,10 @@ export async function signIn(page: Page, email: string, password: string): Promi
   ).catch(() => '(eval failed)');
   console.log(`[E2E][buttons-after-signin] ${buttonDump}`);
 
-  // Wait for HomeScreen's BottomNavigationBar to confirm route transition.
-  // On mobile (375px): aria-current is set on BottomNavBar flt-semantics items immediately.
-  // On desktop (1280px): aria-current may never appear — fall through after 15s so
-  // individual test steps can catch any remaining issue. 15s gives Flutter enough time
-  // to load Firestore data and render the full HomeScreen semantic tree.
+  // Brief wait to let Flutter begin the HomeScreen route transition.
+  // [aria-current] never reliably appears across viewports so we don't wait long;
+  // each individual test waits for its own first element (program title, nav button, etc.).
   await page.locator('[aria-current]')
-    .waitFor({ state: 'attached', timeout: 15_000 })
-    .catch(() => console.log('[E2E] aria-current not found in 15s; HomeScreen may render differently at this viewport'));
+    .waitFor({ state: 'attached', timeout: 1_000 })
+    .catch(() => {});
 }
