@@ -32,31 +32,21 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 }
 
 /**
- * Fill a Flutter web text field identified by its accessible label, then wait for
- * the flt-text-editing-host <input> to confirm focus is established before typing.
+ * Fill a Flutter web text field identified by its accessible label.
  *
- * Flutter web creates a real DOM <input> inside <flt-text-editing-host> when a
- * text field is focused. Without this wait, keyboard.type() may fire before the
- * input element is ready, causing some or all characters to be dropped.
+ * Primary strategy: the creation screens set autofocus: true on their name
+ * TextFormField. Flutter processes autofocus during the first layout cycle after
+ * the route is pushed, creating flt-text-editing-host <input> and calling
+ * element.focus() natively — no CDP click required. We wait for that input to
+ * appear before typing.
  *
- * WHY label-specific locator instead of getByRole('textbox').first():
- * After Flutter route navigation the exit-animation flt-semantics from the previous
- * screen remain in the DOM while transitioning out. getByRole('textbox').first() can
- * match one of those stale elements, whose bounding-box coordinates are either (0,0)
- * or off-screen. A label-specific locator targets the exact field we need and avoids
- * matching stale elements from the previous screen's exit animation.
+ * Fallback: if autofocus does not create the input within 5s (e.g. on the first
+ * screen where navigation was triggered by a synthetic dispatchEvent click),
+ * try page.mouse.click() at the field's centre, then a Tab cycle.
  *
- * WHY .click() primary strategy:
- * Playwright's .click() sends a CDP Input.dispatchMouseEvent at the element's
- * bounding-box centre — the same as a real mouse click — which fires a pointer event
- * on flt-glass-pane and triggers Flutter's focus handling. This creates
- * flt-text-editing-host <input>, confirming focus is established.
- *
- * WHY Tab fallback:
- * If the bounding box is not yet settled (rare: click fires during animation), the
- * pointer event misses the widget. Tab key navigation is handled directly by Flutter's
- * semantics engine and reliably cycles focus through text fields regardless of
- * animation state — confirmed working in sign-in.ts.
+ * Clearing pre-filled text: CreateWeekScreen pre-fills the name field with
+ * "Week N". Control+A selects all before keyboard.type() so the pre-filled value
+ * is replaced rather than appended.
  */
 async function fillTextField(
   page: import('@playwright/test').Page,
@@ -66,59 +56,42 @@ async function fillTextField(
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
 
-  const bbox = await textbox.boundingBox().catch(() => null);
-  if (!bbox) throw new Error(`[E2E] fillTextField: could not get bounding box for label=${String(label)}`);
-
-  const cx = bbox.x + bbox.width / 2;
-  const cy = bbox.y + bbox.height / 2;
-  console.log(`[E2E] fillTextField label=${String(label)} bbox=${JSON.stringify(bbox)} target=(${cx},${cy})`);
-
-  // Wait for no flt-semantics[flt-tappable] element at the click position.
-  // After Flutter route navigation, exit-animation flt-semantics[flt-tappable] elements
-  // (e.g., list tiles from the previous bottom sheet) can remain at this location
-  // until the animation completes. They intercept CDP mouse events, preventing
-  // flt-glass-pane from receiving the pointer event that focuses the text field.
-  // elementFromPoint returns the topmost hit-testable element at (cx, cy).
-  const tappableClear = await page.waitForFunction(
-    ([x, y]: number[]) => {
-      const el = document.elementFromPoint(x, y);
-      return !el?.closest('[flt-tappable]');
-    },
-    [cx, cy],
-    { timeout: 5_000 }
-  ).then(() => true).catch(() => false);
-  console.log(`[E2E] fillTextField: tappableClear=${tappableClear}`);
-
-  // 1500ms > Flutter's 300ms route animation with CI overhead safety margin.
-  await page.waitForTimeout(1_500);
-
-  // Click via page.mouse (raw viewport coordinates) so CDP mouse events go
-  // directly to flt-glass-pane — Flutter's primary pointer event receiver —
-  // without Playwright's element-targeting actionability layer that may re-check
-  // stale-element positions.
-  await page.mouse.click(cx, cy);
-  const clickWorked = await page.locator('flt-text-editing-host input')
-    .waitFor({ state: 'attached', timeout: 3_000 })
+  // Primary: wait for autofocus to create flt-text-editing-host input.
+  // Flutter's autofocus calls element.focus() natively after the route animation
+  // settles, giving the browser keyboard focus without a CDP click.
+  const autoFocused = await page.locator('flt-text-editing-host input')
+    .waitFor({ state: 'attached', timeout: 5_000 })
     .then(() => true).catch(() => false);
+  console.log(`[E2E] fillTextField label=${String(label)} autoFocused=${autoFocused}`);
 
-  if (!clickWorked) {
-    // Click did not establish focus. Tab cycles through Flutter's focusable
-    // elements; text fields create flt-text-editing-host input when focused
-    // (confirmed working in sign-in.ts).
-    console.log('[E2E] click did not focus textbox; trying Tab cycle');
-    for (let i = 0; i < 5; i++) {
-      await page.keyboard.press('Tab');
-      const found = await page.locator('flt-text-editing-host input')
-        .waitFor({ state: 'attached', timeout: 1_000 })
-        .then(() => true).catch(() => false);
-      if (found) {
-        console.log(`[E2E] Tab focused textbox on attempt ${i + 1}`);
-        break;
+  if (!autoFocused) {
+    // Autofocus did not create the input — fall back to CDP mouse click.
+    const bbox = await textbox.boundingBox().catch(() => null);
+    if (!bbox) throw new Error(`[E2E] fillTextField: could not get bounding box for label=${String(label)}`);
+    const cx = bbox.x + bbox.width / 2;
+    const cy = bbox.y + bbox.height / 2;
+    console.log(`[E2E] fillTextField: clicking at (${cx},${cy})`);
+
+    await page.mouse.click(cx, cy);
+    const clickWorked = await page.locator('flt-text-editing-host input')
+      .waitFor({ state: 'attached', timeout: 3_000 })
+      .then(() => true).catch(() => false);
+
+    if (!clickWorked) {
+      console.log('[E2E] click did not focus textbox; trying Tab cycle');
+      for (let i = 0; i < 5; i++) {
+        await page.keyboard.press('Tab');
+        const found = await page.locator('flt-text-editing-host input')
+          .waitFor({ state: 'attached', timeout: 1_000 })
+          .then(() => true).catch(() => false);
+        if (found) { console.log(`[E2E] Tab focused textbox on attempt ${i + 1}`); break; }
       }
+      await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 5_000 });
     }
-    await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 5_000 });
   }
 
+  // Select any pre-filled text then type, so pre-filled values are replaced.
+  await page.keyboard.press('Control+A');
   await page.keyboard.type(text);
 }
 

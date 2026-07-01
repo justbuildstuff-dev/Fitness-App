@@ -130,6 +130,7 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
             // Week Name
             TextFormField(
               controller: _nameController,
+              autofocus: true,
               textInputAction: TextInputAction.next,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(

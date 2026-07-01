@@ -33,6 +33,30 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
   await el.dispatchEvent('click');
 }
 
+/**
+ * Tap the program card on the Programs screen.
+ *
+ * The program name Text widget is rendered on canvas only — it is NOT present in
+ * the flt-semantics accessibility tree, so getByText(programName) cannot find it.
+ * The trailing Edit/Delete IconButtons ARE in the tree. We wait for "Edit program"
+ * to confirm the card has rendered, get its bounding box, then click 120px to the
+ * left — which lands in the program name/icon area of the ListTile.
+ *
+ * page.mouse.click() sends a trusted CDP pointer event to flt-glass-pane, which
+ * Flutter's hit-tester routes to the ListTile's onTap callback. This works here
+ * because signIn() already established trusted user activation via .click().
+ */
+async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
+  const editBtn = page.getByText('Edit program').first();
+  await editBtn.waitFor({ state: 'visible', timeout: 15_000 });
+  const bbox = await editBtn.boundingBox();
+  if (!bbox) throw new Error('[E2E] Could not get bounding box for "Edit program" button');
+  const tapX = Math.max(20, bbox.x - 120);
+  const tapY = bbox.y + bbox.height / 2;
+  console.log(`[E2E] tapProgramCard: clicking at (${tapX}, ${tapY}) (edit button at x=${bbox.x})`);
+  await page.mouse.click(tapX, tapY);
+}
+
 test.describe('Workout Set Logging', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, EMAIL, PASSWORD);
@@ -75,7 +99,8 @@ test.describe('Workout Set Logging', () => {
 
     // --- NAVIGATE TO WORKOUT ---
     // Programs screen shows the seeded E2E Test Program.
-    await tapListTile(page, PROGRAM_NAME);
+    // Program name is canvas-only (not in flt-semantics); use tapProgramCard.
+    await tapProgramCard(page);
     await expect(page.getByText(WEEK_NAME)).toBeVisible({ timeout: 10_000 });
 
     // Navigate into Week 1
@@ -117,7 +142,7 @@ test.describe('Workout Set Logging', () => {
     await page.reload();
     await page.waitForSelector('flt-semantics', { timeout: 20_000 });
     await expect(page.getByText('My Programs')).toBeVisible({ timeout: 20_000 });
-    await tapListTile(page, PROGRAM_NAME);
+    await tapProgramCard(page);
     await tapListTile(page, WEEK_NAME);
     await tapListTile(page, WORKOUT_NAME);
     await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });

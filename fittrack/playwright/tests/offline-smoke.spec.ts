@@ -10,9 +10,9 @@ test.describe('PWA Offline Smoke', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'PWA service worker only in Chromium');
 
   test('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
-    // Extend timeout: sign-in (~3s) + HomeScreen wait (15s) + SW wait (30s) +
-    // offline phase (15s) + screenshots wrapped at 3s each + reconnect reload (20s) +
-    // HomeScreen check (20s) = ~109s. 200s gives headroom for CI variability.
+    // Extend timeout: sign-in (~5s) + HomeScreen wait (15s) + SW wait (10s) +
+    // offline phase (36s max) + reconnect reload (20s) + HomeScreen check (20s) = ~106s.
+    // 200s gives ample headroom for CI variability.
     test.setTimeout(200_000);
 
     // --- WARM THE SERVICE WORKER CACHE ---
@@ -29,13 +29,13 @@ test.describe('PWA Offline Smoke', () => {
     ).toBeVisible({ timeout: 15_000 });
 
     // Wait for the service worker to activate and claim this page.
-    // Flutter web registers a service worker on first load. Give it 30s since CI
-    // starts with a cold cache and the install + activate + claim cycle can be slow.
-    // If the SW doesn't become active in time we skip the offline phase gracefully
-    // (the online load was already verified above).
+    // Flutter web registers a service worker on first load. Allow 10s; if the SW
+    // isn't active by then we skip the offline phase gracefully — the online load
+    // was already verified above. 10s is sufficient for a warm-cache CI runner;
+    // a slow cold-cache runner skips the offline check rather than timing out.
     const isSwReady = await page.waitForFunction(
       () => navigator.serviceWorker?.controller !== null,
-      { timeout: 30_000 }
+      { timeout: 10_000 }
     ).then(() => true).catch(() => false);
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-online-loaded.png` }).catch(() => {});

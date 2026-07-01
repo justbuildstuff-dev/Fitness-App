@@ -99,6 +99,7 @@ class _CreateProgramScreenState extends State<CreateProgramScreen> {
             // Program Name
             TextFormField(
               controller: _nameController,
+              autofocus: true,
               textInputAction: TextInputAction.next,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(

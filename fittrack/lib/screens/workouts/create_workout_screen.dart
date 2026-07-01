@@ -112,6 +112,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
             // Workout Name
             TextFormField(
               controller: _nameController,
+              autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Workout Name *',
                 hintText: 'e.g., Push Day, Upper Body, Cardio',
