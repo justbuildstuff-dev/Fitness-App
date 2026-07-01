@@ -34,19 +34,18 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Fill a Flutter web text field identified by its accessible label.
  *
- * Primary strategy: the creation screens set autofocus: true on their name
- * TextFormField. Flutter processes autofocus during the first layout cycle after
- * the route is pushed, creating flt-text-editing-host <input> and calling
- * element.focus() natively — no CDP click required. We wait for that input to
- * appear before typing.
+ * locator.click() sends a CDP click directly to the flt-semantics[role="textbox"]
+ * element. Flutter's accessibility layer responds by focusing the field and creating
+ * a real <input> in <flt-text-editing-host> to receive keyboard events. This is the
+ * same mechanism used in sign-in.ts for the email field and is the only approach that
+ * reliably focuses Flutter text fields in headless CanvasKit CI.
  *
- * Fallback: if autofocus does not create the input within 5s (e.g. on the first
- * screen where navigation was triggered by a synthetic dispatchEvent click),
- * try page.mouse.click() at the field's centre, then a Tab cycle.
+ * page.mouse.click() at screen coordinates (the previous approach) targets the canvas
+ * / flt-glass-pane and does NOT route through Flutter's focus/text-editing machinery
+ * in headless CI, so flt-text-editing-host <input> is never created.
  *
- * Clearing pre-filled text: CreateWeekScreen pre-fills the name field with
- * "Week N". Control+A selects all before keyboard.type() so the pre-filled value
- * is replaced rather than appended.
+ * Control+A before typing clears any pre-filled value (e.g. "Week N" in
+ * CreateWeekScreen) so the field contains only the typed text.
  */
 async function fillTextField(
   page: import('@playwright/test').Page,
@@ -55,42 +54,7 @@ async function fillTextField(
 ): Promise<void> {
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
-
-  // Primary: wait for autofocus to create flt-text-editing-host input.
-  // Flutter's autofocus calls element.focus() natively after the route animation
-  // settles, giving the browser keyboard focus without a CDP click.
-  const autoFocused = await page.locator('flt-text-editing-host input')
-    .waitFor({ state: 'attached', timeout: 5_000 })
-    .then(() => true).catch(() => false);
-  console.log(`[E2E] fillTextField label=${String(label)} autoFocused=${autoFocused}`);
-
-  if (!autoFocused) {
-    // Autofocus did not create the input — fall back to CDP mouse click.
-    const bbox = await textbox.boundingBox().catch(() => null);
-    if (!bbox) throw new Error(`[E2E] fillTextField: could not get bounding box for label=${String(label)}`);
-    const cx = bbox.x + bbox.width / 2;
-    const cy = bbox.y + bbox.height / 2;
-    console.log(`[E2E] fillTextField: clicking at (${cx},${cy})`);
-
-    await page.mouse.click(cx, cy);
-    const clickWorked = await page.locator('flt-text-editing-host input')
-      .waitFor({ state: 'attached', timeout: 3_000 })
-      .then(() => true).catch(() => false);
-
-    if (!clickWorked) {
-      console.log('[E2E] click did not focus textbox; trying Tab cycle');
-      for (let i = 0; i < 5; i++) {
-        await page.keyboard.press('Tab');
-        const found = await page.locator('flt-text-editing-host input')
-          .waitFor({ state: 'attached', timeout: 1_000 })
-          .then(() => true).catch(() => false);
-        if (found) { console.log(`[E2E] Tab focused textbox on attempt ${i + 1}`); break; }
-      }
-      await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 5_000 });
-    }
-  }
-
-  // Select any pre-filled text then type, so pre-filled values are replaced.
+  await textbox.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type(text);
 }

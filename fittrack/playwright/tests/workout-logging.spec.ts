@@ -36,59 +36,24 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Tap the program card on the Programs screen.
  *
- * The program name Text widget is rendered on canvas only — it is NOT present in
- * the flt-semantics accessibility tree, so getByText(programName) cannot find it.
- * The trailing Edit/Delete IconButtons ARE in the tree ("Edit program", "Delete program").
+ * The program name Text widget is rendered on canvas only and is absent from the
+ * flt-semantics accessibility tree. The trailing Edit/Delete IconButtons ARE in the
+ * tree but Flutter does not expose ListTile.onTap as a flt-tappable semantics node
+ * when interactive trailing children are present (confirmed by CI diagnostic: the
+ * ListTile container appears as role="group" tappable=false).
  *
- * Strategy: walk the DOM upward from the "Edit program" button node, looking for the
- * first flt-semantics ancestor that has flt-tappable but is NOT role="button". That
- * node is the ListTile's onTap semantic container. Dispatching a click event directly
- * on it triggers the Dart onTap callback (navigation to program detail), bypassing
- * the coordinate-based approach which fails in headless CanvasKit because CDP mouse
- * events on flt-glass-pane coordinates do not reliably reach Flutter's gesture handler.
- *
- * All ancestor nodes are logged to CI output so that if no tappable non-button ancestor
- * is found, the next debug iteration can see the exact flt-semantics tree shape.
+ * Fix: _ProgramCard is wrapped in Semantics(label: program.name, button: true,
+ * onTap: onTap) in programs_screen.dart. This creates a flt-semantics[role="button"
+ * flt-tappable] node with aria-label = program name, independently targetable by
+ * Playwright. The inner Edit/Delete buttons retain their own flt-tappable nodes
+ * (WCAG 4.1.2 compliant) — their click handlers call stopPropagation so activating
+ * them does not bubble up to the outer card button.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
-  await page.getByText('Edit program').first().waitFor({ state: 'visible', timeout: 15_000 });
-
-  const result = await page.evaluate((): { ok: boolean; reason?: string; ancestors?: string[] } => {
-    const allEls = Array.from(document.querySelectorAll('flt-semantics'));
-
-    // Find the "Edit program" icon button node (matched by text content or aria-label).
-    const target = allEls.find(
-      el => el.textContent?.trim() === 'Edit program' ||
-            el.getAttribute('aria-label') === 'Edit program',
-    );
-    if (!target) return { ok: false, reason: 'edit-button-not-found' };
-
-    // Walk up the DOM collecting diagnostics, clicking the first flt-tappable
-    // non-button ancestor (the ListTile's semantic tap container).
-    const ancestors: string[] = [];
-    let el: Element | null = target.parentElement;
-    while (el) {
-      const tag = el.tagName.toLowerCase();
-      if (tag === 'body') break;
-      if (tag === 'flt-semantics') {
-        const role = el.getAttribute('role') ?? '';
-        const tappable = el.hasAttribute('flt-tappable');
-        const text = (el.textContent ?? '').substring(0, 40).replace(/\n/g, '↵');
-        ancestors.push(`role="${role}" tappable=${tappable} text="${text}"`);
-        if (tappable && role !== 'button') {
-          el.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-          return { ok: true, ancestors };
-        }
-      }
-      el = el.parentElement;
-    }
-    return { ok: false, reason: 'no-tappable-non-button-ancestor', ancestors };
-  });
-
-  console.log(`[E2E] tapProgramCard: ok=${result.ok} ancestors=${JSON.stringify(result.ancestors ?? [])}`);
-  if (!result.ok) {
-    throw new Error(`[E2E] tapProgramCard: ${result.reason}`);
-  }
+  // Wait for the card to render (the Semantics button with program name appears
+  // only after Firestore delivers the seeded program to the programs stream).
+  await page.getByRole('button', { name: PROGRAM_NAME }).waitFor({ state: 'visible', timeout: 15_000 });
+  await page.getByRole('button', { name: PROGRAM_NAME }).dispatchEvent('click');
 }
 
 test.describe('Workout Set Logging', () => {

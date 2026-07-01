@@ -311,7 +311,19 @@ class _ProgramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    // Semantics wrapper exposes the card as a labelled button in the accessibility
+    // tree so Playwright E2E tests can target it with getByRole('button', {name}).
+    // Flutter does not expose ListTile.onTap as flt-tappable when the tile has
+    // interactive trailing children — only the trailing row gets flt-tappable.
+    // excludeSemantics is intentionally omitted so the inner edit/delete buttons
+    // remain individually reachable by screen readers (WCAG 4.1.2 compliance).
+    // Flutter's flt-tappable click handlers call stopPropagation, so activating
+    // an inner button does not bubble up to this outer card button.
+    return Semantics(
+      label: program.name,
+      button: true,
+      onTap: onTap,
+      child: Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         onTap: onTap,
@@ -402,6 +414,7 @@ class _ProgramCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
