@@ -38,23 +38,57 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
  *
  * The program name Text widget is rendered on canvas only — it is NOT present in
  * the flt-semantics accessibility tree, so getByText(programName) cannot find it.
- * The trailing Edit/Delete IconButtons ARE in the tree. We wait for "Edit program"
- * to confirm the card has rendered, get its bounding box, then click 120px to the
- * left — which lands in the program name/icon area of the ListTile.
+ * The trailing Edit/Delete IconButtons ARE in the tree ("Edit program", "Delete program").
  *
- * page.mouse.click() sends a trusted CDP pointer event to flt-glass-pane, which
- * Flutter's hit-tester routes to the ListTile's onTap callback. This works here
- * because signIn() already established trusted user activation via .click().
+ * Strategy: walk the DOM upward from the "Edit program" button node, looking for the
+ * first flt-semantics ancestor that has flt-tappable but is NOT role="button". That
+ * node is the ListTile's onTap semantic container. Dispatching a click event directly
+ * on it triggers the Dart onTap callback (navigation to program detail), bypassing
+ * the coordinate-based approach which fails in headless CanvasKit because CDP mouse
+ * events on flt-glass-pane coordinates do not reliably reach Flutter's gesture handler.
+ *
+ * All ancestor nodes are logged to CI output so that if no tappable non-button ancestor
+ * is found, the next debug iteration can see the exact flt-semantics tree shape.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
-  const editBtn = page.getByText('Edit program').first();
-  await editBtn.waitFor({ state: 'visible', timeout: 15_000 });
-  const bbox = await editBtn.boundingBox();
-  if (!bbox) throw new Error('[E2E] Could not get bounding box for "Edit program" button');
-  const tapX = Math.max(20, bbox.x - 120);
-  const tapY = bbox.y + bbox.height / 2;
-  console.log(`[E2E] tapProgramCard: clicking at (${tapX}, ${tapY}) (edit button at x=${bbox.x})`);
-  await page.mouse.click(tapX, tapY);
+  await page.getByText('Edit program').first().waitFor({ state: 'visible', timeout: 15_000 });
+
+  const result = await page.evaluate((): { ok: boolean; reason?: string; ancestors?: string[] } => {
+    const allEls = Array.from(document.querySelectorAll('flt-semantics'));
+
+    // Find the "Edit program" icon button node (matched by text content or aria-label).
+    const target = allEls.find(
+      el => el.textContent?.trim() === 'Edit program' ||
+            el.getAttribute('aria-label') === 'Edit program',
+    );
+    if (!target) return { ok: false, reason: 'edit-button-not-found' };
+
+    // Walk up the DOM collecting diagnostics, clicking the first flt-tappable
+    // non-button ancestor (the ListTile's semantic tap container).
+    const ancestors: string[] = [];
+    let el: Element | null = target.parentElement;
+    while (el) {
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'body') break;
+      if (tag === 'flt-semantics') {
+        const role = el.getAttribute('role') ?? '';
+        const tappable = el.hasAttribute('flt-tappable');
+        const text = (el.textContent ?? '').substring(0, 40).replace(/\n/g, '↵');
+        ancestors.push(`role="${role}" tappable=${tappable} text="${text}"`);
+        if (tappable && role !== 'button') {
+          el.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+          return { ok: true, ancestors };
+        }
+      }
+      el = el.parentElement;
+    }
+    return { ok: false, reason: 'no-tappable-non-button-ancestor', ancestors };
+  });
+
+  console.log(`[E2E] tapProgramCard: ok=${result.ok} ancestors=${JSON.stringify(result.ancestors ?? [])}`);
+  if (!result.ok) {
+    throw new Error(`[E2E] tapProgramCard: ${result.reason}`);
+  }
 }
 
 test.describe('Workout Set Logging', () => {
