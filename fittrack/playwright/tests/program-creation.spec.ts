@@ -65,27 +65,51 @@ async function fillTextField(
 ): Promise<void> {
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
-  // 600ms > Flutter's 300ms default route animation so exit-animation stale elements
-  // have moved off-screen before we attempt to click.
-  await page.waitForTimeout(600);
 
   const bbox = await textbox.boundingBox().catch(() => null);
-  console.log(`[E2E] fillTextField label=${String(label)} bbox=${JSON.stringify(bbox)}`);
+  if (!bbox) throw new Error(`[E2E] fillTextField: could not get bounding box for label=${String(label)}`);
 
-  await textbox.click();
+  const cx = bbox.x + bbox.width / 2;
+  const cy = bbox.y + bbox.height / 2;
+  console.log(`[E2E] fillTextField label=${String(label)} bbox=${JSON.stringify(bbox)} target=(${cx},${cy})`);
+
+  // Wait for no flt-semantics[flt-tappable] element at the click position.
+  // After Flutter route navigation, exit-animation flt-semantics[flt-tappable] elements
+  // (e.g., list tiles from the previous bottom sheet) can remain at this location
+  // until the animation completes. They intercept CDP mouse events, preventing
+  // flt-glass-pane from receiving the pointer event that focuses the text field.
+  // elementFromPoint returns the topmost hit-testable element at (cx, cy).
+  const tappableClear = await page.waitForFunction(
+    ([x, y]: number[]) => {
+      const el = document.elementFromPoint(x, y);
+      return !el?.closest('[flt-tappable]');
+    },
+    [cx, cy],
+    { timeout: 5_000 }
+  ).then(() => true).catch(() => false);
+  console.log(`[E2E] fillTextField: tappableClear=${tappableClear}`);
+
+  // 1500ms > Flutter's 300ms route animation with CI overhead safety margin.
+  await page.waitForTimeout(1_500);
+
+  // Click via page.mouse (raw viewport coordinates) so CDP mouse events go
+  // directly to flt-glass-pane — Flutter's primary pointer event receiver —
+  // without Playwright's element-targeting actionability layer that may re-check
+  // stale-element positions.
+  await page.mouse.click(cx, cy);
   const clickWorked = await page.locator('flt-text-editing-host input')
     .waitFor({ state: 'attached', timeout: 3_000 })
     .then(() => true).catch(() => false);
 
   if (!clickWorked) {
-    // Click did not establish focus (bounding box may have been stale during animation).
-    // Tab cycles through Flutter's focusable elements; text fields create
-    // flt-text-editing-host input when focused (confirmed working in sign-in.ts).
+    // Click did not establish focus. Tab cycles through Flutter's focusable
+    // elements; text fields create flt-text-editing-host input when focused
+    // (confirmed working in sign-in.ts).
     console.log('[E2E] click did not focus textbox; trying Tab cycle');
     for (let i = 0; i < 5; i++) {
       await page.keyboard.press('Tab');
       const found = await page.locator('flt-text-editing-host input')
-        .waitFor({ state: 'attached', timeout: 500 })
+        .waitFor({ state: 'attached', timeout: 1_000 })
         .then(() => true).catch(() => false);
       if (found) {
         console.log(`[E2E] Tab focused textbox on attempt ${i + 1}`);

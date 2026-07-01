@@ -116,6 +116,9 @@ function toFirestoreValue(value: unknown): unknown {
       ? { integerValue: String(value) }
       : { doubleValue: value };
   }
+  // Date objects → Firestore Timestamp so that orderBy('createdAt') queries use
+  // the correct type ordering and composite indexes apply as expected.
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
   if (typeof value === 'string') return { stringValue: value };
   if (Array.isArray(value)) {
     return { arrayValue: { values: value.map(toFirestoreValue) } };

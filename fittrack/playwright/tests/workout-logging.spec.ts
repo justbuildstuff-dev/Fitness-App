@@ -44,6 +44,17 @@ test.describe('Workout Set Logging', () => {
     // page.reload() persist check = ~90s worst case.
     test.setTimeout(120_000);
 
+    // Diagnostic: read seeded program document directly from the Firestore emulator REST API
+    // (bypassing Flutter and security rules) to confirm the data is present and correct.
+    // If this returns null/error, the seeding in global-setup failed or used the wrong path.
+    const uid = process.env.E2E_TEST_UID ?? '';
+    const docUrl = `http://localhost:8080/v1/projects/fitness-app-8505e/databases/(default)/documents/users/${uid}/programs/e2e-program-001`;
+    const directDoc = await fetch(docUrl, { headers: { 'Authorization': 'Bearer owner' } })
+      .then(r => r.ok ? r.json() : r.text())
+      .catch((e: Error) => ({ error: e.message }));
+    const fields = (directDoc as { fields?: Record<string, unknown> })?.fields;
+    console.log(`[E2E][direct-read] uid=${uid} name=${JSON.stringify(fields?.name)} isArchived=${JSON.stringify(fields?.isArchived)} createdAt=${JSON.stringify(fields?.createdAt)}`);
+
     // Wait for HomeScreen before attempting any navigation.
     // auth_provider calls user.reload() after sign-in to refresh emailVerified; it has a
     // 10s timeout, so HomeScreen navigation can begin up to ~11s after signIn() returns.

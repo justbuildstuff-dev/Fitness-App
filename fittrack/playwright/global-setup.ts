@@ -21,7 +21,7 @@ export default async function globalSetup(): Promise<void> {
     email: TEST_EMAIL,
     displayName: 'Playwright Test User',
     isProOverride: true,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
   });
 
   // Seed a full workout hierarchy for logging and analytics tests
@@ -35,7 +35,7 @@ export default async function globalSetup(): Promise<void> {
     userId: uid,
     id: programId,
     name: 'E2E Test Program',
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     weekCount: 1,
     isArchived: false,  // Required: getPrograms() queries .where('isArchived', isEqualTo: false)
   });
@@ -46,7 +46,7 @@ export default async function globalSetup(): Promise<void> {
     programId,
     name: 'Week 1',
     weekNumber: 1,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     workoutCount: 1,
   });
 
@@ -58,7 +58,7 @@ export default async function globalSetup(): Promise<void> {
       weekId,
       programId,
       name: 'E2E Workout',
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
       exerciseCount: 1,
     }
   );
@@ -74,7 +74,7 @@ export default async function globalSetup(): Promise<void> {
       name: 'Bench Press',
       exerciseType: 'strength',
       order: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
     }
   );
 
@@ -91,7 +91,7 @@ export default async function globalSetup(): Promise<void> {
       reps: 5,
       weight: 60,
       checked: false,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
     }
   );
 

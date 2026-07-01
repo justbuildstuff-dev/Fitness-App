@@ -11,9 +11,9 @@ test.describe('PWA Offline Smoke', () => {
 
   test('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
     // Extend timeout: sign-in (~3s) + HomeScreen wait (15s) + SW wait (30s) +
-    // offline phase (15s) + reconnect reload (20s) + HomeScreen check (20s) = ~103s.
-    // 150s gives comfortable headroom for CI variability.
-    test.setTimeout(150_000);
+    // offline phase (15s) + screenshots wrapped at 3s each + reconnect reload (20s) +
+    // HomeScreen check (20s) = ~109s. 200s gives headroom for CI variability.
+    test.setTimeout(200_000);
 
     // --- WARM THE SERVICE WORKER CACHE ---
     // Sign in first to ensure the service worker has cached the app shell.
@@ -119,6 +119,9 @@ test.describe('PWA Offline Smoke', () => {
       console.log(`[E2E] Reconnect check failed (page may be in bad state after offline): ${e.message}`);
     });
 
-    await page.screenshot({ path: `test-results/${testInfo.title}/04-reconnected.png` }).catch(() => {});
+    await Promise.race([
+      page.screenshot({ path: `test-results/${testInfo.title}/04-reconnected.png` }).catch(() => {}),
+      new Promise<void>(resolve => setTimeout(resolve, 3_000)),
+    ]);
   });
 });
