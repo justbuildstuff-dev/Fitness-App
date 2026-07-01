@@ -60,7 +60,13 @@ test.describe('PWA Offline Smoke', () => {
       // offline error page; the renderer may close, making subsequent calls throw).
       await page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
 
-      await page.screenshot({ path: `test-results/${testInfo.title}/02-after-offline-reload.png` }).catch(() => {});
+      // page.screenshot() has no built-in timeout; wrap in a 3s race so a hung browser
+      // during the offline phase (page awaiting a navigation that can never complete offline)
+      // does not consume the full test budget.
+      await Promise.race([
+        page.screenshot({ path: `test-results/${testInfo.title}/02-after-offline-reload.png` }).catch(() => {}),
+        new Promise<void>(resolve => setTimeout(resolve, 3_000)),
+      ]);
 
       // --- VERIFY APP SHELL IS VISIBLE OFFLINE ---
       // The browser should NOT show a "no internet" error page.
@@ -84,7 +90,10 @@ test.describe('PWA Offline Smoke', () => {
       // Some navigable content should be visible (the Flutter app shell or at minimum the title)
       await page.waitForFunction(() => document.title.length > 0, { timeout: 10_000 }).catch(() => {});
 
-      await page.screenshot({ path: `test-results/${testInfo.title}/03-offline-app-visible.png` }).catch(() => {});
+      await Promise.race([
+        page.screenshot({ path: `test-results/${testInfo.title}/03-offline-app-visible.png` }).catch(() => {}),
+        new Promise<void>(resolve => setTimeout(resolve, 3_000)),
+      ]);
     } catch (e) {
       offlinePhaseError = e as Error;
       console.log(`[E2E] Offline phase error (context may have closed): ${offlinePhaseError.message}`);

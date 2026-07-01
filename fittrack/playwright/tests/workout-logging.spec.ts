@@ -52,6 +52,16 @@ test.describe('Workout Set Logging', () => {
     // reliable without inflating a single timeout to cover both concerns.
     await expect(page.getByText('My Programs').first()).toBeVisible({ timeout: 20_000 });
 
+    // Dump flt-semantics text content to CI log so we can diagnose what the HomeScreen
+    // is actually rendering (empty list, loading state, or the seeded program).
+    const domDump = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('flt-semantics'));
+      const texts = els.map(e => e.textContent?.trim()).filter(Boolean);
+      const withProgram = texts.filter(t => /E2E|program/i.test(t));
+      return { count: els.length, withProgram, first30: texts.slice(0, 30) };
+    }).catch(() => ({ count: 0, withProgram: [] as string[], first30: [] as string[] }));
+    console.log(`[E2E][dom-dump-home] count=${domDump.count} withProgram=${JSON.stringify(domDump.withProgram)} first30=${JSON.stringify(domDump.first30)}`);
+
     // --- NAVIGATE TO WORKOUT ---
     // Programs screen shows the seeded E2E Test Program.
     await tapListTile(page, PROGRAM_NAME);
