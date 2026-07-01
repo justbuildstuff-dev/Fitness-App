@@ -52,8 +52,14 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
   // Wait for the card to render (the Semantics button with program name appears
   // only after Firestore delivers the seeded program to the programs stream).
-  await page.getByRole('button', { name: PROGRAM_NAME }).waitFor({ state: 'visible', timeout: 15_000 });
-  await page.getByRole('button', { name: PROGRAM_NAME }).dispatchEvent('click');
+  //
+  // exact: true is required. Without it, Playwright's getByRole name match is a
+  // substring match and resolves to 2 elements:
+  //   node-46: aria-label="E2E Test Program"           (Semantics wrapper we added)
+  //   node-47: aria-label="E2E Test Program↵Created…"  (ListTile merged text node)
+  // With exact: true only node-46 matches, avoiding a strict-mode violation.
+  await page.getByRole('button', { name: PROGRAM_NAME, exact: true }).waitFor({ state: 'visible', timeout: 15_000 });
+  await page.getByRole('button', { name: PROGRAM_NAME, exact: true }).dispatchEvent('click');
 }
 
 test.describe('Workout Set Logging', () => {

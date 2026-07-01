@@ -55,6 +55,13 @@ async function fillTextField(
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
   await textbox.click();
+  // Flutter creates flt-text-editing-host <input> asynchronously after the
+  // flt-semantics textbox receives focus. On navigation screens the route
+  // animation must settle before autofocus fires, so the input may not exist
+  // yet when click() returns. Typing before it appears drops all keystrokes.
+  // Wait for the input to be attached first — mirrors sign-in.ts's password
+  // field pattern (Tab → waitFor input[type="password"] → type).
+  await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 5_000 });
   await page.keyboard.press('Control+A');
   await page.keyboard.type(text);
 }
