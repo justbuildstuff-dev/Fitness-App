@@ -39,6 +39,19 @@ test.describe('Workout Set Logging', () => {
   });
 
   test('navigates to seeded workout and checks off a set', async ({ page }, testInfo) => {
+    // Extend timeout: sign-in (~3s) + HomeScreen navigation (~12s, auth_provider.user.reload()
+    // has a 10s built-in timeout) + Firestore data load + navigation + set logging +
+    // page.reload() persist check = ~90s worst case.
+    test.setTimeout(120_000);
+
+    // Wait for HomeScreen before attempting any navigation.
+    // auth_provider calls user.reload() after sign-in to refresh emailVerified; it has a
+    // 10s timeout, so HomeScreen navigation can begin up to ~11s after signIn() returns.
+    // An explicit wait here separates "app navigated home" (covered below) from
+    // "Firestore data loaded" (covered by tapListTile's own 15s wait), making both
+    // reliable without inflating a single timeout to cover both concerns.
+    await expect(page.getByText('My Programs').first()).toBeVisible({ timeout: 20_000 });
+
     // --- NAVIGATE TO WORKOUT ---
     // Programs screen shows the seeded E2E Test Program.
     await tapListTile(page, PROGRAM_NAME);

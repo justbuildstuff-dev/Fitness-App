@@ -66,7 +66,16 @@ test.describe('PWA Offline Smoke', () => {
       // The browser should NOT show a "no internet" error page.
       // Chromium's offline error page contains the text "ERR_INTERNET_DISCONNECTED" or
       // "No internet" — if this text is present, the service worker cache failed.
-      const pageContent = await page.content().catch(() => '');
+      //
+      // page.content() has no built-in timeout. If the page is in an indeterminate state
+      // after the offline reload (e.g. the service worker's fetch handler is pending),
+      // page.content() calls page.evaluate() internally, which waits for the pending
+      // navigation to settle — a navigation that can never complete offline. Race it
+      // against a 5s wall-clock timer so the offline phase cannot hang indefinitely.
+      const pageContent = await Promise.race([
+        page.content().catch(() => ''),
+        new Promise<string>(resolve => setTimeout(() => resolve(''), 5_000)),
+      ]);
       const hasNetworkError = pageContent.includes('ERR_INTERNET_DISCONNECTED') ||
         pageContent.includes('ERR_NETWORK_CHANGED') ||
         pageContent.includes('No internet');
