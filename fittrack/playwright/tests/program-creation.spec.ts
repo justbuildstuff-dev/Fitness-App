@@ -34,21 +34,19 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Fill a Flutter web text field identified by its accessible label.
  *
- * Creation screens (CreateProgramScreen, CreateWeekScreen, CreateWorkoutScreen) set
- * autofocus: !kIsWeb on their name field: native platforms get keyboard-auto-show on
- * navigation; the web build starts the field unfocused so the test can focus it cleanly.
+ * Creation screens set autofocus: !kIsWeb — web builds start the field unfocused so the
+ * FocusNode is not pre-empted before the test click arrives. Without this, autofocus:true
+ * marks the FocusNode as already-focused, causing requestFocus() to be a no-op when the
+ * test click fires, so TextInputConnection.attach() is never called.
  *
- * dispatchEvent('click') fires the DOM click event directly on the located flt-semantics
- * node, bypassing coordinate-based hit testing (so old-route overlays cannot intercept).
- * Flutter's semantics click handler invokes SemanticsAction.tap on the textbox node.
- * Because the FocusNode starts unfocused (no autofocus on web), requestFocus() is not a
- * no-op — Flutter opens a TextInputConnection and creates flt-text-editing-host <input>.
+ * locator.click({ force:true }) sends a trusted CDP mouse event (isTrusted=true) at the
+ * textbox's viewport coordinates. force:true bypasses Playwright's actionability check in
+ * case a previous route's flt-semantics overlay has the same bounding box. The trusted
+ * click triggers Flutter's text field handler: requestFocus() → attach() →
+ * flt-text-editing-host <input> is created and focused.
  *
- * We wait for the input to appear before typing so keyboard events route to the focused
- * flt-text-editing-host <input> rather than firing into an unfocused void.
- *
- * Control+A before typing clears any pre-filled value (e.g. "Week N" in CreateWeekScreen)
- * so the field contains only the typed text.
+ * We wait for the input before typing to ensure keyboard events route to the focused
+ * flt-text-editing-host <input>. Control+A clears any pre-filled value (e.g. "Week N").
  */
 async function fillTextField(
   page: import('@playwright/test').Page,
@@ -58,10 +56,20 @@ async function fillTextField(
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
 
-  // dispatchEvent fires directly on the located flt-semantics node; the textbox
-  // FocusNode is unfocused (autofocus disabled on web), so SemanticsAction.tap →
-  // requestFocus() → TextInputConnection.attach() → flt-text-editing-host <input>.
-  await textbox.dispatchEvent('click');
+  // The creation screens now use autofocus: !kIsWeb — the FocusNode starts
+  // unfocused on web. A trusted CDP click (isTrusted=true) on the flt-semantics
+  // textbox node triggers Flutter's text field handler to call requestFocus() →
+  // TextInputConnection.attach() → creates flt-text-editing-host <input>.
+  // force:true bypasses Playwright's actionability check in case the previous
+  // route's flt-semantics overlay occupies the same bounding box coordinates.
+  await textbox.click({ force: true });
+
+  // Diagnostic: log whether the text editing host appeared after the click.
+  const hasInputAfterClick = await page.evaluate(
+    () => !!document.querySelector('flt-text-editing-host input')
+  );
+  console.log(`[E2E][fill-diag] label=${String(label)} hasInput=${hasInputAfterClick}`);
+
   const input = page.locator('flt-text-editing-host input');
   await input.waitFor({ state: 'attached', timeout: 8_000 });
 

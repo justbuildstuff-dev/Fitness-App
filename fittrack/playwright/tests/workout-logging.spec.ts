@@ -56,7 +56,44 @@ async function tapProgramCard(page: import('@playwright/test').Page): Promise<vo
   // to avoid clicking during a semantics tree rebuild.
   await page.waitForTimeout(300);
 
+  // Diagnostic: inspect what flt-tappable elements exist and whether the outer
+  // Semantics node (aria-label=program.name) has flt-tappable registered.
+  const diag = await page.evaluate((name) => {
+    const outer = document.querySelector(`flt-semantics[role="button"][aria-label="${name}"]`);
+    const tappables = Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'))
+      .map(el => ({
+        id: el.id,
+        role: el.getAttribute('role'),
+        label: el.getAttribute('aria-label'),
+        text: (el.textContent ?? '').trim().slice(0, 60),
+      }));
+    return {
+      outerFound: !!outer,
+      outerTappable: outer?.hasAttribute('flt-tappable') ?? false,
+      tappables,
+    };
+  }, PROGRAM_NAME);
+  console.log(`[E2E][card-diag] ${JSON.stringify(diag)}`);
+
+  // Attempt 1: dispatchEvent directly on the outer Semantics node (bypasses
+  // coordinate hit-testing so old-route overlays can't intercept).
   await card.dispatchEvent('click');
+
+  // If dispatchEvent doesn't trigger navigation (SemanticsAction.tap not registered
+  // on the outer node), fall back to a trusted CDP click via page.mouse at the card
+  // center — trusted (isTrusted=true) events go through Flutter's pointer path.
+  const navigated = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('flt-semantics'))
+      .some(el => (el.textContent ?? '').includes('Week'))
+  );
+  console.log(`[E2E][card-post-click] navigated=${navigated}`);
+  if (!navigated) {
+    console.log('[E2E][card-fallback] dispatchEvent had no effect; trying CDP mouse click');
+    const box = await card.boundingBox();
+    if (box) {
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    }
+  }
 }
 
 test.describe('Workout Set Logging', () => {
