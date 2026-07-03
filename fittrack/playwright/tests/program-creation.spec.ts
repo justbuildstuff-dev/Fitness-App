@@ -64,9 +64,16 @@ async function fillTextField(
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
 
-  // All creation screens use autofocus: true — flt-text-editing-host <input> is created
-  // automatically when the screen is pushed. No click needed (and clicks via dispatchEvent
-  // or CDP do not reliably open the text editing connection on pushed routes).
+  // All creation screens use autofocus: true, so Flutter has already called
+  // FocusNode.requestFocus(). But autofocus alone does not create flt-text-editing-host
+  // <input> — the browser requires an isTrusted user event to open a text editing
+  // connection. locator.click({ force: true }) sends trusted CDP mouse events directly
+  // at the textbox's viewport coordinates, bypassing Playwright's actionability check
+  // (which would otherwise reject the click if the old route's flt-semantics overlay
+  // has the same bounding box as the new route's field). The trusted click triggers
+  // Flutter's pointer event path → TextField focuses → flt-text-editing-host <input>
+  // is created in the DOM.
+  await textbox.click({ force: true });
   const input = page.locator('flt-text-editing-host input');
   await input.waitFor({ state: 'attached', timeout: 8_000 });
 

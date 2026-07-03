@@ -36,49 +36,34 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Tap the program card on the Programs screen.
  *
- * _ProgramCard in programs_screen.dart uses:
- *   Semantics(label: program.name, button: true,
- *     child: GestureDetector(onTap: onTap, child: Card(...)))
+ * Uses locator.click({ force: true }) — a trusted CDP mouse event at the card's viewport
+ * center coordinates, bypassing Playwright's actionability checks (which would otherwise
+ * reject the click if another element has the same bounding box).
  *
- * This produces two flt-semantics nodes:
- *   - Outer: role="button", aria-label="<program name>". Flutter auto-adds flt-tappable
- *     to role=button nodes for keyboard activation support, but this node has NO registered
- *     SemanticsAction.tap (button:true is a role flag, not an action) → clicking it is a
- *     no-op. Its aria-label contains the program name.
- *   - Inner GestureDetector: flt-tappable WITH SemanticsAction.tap → onTap → Navigator.push.
- *     Its aria-label is the merged text of its children (trailing IconButtons: "Edit program
- *     Delete program"), NOT the program name — so it cannot be found by label substring match.
+ * Trusted (isTrusted=true) CDP events trigger Flutter's real pointer event path, which
+ * invokes the GestureDetector's TapGestureRecognizer → onTap → Navigator.push.
+ * Synthetic events (dispatchEvent, element.focus) are isTrusted=false; Flutter's web
+ * engine routes these through the semantics bridge, which fires SemanticsAction.tap on
+ * the semantics node — but the node that was being matched (the outer Semantics(button:)
+ * wrapper) has no SemanticsAction.tap registered (button:true is a role flag, not an
+ * action), so every synthetic click was a no-op.
  *
- * Strategy: find the outer button node by exact aria-label, then click the first flt-tappable
- * descendant inside it. That first descendant is the GestureDetector node (outermost in DOM
- * order inside the card) which carries the actual navigation tap action.
+ * The Programs screen is reached via auth-state change (not a pushed route), so there is
+ * no "previous route overlay" sitting on top of the card. The CDP click at the card's
+ * center coordinates reliably lands on the topmost flt-semantics element there, which
+ * is the inner GestureDetector node (child elements have higher z-index than parents).
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
   const card = page.getByRole('button', { name: PROGRAM_NAME, exact: true });
   await card.waitFor({ state: 'visible', timeout: 15_000 });
 
-  const result = await page.evaluate((name: string) => {
-    // Find the outer Semantics node by exact aria-label match
-    const outerButton = Array.from(document.querySelectorAll('flt-semantics[role="button"]'))
-      .find(n => n.getAttribute('aria-label') === name);
-    if (!outerButton) return { ok: false, reason: `no role=button with aria-label="${name}"` };
+  // Small wait for any in-flight Firestore updates to settle before clicking,
+  // to avoid clicking during a semantics tree rebuild.
+  await page.waitForTimeout(300);
 
-    // The inner GestureDetector is the first flt-tappable descendant and has the tap action.
-    const inner = outerButton.querySelector('flt-semantics[flt-tappable]');
-    if (!inner) return { ok: false, reason: 'no flt-tappable descendant inside outer button' };
-
-    inner.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    return { ok: true, innerLabel: inner.getAttribute('aria-label') ?? '(null)' };
-  }, PROGRAM_NAME);
-
-  if (!result.ok) {
-    const dump = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('flt-semantics'))
-        .map(n => `[role=${n.getAttribute('role')} label=${n.getAttribute('aria-label')} tap=${n.hasAttribute('flt-tappable')}]`)
-        .join(' | ')
-    ).catch(() => '(eval failed)');
-    throw new Error(`tapProgramCard failed: ${(result as { reason: string }).reason}. DOM: ${dump}`);
-  }
+  // Trusted CDP click at card center. force:true bypasses Playwright's actionability
+  // check so we aren't blocked by element-overlap detection.
+  await card.click({ force: true });
 }
 
 test.describe('Workout Set Logging', () => {
