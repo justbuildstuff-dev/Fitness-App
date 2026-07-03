@@ -36,22 +36,17 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Tap the program card on the Programs screen.
  *
- * Uses locator.click({ force: true }) — a trusted CDP mouse event at the card's viewport
- * center coordinates, bypassing Playwright's actionability checks (which would otherwise
- * reject the click if another element has the same bounding box).
+ * Strategy: dispatchEvent('click') directly on the outer flt-semantics role=button node
+ * (aria-label = program name). This bypasses coordinate-based DOM hit testing so no
+ * overlay element can intercept the event.
  *
- * Trusted (isTrusted=true) CDP events trigger Flutter's real pointer event path, which
- * invokes the GestureDetector's TapGestureRecognizer → onTap → Navigator.push.
- * Synthetic events (dispatchEvent, element.focus) are isTrusted=false; Flutter's web
- * engine routes these through the semantics bridge, which fires SemanticsAction.tap on
- * the semantics node — but the node that was being matched (the outer Semantics(button:)
- * wrapper) has no SemanticsAction.tap registered (button:true is a role flag, not an
- * action), so every synthetic click was a no-op.
+ * _ProgramCard now sets Semantics(onTap: onTap, button: true, label: program.name),
+ * which registers SemanticsAction.tap on the outer semantics node. Flutter's semantics
+ * click handler invokes that action → onTap → Navigator.push.
  *
- * The Programs screen is reached via auth-state change (not a pushed route), so there is
- * no "previous route overlay" sitting on top of the card. The CDP click at the card's
- * center coordinates reliably lands on the topmost flt-semantics element there, which
- * is the inner GestureDetector node (child elements have higher z-index than parents).
+ * dispatchEvent is used instead of .click() to avoid Playwright's actionability retry
+ * loop: after navigation the flt-semantics tree rebuilds, which would cause .click() to
+ * re-fire indefinitely until the 60-second test timeout.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
   const card = page.getByRole('button', { name: PROGRAM_NAME, exact: true });
@@ -61,9 +56,7 @@ async function tapProgramCard(page: import('@playwright/test').Page): Promise<vo
   // to avoid clicking during a semantics tree rebuild.
   await page.waitForTimeout(300);
 
-  // Trusted CDP click at card center. force:true bypasses Playwright's actionability
-  // check so we aren't blocked by element-overlap detection.
-  await card.click({ force: true });
+  await card.dispatchEvent('click');
 }
 
 test.describe('Workout Set Logging', () => {

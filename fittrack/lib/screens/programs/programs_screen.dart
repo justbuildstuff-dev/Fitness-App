@@ -325,6 +325,7 @@ class _ProgramCard extends StatelessWidget {
     return Semantics(
       label: program.name,
       button: true,
+      onTap: onTap,
       child: GestureDetector(
       onTap: onTap,
       child: Card(
