@@ -34,18 +34,23 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Fill a Flutter web text field identified by its accessible label.
  *
- * locator.click() sends a CDP click directly to the flt-semantics[role="textbox"]
- * element. Flutter's accessibility layer responds by focusing the field and creating
- * a real <input> in <flt-text-editing-host> to receive keyboard events. This is the
- * same mechanism used in sign-in.ts for the email field and is the only approach that
- * reliably focuses Flutter text fields in headless CanvasKit CI.
+ * Uses element.focus() (via JS evaluate) rather than locator.click() (CDP pointer events)
+ * to focus the flt-semantics[role="textbox"] element.
  *
- * page.mouse.click() at screen coordinates (the previous approach) targets the canvas
- * / flt-glass-pane and does NOT route through Flutter's focus/text-editing machinery
- * in headless CI, so flt-text-editing-host <input> is never created.
+ * On pushed routes (slide-in animation), CDP pointer events route to incorrect coordinates
+ * in Flutter's gesture system — the pointer lands outside the widget's layout bounds while
+ * the animation is in-flight, so the text field is never focused and flt-text-editing-host
+ * <input> is never created. Waiting for the animation to settle and retrying clicks did not
+ * resolve this (confirmed across multiple CI runs).
  *
- * Control+A before typing clears any pre-filled value (e.g. "Week N" in
- * CreateWeekScreen) so the field contains only the typed text.
+ * element.focus() bypasses Flutter's gesture system entirely. It fires a DOM focus event
+ * on the flt-semantics element, which Flutter's web engine handles via its accessibility
+ * event listener: focus → SemanticsAction.didGainAccessibilityFocus → FocusNode.requestFocus()
+ * → TextInputConnection.attach() → flt-text-editing-host <input> created. This works
+ * regardless of route animation state.
+ *
+ * Control+A before typing clears any pre-filled value (e.g. "Week N" in CreateWeekScreen)
+ * so the field contains only the typed text.
  */
 async function fillTextField(
   page: import('@playwright/test').Page,
@@ -54,20 +59,13 @@ async function fillTextField(
 ): Promise<void> {
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
-  const input = page.locator('flt-text-editing-host input');
 
-  // CreateProgramScreen has autofocus: true, but this is a pushed route. During
-  // the slide-in animation (typically 300ms) Flutter's visual hit-test position
-  // lags behind the flt-semantics element's CSS position — so a click fired while
-  // the animation is in-flight misses the text field entirely. First click to
-  // initiate focus; if no input appears within 2 s (animation still running),
-  // click again once the widget has settled in its final position.
-  await textbox.click();
-  const appeared = await input.waitFor({ state: 'attached', timeout: 2_000 }).then(() => true).catch(() => false);
-  if (!appeared) {
-    await textbox.click();
-    await input.waitFor({ state: 'attached', timeout: 10_000 });
-  }
+  // Focus via JS rather than CDP pointer events — works on pushed routes where
+  // animation-offset coordinates cause locator.click() to miss Flutter's gesture hit-test.
+  await textbox.evaluate((el: Element) => (el as HTMLElement).focus());
+  const input = page.locator('flt-text-editing-host input');
+  await input.waitFor({ state: 'attached', timeout: 8_000 });
+
   await page.keyboard.press('Control+A');
   await page.keyboard.type(text);
 }

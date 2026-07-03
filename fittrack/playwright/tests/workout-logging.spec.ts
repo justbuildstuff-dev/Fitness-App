@@ -39,32 +39,28 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
  * The program name Text widget is rendered on canvas only and is absent from the
  * flt-semantics accessibility tree. The trailing Edit/Delete IconButtons ARE in the
  * tree but Flutter does not expose ListTile.onTap as a flt-tappable semantics node
- * when interactive trailing children are present (confirmed by CI diagnostic: the
- * ListTile container appears as role="group" tappable=false).
+ * when interactive trailing children are present.
  *
- * Fix: _ProgramCard is wrapped in Semantics(label: program.name, button: true,
- * onTap: onTap) in programs_screen.dart. This creates a flt-semantics[role="button"
- * flt-tappable] node with aria-label = program name, independently targetable by
- * Playwright. The inner Edit/Delete buttons retain their own flt-tappable nodes
- * (WCAG 4.1.2 compliant) — their click handlers call stopPropagation so activating
- * them does not bubble up to the outer card button.
+ * _ProgramCard is wrapped in Semantics(label: program.name, button: true, onTap: onTap)
+ * in programs_screen.dart, creating a flt-semantics[role="button"] node with
+ * aria-label = program name. We use that node's bounding box to derive coordinates,
+ * then send real pointer events via page.mouse.click() through Flutter's flt-glass-pane
+ * gesture system rather than through the semantics→Dart bridge.
+ *
+ * dispatchEvent('click') on flt-semantics nodes (tried on both the Semantics wrapper
+ * node and the merged ListTile node across multiple CI runs) does not invoke the Dart
+ * onTap callback for this card layout. page.mouse.click() bypasses the semantics bridge
+ * and routes through flt-glass-pane → TapGestureRecognizer → ListTile.onTap → navigation.
+ *
+ * We click at 35% of the card width from the left to land in the card body and avoid
+ * the trailing Edit/Delete buttons which occupy the rightmost portion of the tile.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
-  // getByRole('button', { name: PROGRAM_NAME }) resolves to two flt-semantics nodes:
-  //   [0] node-46: Semantics wrapper (aria-label="E2E Test Program", exact match)
-  //   [1] node-47: ListTile merged text node (aria-label="E2E Test Program↵Created…")
-  //
-  // node-46 is a bare Semantics(button: true, onTap: cb) with no gesture recognizer
-  // backing. dispatchEvent('click') on it sends SemanticsAction.tap to Dart, but the
-  // web engine's semantics→Dart bridge does not reliably invoke the callback for
-  // pure-Semantics nodes (no GestureDetector/InkWell underneath).
-  //
-  // node-47 is the ListTile's InkWell semantics node (which became flt-tappable after
-  // the outer Semantics wrapper was added). Its tap action IS backed by a gesture
-  // recognizer, so the Dart onTap fires correctly. Target it with .nth(1).
-  const buttons = page.getByRole('button', { name: PROGRAM_NAME });
-  await buttons.first().waitFor({ state: 'visible', timeout: 15_000 });
-  await buttons.nth(1).dispatchEvent('click');
+  const card = page.getByRole('button', { name: PROGRAM_NAME, exact: true });
+  await card.waitFor({ state: 'visible', timeout: 15_000 });
+  const box = await card.boundingBox();
+  if (!box) throw new Error(`Program card "${PROGRAM_NAME}" has no bounding box`);
+  await page.mouse.click(box.x + box.width * 0.35, box.y + box.height / 2);
 }
 
 test.describe('Workout Set Logging', () => {
