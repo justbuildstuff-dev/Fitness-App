@@ -50,16 +50,21 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
  * them does not bubble up to the outer card button.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
-  // Wait for the card to render (the Semantics button with program name appears
-  // only after Firestore delivers the seeded program to the programs stream).
+  // getByRole('button', { name: PROGRAM_NAME }) resolves to two flt-semantics nodes:
+  //   [0] node-46: Semantics wrapper (aria-label="E2E Test Program", exact match)
+  //   [1] node-47: ListTile merged text node (aria-label="E2E Test Program↵Created…")
   //
-  // exact: true is required. Without it, Playwright's getByRole name match is a
-  // substring match and resolves to 2 elements:
-  //   node-46: aria-label="E2E Test Program"           (Semantics wrapper we added)
-  //   node-47: aria-label="E2E Test Program↵Created…"  (ListTile merged text node)
-  // With exact: true only node-46 matches, avoiding a strict-mode violation.
-  await page.getByRole('button', { name: PROGRAM_NAME, exact: true }).waitFor({ state: 'visible', timeout: 15_000 });
-  await page.getByRole('button', { name: PROGRAM_NAME, exact: true }).dispatchEvent('click');
+  // node-46 is a bare Semantics(button: true, onTap: cb) with no gesture recognizer
+  // backing. dispatchEvent('click') on it sends SemanticsAction.tap to Dart, but the
+  // web engine's semantics→Dart bridge does not reliably invoke the callback for
+  // pure-Semantics nodes (no GestureDetector/InkWell underneath).
+  //
+  // node-47 is the ListTile's InkWell semantics node (which became flt-tappable after
+  // the outer Semantics wrapper was added). Its tap action IS backed by a gesture
+  // recognizer, so the Dart onTap fires correctly. Target it with .nth(1).
+  const buttons = page.getByRole('button', { name: PROGRAM_NAME });
+  await buttons.first().waitFor({ state: 'visible', timeout: 15_000 });
+  await buttons.nth(1).dispatchEvent('click');
 }
 
 test.describe('Workout Set Logging', () => {

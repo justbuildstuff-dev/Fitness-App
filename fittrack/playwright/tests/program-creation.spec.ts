@@ -54,14 +54,20 @@ async function fillTextField(
 ): Promise<void> {
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
+  const input = page.locator('flt-text-editing-host input');
+
+  // CreateProgramScreen has autofocus: true, but this is a pushed route. During
+  // the slide-in animation (typically 300ms) Flutter's visual hit-test position
+  // lags behind the flt-semantics element's CSS position — so a click fired while
+  // the animation is in-flight misses the text field entirely. First click to
+  // initiate focus; if no input appears within 2 s (animation still running),
+  // click again once the widget has settled in its final position.
   await textbox.click();
-  // Flutter creates flt-text-editing-host <input> asynchronously after the
-  // flt-semantics textbox receives focus. On navigation screens the route
-  // animation must settle before autofocus fires, so the input may not exist
-  // yet when click() returns. Typing before it appears drops all keystrokes.
-  // Wait for the input to be attached first — mirrors sign-in.ts's password
-  // field pattern (Tab → waitFor input[type="password"] → type).
-  await page.locator('flt-text-editing-host input').waitFor({ state: 'attached', timeout: 5_000 });
+  const appeared = await input.waitFor({ state: 'attached', timeout: 2_000 }).then(() => true).catch(() => false);
+  if (!appeared) {
+    await textbox.click();
+    await input.waitFor({ state: 'attached', timeout: 10_000 });
+  }
   await page.keyboard.press('Control+A');
   await page.keyboard.type(text);
 }
