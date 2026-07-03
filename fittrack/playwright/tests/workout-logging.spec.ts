@@ -36,31 +36,45 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Tap the program card on the Programs screen.
  *
- * The program name Text widget is rendered on canvas only and is absent from the
- * flt-semantics accessibility tree. The trailing Edit/Delete IconButtons ARE in the
- * tree but Flutter does not expose ListTile.onTap as a flt-tappable semantics node
- * when interactive trailing children are present.
+ * _ProgramCard uses GestureDetector(onTap: onTap) in programs_screen.dart, which
+ * creates a flt-tappable semantics node backed by TapGestureRecognizer. When
+ * dispatchEvent('click') fires on a GestureDetector-backed flt-tappable node,
+ * Flutter routes it through TapGestureRecognizer → onTap → Navigator.push.
+ * This is the same path as FloatingActionButton (confirmed working in CI).
  *
- * _ProgramCard is wrapped in Semantics(label: program.name, button: true, onTap: onTap)
- * in programs_screen.dart, creating a flt-semantics[role="button"] node with
- * aria-label = program name. We use that node's bounding box to derive coordinates,
- * then send real pointer events via page.mouse.click() through Flutter's flt-glass-pane
- * gesture system rather than through the semantics→Dart bridge.
+ * Semantics(onTap:) was tried previously: it creates flt-tappable but without a
+ * real gesture recognizer; the semantics→Dart bridge does not reliably invoke the
+ * callback for that node type (confirmed across multiple CI runs).
  *
- * dispatchEvent('click') on flt-semantics nodes (tried on both the Semantics wrapper
- * node and the merged ListTile node across multiple CI runs) does not invoke the Dart
- * onTap callback for this card layout. page.mouse.click() bypasses the semantics bridge
- * and routes through flt-glass-pane → TapGestureRecognizer → ListTile.onTap → navigation.
- *
- * We click at 35% of the card width from the left to land in the card body and avoid
- * the trailing Edit/Delete buttons which occupy the rightmost portion of the tile.
+ * The outer Semantics(label:, button:) node has the exact program name aria-label
+ * but is NOT flt-tappable. The inner GestureDetector node IS flt-tappable and has
+ * the program name merged into its aria-label. We find the flt-tappable node by
+ * aria-label substring match and dispatch the click directly.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
+  // Wait for the outer Semantics node (exact aria-label) to confirm the card is rendered.
   const card = page.getByRole('button', { name: PROGRAM_NAME, exact: true });
   await card.waitFor({ state: 'visible', timeout: 15_000 });
-  const box = await card.boundingBox();
-  if (!box) throw new Error(`Program card "${PROGRAM_NAME}" has no bounding box`);
-  await page.mouse.click(box.x + box.width * 0.35, box.y + box.height / 2);
+
+  // Find the GestureDetector-backed flt-tappable node (may have merged label with
+  // subtitle text, so match by substring) and dispatch click.
+  const clicked = await page.evaluate((name: string) => {
+    const nodes = Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'));
+    const target = nodes.find(n => (n.getAttribute('aria-label') ?? '').includes(name));
+    if (!target) return false;
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return true;
+  }, PROGRAM_NAME);
+
+  if (!clicked) {
+    // Diagnostic: dump all flt-tappable nodes to help diagnose label mismatch
+    const dump = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'))
+        .map(n => `[${n.id}] role=${n.getAttribute('role')} label=${n.getAttribute('aria-label')}`)
+        .join(' | ')
+    ).catch(() => '(eval failed)');
+    throw new Error(`No flt-tappable node found with label containing "${PROGRAM_NAME}". Nodes: ${dump}`);
+  }
 }
 
 test.describe('Workout Set Logging', () => {

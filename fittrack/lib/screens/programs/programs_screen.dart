@@ -311,22 +311,25 @@ class _ProgramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Semantics wrapper exposes the card as a labelled button in the accessibility
-    // tree so Playwright E2E tests can target it with getByRole('button', {name}).
-    // Flutter does not expose ListTile.onTap as flt-tappable when the tile has
-    // interactive trailing children — only the trailing row gets flt-tappable.
-    // excludeSemantics is intentionally omitted so the inner edit/delete buttons
-    // remain individually reachable by screen readers (WCAG 4.1.2 compliance).
-    // Flutter's flt-tappable click handlers call stopPropagation, so activating
-    // an inner button does not bubble up to this outer card button.
+    // GestureDetector provides a gesture-recognizer-backed flt-tappable node so
+    // Playwright's dispatchEvent('click') routes through TapGestureRecognizer →
+    // onTap → navigation. Semantics(onTap:) creates flt-tappable but without a
+    // gesture recognizer behind it; the web engine's semantics→Dart bridge does
+    // not reliably invoke the callback for that case (confirmed across CI runs).
+    //
+    // The outer Semantics label/button exposes the card as a labelled button in
+    // the accessibility tree (WCAG 4.1.2). The inner edit/delete IconButtons
+    // remain individually reachable by screen readers — their GestureDetectors
+    // win the gesture arena for taps within their bounds, and GestureDetector
+    // wrapping the card wins for taps anywhere else on the card body.
     return Semantics(
       label: program.name,
       button: true,
+      child: GestureDetector(
       onTap: onTap,
       child: Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        onTap: onTap,
         leading: Container(
           width: 48,
           height: 48,
@@ -414,6 +417,7 @@ class _ProgramCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
       ),
     );

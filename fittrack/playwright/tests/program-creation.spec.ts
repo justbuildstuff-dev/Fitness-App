@@ -34,20 +34,22 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Fill a Flutter web text field identified by its accessible label.
  *
- * Uses element.focus() (via JS evaluate) rather than locator.click() (CDP pointer events)
- * to focus the flt-semantics[role="textbox"] element.
+ * Uses dispatchEvent('click') on the flt-semantics[role="textbox"] element rather than
+ * locator.click() (CDP coordinate-based) or element.focus() (DOM focus event).
  *
- * On pushed routes (slide-in animation), CDP pointer events route to incorrect coordinates
- * in Flutter's gesture system — the pointer lands outside the widget's layout bounds while
- * the animation is in-flight, so the text field is never focused and flt-text-editing-host
- * <input> is never created. Waiting for the animation to settle and retrying clicks did not
- * resolve this (confirmed across multiple CI runs).
+ * locator.click() fails on pushed routes: the previous route's flt-semantics overlay
+ * remains in the DOM during and after the slide-in animation, covering the same CSS
+ * coordinates as the new route's text field. The CDP click lands on the wrong element.
  *
- * element.focus() bypasses Flutter's gesture system entirely. It fires a DOM focus event
- * on the flt-semantics element, which Flutter's web engine handles via its accessibility
- * event listener: focus → SemanticsAction.didGainAccessibilityFocus → FocusNode.requestFocus()
- * → TextInputConnection.attach() → flt-text-editing-host <input> created. This works
- * regardless of route animation state.
+ * element.focus() was tried next: Flutter's web engine does not respond to DOM focus
+ * events on flt-semantics elements by opening the text editing connection (confirmed —
+ * flt-text-editing-host <input> never appeared within 8s timeout).
+ *
+ * dispatchEvent('click') fires directly on the flt-semantics[role="textbox"] element
+ * found by accessible role/name, bypassing coordinate routing. Flutter's textbox click
+ * handler creates flt-text-editing-host <input>, which is identical to the mechanism
+ * that sign-in.ts relies on for the email field (where locator.click() works because
+ * the sign-in screen is the initial route with no overlay).
  *
  * Control+A before typing clears any pre-filled value (e.g. "Week N" in CreateWeekScreen)
  * so the field contains only the typed text.
@@ -60,9 +62,15 @@ async function fillTextField(
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
 
-  // Focus via JS rather than CDP pointer events — works on pushed routes where
-  // animation-offset coordinates cause locator.click() to miss Flutter's gesture hit-test.
-  await textbox.evaluate((el: Element) => (el as HTMLElement).focus());
+  // Dispatch click directly on the flt-semantics textbox element.
+  // locator.click() (CDP pointer events) fails on pushed routes: the slide-in animation
+  // leaves the previous route's overlay on top at those CSS coordinates, so the click
+  // lands on the wrong element and the text field is never focused.
+  // element.focus() was tried next but Flutter's accessibility layer does not respond
+  // to DOM focus events by opening the text editing connection.
+  // dispatchEvent('click') fires directly on the element regardless of z-ordering —
+  // Flutter's flt-semantics textbox click handler creates flt-text-editing-host <input>.
+  await textbox.dispatchEvent('click');
   const input = page.locator('flt-text-editing-host input');
   await input.waitFor({ state: 'attached', timeout: 8_000 });
 
