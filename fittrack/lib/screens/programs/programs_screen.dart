@@ -311,9 +311,7 @@ class _ProgramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
+    return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: Container(
@@ -403,7 +401,7 @@ class _ProgramCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
+        onTap: onTap,
       ),
     );
   }
