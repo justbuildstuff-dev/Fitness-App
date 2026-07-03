@@ -34,19 +34,10 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Fill a Flutter web text field identified by its accessible label.
  *
- * Creation screens set autofocus: !kIsWeb — web builds start the field unfocused so the
- * FocusNode is not pre-empted before the test click arrives. Without this, autofocus:true
- * marks the FocusNode as already-focused, causing requestFocus() to be a no-op when the
- * test click fires, so TextInputConnection.attach() is never called.
- *
- * locator.click({ force:true }) sends a trusted CDP mouse event (isTrusted=true) at the
- * textbox's viewport coordinates. force:true bypasses Playwright's actionability check in
- * case a previous route's flt-semantics overlay has the same bounding box. The trusted
- * click triggers Flutter's text field handler: requestFocus() → attach() →
- * flt-text-editing-host <input> is created and focused.
- *
- * We wait for the input before typing to ensure keyboard events route to the focused
- * flt-text-editing-host <input>. Control+A clears any pre-filled value (e.g. "Week N").
+ * Creation screens set autofocus: !kIsWeb so the FocusNode starts unfocused on web.
+ * A trusted CDP click (isTrusted=true, force:true) focuses the flt-semantics textbox,
+ * then keyboard events route directly to the focused element. Control+A clears any
+ * pre-filled value (e.g. "Week N") before typing.
  */
 async function fillTextField(
   page: import('@playwright/test').Page,
@@ -55,24 +46,7 @@ async function fillTextField(
 ): Promise<void> {
   const textbox = page.getByRole('textbox', { name: label });
   await textbox.waitFor({ state: 'visible', timeout: 10_000 });
-
-  // The creation screens now use autofocus: !kIsWeb — the FocusNode starts
-  // unfocused on web. A trusted CDP click (isTrusted=true) on the flt-semantics
-  // textbox node triggers Flutter's text field handler to call requestFocus() →
-  // TextInputConnection.attach() → creates flt-text-editing-host <input>.
-  // force:true bypasses Playwright's actionability check in case the previous
-  // route's flt-semantics overlay occupies the same bounding box coordinates.
   await textbox.click({ force: true });
-
-  // Diagnostic: log whether the text editing host appeared after the click.
-  const hasInputAfterClick = await page.evaluate(
-    () => !!document.querySelector('flt-text-editing-host input')
-  );
-  console.log(`[E2E][fill-diag] label=${String(label)} hasInput=${hasInputAfterClick}`);
-
-  const input = page.locator('flt-text-editing-host input');
-  await input.waitFor({ state: 'attached', timeout: 8_000 });
-
   await page.keyboard.press('Control+A');
   await page.keyboard.type(text);
 }
