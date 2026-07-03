@@ -36,44 +36,48 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
 /**
  * Tap the program card on the Programs screen.
  *
- * _ProgramCard uses GestureDetector(onTap: onTap) in programs_screen.dart, which
- * creates a flt-tappable semantics node backed by TapGestureRecognizer. When
- * dispatchEvent('click') fires on a GestureDetector-backed flt-tappable node,
- * Flutter routes it through TapGestureRecognizer → onTap → Navigator.push.
- * This is the same path as FloatingActionButton (confirmed working in CI).
+ * _ProgramCard in programs_screen.dart uses:
+ *   Semantics(label: program.name, button: true,
+ *     child: GestureDetector(onTap: onTap, child: Card(...)))
  *
- * Semantics(onTap:) was tried previously: it creates flt-tappable but without a
- * real gesture recognizer; the semantics→Dart bridge does not reliably invoke the
- * callback for that node type (confirmed across multiple CI runs).
+ * This produces two flt-semantics nodes:
+ *   - Outer: role="button", aria-label="<program name>". Flutter auto-adds flt-tappable
+ *     to role=button nodes for keyboard activation support, but this node has NO registered
+ *     SemanticsAction.tap (button:true is a role flag, not an action) → clicking it is a
+ *     no-op. Its aria-label contains the program name.
+ *   - Inner GestureDetector: flt-tappable WITH SemanticsAction.tap → onTap → Navigator.push.
+ *     Its aria-label is the merged text of its children (trailing IconButtons: "Edit program
+ *     Delete program"), NOT the program name — so it cannot be found by label substring match.
  *
- * The outer Semantics(label:, button:) node has the exact program name aria-label
- * but is NOT flt-tappable. The inner GestureDetector node IS flt-tappable and has
- * the program name merged into its aria-label. We find the flt-tappable node by
- * aria-label substring match and dispatch the click directly.
+ * Strategy: find the outer button node by exact aria-label, then click the first flt-tappable
+ * descendant inside it. That first descendant is the GestureDetector node (outermost in DOM
+ * order inside the card) which carries the actual navigation tap action.
  */
 async function tapProgramCard(page: import('@playwright/test').Page): Promise<void> {
-  // Wait for the outer Semantics node (exact aria-label) to confirm the card is rendered.
   const card = page.getByRole('button', { name: PROGRAM_NAME, exact: true });
   await card.waitFor({ state: 'visible', timeout: 15_000 });
 
-  // Find the GestureDetector-backed flt-tappable node (may have merged label with
-  // subtitle text, so match by substring) and dispatch click.
-  const clicked = await page.evaluate((name: string) => {
-    const nodes = Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'));
-    const target = nodes.find(n => (n.getAttribute('aria-label') ?? '').includes(name));
-    if (!target) return false;
-    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    return true;
+  const result = await page.evaluate((name: string) => {
+    // Find the outer Semantics node by exact aria-label match
+    const outerButton = Array.from(document.querySelectorAll('flt-semantics[role="button"]'))
+      .find(n => n.getAttribute('aria-label') === name);
+    if (!outerButton) return { ok: false, reason: `no role=button with aria-label="${name}"` };
+
+    // The inner GestureDetector is the first flt-tappable descendant and has the tap action.
+    const inner = outerButton.querySelector('flt-semantics[flt-tappable]');
+    if (!inner) return { ok: false, reason: 'no flt-tappable descendant inside outer button' };
+
+    inner.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    return { ok: true, innerLabel: inner.getAttribute('aria-label') ?? '(null)' };
   }, PROGRAM_NAME);
 
-  if (!clicked) {
-    // Diagnostic: dump all flt-tappable nodes to help diagnose label mismatch
+  if (!result.ok) {
     const dump = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'))
-        .map(n => `[${n.id}] role=${n.getAttribute('role')} label=${n.getAttribute('aria-label')}`)
+      Array.from(document.querySelectorAll('flt-semantics'))
+        .map(n => `[role=${n.getAttribute('role')} label=${n.getAttribute('aria-label')} tap=${n.hasAttribute('flt-tappable')}]`)
         .join(' | ')
     ).catch(() => '(eval failed)');
-    throw new Error(`No flt-tappable node found with label containing "${PROGRAM_NAME}". Nodes: ${dump}`);
+    throw new Error(`tapProgramCard failed: ${(result as { reason: string }).reason}. DOM: ${dump}`);
   }
 }
 
