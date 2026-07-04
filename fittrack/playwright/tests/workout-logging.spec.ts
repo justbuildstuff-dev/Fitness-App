@@ -38,30 +38,35 @@ function firstVisible(
 }
 
 /**
- * Tap a Flutter flt-semantics list tile by text content or aria-label.
+ * Tap a Flutter flt-semantics list tile by text content.
  *
- * Tries text content first (simple tiles without trailing buttons), then falls back
- * to flt-tappable[aria-label*=] for tiles whose title is merged into aria-label by
- * MergeSemantics (triggered when trailing IconButtons are present as container nodes).
+ * Flutter's _WorkoutCard / _ProgramCard / _WeekCard use a Stack overlay so that
+ * ListTile has no trailing buttons. Without trailing container children, ListTile's
+ * MergeSemantics produces a single flt-tappable node whose DOM text content IS the
+ * tile title (not absorbed into aria-label). However the Stack itself also becomes
+ * a non-tappable flt-semantics element whose textContent includes the title — and
+ * page.getByText().first() in DOM order hits that non-tappable Stack container before
+ * the tappable ListTile node, so dispatchEvent has no effect.
  *
- * Tiles whose title is TEXT CONTENT (not absorbed into aria-label) respond to
- * dispatchEvent: the click fires on the text node, bubbles to the InkWell's
- * flt-tappable ancestor, and the InkWell click listener calls onTap().
+ * Fix: use flt-semantics[flt-tappable]:has-text() which requires the flt-tappable
+ * attribute, skipping the non-tappable Stack/group ancestors. The tappable node's
+ * text content is exactly the tile title (+ subtitle), and dispatchEvent('click') on
+ * it calls performAction(nodeId, SemanticsAction.tap) → ListTile.onTap → navigation.
  *
- * Tiles whose title is in aria-label (MergeSemantics case) also use the
- * flt-tappable[aria-label*=] locator — but the Flutter code has been restructured
- * (Stack overlay for trailing buttons) so that ListTile no longer activates
- * MergeSemantics, and the title reverts to text content. The aria-label path
- * here is a belt-and-suspenders fallback for any remaining merged nodes.
+ * Fallback: flt-tappable[aria-label*=] catches any remaining merged-semantics nodes
+ * where the title ended up in aria-label rather than text content.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
     [
-      page.getByText(text).first(),
+      // Primary: tappable flt-semantics whose DOM text content contains the tile title.
+      // [flt-tappable] excludes non-tappable Stack/group containers that also match :has-text.
+      page.locator(`flt-semantics[flt-tappable]:has-text("${text}")`).first(),
+      // Fallback: title is in aria-label (merged-semantics case).
       page.locator(`flt-semantics[flt-tappable][aria-label*="${text}"]`).first(),
     ],
     15_000,
-  ).catch(() => { throw new Error(`Tile "${text}" not found by text or aria-label within 15s`); });
+  ).catch(() => { throw new Error(`Tile "${text}" not found within 15s`); });
 
   await el.dispatchEvent('click');
 }

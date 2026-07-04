@@ -36,30 +36,22 @@ function firstVisible(
 }
 
 /**
- * Tap a Flutter flt-semantics list tile by text content or aria-label.
+ * Tap a Flutter flt-semantics list tile by text content.
  *
- * Tries text content first (simple tiles without trailing buttons), then falls back
- * to flt-tappable[aria-label*=] for tiles whose title is merged into aria-label by
- * MergeSemantics (triggered when trailing IconButtons are present as container nodes).
- *
- * Tiles whose title is TEXT CONTENT (not absorbed into aria-label) respond to
- * dispatchEvent: the click fires on the text node, bubbles to the InkWell's
- * flt-tappable ancestor, and the InkWell click listener calls onTap().
- *
- * Tiles whose title is in aria-label (MergeSemantics case) also use the
- * flt-tappable[aria-label*=] locator — but the Flutter code has been restructured
- * (Stack overlay for trailing buttons) so that ListTile no longer activates
- * MergeSemantics, and the title reverts to text content. The aria-label path
- * here is a belt-and-suspenders fallback for any remaining merged nodes.
+ * See workout-logging.spec.ts for detailed explanation of why
+ * flt-semantics[flt-tappable]:has-text() is used instead of getByText().first().
+ * Short version: getByText().first() in DOM order hits the non-tappable Stack
+ * container before the tappable ListTile node; [flt-tappable]:has-text() excludes
+ * the non-tappable ancestors, landing directly on the tappable tile node.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
     [
-      page.getByText(text).first(),
+      page.locator(`flt-semantics[flt-tappable]:has-text("${text}")`).first(),
       page.locator(`flt-semantics[flt-tappable][aria-label*="${text}"]`).first(),
     ],
     15_000,
-  ).catch(() => { throw new Error(`Tile "${text}" not found by text or aria-label within 15s`); });
+  ).catch(() => { throw new Error(`Tile "${text}" not found within 15s`); });
 
   await el.dispatchEvent('click');
 }
