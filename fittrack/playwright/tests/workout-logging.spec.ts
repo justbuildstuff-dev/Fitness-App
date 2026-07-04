@@ -44,13 +44,15 @@ function firstVisible(
  * to flt-tappable[aria-label*=] for tiles whose title is merged into aria-label by
  * MergeSemantics (triggered when trailing IconButtons are present as container nodes).
  *
- * Uses page.mouse.click() at the element's bounding-box centre rather than
- * dispatchEvent('click'). dispatchEvent creates a synthetic (isTrusted=false) event
- * that MergeSemantics flt-tappable nodes ignore; page.mouse.click() sends a CDP
- * Input.dispatchMouseEvent which arrives as a real (isTrusted=true) pointer event and
- * hits Flutter's canvas hit-test path, triggering the InkWell/GestureDetector onTap.
- * Coordinate-based mouse clicks also avoid Playwright's locator retry loop (which
- * re-fires .click() indefinitely after Flutter rebuilds the semantics tree on navigation).
+ * Tiles whose title is TEXT CONTENT (not absorbed into aria-label) respond to
+ * dispatchEvent: the click fires on the text node, bubbles to the InkWell's
+ * flt-tappable ancestor, and the InkWell click listener calls onTap().
+ *
+ * Tiles whose title is in aria-label (MergeSemantics case) also use the
+ * flt-tappable[aria-label*=] locator — but the Flutter code has been restructured
+ * (Stack overlay for trailing buttons) so that ListTile no longer activates
+ * MergeSemantics, and the title reverts to text content. The aria-label path
+ * here is a belt-and-suspenders fallback for any remaining merged nodes.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
@@ -61,9 +63,7 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     15_000,
   ).catch(() => { throw new Error(`Tile "${text}" not found by text or aria-label within 15s`); });
 
-  const box = await el.boundingBox();
-  if (!box) throw new Error(`Tile "${text}" has no bounding box`);
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await el.dispatchEvent('click');
 }
 
 /** Assert that a named tile is visible by text content or aria-label. */
