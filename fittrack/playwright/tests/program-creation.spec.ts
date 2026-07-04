@@ -42,9 +42,13 @@ function firstVisible(
  * to flt-tappable[aria-label*=] for tiles whose title is merged into aria-label by
  * MergeSemantics (triggered when trailing IconButtons are present as container nodes).
  *
- * dispatchEvent avoids Playwright's actionability retry loop: after Flutter navigation
- * the semantics tree rebuilds, invalidating element references and causing .click()
- * to retry indefinitely until the 60-second timeout.
+ * Uses page.mouse.click() at the element's bounding-box centre rather than
+ * dispatchEvent('click'). dispatchEvent creates a synthetic (isTrusted=false) event
+ * that MergeSemantics flt-tappable nodes ignore; page.mouse.click() sends a CDP
+ * Input.dispatchMouseEvent which arrives as a real (isTrusted=true) pointer event and
+ * hits Flutter's canvas hit-test path, triggering the InkWell/GestureDetector onTap.
+ * Coordinate-based mouse clicks also avoid Playwright's locator retry loop (which
+ * re-fires .click() indefinitely after Flutter rebuilds the semantics tree on navigation).
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
@@ -55,7 +59,9 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     15_000,
   ).catch(() => { throw new Error(`Tile "${text}" not found by text or aria-label within 15s`); });
 
-  await el.dispatchEvent('click');
+  const box = await el.boundingBox();
+  if (!box) throw new Error(`Tile "${text}" has no bounding box`);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }
 
 /** Assert that a named tile is visible by text content or aria-label. */
