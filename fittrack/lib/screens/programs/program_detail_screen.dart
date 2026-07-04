@@ -787,86 +787,92 @@ class _WeekCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // PopupMenuButton in ListTile.trailing carries Semantics(container:true), which
-    // triggers MergeSemantics and absorbs the week name into the tile's aria-label
-    // rather than keeping it as DOM text content. Moving the popup button outside
-    // ListTile via a Stack overlay prevents the merge. See _ProgramCard for the same
-    // pattern and a detailed explanation.
-    return Stack(
-      children: [
-        Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            // Reserve right space for the overlaid PopupMenuButton (~48 dp).
-            contentPadding: const EdgeInsets.fromLTRB(16, 8, 52, 8),
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  '$weekNumber',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+    // InkWell + sibling PopupMenuButton inside Card avoids MergeSemantics.
+    // See _ProgramCard in programs_screen.dart for the detailed explanation.
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$weekNumber',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            week.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          if (week.notes != null)
+                            Text(
+                              week.notes!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            title: Text(
-              week.name,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: week.notes != null
-                ? Text(
-                    week.notes!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : null,
-            onTap: onTap,
           ),
-        ),
-        Positioned(
-          right: 0,
-          top: 0,
-          bottom: 8,
-          child: Center(
-            child: PopupMenuButton<String>(
-              onSelected: (value) => _handleMenuAction(context, value),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'duplicate',
-                  child: ListTile(
-                    leading: Icon(Icons.content_copy),
-                    title: Text('Duplicate'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+          PopupMenuButton<String>(
+            onSelected: (value) => _handleMenuAction(context, value),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'duplicate',
+                child: ListTile(
+                  leading: Icon(Icons.content_copy),
+                  title: Text('Duplicate'),
+                  contentPadding: EdgeInsets.zero,
                 ),
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: ListTile(
-                    leading: Icon(Icons.edit),
-                    title: Text('Edit'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+              ),
+              const PopupMenuItem(
+                value: 'edit',
+                child: ListTile(
+                  leading: Icon(Icons.edit),
+                  title: Text('Edit'),
+                  contentPadding: EdgeInsets.zero,
                 ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: ListTile(
-                    leading: Icon(Icons.delete),
-                    title: Text('Delete'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  leading: Icon(Icons.delete),
+                  title: Text('Delete'),
+                  contentPadding: EdgeInsets.zero,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(width: 4),
+        ],
+      ),
     );
   }
 
