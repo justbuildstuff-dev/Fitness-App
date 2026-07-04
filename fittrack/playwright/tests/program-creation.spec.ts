@@ -9,26 +9,68 @@ const WEEK_NAME = 'E2E Week 1';
 const WORKOUT_NAME = 'E2E Push Day';
 
 /**
- * Tap a Flutter flt-semantics list tile by text content.
+ * Returns the first locator that becomes visible within `timeout` ms.
  *
- * Strategy: wait for the text element to be visible (handles async Firestore loading),
- * then dispatch a click on it. The click event bubbles up to the flt-tappable
- * ListTile container's click listener, triggering the Dart onTap callback.
+ * Flutter's ListTile uses MergeSemantics internally:
+ * - Without trailing container children (IconButtons): title text appears as
+ *   flt-semantics text content → getByText() works.
+ * - With trailing containers (edit/delete buttons): MergeSemantics absorbs the
+ *   title into the node's aria-label; text content shows only trailing button text
+ *   → getByText() fails, flt-tappable[aria-label*=] succeeds.
+ * Both locators race; whichever resolves first wins.
+ */
+function firstVisible(
+  locators: import('@playwright/test').Locator[],
+  timeout: number,
+): Promise<import('@playwright/test').Locator> {
+  return new Promise<import('@playwright/test').Locator>((resolve, reject) => {
+    let settled = false;
+    let pending = locators.length;
+    for (const loc of locators) {
+      loc.waitFor({ state: 'visible', timeout }).then(
+        () => { if (!settled) { settled = true; resolve(loc); } },
+        () => { if (--pending === 0 && !settled) reject(); },
+      );
+    }
+  });
+}
+
+/**
+ * Tap a Flutter flt-semantics list tile by text content or aria-label.
  *
- * Using getByText instead of locator('flt-semantics[flt-tappable]', { hasText }) because
- * ListTile widgets with trailing IconButtons (edit/delete) may not get flt-tappable on
- * their outer semantics container — Flutter may omit it when interactive children are
- * present. getByText finds the title text flt-semantics directly; dispatchEvent('click')
- * bubbles to whichever ancestor has the click listener.
+ * Tries text content first (simple tiles without trailing buttons), then falls back
+ * to flt-tappable[aria-label*=] for tiles whose title is merged into aria-label by
+ * MergeSemantics (triggered when trailing IconButtons are present as container nodes).
  *
- * dispatchEvent is used instead of .click() to avoid Playwright's actionability retry
- * loop: after Flutter navigation the semantics tree rebuilds, which invalidates element
- * references and causes .click() to retry indefinitely until the 60-second timeout.
+ * dispatchEvent avoids Playwright's actionability retry loop: after Flutter navigation
+ * the semantics tree rebuilds, invalidating element references and causing .click()
+ * to retry indefinitely until the 60-second timeout.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
-  const el = page.getByText(text).first();
-  await el.waitFor({ state: 'visible', timeout: 15_000 });
+  const el = await firstVisible(
+    [
+      page.getByText(text).first(),
+      page.locator(`flt-semantics[flt-tappable][aria-label*="${text}"]`).first(),
+    ],
+    15_000,
+  ).catch(() => { throw new Error(`Tile "${text}" not found by text or aria-label within 15s`); });
+
   await el.dispatchEvent('click');
+}
+
+/** Assert that a named tile is visible by text content or aria-label. */
+async function assertTileVisible(
+  page: import('@playwright/test').Page,
+  text: string,
+  timeout = 10_000,
+): Promise<void> {
+  await firstVisible(
+    [
+      page.getByText(text).first(),
+      page.locator(`flt-semantics[aria-label*="${text}"]`).first(),
+    ],
+    timeout,
+  ).catch(() => { throw new Error(`"${text}" not visible by text or aria-label within ${timeout}ms`); });
 }
 
 /**
@@ -87,14 +129,14 @@ test.describe('Program / Week / Workout Creation', () => {
     await page.screenshot({ path: `test-results/${testInfo.title}/02-program-name-filled.png` });
     await page.getByRole('button', { name: 'CREATE', exact: true }).dispatchEvent('click');
 
-    // Verify program appears in the list
-    await expect(page.getByText(PROGRAM_NAME)).toBeVisible({ timeout: 15_000 });
+    // Verify program appears in the list (tile title is in aria-label via MergeSemantics)
+    await assertTileVisible(page, PROGRAM_NAME, 15_000);
     await page.screenshot({ path: `test-results/${testInfo.title}/03-program-created.png` });
 
     // --- NAVIGATE INTO PROGRAM ---
     await tapListTile(page, PROGRAM_NAME);
-    // Wait for program detail screen
-    await expect(page.getByText(PROGRAM_NAME)).toBeVisible({ timeout: 10_000 });
+    // Wait for program detail screen (AppBar or tile shows program name)
+    await assertTileVisible(page, PROGRAM_NAME, 10_000);
 
     // --- CREATE WEEK ---
     // Empty state shows "Create Week" button; if FAB is shown instead, fall back to FAB.
@@ -112,13 +154,13 @@ test.describe('Program / Week / Workout Creation', () => {
     await page.screenshot({ path: `test-results/${testInfo.title}/04-week-name-filled.png` });
     await page.getByRole('button', { name: 'CREATE', exact: true }).dispatchEvent('click');
 
-    // Verify week appears
-    await expect(page.getByText(WEEK_NAME)).toBeVisible({ timeout: 15_000 });
+    // Verify week appears in the list
+    await assertTileVisible(page, WEEK_NAME, 15_000);
     await page.screenshot({ path: `test-results/${testInfo.title}/05-week-created.png` });
 
     // --- NAVIGATE INTO WEEK ---
     await tapListTile(page, WEEK_NAME);
-    await expect(page.getByText(WEEK_NAME)).toBeVisible({ timeout: 10_000 });
+    await assertTileVisible(page, WEEK_NAME, 10_000);
 
     // --- CREATE WORKOUT ---
     const createWorkoutButton = page.getByRole('button', { name: 'Create Workout' });
@@ -135,8 +177,8 @@ test.describe('Program / Week / Workout Creation', () => {
     await page.screenshot({ path: `test-results/${testInfo.title}/06-workout-name-filled.png` });
     await page.getByRole('button', { name: 'CREATE', exact: true }).dispatchEvent('click');
 
-    // Verify workout appears
-    await expect(page.getByText(WORKOUT_NAME)).toBeVisible({ timeout: 15_000 });
+    // Verify workout appears in the list
+    await assertTileVisible(page, WORKOUT_NAME, 15_000);
     await page.screenshot({ path: `test-results/${testInfo.title}/07-workout-created.png` });
   });
 });

@@ -11,26 +11,68 @@ const WORKOUT_NAME = 'E2E Workout';
 const EXERCISE_NAME = 'Bench Press';
 
 /**
- * Tap a Flutter flt-semantics list tile by text content.
+ * Returns the first locator that becomes visible within `timeout` ms.
  *
- * Strategy: wait for the text element to be visible (handles async Firestore loading),
- * then dispatch a click on it. The click event bubbles up to the flt-tappable
- * ListTile container's click listener, triggering the Dart onTap callback.
+ * Flutter's ListTile uses MergeSemantics internally:
+ * - Without trailing container children (IconButtons): title text appears as
+ *   flt-semantics text content → getByText() works.
+ * - With trailing containers (edit/delete buttons): MergeSemantics absorbs the
+ *   title into the node's aria-label; text content shows only trailing button text
+ *   → getByText() fails, flt-tappable[aria-label*=] succeeds.
+ * Both locators race; whichever resolves first wins.
+ */
+function firstVisible(
+  locators: import('@playwright/test').Locator[],
+  timeout: number,
+): Promise<import('@playwright/test').Locator> {
+  return new Promise<import('@playwright/test').Locator>((resolve, reject) => {
+    let settled = false;
+    let pending = locators.length;
+    for (const loc of locators) {
+      loc.waitFor({ state: 'visible', timeout }).then(
+        () => { if (!settled) { settled = true; resolve(loc); } },
+        () => { if (--pending === 0 && !settled) reject(); },
+      );
+    }
+  });
+}
+
+/**
+ * Tap a Flutter flt-semantics list tile by text content or aria-label.
  *
- * Using getByText instead of locator('flt-semantics[flt-tappable]', { hasText }) because
- * ListTile widgets with trailing IconButtons (edit/delete) may not get flt-tappable on
- * their outer semantics container — Flutter may omit it when interactive children are
- * present. getByText finds the title text flt-semantics directly; dispatchEvent('click')
- * bubbles to whichever ancestor has the click listener.
+ * Tries text content first (simple tiles without trailing buttons), then falls back
+ * to flt-tappable[aria-label*=] for tiles whose title is merged into aria-label by
+ * MergeSemantics (triggered when trailing IconButtons are present as container nodes).
  *
- * dispatchEvent is used instead of .click() to avoid Playwright's actionability retry
- * loop: after Flutter navigation the semantics tree rebuilds, which invalidates element
- * references and causes .click() to retry indefinitely until the 60-second timeout.
+ * dispatchEvent avoids Playwright's actionability retry loop: after Flutter navigation
+ * the semantics tree rebuilds, invalidating element references and causing .click()
+ * to retry indefinitely until the 60-second timeout.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
-  const el = page.getByText(text).first();
-  await el.waitFor({ state: 'visible', timeout: 15_000 });
+  const el = await firstVisible(
+    [
+      page.getByText(text).first(),
+      page.locator(`flt-semantics[flt-tappable][aria-label*="${text}"]`).first(),
+    ],
+    15_000,
+  ).catch(() => { throw new Error(`Tile "${text}" not found by text or aria-label within 15s`); });
+
   await el.dispatchEvent('click');
+}
+
+/** Assert that a named tile is visible by text content or aria-label. */
+async function assertTileVisible(
+  page: import('@playwright/test').Page,
+  text: string,
+  timeout = 10_000,
+): Promise<void> {
+  await firstVisible(
+    [
+      page.getByText(text).first(),
+      page.locator(`flt-semantics[aria-label*="${text}"]`).first(),
+    ],
+    timeout,
+  ).catch(() => { throw new Error(`"${text}" not visible by text or aria-label within ${timeout}ms`); });
 }
 
 
@@ -59,31 +101,41 @@ test.describe('Workout Set Logging', () => {
     // Wait for HomeScreen before attempting any navigation.
     // auth_provider calls user.reload() after sign-in to refresh emailVerified; it has a
     // 10s timeout, so HomeScreen navigation can begin up to ~11s after signIn() returns.
-    // An explicit wait here separates "app navigated home" (covered below) from
-    // "Firestore data loaded" (covered by tapListTile's own 15s wait), making both
-    // reliable without inflating a single timeout to cover both concerns.
     await expect(page.getByText('My Programs').first()).toBeVisible({ timeout: 20_000 });
 
+    // DOM diagnostic: dump flt-semantics nodes to confirm program card aria-label structure.
+    // MergeSemantics (used by ListTile with trailing IconButtons) merges the title into
+    // aria-label rather than text content; this log confirms which selector to use.
+    const domDump = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('flt-semantics'));
+      return {
+        count: els.length,
+        nodes: els.map(e => ({
+          text: (e.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 80),
+          label: e.getAttribute('aria-label'),
+          role: e.getAttribute('role'),
+          tappable: e.hasAttribute('flt-tappable'),
+        })).filter(n => n.text || n.label),
+      };
+    });
+    console.log(`[E2E][dom-dump] count=${domDump.count} nodes=${JSON.stringify(domDump.nodes.slice(0, 25))}`);
+
     // --- NAVIGATE TO WORKOUT ---
-    // Programs screen shows the seeded E2E Test Program as a list tile. The
-    // program name appears in flt-semantics text content (ListTile title), so
-    // tapListTile finds it and dispatches a click that bubbles to the
-    // GestureDetector's flt-tappable click handler → Navigator.push.
     await tapListTile(page, PROGRAM_NAME);
-    await expect(page.getByText(WEEK_NAME)).toBeVisible({ timeout: 10_000 });
+    await assertTileVisible(page, WEEK_NAME, 10_000);
 
     // Navigate into Week 1
     await tapListTile(page, WEEK_NAME);
-    await expect(page.getByText(WORKOUT_NAME)).toBeVisible({ timeout: 10_000 });
+    await assertTileVisible(page, WORKOUT_NAME, 10_000);
 
     // Navigate into E2E Workout
     await tapListTile(page, WORKOUT_NAME);
-    await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });
+    await assertTileVisible(page, EXERCISE_NAME, 10_000);
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-workout-open.png` });
 
     // --- VERIFY EXERCISE IS VISIBLE ---
-    await expect(page.getByText(EXERCISE_NAME)).toBeVisible();
+    await assertTileVisible(page, EXERCISE_NAME, 5_000);
 
     // --- LOG THE SET ---
     // The seeded set (reps:5, weight:60) is pre-populated in the set row.
@@ -114,7 +166,7 @@ test.describe('Workout Set Logging', () => {
     await tapListTile(page, PROGRAM_NAME);
     await tapListTile(page, WEEK_NAME);
     await tapListTile(page, WORKOUT_NAME);
-    await expect(page.getByText(EXERCISE_NAME)).toBeVisible({ timeout: 10_000 });
+    await assertTileVisible(page, EXERCISE_NAME, 10_000);
 
     // The checkbox should still be checked after reload
     const reloadedCheckbox = page.getByRole('checkbox').first();
