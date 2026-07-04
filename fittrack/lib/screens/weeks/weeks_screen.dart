@@ -855,93 +855,93 @@ class _WorkoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // InkWell + sibling trailing buttons inside Card avoids MergeSemantics.
-    // See _ProgramCard in programs_screen.dart for the detailed explanation.
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.fitness_center,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            workout.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          if (workout.dayOfWeek != null) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today,
-                                  size: 14,
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  workout.dayOfWeekName,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (workout.notes != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              workout.notes!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+    // Stack overlay keeps edit/delete buttons out of ListTile.trailing to prevent
+    // MergeSemantics from absorbing the workout name into aria-label. See _ProgramCard
+    // in programs_screen.dart for the detailed explanation.
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 100, 8),
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.fitness_center,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 20,
               ),
             ),
+            title: Text(
+              workout.name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (workout.dayOfWeek != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        workout.dayOfWeekName,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (workout.notes != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    workout.notes!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            onTap: onTap,
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () => _editWorkout(context),
-            tooltip: 'Edit workout',
+        ),
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 8,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  onPressed: () => _editWorkout(context),
+                  tooltip: 'Edit workout',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                  onPressed: () => _deleteWorkout(context),
+                  tooltip: 'Delete workout',
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-            onPressed: () => _deleteWorkout(context),
-            tooltip: 'Delete workout',
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

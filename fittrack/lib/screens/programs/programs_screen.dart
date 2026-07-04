@@ -311,128 +311,119 @@ class _ProgramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // InkWell + sibling trailing buttons inside Card avoids MergeSemantics.
-    //
-    // Flutter's ListTile wraps its content in MergeSemantics, which absorbs the
-    // title Text into the tile node's aria-label whenever any trailing child carries
-    // Semantics(container:true) (which IconButton does internally). MergeSemantics
-    // also merges all descendant SemanticsAction.tap handlers; the trailing button
-    // tap wins and overrides the tile's own onTap, so tapping the tile navigates
-    // to the wrong action (or nowhere) in the web accessibility layer.
-    //
-    // By using InkWell directly (no ListTile) with action buttons as Row siblings
-    // (not children) of InkWell, we get:
-    //   • No MergeSemantics — title Text stays as DOM text content, findable by
-    //     getByText(); dispatchEvent('click') bubbles from the text node to InkWell.
-    //   • No cross-tap interference — button clicks don't bubble to InkWell and
-    //     button taps don't trigger tile navigation.
-    //   • Full WCAG compliance — InkWell is accessible via its text-content name;
-    //     buttons keep their own tooltip-derived accessible labels.
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.fitness_center,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            program.name,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (program.description != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              program.description!,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  'Created ${_formatDate(program.createdAt)}',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (program.updatedAt != program.createdAt) ...[
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.edit,
-                                  size: 14,
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    'Updated ${_formatDate(program.updatedAt)}',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+    // Trailing buttons are lifted out of ListTile into a Stack overlay.
+    // ListTile activates MergeSemantics when any trailing child carries
+    // Semantics(container:true) (which IconButton does internally), which absorbs
+    // the title text into the tile node's aria-label and removes it from DOM text
+    // content. The E2E accessibility tests locate tiles by text content and rely
+    // on click-bubbling to the InkWell; putting buttons outside ListTile prevents
+    // the merge and keeps the title as discoverable text content.
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            // Extra right padding reserves space for the two overlaid icon buttons
+            // (2 × ~44 dp minimum touch target + 8 dp gap = ~100 dp).
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 100, 8),
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.fitness_center,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
+            title: Text(
+              program.name,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (program.description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    program.description!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Created ${_formatDate(program.createdAt)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (program.updatedAt != program.createdAt) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.edit,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          'Updated ${_formatDate(program.updatedAt)}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+            onTap: onTap,
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () => _editProgram(context),
-            tooltip: 'Edit program',
+        ),
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 8, // exclude Card's bottom margin so buttons sit inside the card
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  onPressed: () => _editProgram(context),
+                  tooltip: 'Edit program',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                  onPressed: () => _deleteProgram(context),
+                  tooltip: 'Delete program',
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-            onPressed: () => _deleteProgram(context),
-            tooltip: 'Delete program',
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
