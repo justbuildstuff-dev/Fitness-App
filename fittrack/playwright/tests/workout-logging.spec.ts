@@ -46,15 +46,19 @@ function firstVisible(
  * tile title (not absorbed into aria-label). However the Stack itself also becomes
  * a non-tappable flt-semantics element whose textContent includes the title — and
  * page.getByText().first() in DOM order hits that non-tappable Stack container before
- * the tappable ListTile node, so dispatchEvent has no effect.
+ * the tappable ListTile node.
  *
- * Fix: use flt-semantics[flt-tappable]:has-text() which requires the flt-tappable
- * attribute, skipping the non-tappable Stack/group ancestors. The tappable node's
- * text content is exactly the tile title (+ subtitle), and dispatchEvent('click') on
- * it calls performAction(nodeId, SemanticsAction.tap) → ListTile.onTap → navigation.
+ * Selection: flt-semantics[flt-tappable]:has-text() finds the correct tappable node.
+ * Fallback: flt-tappable[aria-label*=] catches merged-semantics nodes where the title
+ * is in aria-label rather than text content.
  *
- * Fallback: flt-tappable[aria-label*=] catches any remaining merged-semantics nodes
- * where the title ended up in aria-label rather than text content.
+ * Click mechanism: dispatchEvent('click') creates a non-trusted synthetic event
+ * (isTrusted=false) that Flutter's CanvasKit semantics layer does not route to the
+ * Dart tap callback reliably. page.mouse.click(cx, cy) sends a trusted CDP
+ * Input.dispatchMouseEvent at the element's coordinates, which Flutter's flt-semantics
+ * pointer-events:all handler receives and routes correctly to ListTile.onTap.
+ * We click at 25% from the left edge to stay clear of right-side trailing buttons
+ * (edit / delete / popup) in the Stack overlay, which are Positioned at right:0.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
@@ -68,7 +72,22 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     15_000,
   ).catch(() => { throw new Error(`Tile "${text}" not found within 15s`); });
 
-  await el.dispatchEvent('click');
+  // Log which element was resolved (visible in gh run view --log for debugging).
+  const elInfo = await el.evaluate((e: Element) => ({
+    text: (e.textContent ?? '').trim().slice(0, 50),
+    role: e.getAttribute('role'),
+    tappable: e.hasAttribute('flt-tappable'),
+  }));
+  console.log(`[E2E][tap] "${text}" → ${JSON.stringify(elInfo)}`);
+
+  // Trusted CDP click at left-25% of the element (avoids right-side trailing buttons).
+  const box = await el.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.5);
+  } else {
+    // Fallback: dispatchEvent if the element has no layout box (should not happen).
+    await el.dispatchEvent('click');
+  }
 }
 
 /** Assert that a named tile is visible by text content or aria-label. */
@@ -133,6 +152,16 @@ test.describe('Workout Set Logging', () => {
 
     // --- NAVIGATE TO WORKOUT ---
     await tapListTile(page, PROGRAM_NAME);
+
+    // Diagnostic: confirm navigation by checking the screen heading.
+    // If still on programs screen the heading is "My Programs"; on program detail it changes.
+    await page.waitForTimeout(500);
+    const headings = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('flt-semantics[role="heading"]'))
+        .map(e => (e.textContent ?? '').trim().slice(0, 40))
+    );
+    console.log(`[E2E][post-program-tap-headings] ${JSON.stringify(headings)}`);
+
     await assertTileVisible(page, WEEK_NAME, 10_000);
 
     // Navigate into Week 1

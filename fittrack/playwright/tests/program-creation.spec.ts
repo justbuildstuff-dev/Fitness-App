@@ -38,11 +38,11 @@ function firstVisible(
 /**
  * Tap a Flutter flt-semantics list tile by text content.
  *
- * See workout-logging.spec.ts for detailed explanation of why
- * flt-semantics[flt-tappable]:has-text() is used instead of getByText().first().
- * Short version: getByText().first() in DOM order hits the non-tappable Stack
- * container before the tappable ListTile node; [flt-tappable]:has-text() excludes
- * the non-tappable ancestors, landing directly on the tappable tile node.
+ * See workout-logging.spec.ts for detailed explanation of selector and click mechanism.
+ * Short version: flt-semantics[flt-tappable]:has-text() finds the correct tappable node
+ * (skipping non-tappable Stack containers). page.mouse.click at left-25% sends a trusted
+ * CDP event that Flutter routes reliably to ListTile.onTap; dispatchEvent('click') creates
+ * a non-trusted synthetic event that does not trigger navigation reliably.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
@@ -53,7 +53,21 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     15_000,
   ).catch(() => { throw new Error(`Tile "${text}" not found within 15s`); });
 
-  await el.dispatchEvent('click');
+  // Log which element was resolved.
+  const elInfo = await el.evaluate((e: Element) => ({
+    text: (e.textContent ?? '').trim().slice(0, 50),
+    role: e.getAttribute('role'),
+    tappable: e.hasAttribute('flt-tappable'),
+  }));
+  console.log(`[E2E][tap] "${text}" → ${JSON.stringify(elInfo)}`);
+
+  // Trusted CDP click at left-25% of the element (avoids right-side trailing buttons).
+  const box = await el.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.5);
+  } else {
+    await el.dispatchEvent('click');
+  }
 }
 
 /** Assert that a named tile is visible by text content or aria-label. */
