@@ -58,13 +58,30 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     text: (e.textContent ?? '').trim().slice(0, 50),
     role: e.getAttribute('role'),
     tappable: e.hasAttribute('flt-tappable'),
+    box: (() => { const r = (e as HTMLElement).getBoundingClientRect(); return {x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height)}; })(),
   }));
   console.log(`[E2E][tap] "${text}" → ${JSON.stringify(elInfo)}`);
 
   // Trusted CDP click at left-25% of the element (avoids right-side trailing buttons).
   const box = await el.boundingBox();
   if (box) {
-    await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.5);
+    const cx = box.x + box.width * 0.25;
+    const cy = box.y + box.height * 0.5;
+
+    // Log what elementFromPoint says is at the click target.
+    const targetInfo = await page.evaluate(({x, y}: {x: number; y: number}) => {
+      const t = document.elementFromPoint(x, y);
+      if (!t) return {tag: 'none', role: null, tappable: false, text: ''};
+      return {
+        tag: t.tagName.toLowerCase(),
+        role: t.getAttribute('role'),
+        tappable: t.hasAttribute('flt-tappable'),
+        text: (t.textContent ?? '').trim().slice(0, 40),
+      };
+    }, {x: cx, y: cy});
+    console.log(`[E2E][hit-target] (${cx.toFixed(0)},${cy.toFixed(0)}) → ${JSON.stringify(targetInfo)}`);
+
+    await page.mouse.click(cx, cy);
   } else {
     await el.dispatchEvent('click');
   }

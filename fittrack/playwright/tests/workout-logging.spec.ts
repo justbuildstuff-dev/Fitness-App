@@ -77,13 +77,32 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     text: (e.textContent ?? '').trim().slice(0, 50),
     role: e.getAttribute('role'),
     tappable: e.hasAttribute('flt-tappable'),
+    box: (e as HTMLElement).getBoundingClientRect
+      ? (() => { const r = (e as HTMLElement).getBoundingClientRect(); return {x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height)}; })()
+      : null,
   }));
   console.log(`[E2E][tap] "${text}" → ${JSON.stringify(elInfo)}`);
 
   // Trusted CDP click at left-25% of the element (avoids right-side trailing buttons).
   const box = await el.boundingBox();
   if (box) {
-    await page.mouse.click(box.x + box.width * 0.25, box.y + box.height * 0.5);
+    const cx = box.x + box.width * 0.25;
+    const cy = box.y + box.height * 0.5;
+
+    // Log what elementFromPoint says is at the click target — confirms hit target.
+    const targetInfo = await page.evaluate(({x, y}: {x: number; y: number}) => {
+      const t = document.elementFromPoint(x, y);
+      if (!t) return {tag: 'none', role: null, tappable: false, text: ''};
+      return {
+        tag: t.tagName.toLowerCase(),
+        role: t.getAttribute('role'),
+        tappable: t.hasAttribute('flt-tappable'),
+        text: (t.textContent ?? '').trim().slice(0, 40),
+      };
+    }, {x: cx, y: cy});
+    console.log(`[E2E][hit-target] (${cx.toFixed(0)},${cy.toFixed(0)}) → ${JSON.stringify(targetInfo)}`);
+
+    await page.mouse.click(cx, cy);
   } else {
     // Fallback: dispatchEvent if the element has no layout box (should not happen).
     await el.dispatchEvent('click');
@@ -153,14 +172,15 @@ test.describe('Workout Set Logging', () => {
     // --- NAVIGATE TO WORKOUT ---
     await tapListTile(page, PROGRAM_NAME);
 
-    // Diagnostic: confirm navigation by checking the screen heading.
-    // If still on programs screen the heading is "My Programs"; on program detail it changes.
-    await page.waitForTimeout(500);
-    const headings = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('flt-semantics[role="heading"]'))
-        .map(e => (e.textContent ?? '').trim().slice(0, 40))
-    );
-    console.log(`[E2E][post-program-tap-headings] ${JSON.stringify(headings)}`);
+    // Diagnostic: confirm navigation by checking current flt-semantics node texts.
+    // If still on programs screen, "E2E Test Program" tile is still present.
+    // If navigated to program detail, the tile is gone and week tiles appear instead.
+    await page.waitForTimeout(1500);
+    const postTapDump = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'));
+      return els.map(e => (e.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 35));
+    });
+    console.log(`[E2E][post-tap-tappables] ${JSON.stringify(postTapDump)}`);
 
     await assertTileVisible(page, WEEK_NAME, 10_000);
 
