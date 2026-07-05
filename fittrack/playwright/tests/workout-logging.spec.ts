@@ -52,13 +52,16 @@ function firstVisible(
  * Fallback: flt-tappable[aria-label*=] catches merged-semantics nodes where the title
  * is in aria-label rather than text content.
  *
- * Click mechanism: dispatchEvent('click') creates a non-trusted synthetic event
- * (isTrusted=false) that Flutter's CanvasKit semantics layer does not route to the
- * Dart tap callback reliably. page.mouse.click(cx, cy) sends a trusted CDP
- * Input.dispatchMouseEvent at the element's coordinates, which Flutter's flt-semantics
- * pointer-events:all handler receives and routes correctly to ListTile.onTap.
- * We click at 25% from the left edge to stay clear of right-side trailing buttons
- * (edit / delete / popup) in the Stack overlay, which are Positioned at right:0.
+ * Click mechanism: with --force-renderer-accessibility, tappable flt-semantics elements
+ * have pointer-events:all and intercept all pointer events. Flutter's glass-pane gesture
+ * handler skips gesture processing when event.target is a flt-semantics element (it
+ * relies on performAction from the semantics click listener instead). However,
+ * performAction does not reliably trigger ListTile.onTap navigation in this build.
+ *
+ * Fix: temporarily set pointer-events:none on all flt-semantics before the click so
+ * the event target becomes flt-glass-pane rather than flt-semantics. Flutter's gesture
+ * engine then processes the event via normal hit-testing and fires ListTile.onTap.
+ * We click at 25% from the left edge to stay clear of right-side trailing buttons.
  */
 async function tapListTile(page: import('@playwright/test').Page, text: string): Promise<void> {
   const el = await firstVisible(
@@ -77,32 +80,28 @@ async function tapListTile(page: import('@playwright/test').Page, text: string):
     text: (e.textContent ?? '').trim().slice(0, 50),
     role: e.getAttribute('role'),
     tappable: e.hasAttribute('flt-tappable'),
-    box: (e as HTMLElement).getBoundingClientRect
-      ? (() => { const r = (e as HTMLElement).getBoundingClientRect(); return {x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height)}; })()
-      : null,
+    box: (() => { const r = (e as HTMLElement).getBoundingClientRect(); return {x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height)}; })(),
   }));
   console.log(`[E2E][tap] "${text}" → ${JSON.stringify(elInfo)}`);
 
-  // Trusted CDP click at left-25% of the element (avoids right-side trailing buttons).
   const box = await el.boundingBox();
   if (box) {
     const cx = box.x + box.width * 0.25;
     const cy = box.y + box.height * 0.5;
 
-    // Log what elementFromPoint says is at the click target — confirms hit target.
-    const targetInfo = await page.evaluate(({x, y}: {x: number; y: number}) => {
-      const t = document.elementFromPoint(x, y);
-      if (!t) return {tag: 'none', role: null, tappable: false, text: ''};
-      return {
-        tag: t.tagName.toLowerCase(),
-        role: t.getAttribute('role'),
-        tappable: t.hasAttribute('flt-tappable'),
-        text: (t.textContent ?? '').trim().slice(0, 40),
-      };
-    }, {x: cx, y: cy});
-    console.log(`[E2E][hit-target] (${cx.toFixed(0)},${cy.toFixed(0)}) → ${JSON.stringify(targetInfo)}`);
-
+    // Bypass the flt-semantics pointer-events intercept so the click reaches the
+    // Flutter canvas / glass-pane directly and is processed by the gesture engine.
+    await page.evaluate(() => {
+      document.querySelectorAll('flt-semantics').forEach(e => {
+        (e as HTMLElement).style.pointerEvents = 'none';
+      });
+    });
     await page.mouse.click(cx, cy);
+    await page.evaluate(() => {
+      document.querySelectorAll('flt-semantics').forEach(e => {
+        (e as HTMLElement).style.pointerEvents = '';
+      });
+    });
   } else {
     // Fallback: dispatchEvent if the element has no layout box (should not happen).
     await el.dispatchEvent('click');
