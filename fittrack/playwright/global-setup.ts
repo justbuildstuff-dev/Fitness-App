@@ -61,6 +61,7 @@ export default async function globalSetup(): Promise<void> {
       name: 'E2E Workout',
       orderIndex: 0,   // Required: getWorkouts() queries .orderBy('orderIndex')
       createdAt: new Date(),
+      updatedAt: new Date(),  // Required: WorkoutConverter.fromFirestore casts as Timestamp (non-nullable)
       exerciseCount: 1,
     }
   );
@@ -77,6 +78,7 @@ export default async function globalSetup(): Promise<void> {
       exerciseType: 'strength',
       order: 0,
       createdAt: new Date(),
+      updatedAt: new Date(),  // Required: ExerciseConverter.fromFirestore casts as Timestamp (non-nullable)
     }
   );
 
@@ -94,6 +96,7 @@ export default async function globalSetup(): Promise<void> {
       weight: 60,
       checked: false,
       createdAt: new Date(),
+      updatedAt: new Date(),  // Required: ExerciseSetConverter.fromFirestore casts as Timestamp (non-nullable)
     }
   );
 
