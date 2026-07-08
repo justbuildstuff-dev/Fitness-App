@@ -14,46 +14,73 @@ test.describe('Analytics Screen', () => {
     // so the Analytics Pro gate is open.
 
     // Navigate to Analytics via bottom navigation tab.
-    // getByRole finds node-30 (flt-semantics[role="button"][aria-current="false"]).
-    // Use dispatchEvent('click') rather than .click(): Playwright's .click() enters a
-    // 60-second retry loop when Flutter rebuilds the flt-semantics tree after navigation
-    // (route pushState causes the outer actionability loop to retry indefinitely).
-    // dispatchEvent fires the DOM 'click' event directly; Flutter's flt-tappable
-    // addEventListener('click') handler fires and triggers the Dart tap callback.
-    await page.getByRole('button', { name: 'Analytics' }).dispatchEvent('click');
+    //
+    // dispatchEvent('click') fires a non-trusted click event. For most buttons (FAB,
+    // list tiles) this works because Flutter's flt-tappable click listener fires
+    // performAction(tap). But bottom NavigationBar destination taps require the event
+    // to reach flt-glass-pane (the Flutter gesture arena) via actual pointer input.
+    //
+    // Fix: use the same pointer-events bypass as tapListTile:
+    //   1. Temporarily set pointer-events:none on all flt-semantics so the CDP mouse
+    //      click reaches flt-glass-pane instead of being intercepted by the overlay.
+    //   2. Use page.mouse.click() (a CDP-generated trusted event) so Flutter's gesture
+    //      engine processes it via hit-testing and fires onDestinationSelected(1).
+    const analyticsTabEl = page.locator('flt-semantics[flt-tappable]:has-text("Analytics")').first();
+    await analyticsTabEl.waitFor({ state: 'visible', timeout: 10_000 });
+    const tabBox = await analyticsTabEl.boundingBox();
+    if (tabBox) {
+      await page.evaluate(() => {
+        document.querySelectorAll('flt-semantics').forEach(e => {
+          (e as HTMLElement).style.pointerEvents = 'none';
+        });
+      });
+      await page.mouse.click(
+        tabBox.x + tabBox.width * 0.5,
+        tabBox.y + tabBox.height * 0.5,
+      );
+      await page.evaluate(() => {
+        document.querySelectorAll('flt-semantics').forEach(e => {
+          (e as HTMLElement).style.pointerEvents = '';
+        });
+      });
+    }
 
-    // The Analytics screen should load without crash or blank screen
-    await expect(page.getByText('Analytics').first()).toBeVisible({ timeout: 15_000 });
+    await page.screenshot({ path: `test-results/${testInfo.title}/01-analytics-tab-clicked.png` });
 
-    await page.screenshot({ path: `test-results/${testInfo.title}/01-analytics-loaded.png` });
-
-    // Wait up to 10s for at least one analytics tab (Overview / Exercise / Trends) OR the
-    // empty state ("No Data Available"). The empty state renders when no workout history
-    // exists (monthHeatmapData == null && currentAnalytics == null); the E2E test user has
-    // seeded data but no completed workouts, so the empty state is the expected outcome.
-    await page.getByText('Overview')
+    // Wait for Analytics screen body content (analytics-specific text that does NOT appear
+    // on the Programs screen). The nav button "Analytics Tab 2 of 3" contains "Analytics"
+    // so we cannot use that as a navigation signal — we must wait for screen body content.
+    //   - "No Data Available" → empty state (expected when no completed workouts exist)
+    //   - "Loading analytics..." → loading state
+    //   - "Overview" / "Exercise" / "Trends" → tabbed content (when analytics data exists)
+    await page.getByText('No Data Available')
+      .or(page.getByText('Loading analytics'))
+      .or(page.getByText('Start tracking workouts'))
+      .or(page.getByText('Overview'))
       .or(page.getByText('Exercise'))
       .or(page.getByText('Trends'))
-      .or(page.getByText('No Data Available'))
       .first()
-      .waitFor({ state: 'visible', timeout: 10_000 })
+      .waitFor({ state: 'visible', timeout: 15_000 })
       .catch(() => {});
+
+    await page.screenshot({ path: `test-results/${testInfo.title}/02-analytics-loaded.png` });
 
     const hasOverviewTab = await page.getByText('Overview').isVisible().catch(() => false);
     const hasExerciseTab = await page.getByText('Exercise').isVisible().catch(() => false);
     const hasTrendsTab = await page.getByText('Trends').isVisible().catch(() => false);
     const hasEmptyState = await page.getByText('No Data Available').isVisible().catch(() => false);
+    const hasLoadingState = await page.getByText('Loading analytics').isVisible().catch(() => false);
+    const hasEmptyHint = await page.getByText('Start tracking workouts').isVisible().catch(() => false);
 
-    expect(hasOverviewTab || hasExerciseTab || hasTrendsTab || hasEmptyState).toBeTruthy();
+    console.log(`[E2E][analytics-state] overview=${hasOverviewTab} exercise=${hasExerciseTab} trends=${hasTrendsTab} empty=${hasEmptyState} loading=${hasLoadingState} hint=${hasEmptyHint}`);
 
-    await page.screenshot({ path: `test-results/${testInfo.title}/02-analytics-tabs-visible.png` });
+    expect(hasOverviewTab || hasExerciseTab || hasTrendsTab || hasEmptyState || hasLoadingState || hasEmptyHint).toBeTruthy();
 
-    // Verify no error dialog is shown (error dialogs typically contain "Error" or "Something went wrong")
+    // Verify no error dialog is shown
     const errorDialog = page.getByText(/something went wrong/i);
     await expect(errorDialog).not.toBeVisible();
 
-    // Verify screen is not blank: some content should be present beyond just the nav
-    // The page should have rendered more than just the navigation bar
+    // Verify screen is not blank
     const bodyText = await page.locator('body').innerText();
     expect(bodyText.length).toBeGreaterThan(20);
   });

@@ -231,6 +231,34 @@ test.describe('Workout Set Logging', () => {
 
     await page.screenshot({ path: `test-results/${testInfo.title}/02-exercise-visible.png` });
 
+    // Diagnostic: read the set document directly from the Firestore emulator to verify
+    // the 'checked' field value as stored — bypasses Flutter and security rules.
+    // If checked=true here, the seed wrote the wrong value or global-setup failed.
+    // If checked=false here but the DOM shows aria-checked="true", it's a converter/Flutter bug.
+    const setDocUrl = `http://localhost:8080/v1/projects/fitness-app-8505e/databases/(default)/documents/users/${uid}/programs/e2e-program-001/weeks/e2e-week-001/workouts/e2e-workout-001/exercises/e2e-exercise-001/sets/e2e-set-001`;
+    const setDoc = await fetch(setDocUrl, { headers: { 'Authorization': 'Bearer owner' } })
+      .then(r => r.ok ? r.json() : r.text())
+      .catch((e: Error) => ({ error: (e as Error).message }));
+    const setFields = (setDoc as { fields?: Record<string, unknown> })?.fields as Record<string, unknown> | undefined;
+    console.log(`[E2E][set-direct-read] checked=${JSON.stringify(setFields?.checked)} reps=${JSON.stringify(setFields?.reps)} updatedAt=${JSON.stringify(setFields?.updatedAt)}`);
+
+    // Diagnostic: dump ALL role="checkbox" elements in the DOM (unfiltered) to identify
+    // exactly which element getByRole('checkbox').first() resolves to and what its state is.
+    const allCheckboxes = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('[role="checkbox"]')).map(el => ({
+        id: el.id,
+        checked: el.getAttribute('aria-checked'),
+        tappable: el.hasAttribute('flt-tappable'),
+        text: (el.textContent ?? '').trim().slice(0, 40),
+        label: el.getAttribute('aria-label'),
+        rect: (() => {
+          const r = (el as HTMLElement).getBoundingClientRect();
+          return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+        })(),
+      }));
+    });
+    console.log(`[E2E][all-checkboxes] count=${allCheckboxes.length} ${JSON.stringify(allCheckboxes)}`);
+
     // Check off the set using the Checkbox widget (Flutter renders as role="checkbox").
     // Use dispatchEvent('click') for the same reason as button clicks: the flt-semantics
     // node may be rebuilt after the toggle (set becomes read-only), which would cause
