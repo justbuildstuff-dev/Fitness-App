@@ -263,6 +263,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateWeek(context),
+        tooltip: 'Add',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: const GlobalBottomNavBar(

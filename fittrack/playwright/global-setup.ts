@@ -45,6 +45,7 @@ export default async function globalSetup(): Promise<void> {
     id: weekId,
     programId,
     name: 'Week 1',
+    order: 1,        // Required: getWeeks() queries .orderBy('order')
     weekNumber: 1,
     createdAt: new Date(),
     workoutCount: 1,
@@ -58,6 +59,7 @@ export default async function globalSetup(): Promise<void> {
       weekId,
       programId,
       name: 'E2E Workout',
+      orderIndex: 0,   // Required: getWorkouts() queries .orderBy('orderIndex')
       createdAt: new Date(),
       exerciseCount: 1,
     }
