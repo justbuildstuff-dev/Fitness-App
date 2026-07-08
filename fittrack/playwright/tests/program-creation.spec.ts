@@ -155,6 +155,11 @@ test.describe('Program / Week / Workout Creation', () => {
     await page.screenshot({ path: `test-results/${testInfo.title}/02-program-name-filled.png` });
     await page.getByRole('button', { name: 'CREATE', exact: true }).dispatchEvent('click');
 
+    // Wait for CreateProgramScreen to close (Navigator.pop() is called inside the async
+    // _saveProgram handler after the Firestore write completes; this ensures we're back
+    // on ProgramsScreen before checking for the tile).
+    await expect(page.getByText('Create New Program').first()).not.toBeVisible({ timeout: 10_000 });
+
     // Verify program appears in the list (tile title is in aria-label via MergeSemantics)
     await assertTileVisible(page, PROGRAM_NAME, 15_000);
     await page.screenshot({ path: `test-results/${testInfo.title}/03-program-created.png` });
@@ -173,6 +178,11 @@ test.describe('Program / Week / Workout Creation', () => {
     } else {
       await page.getByRole('button', { name: 'Add' }).dispatchEvent('click');
     }
+
+    // _navigateToCreateWeek calls CreateOptionsSheet.show() before pushing CreateWeekScreen.
+    // Tap "Start Fresh" to proceed past the bottom sheet.
+    await expect(page.getByText('Start Fresh')).toBeVisible({ timeout: 10_000 });
+    await tapListTile(page, 'Start Fresh');
 
     // CreateWeekScreen: fill week name and submit
     await expect(page.getByText('Create New Week')).toBeVisible({ timeout: 10_000 });
@@ -196,6 +206,11 @@ test.describe('Program / Week / Workout Creation', () => {
     } else {
       await page.getByRole('button', { name: 'Add' }).dispatchEvent('click');
     }
+
+    // _navigateToCreateWorkout also calls CreateOptionsSheet.show() before pushing
+    // CreateWorkoutScreen. Tap "Start Fresh" to proceed past the bottom sheet.
+    await expect(page.getByText('Start Fresh')).toBeVisible({ timeout: 10_000 });
+    await tapListTile(page, 'Start Fresh');
 
     // CreateWorkoutScreen: fill workout name and submit
     await expect(page.getByText('Create Workout').first()).toBeVisible({ timeout: 10_000 });

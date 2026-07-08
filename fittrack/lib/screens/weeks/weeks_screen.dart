@@ -282,6 +282,7 @@ class _WeeksScreenState extends State<WeeksScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateWorkout(context),
+        tooltip: 'Add',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: const GlobalBottomNavBar(

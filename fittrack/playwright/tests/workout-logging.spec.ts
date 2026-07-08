@@ -185,6 +185,16 @@ test.describe('Workout Set Logging', () => {
 
     // Navigate into Week 1
     await tapListTile(page, WEEK_NAME);
+
+    // Diagnostic: confirm navigation to WeeksScreen succeeded.
+    // If still on ProgramDetailScreen, week tile is present; if navigated, workout tiles appear.
+    await page.waitForTimeout(1500);
+    const postWeekTapDump = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('flt-semantics[flt-tappable]'));
+      return els.map(e => (e.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 35));
+    });
+    console.log(`[E2E][post-week-tap-tappables] ${JSON.stringify(postWeekTapDump)}`);
+
     await assertTileVisible(page, WORKOUT_NAME, 10_000);
 
     // Navigate into E2E Workout
