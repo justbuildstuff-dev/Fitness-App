@@ -199,6 +199,22 @@ test.describe('Workout Set Logging', () => {
 
     // Navigate into E2E Workout
     await tapListTile(page, WORKOUT_NAME);
+
+    // Diagnostic: confirm navigation to ConsolidatedWorkoutScreen.
+    // If exercises fail to load (orderIndex field missing, updatedAt cast error, etc.),
+    // this dump reveals whether we're on an error state or loading state.
+    await page.waitForTimeout(2000);
+    const postWorkoutTapDump = await page.evaluate(() => {
+      const els = Array.from(document.querySelectorAll('flt-semantics'));
+      return els.map(e => ({
+        text: (e.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 60),
+        label: e.getAttribute('aria-label')?.slice(0, 60) ?? null,
+        tappable: e.hasAttribute('flt-tappable'),
+        role: e.getAttribute('role'),
+      })).filter(n => n.text || n.label).slice(0, 30);
+    });
+    console.log(`[E2E][post-workout-tap-dump] ${JSON.stringify(postWorkoutTapDump)}`);
+
     await assertTileVisible(page, EXERCISE_NAME, 10_000);
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-workout-open.png` });

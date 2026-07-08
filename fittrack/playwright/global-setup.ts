@@ -76,7 +76,7 @@ export default async function globalSetup(): Promise<void> {
       programId,
       name: 'Bench Press',
       exerciseType: 'strength',
-      order: 0,
+      orderIndex: 0,  // Required: getExercises() queries .orderBy('orderIndex')
       createdAt: new Date(),
       updatedAt: new Date(),  // Required: ExerciseConverter.fromFirestore casts as Timestamp (non-nullable)
     }
