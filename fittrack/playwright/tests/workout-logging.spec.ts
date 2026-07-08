@@ -224,8 +224,10 @@ test.describe('Workout Set Logging', () => {
 
     // --- LOG THE SET ---
     // The seeded set (reps:5, weight:60) is pre-populated in the set row.
-    // Verify reps and weight fields are visible
-    await expect(page.getByText('Reps *').first()).toBeVisible({ timeout: 5_000 });
+    // Verify the reps text field is visible.
+    // Flutter renders InputDecoration.labelText ('Reps *') as aria-label on the textbox
+    // semantics node — NOT as a separate DOM text node — so getByText('Reps *') finds nothing.
+    await expect(page.getByRole('textbox', { name: /reps/i }).first()).toBeVisible({ timeout: 5_000 });
 
     await page.screenshot({ path: `test-results/${testInfo.title}/02-exercise-visible.png` });
 
