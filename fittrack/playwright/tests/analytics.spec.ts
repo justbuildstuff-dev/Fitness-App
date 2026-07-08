@@ -28,6 +28,8 @@ test.describe('Analytics Screen', () => {
     const analyticsTabEl = page.locator('flt-semantics[flt-tappable]:has-text("Analytics")').first();
     await analyticsTabEl.waitFor({ state: 'visible', timeout: 10_000 });
     const tabBox = await analyticsTabEl.boundingBox();
+    const tabText = await analyticsTabEl.textContent().catch(() => '');
+    console.log(`[E2E][analytics-tab] text="${tabText?.trim()}" box=${JSON.stringify(tabBox)}`);
     if (tabBox) {
       await page.evaluate(() => {
         document.querySelectorAll('flt-semantics').forEach(e => {
@@ -43,7 +45,23 @@ test.describe('Analytics Screen', () => {
           (e as HTMLElement).style.pointerEvents = '';
         });
       });
+      // Brief wait so Flutter's gesture engine can process the tap and trigger
+      // NavigationBar.onDestinationSelected before we start polling for screen content.
+      await page.waitForTimeout(1000);
     }
+
+    // Diagnostic: dump top-level semantics nodes to reveal what screen is now showing.
+    const postNavDump = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('flt-semantics'))
+        .map(e => ({
+          text: (e.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 50),
+          tappable: e.hasAttribute('flt-tappable'),
+          role: e.getAttribute('role'),
+        }))
+        .filter(n => n.text)
+        .slice(0, 20);
+    });
+    console.log(`[E2E][post-nav-dump] ${JSON.stringify(postNavDump)}`);
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-analytics-tab-clicked.png` });
 
