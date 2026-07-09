@@ -126,6 +126,11 @@ async function assertTileVisible(
 
 test.describe('Workout Set Logging', () => {
   test.beforeEach(async ({ page }) => {
+    // Extend timeout for the full test (beforeEach + test body): sign-in alone can take
+    // up to 60s in the emulator on a cold browser. The default 60s total budget leaves
+    // no room for the Firestore PATCH + sign-in + navigation + set-logging steps.
+    test.setTimeout(120_000);
+
     // Reset the set's checked field to false before each attempt so tests are isolated
     // regardless of run order: mobile runs first, clicks the checkbox, and persists
     // checked:true; without this reset the desktop run (and any mobile retry) would see
@@ -142,10 +147,6 @@ test.describe('Workout Set Logging', () => {
   });
 
   test('navigates to seeded workout and checks off a set', async ({ page }, testInfo) => {
-    // Extend timeout: sign-in (~3s) + HomeScreen navigation (~12s, auth_provider.user.reload()
-    // has a 10s built-in timeout) + Firestore data load + navigation + set logging +
-    // Firestore persist check = ~60s worst case.
-    test.setTimeout(120_000);
 
     // Diagnostic: read seeded program document directly from the Firestore emulator REST API
     // (bypassing Flutter and security rules) to confirm the data is present and correct.
