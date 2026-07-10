@@ -95,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () => PaywallScreen.show(
                       context,
                       headline: 'Unlock Overload Pro',
-                      subtext: 'Unlimited programs. Full analytics. \$39.99/year.',
+                      subtext: 'Unlimited programs. Full analytics. \$49.99/year.',
                     ),
                   );
                 },

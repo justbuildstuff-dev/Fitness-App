@@ -119,9 +119,9 @@ class PaywallScreen extends StatelessWidget {
                   _PlanCard(
                     label: 'Annual',
                     badge: 'RECOMMENDED',
-                    savings: 'Save 52% vs monthly',
-                    price: '\$39.99/year',
-                    detail: 'Billed annually · 14-day free trial',
+                    savings: 'Save 40% vs monthly',
+                    price: '\$49.99/year',
+                    detail: 'Billed annually',
                     isRecommended: true,
                     onTap: () {
                       Navigator.of(context).pop();
@@ -141,7 +141,7 @@ class PaywallScreen extends StatelessWidget {
                   _PlanCard(
                     label: 'Monthly',
                     price: '\$6.99/month',
-                    detail: '14-day free trial',
+                    detail: 'Billed monthly',
                     isRecommended: false,
                     onTap: () {
                       Navigator.of(context).pop();
@@ -152,26 +152,6 @@ class PaywallScreen extends StatelessWidget {
                             .read<SubscriptionProvider>()
                             .startCheckout(
                                 userId, SubscriptionService.monthlyPriceId);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Lifetime plan card
-                  _PlanCard(
-                    label: 'Lifetime',
-                    price: '\$59.99',
-                    detail: 'One-time purchase · No recurring fees',
-                    isRecommended: false,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      final userId =
-                          context.read<AuthProvider>().user?.uid;
-                      if (userId != null) {
-                        context
-                            .read<SubscriptionProvider>()
-                            .startCheckout(
-                                userId, SubscriptionService.lifetimePriceId);
                       }
                     },
                   ),

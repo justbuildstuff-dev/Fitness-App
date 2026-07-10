@@ -76,7 +76,7 @@ void main() {
       expect(find.text('You have reached the free plan limit.'), findsNothing);
     });
 
-    testWidgets('renders Annual, Monthly and Lifetime plan labels', (tester) async {
+    testWidgets('renders Annual and Monthly plan labels', (tester) async {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -86,7 +86,7 @@ void main() {
 
       expect(find.text('Annual'), findsOneWidget);
       expect(find.text('Monthly'), findsOneWidget);
-      expect(find.text('Lifetime'), findsOneWidget);
+      expect(find.text('Lifetime'), findsNothing);
     });
 
     testWidgets('renders RECOMMENDED badge on annual plan', (tester) async {
@@ -100,7 +100,7 @@ void main() {
       expect(find.text('RECOMMENDED'), findsOneWidget);
     });
 
-    testWidgets('renders Lifetime plan with one-time purchase detail', (tester) async {
+    testWidgets('does not render Lifetime plan (out of scope)', (tester) async {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -108,8 +108,8 @@ void main() {
         ),
       );
 
-      expect(find.text('Lifetime'), findsOneWidget);
-      expect(find.text('One-time purchase · No recurring fees'), findsOneWidget);
+      expect(find.text('Lifetime'), findsNothing);
+      expect(find.text('One-time purchase · No recurring fees'), findsNothing);
     });
 
     testWidgets('renders benefits list', (tester) async {
@@ -186,7 +186,7 @@ void main() {
   });
 
   group('PaywallScreen - plan prices', () {
-    testWidgets('renders hardcoded Stripe prices', (tester) async {
+    testWidgets('renders updated Stripe prices', (tester) async {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
@@ -194,9 +194,9 @@ void main() {
         ),
       );
 
-      expect(find.text(r'$39.99/year'), findsOneWidget);
+      expect(find.text(r'$49.99/year'), findsOneWidget);
       expect(find.text(r'$6.99/month'), findsOneWidget);
-      expect(find.text(r'$59.99'), findsOneWidget);
+      expect(find.text(r'$59.99'), findsNothing);
     });
   });
 
