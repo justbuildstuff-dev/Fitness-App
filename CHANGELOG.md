@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-07-10
+
+### Added
+- **Playwright E2E Browser Testing** - Automated end-to-end tests covering the app's three critical user flows in a real Chromium browser (#490)
+  - Program / week / workout creation flow verified at 375px (mobile) and 1280px (desktop)
+  - Workout set logging flow with Firestore persistence verification
+  - Analytics screen render verification
+  - Tests run against Firebase Auth and Firestore emulators; no production data used
+  - Non-blocking CI integration: failures post PR comments and create GitHub issues without blocking merges
+  - Screenshots artifact uploaded on every CI run (90-day retention)
+
+### Fixed
+- Fixed Firebase Auth emulator endpoint: sign-in now correctly targets `localhost:9099` instead of falling back to production Auth (#512)
+- Fixed E2E sign-in helper to fail fast on auth 400 responses rather than hanging for the full 90s timeout (#512)
+- Fixed E2E analytics tab navigation: Firebase emulator warning banner is hidden before pointer events so it no longer intercepts clicks (#512)
+
 ## [1.6.0] - 2026-03-19
 
 ### Added
