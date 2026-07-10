@@ -11,6 +11,7 @@ import '../../widgets/global_bottom_nav_bar.dart';
 import '../../widgets/create_options_sheet.dart';
 import '../templates/template_picker_screen.dart';
 import '../templates/template_preview_sheet.dart';
+import '../../widgets/checkout_success_banner.dart';
 import '../../widgets/returning_user_banner.dart';
 import '../../providers/subscription_provider.dart';
 import '../subscription/paywall_screen.dart';
@@ -93,6 +94,7 @@ class ProgramsScreen extends StatelessWidget {
 
           return Column(
             children: [
+              const CheckoutSuccessBanner(),
               const ReturningUserBanner(),
               Expanded(
                 child: RefreshIndicator(
