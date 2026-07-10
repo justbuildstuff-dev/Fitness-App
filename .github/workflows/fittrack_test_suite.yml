@@ -667,7 +667,8 @@ jobs:
         # Playwright interacts via Flutter's flt-semantics accessibility overlay.
         flutter build web --release \
           --dart-define=USE_EMULATOR=true \
-          --dart-define=SKIP_ONBOARDING=true
+          --dart-define=SKIP_ONBOARDING=true \
+          --dart-define=FORCE_SEMANTICS=true
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -743,7 +744,8 @@ jobs:
           bash playwright/scripts/report-failures.sh \
             "${{ github.event.number }}" \
             "${{ github.run_id }}" \
-            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "${{ steps.playwright.outcome }}"
         else
           STATUS="${{ steps.playwright.outcome }}"
           if [ "$STATUS" = "success" ]; then

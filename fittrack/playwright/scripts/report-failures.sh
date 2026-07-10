@@ -17,6 +17,9 @@ set -euo pipefail
 PR_NUMBER="${1:?PR number required}"
 RUN_ID="${2:?Run ID required}"
 RUN_URL="${3:?Run URL required}"
+# Optional: "success"|"failure"|"cancelled" from ${{ steps.playwright.outcome }}.
+# Used to detect a global-setup crash (Playwright exits non-zero but 0 tests ran).
+PLAYWRIGHT_OUTCOME="${4:-}"
 
 RESULTS_FILE="playwright/playwright-report/results.json"
 LABEL="playwright-failure"
@@ -34,10 +37,75 @@ if [ ! -f "$RESULTS_FILE" ]; then
 fi
 
 # ─── Parse results via jq ────────────────────────────────────────────────────
-TOTAL=$(jq '.stats.expected // 0' "$RESULTS_FILE")
+# stats.expected = tests that ran as expected (passed / expected failures)
+# stats.unexpected = tests that did NOT run as expected (actual failures)
+# TOTAL is the count of all tests that ran — used to distinguish "crash" (0 ran)
+# from "failures" (>0 ran but some failed). stats.expected alone equals 0 when
+# ALL tests fail, which was incorrectly triggering the crash guard.
+TOTAL=$(jq '(.stats.expected // 0) + (.stats.unexpected // 0) + (.stats.flaky // 0)' "$RESULTS_FILE")
 PASSED=$(jq '.stats.expected // 0' "$RESULTS_FILE")
 FAILED=$(jq '.stats.unexpected // 0' "$RESULTS_FILE")
 SKIPPED=$(jq '.stats.skipped // 0' "$RESULTS_FILE")
+
+# ─── Detect global-setup / infra crash ───────────────────────────────────────
+# When global-setup throws, Playwright exits non-zero but results.json shows
+# 0 tests (stats.expected=0). Without this guard the script would report
+# "all tests passed" (0 failures = pass) even though nothing ran.
+if [ "$PLAYWRIGHT_OUTCOME" = "failure" ] && [ "$TOTAL" -eq 0 ]; then
+  echo "⚠️  Playwright crashed before any tests ran (global-setup failure)"
+
+  ISSUE_TITLE="Playwright E2E crash — PR #${PR_NUMBER} run #${RUN_ID}"
+  ISSUE_BODY="## Playwright E2E Setup Crash
+
+**PR:** #${PR_NUMBER}
+**Run:** [${RUN_ID}](${RUN_URL})
+**Result:** Playwright exited non-zero with 0 tests run — likely a \`global-setup\` failure.
+
+### What this means
+The test suite crashed before any spec files were executed. Common causes:
+- Firebase emulator not reachable
+- Auth/Firestore seed data call failed
+- TypeScript compile error in \`global-setup.ts\`
+
+### How to investigate
+1. Open the run link above and inspect the **Run Playwright E2E tests** step output
+2. Look for the first uncaught error in \`global-setup.ts\`
+3. Fix the root cause and re-run the workflow
+
+---
+*Auto-created by \`playwright/scripts/report-failures.sh\`. Closes automatically when tests run cleanly.*"
+
+  EXISTING_ISSUE=$(gh issue list \
+    --label "$LABEL" \
+    --state open \
+    --search "Playwright E2E crash — PR #${PR_NUMBER}" \
+    --json number \
+    --jq '.[0].number' 2>/dev/null || echo "")
+
+  if [ -n "$EXISTING_ISSUE" ]; then
+    gh issue edit "$EXISTING_ISSUE" --title "$ISSUE_TITLE" --body "$ISSUE_BODY" 2>/dev/null || true
+    ISSUE_NUMBER="$EXISTING_ISSUE"
+  else
+    ISSUE_NUMBER=$(gh issue create \
+      --title "$ISSUE_TITLE" \
+      --body "$ISSUE_BODY" \
+      --label "$LABEL" \
+      --label "priority/high" \
+      --json number \
+      --jq '.number' 2>/dev/null || echo "")
+  fi
+
+  if [ -n "$ISSUE_NUMBER" ]; then
+    gh pr comment "$PR_NUMBER" \
+      --body "⚠️ **Playwright E2E**: test suite crashed before any tests ran — [GitHub Issue #${ISSUE_NUMBER}](../../issues/${ISSUE_NUMBER}) · [View run logs]($RUN_URL)" \
+      2>/dev/null || true
+  else
+    gh pr comment "$PR_NUMBER" \
+      --body "⚠️ **Playwright E2E**: test suite crashed before any tests ran — [View run logs]($RUN_URL)" \
+      2>/dev/null || true
+  fi
+  exit 0
+fi
 
 # Build a list of failing test names with viewport and status
 FAILING_TESTS=$(jq -r '

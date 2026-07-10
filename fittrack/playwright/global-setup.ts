@@ -21,7 +21,7 @@ export default async function globalSetup(): Promise<void> {
     email: TEST_EMAIL,
     displayName: 'Playwright Test User',
     isProOverride: true,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
   });
 
   // Seed a full workout hierarchy for logging and analytics tests
@@ -35,8 +35,9 @@ export default async function globalSetup(): Promise<void> {
     userId: uid,
     id: programId,
     name: 'E2E Test Program',
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     weekCount: 1,
+    isArchived: false,  // Required: getPrograms() queries .where('isArchived', isEqualTo: false)
   });
 
   await seedFirestoreDoc(`users/${uid}/programs/${programId}/weeks/${weekId}`, {
@@ -44,8 +45,9 @@ export default async function globalSetup(): Promise<void> {
     id: weekId,
     programId,
     name: 'Week 1',
+    order: 1,        // Required: getWeeks() queries .orderBy('order')
     weekNumber: 1,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     workoutCount: 1,
   });
 
@@ -57,7 +59,9 @@ export default async function globalSetup(): Promise<void> {
       weekId,
       programId,
       name: 'E2E Workout',
-      createdAt: new Date().toISOString(),
+      orderIndex: 0,   // Required: getWorkouts() queries .orderBy('orderIndex')
+      createdAt: new Date(),
+      updatedAt: new Date(),  // Required: WorkoutConverter.fromFirestore casts as Timestamp (non-nullable)
       exerciseCount: 1,
     }
   );
@@ -72,8 +76,9 @@ export default async function globalSetup(): Promise<void> {
       programId,
       name: 'Bench Press',
       exerciseType: 'strength',
-      order: 0,
-      createdAt: new Date().toISOString(),
+      orderIndex: 0,  // Required: getExercises() queries .orderBy('orderIndex')
+      createdAt: new Date(),
+      updatedAt: new Date(),  // Required: ExerciseConverter.fromFirestore casts as Timestamp (non-nullable)
     }
   );
 
@@ -90,7 +95,8 @@ export default async function globalSetup(): Promise<void> {
       reps: 5,
       weight: 60,
       checked: false,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),  // Required: ExerciseSetConverter.fromFirestore casts as Timestamp (non-nullable)
     }
   );
 

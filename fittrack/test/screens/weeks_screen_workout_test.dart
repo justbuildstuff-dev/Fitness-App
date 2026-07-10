@@ -877,7 +877,11 @@ void main() {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
 
-        // Find delete button specifically within Push Day's card for reliable targeting
+        // Find delete button specifically within Push Day's card for reliable targeting.
+        // _WorkoutCard uses Stack(Card(ListTile), Positioned(edit_btn, delete_btn)) so that
+        // ListTile has no trailing buttons and MergeSemantics keeps the title as DOM text
+        // content for E2E tests. The delete button is in Positioned (sibling of Card inside
+        // Stack), so we search the Stack ancestor rather than the Card ancestor.
         final pushDayCard = find.ancestor(
           of: find.text('Push Day'),
           matching: find.byType(Card),
@@ -885,8 +889,13 @@ void main() {
         expect(pushDayCard, findsOneWidget,
             reason: 'Should find Push Day workout card');
 
-        final pushDayDeleteButton = find.descendant(
+        // find.ancestor returns innermost first; .first = the _WorkoutCard Stack.
+        final pushDayStack = find.ancestor(
           of: pushDayCard,
+          matching: find.byType(Stack),
+        ).first;
+        final pushDayDeleteButton = find.descendant(
+          of: pushDayStack,
           matching: find.byIcon(Icons.delete),
         );
         expect(pushDayDeleteButton, findsOneWidget,

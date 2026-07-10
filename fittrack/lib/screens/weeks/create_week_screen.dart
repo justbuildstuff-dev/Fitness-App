@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
@@ -130,6 +131,7 @@ class _CreateWeekScreenState extends State<CreateWeekScreen> {
             // Week Name
             TextFormField(
               controller: _nameController,
+              autofocus: !kIsWeb,
               textInputAction: TextInputAction.next,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(

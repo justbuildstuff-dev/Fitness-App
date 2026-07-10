@@ -118,6 +118,7 @@ class ProgramsScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToCreateProgram(context),
+        tooltip: 'Add',
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: const GlobalBottomNavBar(
@@ -310,98 +311,119 @@ class _ProgramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.fitness_center,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        title: Text(
-          program.name,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (program.description != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                program.description!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+    // Trailing buttons are lifted out of ListTile into a Stack overlay.
+    // ListTile activates MergeSemantics when any trailing child carries
+    // Semantics(container:true) (which IconButton does internally), which absorbs
+    // the title text into the tile node's aria-label and removes it from DOM text
+    // content. The E2E accessibility tests locate tiles by text content and rely
+    // on click-bubbling to the InkWell; putting buttons outside ListTile prevents
+    // the merge and keeps the title as discoverable text content.
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            // Extra right padding reserves space for the two overlaid icon buttons
+            // (2 × ~44 dp minimum touch target + 8 dp gap = ~100 dp).
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 100, 8),
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-            const SizedBox(height: 8),
-            Row(
+              child: Icon(
+                Icons.fitness_center,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            title: Text(
+              program.name,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    'Created ${_formatDate(program.createdAt)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                if (program.description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    program.description!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (program.updatedAt != program.createdAt) ...[
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.edit,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      'Updated ${_formatDate(program.updatedAt)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Created ${_formatDate(program.createdAt)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (program.updatedAt != program.createdAt) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.edit,
+                        size: 14,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          'Updated ${_formatDate(program.updatedAt)}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
-          ],
+            onTap: onTap,
+          ),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: () => _editProgram(context),
-              tooltip: 'Edit program',
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 8, // exclude Card's bottom margin so buttons sit inside the card
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  onPressed: () => _editProgram(context),
+                  tooltip: 'Edit program',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                  onPressed: () => _deleteProgram(context),
+                  tooltip: 'Delete program',
+                ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-              onPressed: () => _deleteProgram(context),
-              tooltip: 'Delete program',
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
