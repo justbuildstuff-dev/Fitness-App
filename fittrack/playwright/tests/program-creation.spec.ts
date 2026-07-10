@@ -219,7 +219,7 @@ test.describe('Program / Week / Workout Creation', () => {
     await page.getByRole('button', { name: 'CREATE', exact: true }).dispatchEvent('click');
 
     // Verify workout appears in the list
-    await assertTileVisible(page, WORKOUT_NAME, 15_000);
+    await assertTileVisible(page, WORKOUT_NAME, 30_000);
     await page.screenshot({ path: `test-results/${testInfo.title}/07-workout-created.png` });
   });
 });

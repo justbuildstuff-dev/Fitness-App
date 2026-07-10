@@ -83,13 +83,22 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
   // or /v1/accounts:signInWithPassword — match either path pattern.
+  // Wait for ANY signInWithPassword response (200 or 400), then check status.
+  // Filtering for 200 only causes a 90s hang when the emulator returns 400 on the first
+  // auth request of a suite run (race condition: global-setup creates the user, first test
+  // fires before the emulator commits it). Accepting any status lets us throw immediately
+  // on 400 so the test retries within seconds rather than burning the full timeout budget.
   const authOkPromise = page.waitForResponse(
-    resp => (resp.url().includes('signInWithPassword') || resp.url().includes('accounts:signInWithPassword')) && resp.status() === 200,
-    // 90s: the emulator occasionally stalls on the first auth request of a test suite
-    // run (cold emulator + cold browser + Firestore data loaded by previous tests). The
-    // workout-logging test.setTimeout(120_000) in beforeEach provides the budget for this.
+    resp => resp.url().includes('signInWithPassword') || resp.url().includes('accounts:signInWithPassword'),
     { timeout: 90_000 }
-  );
+  ).then(async resp => {
+    if (resp.status() !== 200) {
+      let body = '';
+      try { body = (await resp.text()).slice(0, 200); } catch { /* consumed */ }
+      throw new Error(`signInWithPassword returned ${resp.status()}: ${body}`);
+    }
+    return resp;
+  });
 
   // Submit by pressing Enter in the password field.
   // The password TextFormField has onFieldSubmitted: (_) => _signIn(), so Enter
