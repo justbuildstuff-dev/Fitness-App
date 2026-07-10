@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+const bool _kSkipOnboarding = bool.fromEnvironment('SKIP_ONBOARDING', defaultValue: false);
+
 /// Manages onboarding completion state via SharedPreferences.
 ///
 /// Singleton initialized once in main.dart after SharedPreferences.getInstance().
@@ -26,7 +28,7 @@ class OnboardingService {
 
   /// Returns true if the user has completed or skipped onboarding.
   bool get hasCompletedOnboarding =>
-      _prefs.getBool(_onboardingKey) ?? false;
+      _kSkipOnboarding || (_prefs.getBool(_onboardingKey) ?? false);
 
   /// Marks onboarding as complete. Persists to SharedPreferences.
   Future<void> markComplete() async {

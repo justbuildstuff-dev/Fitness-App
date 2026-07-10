@@ -14,7 +14,12 @@ on:
     paths:
       - 'fittrack/**'
       - '.github/workflows/fittrack_test_suite.yml'
-  workflow_dispatch:  # Allow manual triggering from Actions tab
+  workflow_dispatch:
+    inputs:
+      run_android_e2e:
+        description: 'Force-run Android E2E tests (ignores path filter)'
+        type: boolean
+        default: false
 
 # Required permissions for PR comments and test reports
 permissions:
@@ -26,14 +31,36 @@ jobs:
   # Parallel test execution for faster feedback
   #
   # Test Job Descriptions:
+  # - check-changes: Detects whether Android-relevant files changed (gates integration-tests)
   # - unit-tests: Fast validation of business logic (models, services, providers) using mocks
   # - widget-tests: UI component testing with mocked dependencies
   # - integration-tests: End-to-end tests on Android emulator (SLOW, known flaky - see #29)
+  #     Skipped automatically on PWA-only PRs (no android/** or integration_test/** changes).
+  #     Override with workflow_dispatch input run_android_e2e=true. See #490.
   # - enhanced-tests: REAL Firebase integration tests connecting to emulators (validates actual Firebase operations)
   # - performance-tests: Edge case and performance validation
   # - security-checks: Dependency audits and security scanning
+  # - playwright-e2e: Playwright browser tests against compiled Flutter web output (non-blocking)
   #
   # See Docs/Testing/TestClassification.md for complete test type definitions
+
+  check-changes:
+    name: Detect Changed File Paths
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    outputs:
+      android_changed: ${{ steps.filter.outputs.android }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Check for Android/integration_test file changes
+      uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          android:
+            - 'fittrack/android/**'
+            - 'fittrack/integration_test/**'
 
   unit-tests:
     name: Unit Tests (Business Logic)
@@ -139,7 +166,13 @@ jobs:
     name: E2E Tests (Android Emulator)
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    # Skipped on PRs with no android/** or integration_test/** changes to save ~80 min CI time.
+    # Force-run via workflow_dispatch with run_android_e2e=true. See issue #490.
+    needs: [check-changes]
+    if: |
+      (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') &&
+      (needs.check-changes.outputs.android_changed == 'true' ||
+       github.event.inputs.run_android_e2e == 'true')
 
     steps:
     - name: Checkout code
@@ -602,6 +635,136 @@ jobs:
         pkill -f "firebase" || true
         pkill -f "java.*firestore" || true
 
+  # Playwright E2E browser tests against compiled Flutter web PWA output.
+  # Non-blocking: continue-on-error:true and NOT in all-tests-passed needs.
+  # Failures create one GitHub issue listing all defects (see playwright/scripts/report-failures.sh).
+  playwright-e2e:
+    name: Playwright E2E (PWA Browser Tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 3.35.1
+        cache: true
+
+    - name: Install Flutter dependencies
+      run: |
+        cd fittrack
+        flutter pub get
+
+    - name: Build Flutter web
+      run: |
+        cd fittrack
+        # --web-renderer html was removed in Flutter 3.24+; CanvasKit is the default.
+        # Playwright interacts via Flutter's flt-semantics accessibility overlay.
+        flutter build web --release \
+          --dart-define=USE_EMULATOR=true \
+          --dart-define=SKIP_ONBOARDING=true \
+          --dart-define=FORCE_SEMANTICS=true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Setup Java 21 for Firebase emulators
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Install Firebase CLI
+      run: npm install -g firebase-tools
+
+    - name: Install Playwright dependencies
+      run: |
+        cd fittrack/playwright
+        # npm install used instead of npm ci because no package-lock.json is committed.
+        # package-lock.json is gitignored (Windows SSL prevents local generation);
+        # version is pinned in package.json via ^semver so installs are stable.
+        npm install
+
+    - name: Install Playwright browsers
+      run: |
+        cd fittrack/playwright
+        npx playwright install --with-deps chromium
+
+    - name: Start Firebase emulators
+      run: |
+        cd fittrack
+        firebase emulators:start --only auth,firestore --project fitness-app-8505e &
+        echo $! > emulator.pid
+
+    - name: Wait for Firebase emulators
+      run: |
+        echo "Waiting for Firestore emulator on localhost:8080..."
+        timeout 60 bash -c 'until curl -sf http://localhost:8080 > /dev/null; do sleep 2; done'
+        echo "Waiting for Auth emulator on localhost:9099..."
+        timeout 60 bash -c 'until curl -sf http://localhost:9099 > /dev/null; do sleep 2; done'
+        echo "✅ Firebase emulators ready"
+
+    - name: Start Flutter web server
+      run: |
+        npx serve@14 -s fittrack/build/web -l 3000 &
+        timeout 30 bash -c 'until curl -sf http://localhost:3000 > /dev/null; do sleep 1; done'
+        echo "✅ Flutter web server running on http://localhost:3000"
+
+    - name: Run Playwright E2E tests
+      id: playwright
+      run: |
+        cd fittrack/playwright
+        npx playwright test
+
+    - name: Upload Playwright artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-screenshots
+        path: |
+          fittrack/playwright/test-results/
+          fittrack/playwright/playwright-report/
+        retention-days: 90
+        if-no-files-found: ignore
+
+    - name: Report results to PR
+      if: always() && github.event_name == 'pull_request'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cd fittrack
+        if [ -f playwright/scripts/report-failures.sh ]; then
+          bash playwright/scripts/report-failures.sh \
+            "${{ github.event.number }}" \
+            "${{ github.run_id }}" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            "${{ steps.playwright.outcome }}"
+        else
+          STATUS="${{ steps.playwright.outcome }}"
+          if [ "$STATUS" = "success" ]; then
+            gh pr comment "${{ github.event.number }}" --body "✅ Playwright E2E: all tests passed — [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          else
+            gh pr comment "${{ github.event.number }}" --body "⚠️ Playwright E2E: one or more tests failed — [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          fi
+        fi
+
+    - name: Stop Firebase emulators
+      if: always()
+      run: |
+        cd fittrack
+        if [ -f emulator.pid ]; then
+          kill $(cat emulator.pid) || true
+          rm emulator.pid
+        fi
+        pkill -f "firebase" || true
+
   # Aggregate results and generate reports
   test-summary:
     name: Test Summary Report
@@ -734,7 +897,7 @@ jobs:
   all-tests-passed:
     name: All Tests Status
     runs-on: ubuntu-latest
-    needs: [unit-tests, widget-tests, integration-tests, performance-tests, enhanced-tests, security-checks, integration-coverage-check]
+    needs: [check-changes, unit-tests, widget-tests, integration-tests, performance-tests, enhanced-tests, security-checks, integration-coverage-check]
     if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && always()
 
     steps:
@@ -782,8 +945,10 @@ jobs:
           echo "⚠️  Widget Tests failed (non-blocking)"
         fi
 
-        # Check integration tests - known to be flaky
-        if [[ "${{ needs.integration-tests.result }}" != "success" ]]; then
+        # Check integration tests - known flaky, skipped on PWA-only PRs (see #490)
+        if [[ "${{ needs.integration-tests.result }}" == "skipped" ]]; then
+          echo "⏭️  Integration Tests skipped (no android/ or integration_test/ changes)"
+        elif [[ "${{ needs.integration-tests.result }}" != "success" ]]; then
           echo "⚠️  Integration Tests failed/cancelled (known flaky - see #29)"
         fi
 

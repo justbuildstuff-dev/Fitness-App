@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/program_provider.dart';
@@ -112,6 +113,7 @@ class _CreateWorkoutScreenState extends State<CreateWorkoutScreen> {
             // Workout Name
             TextFormField(
               controller: _nameController,
+              autofocus: !kIsWeb,
               decoration: const InputDecoration(
                 labelText: 'Workout Name *',
                 hintText: 'e.g., Push Day, Upper Body, Cardio',

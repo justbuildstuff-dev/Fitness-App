@@ -36,9 +36,17 @@ class AuthProvider extends ChangeNotifier {
     _authStateSubscription = _auth.authStateChanges().listen((User? user) async {
       debugPrint('[AuthProvider] Auth state changed - userId: ${user?.uid ?? 'null'}');
 
-      // Reload user to get latest emailVerified status
+      // Reload user to get latest emailVerified status.
+      // Wrapped in timeout+catch: in headless CI (Playwright), user.reload()'s
+      // getAccountInfo request can hang indefinitely, preventing _user from
+      // being set and blocking navigation. If reload fails or times out we still
+      // set _user from currentUser — the sign-in JWT already includes emailVerified.
       if (user != null) {
-        await user.reload();
+        try {
+          await user.reload().timeout(const Duration(seconds: 10));
+        } catch (e) {
+          debugPrint('[AuthProvider] user.reload() timed out or failed (non-blocking): $e');
+        }
         _user = _auth.currentUser;
       } else {
         _user = null;
@@ -116,9 +124,13 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
-      // Update last login time
+      // Update last login time.
+      // Fire-and-forget: _updateLastLogin() writes a non-critical timestamp to
+      // Firestore. Awaiting it would block _setLoading(false) in the finally
+      // block if the Firestore connection to the emulator is slow or hangs in
+      // headless CI — keeping isLoading=true indefinitely and blocking navigation.
       if (_user != null) {
-        await _updateLastLogin();
+        _updateLastLogin(); // unawaited intentionally
         AppAnalyticsService.instance.logLogin();
       }
     } on FirebaseAuthException catch (e) {
