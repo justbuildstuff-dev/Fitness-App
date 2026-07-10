@@ -393,26 +393,31 @@ service cloud.firestore {
     }
 
     // -----------------------
-    // Stripe Extension — customers collection
-    // Written by the Firebase Stripe Extension (admin SDK / webhooks).
-    // Clients may read their own subscription data and create checkout sessions.
+    // Stripe — customers collection
+    // Written by the Cloudflare Worker via Firebase Admin REST API (service account).
+    // Clients may only read their own subscription data.
     // -----------------------
     match /customers/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // Extension writes via admin SDK
+      allow write: if false; // Cloudflare Worker writes via service account (Admin REST API)
 
+      // Legacy: was used by the Firebase Stripe Extension for checkout session
+      // URL polling. Not used in the current Cloudflare Worker flow — the Worker
+      // creates Stripe sessions directly via the Stripe API without touching
+      // Firestore. Retained for historical compatibility; client write removed.
       match /checkout_sessions/{sessionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // no longer written by client
       }
 
       match /subscriptions/{subscriptionId} {
         allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if false; // Extension writes via admin SDK
+        allow write: if false; // Cloudflare Worker writes via service account
       }
 
       match /payments/{paymentId} {
         allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if false; // Extension writes via admin SDK
+        allow write: if false; // Cloudflare Worker writes via service account
       }
     }
 
