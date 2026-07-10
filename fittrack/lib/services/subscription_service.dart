@@ -1,13 +1,15 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import '../models/subscription.dart';
 
-/// Manages subscription billing via the Firebase Stripe Extension.
+/// Manages subscription billing via a Cloudflare Worker that proxies Stripe.
 ///
-/// The Firebase Stripe Extension syncs Stripe subscription state to Firestore
-/// under `customers/{userId}/subscriptions`. Checkout sessions are created by
-/// writing to `customers/{userId}/checkout_sessions`; the extension populates
-/// the Stripe Checkout URL asynchronously.
+/// Checkout sessions are created by calling the Worker's
+/// /create-checkout-session endpoint directly. Subscription state is written
+/// to `customers/{userId}/subscriptions` by the Worker's webhook handler and
+/// read back via a real-time Firestore stream.
 class SubscriptionService {
   static final SubscriptionService instance = SubscriptionService._();
 
@@ -15,7 +17,10 @@ class SubscriptionService {
   // Format: price_XXXXXXXXXXXXXXXXXXXXXXXX
   static const String monthlyPriceId = 'price_monthly_placeholder';
   static const String annualPriceId = 'price_annual_placeholder';
-  static const String lifetimePriceId = 'price_lifetime_placeholder';
+
+  // Cloudflare Worker base URL — set after deploying the Worker via `wrangler deploy`.
+  // Format: https://fittrack-stripe-worker.<account>.workers.dev
+  static const String _workerBaseUrl = 'https://fittrack-stripe-worker.placeholder.workers.dev';
 
   // Stripe Customer Portal shareable link — configured in Stripe Dashboard →
   // Settings → Billing → Customer Portal.
@@ -23,14 +28,23 @@ class SubscriptionService {
       'https://billing.stripe.com/p/login/placeholder';
 
   final FirebaseFirestore? _injectedFirestore;
+  final http.Client? _injectedHttpClient;
+
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
 
-  SubscriptionService._() : _injectedFirestore = null;
+  http.Client get _httpClient => _injectedHttpClient ?? http.Client();
+
+  SubscriptionService._()
+      : _injectedFirestore = null,
+        _injectedHttpClient = null;
 
   @visibleForTesting
-  SubscriptionService.forTest(FirebaseFirestore firestore)
-      : _injectedFirestore = firestore;
+  SubscriptionService.forTest(
+    FirebaseFirestore firestore,
+    http.Client httpClient,
+  )   : _injectedFirestore = firestore,
+        _injectedHttpClient = httpClient;
 
   /// Real-time stream of active Stripe subscriptions for [userId].
   /// Emits [SubscriptionInfo.free] when no active/trialing subscriptions exist.
@@ -63,39 +77,30 @@ class SubscriptionService {
     return SubscriptionInfo.fromStripeFirestore(snapshot.docs.first.data());
   }
 
-  /// Creates a Stripe Checkout session and returns the hosted Checkout URL.
-  ///
-  /// Writes a session document to `customers/{userId}/checkout_sessions`;
-  /// the Firebase Stripe Extension creates the Stripe session and writes back
-  /// the `url` field. Throws if the extension returns an error or times out.
+  /// Creates a Stripe Checkout session via the Cloudflare Worker and returns
+  /// the hosted Checkout URL. Throws if the Worker returns a non-200 response.
   Future<String> createCheckoutSession({
     required String userId,
     required String priceId,
     required String successUrl,
     required String cancelUrl,
   }) async {
-    final sessionRef = await _firestore
-        .collection('customers')
-        .doc(userId)
-        .collection('checkout_sessions')
-        .add({
-      'price': priceId,
-      'success_url': successUrl,
-      'cancel_url': cancelUrl,
-      'mode': priceId == lifetimePriceId ? 'payment' : 'subscription',
-      'allow_promotion_codes': true,
-    });
+    final response = await _httpClient.post(
+      Uri.parse('$_workerBaseUrl/create-checkout-session'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'uid': userId,
+        'priceId': priceId,
+        'successUrl': successUrl,
+        'cancelUrl': cancelUrl,
+      }),
+    );
 
-    // Extension populates 'url' (or 'error') asynchronously — wait up to 10s.
-    final snapshot = await sessionRef
-        .snapshots()
-        .firstWhere((snap) =>
-            snap.data()?['url'] != null || snap.data()?['error'] != null)
-        .timeout(const Duration(seconds: 10));
+    if (response.statusCode != 200) {
+      throw Exception('Checkout failed: ${response.statusCode}');
+    }
 
-    final error = snapshot.data()?['error'] as String?;
-    if (error != null) throw Exception('Stripe checkout error: $error');
-
-    return snapshot.data()!['url'] as String;
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return data['url'] as String;
   }
 }

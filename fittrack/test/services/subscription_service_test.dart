@@ -1,19 +1,21 @@
 @Timeout(Duration(seconds: 30))
 library;
 
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:fittrack/models/subscription.dart';
 import 'package:fittrack/services/subscription_service.dart';
 
 void main() {
   late FakeFirebaseFirestore fakeFirestore;
-  late SubscriptionService service;
 
   setUp(() {
     fakeFirestore = FakeFirebaseFirestore();
-    service = SubscriptionService.forTest(fakeFirestore);
   });
 
   group('SubscriptionService - Stripe Price ID constants', () {
@@ -25,16 +27,18 @@ void main() {
       expect(SubscriptionService.annualPriceId, isNotEmpty);
     });
 
-    test('lifetimePriceId is set', () {
-      expect(SubscriptionService.lifetimePriceId, isNotEmpty);
-    });
-
     test('stripePortalUrl starts with https', () {
       expect(SubscriptionService.stripePortalUrl, startsWith('https://'));
     });
   });
 
   group('SubscriptionService - loadFromFirestore', () {
+    late SubscriptionService service;
+
+    setUp(() {
+      service = SubscriptionService.forTest(fakeFirestore, MockClient((_) async => http.Response('', 200)));
+    });
+
     test('returns SubscriptionInfo.free when no subscriptions exist', () async {
       final result = await service.loadFromFirestore('user-1');
       expect(result.isPro, isFalse);
@@ -106,6 +110,12 @@ void main() {
   });
 
   group('SubscriptionService - subscriptionStream', () {
+    late SubscriptionService service;
+
+    setUp(() {
+      service = SubscriptionService.forTest(fakeFirestore, MockClient((_) async => http.Response('', 200)));
+    });
+
     test('emits SubscriptionInfo.free when no subscriptions', () async {
       final stream = service.subscriptionStream('user-stream');
       final info = await stream.first;
@@ -136,95 +146,72 @@ void main() {
   });
 
   group('SubscriptionService - createCheckoutSession', () {
-    test('writes checkout session document with correct fields', () async {
-      // Simulate extension responding with a url immediately
-      fakeFirestore
-          .collection('customers')
-          .doc('user-checkout')
-          .collection('checkout_sessions')
-          .snapshots()
-          .listen((snap) async {
-        for (final doc in snap.docs) {
-          if (doc.data()['price'] != null && doc.data()['url'] == null) {
-            await doc.reference.update({'url': 'https://checkout.stripe.com/test'});
-          }
-        }
+    test('POSTs correct JSON body to Worker and returns url', () async {
+      final capturedRequests = <http.Request>[];
+      final mockClient = MockClient((request) async {
+        capturedRequests.add(request);
+        return http.Response(
+          jsonEncode({'url': 'https://checkout.stripe.com/test123'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       });
 
+      final service = SubscriptionService.forTest(fakeFirestore, mockClient);
       final url = await service.createCheckoutSession(
         userId: 'user-checkout',
         priceId: SubscriptionService.annualPriceId,
-        successUrl: 'https://fittrack-app.web.app/?checkout=success',
-        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+        successUrl: 'https://app.test/?checkout=success',
+        cancelUrl: 'https://app.test/?checkout=cancelled',
       );
 
-      expect(url, 'https://checkout.stripe.com/test');
+      expect(url, 'https://checkout.stripe.com/test123');
+      expect(capturedRequests.length, 1);
 
-      // Verify session document was written with correct fields
-      final sessions = await fakeFirestore
-          .collection('customers')
-          .doc('user-checkout')
-          .collection('checkout_sessions')
-          .get();
-      expect(sessions.docs.length, 1);
-      final data = sessions.docs.first.data();
-      expect(data['price'], SubscriptionService.annualPriceId);
-      expect(data['mode'], 'subscription');
-      expect(data['allow_promotion_codes'], isTrue);
+      final body = jsonDecode(capturedRequests.first.body) as Map<String, dynamic>;
+      expect(body['uid'], 'user-checkout');
+      expect(body['priceId'], SubscriptionService.annualPriceId);
+      expect(body['successUrl'], 'https://app.test/?checkout=success');
+      expect(body['cancelUrl'], 'https://app.test/?checkout=cancelled');
     });
 
-    test('uses payment mode for lifetime price ID', () async {
-      fakeFirestore
-          .collection('customers')
-          .doc('user-lifetime')
-          .collection('checkout_sessions')
-          .snapshots()
-          .listen((snap) async {
-        for (final doc in snap.docs) {
-          if (doc.data()['price'] != null && doc.data()['url'] == null) {
-            await doc.reference.update({'url': 'https://checkout.stripe.com/lifetime'});
-          }
-        }
-      });
-
-      await service.createCheckoutSession(
-        userId: 'user-lifetime',
-        priceId: SubscriptionService.lifetimePriceId,
-        successUrl: 'https://fittrack-app.web.app/?checkout=success',
-        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
-      );
-
-      final sessions = await fakeFirestore
-          .collection('customers')
-          .doc('user-lifetime')
-          .collection('checkout_sessions')
-          .get();
-      expect(sessions.docs.first.data()['mode'], 'payment');
-    });
-
-    test('throws when extension returns error', () async {
-      fakeFirestore
-          .collection('customers')
-          .doc('user-error')
-          .collection('checkout_sessions')
-          .snapshots()
-          .listen((snap) async {
-        for (final doc in snap.docs) {
-          if (doc.data()['price'] != null && doc.data()['error'] == null) {
-            await doc.reference
-                .update({'error': 'No such price: bad_price_id'});
-          }
-        }
-      });
+    test('throws Exception when Worker returns non-200', () async {
+      final mockClient = MockClient((_) async => http.Response('error', 502));
+      final service = SubscriptionService.forTest(fakeFirestore, mockClient);
 
       expect(
         () => service.createCheckoutSession(
           userId: 'user-error',
-          priceId: 'bad_price_id',
-          successUrl: 'https://fittrack-app.web.app/?checkout=success',
-          cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+          priceId: SubscriptionService.annualPriceId,
+          successUrl: 'https://app.test/?checkout=success',
+          cancelUrl: 'https://app.test/?checkout=cancelled',
         ),
         throwsA(isA<Exception>()),
+      );
+    });
+
+    test('sets Content-Type header to application/json', () async {
+      final capturedRequests = <http.Request>[];
+      final mockClient = MockClient((request) async {
+        capturedRequests.add(request);
+        return http.Response(
+          jsonEncode({'url': 'https://checkout.stripe.com/test'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final service = SubscriptionService.forTest(fakeFirestore, mockClient);
+      await service.createCheckoutSession(
+        userId: 'u1',
+        priceId: SubscriptionService.monthlyPriceId,
+        successUrl: 'https://app.test/?checkout=success',
+        cancelUrl: 'https://app.test/?checkout=cancelled',
+      );
+
+      expect(
+        capturedRequests.first.headers['content-type'],
+        'application/json',
       );
     });
   });
