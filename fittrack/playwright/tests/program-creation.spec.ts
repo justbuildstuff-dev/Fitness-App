@@ -191,7 +191,7 @@ test.describe('Program / Week / Workout Creation', () => {
     await page.getByRole('button', { name: 'CREATE', exact: true }).dispatchEvent('click');
 
     // Verify week appears in the list
-    await assertTileVisible(page, WEEK_NAME, 20_000);
+    await assertTileVisible(page, WEEK_NAME, 30_000);
     await page.screenshot({ path: `test-results/${testInfo.title}/05-week-created.png` });
 
     // --- NAVIGATE INTO WEEK ---

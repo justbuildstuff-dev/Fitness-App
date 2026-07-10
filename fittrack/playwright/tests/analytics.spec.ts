@@ -73,34 +73,50 @@ test.describe('Analytics Screen', () => {
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-analytics-tab-clicked.png` });
 
-    // Wait for Analytics screen body content (analytics-specific text that does NOT appear
-    // on the Programs screen). The nav button "Analytics Tab 2 of 3" contains "Analytics"
-    // so we cannot use that as a navigation signal — we must wait for screen body content.
-    //   - "No Data Available" → empty state (expected when no completed workouts exist)
-    //   - "Loading analytics..." → loading state
-    //   - "Overview" / "Exercise" / "Trends" → tabbed content (when analytics data exists)
-    await page.getByText('No Data Available')
-      .or(page.getByText('Loading analytics'))
-      .or(page.getByText('Start tracking workouts'))
-      .or(page.getByText('Overview'))
-      .or(page.getByText('Exercise'))
-      .or(page.getByText('Trends'))
-      .first()
-      .waitFor({ state: 'visible', timeout: 20_000 })
-      .catch(() => {});
+    // Wait for Analytics screen content to appear in the flt-semantics DOM.
+    //
+    // getByText().isVisible() does NOT work for Flutter web semantics: flt-semantics
+    // elements exist in the DOM but Playwright considers them not visible because their
+    // bounding boxes are clipped by parent nodes (Flutter's semantics clip rectangles).
+    //
+    // Instead, use waitForFunction() to poll the raw textContent of all flt-semantics.
+    // Analytics-screen-specific strings (none of which appear on the Programs screen):
+    //   - "Refresh Analytics" — always present (AppBar action button)
+    //   - "Key Statistics"    — always present (section header)
+    //   - "Loading analytics" — loading state before data arrives
+    //   - "No Data Available" — empty state when no workouts have been logged
+    await page.waitForFunction(() => {
+      const allText = Array.from(document.querySelectorAll('flt-semantics'))
+        .map(e => e.textContent ?? '').join(' ');
+      return allText.includes('Refresh Analytics') ||
+             allText.includes('Key Statistics') ||
+             allText.includes('Loading analytics') ||
+             allText.includes('No Data Available');
+    }, { timeout: 20_000 }).catch(() => {});
 
     await page.screenshot({ path: `test-results/${testInfo.title}/02-analytics-loaded.png` });
 
-    const hasOverviewTab = await page.getByText('Overview').isVisible().catch(() => false);
-    const hasExerciseTab = await page.getByText('Exercise').isVisible().catch(() => false);
-    const hasTrendsTab = await page.getByText('Trends').isVisible().catch(() => false);
-    const hasEmptyState = await page.getByText('No Data Available').isVisible().catch(() => false);
-    const hasLoadingState = await page.getByText('Loading analytics').isVisible().catch(() => false);
-    const hasEmptyHint = await page.getByText('Start tracking workouts').isVisible().catch(() => false);
+    // Read all flt-semantics text directly (bypasses Playwright's CSS visibility check).
+    const analyticsDOM = await page.evaluate(() => {
+      const allText = Array.from(document.querySelectorAll('flt-semantics'))
+        .map(e => e.textContent ?? '').join(' ');
+      return {
+        hasRefreshButton:    allText.includes('Refresh Analytics'),
+        hasKeyStats:         allText.includes('Key Statistics'),
+        hasDetailedAnalytics: allText.includes('Detailed Analytics'),
+        hasLoading:          allText.includes('Loading analytics'),
+        hasNoData:           allText.includes('No Data Available'),
+        hasExerciseBreakdown: allText.includes('Exercise Type'),
+        rawSample:           allText.slice(0, 300),
+      };
+    });
 
-    console.log(`[E2E][analytics-state] overview=${hasOverviewTab} exercise=${hasExerciseTab} trends=${hasTrendsTab} empty=${hasEmptyState} loading=${hasLoadingState} hint=${hasEmptyHint}`);
+    console.log(`[E2E][analytics-state] ${JSON.stringify(analyticsDOM)}`);
 
-    expect(hasOverviewTab || hasExerciseTab || hasTrendsTab || hasEmptyState || hasLoadingState || hasEmptyHint).toBeTruthy();
+    expect(
+      analyticsDOM.hasRefreshButton || analyticsDOM.hasKeyStats ||
+      analyticsDOM.hasLoading || analyticsDOM.hasNoData
+    ).toBeTruthy();
 
     // Verify no error dialog is shown
     const errorDialog = page.getByText(/something went wrong/i);

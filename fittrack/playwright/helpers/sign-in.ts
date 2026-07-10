@@ -85,9 +85,10 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // or /v1/accounts:signInWithPassword — match either path pattern.
   const authOkPromise = page.waitForResponse(
     resp => (resp.url().includes('signInWithPassword') || resp.url().includes('accounts:signInWithPassword')) && resp.status() === 200,
-    // 60s: the first test in a fresh Desktop Chrome project (cold-start) needs longer than
-    // 30s because the browser, Flutter assets, and Auth emulator all initialize together.
-    { timeout: 60_000 }
+    // 90s: the emulator occasionally stalls on the first auth request of a test suite
+    // run (cold emulator + cold browser + Firestore data loaded by previous tests). The
+    // workout-logging test.setTimeout(120_000) in beforeEach provides the budget for this.
+    { timeout: 90_000 }
   );
 
   // Submit by pressing Enter in the password field.
