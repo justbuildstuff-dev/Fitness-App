@@ -1,4 +1,5 @@
 import { handleCreateCheckoutSession } from './checkout';
+import { handleStripeWebhook } from './webhook';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -14,6 +15,10 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/create-checkout-session') {
       return handleCreateCheckoutSession(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/stripe-webhook') {
+      return handleStripeWebhook(request, env);
     }
 
     return new Response('Not Found', { status: 404 });
