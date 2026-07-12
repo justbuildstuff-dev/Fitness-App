@@ -26,6 +26,7 @@ import 'services/lifecycle_notification_service.dart';
 import 'services/notification_service.dart';
 import 'services/onboarding_service.dart';
 import 'services/returning_user_service.dart';
+import 'widgets/checkout_success_banner.dart';
 
 const bool _kUseEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
 const bool _kForceSemantics = bool.fromEnvironment('FORCE_SEMANTICS', defaultValue: false);
@@ -120,6 +121,13 @@ void main() async {
 
   // Initialize returning user service — detects 30+ day inactivity on home screen
   ReturningUserService.initialize(prefs);
+
+  // Detect Stripe Checkout success return URL — set once before runApp so the
+  // flag is available synchronously when ProgramsScreen first builds.
+  if (kIsWeb) {
+    CheckoutSuccessService.pendingWelcome =
+        Uri.base.queryParameters['checkout'] == 'success';
+  }
 
   runZonedGuarded(
     () => runApp(OverloadApp(prefs: prefs)),

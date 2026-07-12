@@ -1,17 +1,29 @@
 /// Integration tests for SubscriptionService.
 ///
-/// Tests the full Stripe-via-Firestore subscription lifecycle using
-/// FakeFirebaseFirestore, verifying that subscription reads, stream emissions,
-/// and checkout session creation all behave correctly end-to-end.
+/// Tests the subscription read/stream lifecycle using FakeFirebaseFirestore,
+/// verifying that subscription reads and stream emissions behave correctly.
+/// Checkout session creation is tested in subscription_service_test.dart
+/// via MockClient.
 
 @Timeout(Duration(seconds: 30))
 library;
 
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:fittrack/models/subscription.dart';
 import 'package:fittrack/services/subscription_service.dart';
+
+SubscriptionService _makeService(FakeFirebaseFirestore firestore, {http.Client? httpClient}) {
+  return SubscriptionService.forTest(
+    firestore,
+    httpClient ?? MockClient((_) async => http.Response('', 200)),
+  );
+}
 
 void main() {
   late FakeFirebaseFirestore fakeFirestore;
@@ -19,7 +31,7 @@ void main() {
 
   setUp(() {
     fakeFirestore = FakeFirebaseFirestore();
-    service = SubscriptionService.forTest(fakeFirestore);
+    service = _makeService(fakeFirestore);
   });
 
   group('SubscriptionService - subscription read lifecycle', () {
@@ -100,25 +112,16 @@ void main() {
     });
   });
 
-  group('SubscriptionService - checkout session lifecycle', () {
-    test('checkout session document is written with required fields', () async {
-      // Simulate extension: write url when session created
-      fakeFirestore
-          .collection('customers')
-          .doc('user-checkout')
-          .collection('checkout_sessions')
-          .snapshots()
-          .listen((snap) async {
-        for (final doc in snap.docs) {
-          final data = doc.data();
-          if (data['price'] != null && data['url'] == null && data['error'] == null) {
-            await doc.reference
-                .update({'url': 'https://checkout.stripe.com/session-xyz'});
-          }
-        }
-      });
+  group('SubscriptionService - checkout session via Cloudflare Worker', () {
+    test('createCheckoutSession returns url from Worker response', () async {
+      final mockClient = MockClient((_) async => http.Response(
+            jsonEncode({'url': 'https://checkout.stripe.com/session-xyz'}),
+            200,
+            headers: {'content-type': 'application/json'},
+          ));
+      final svc = _makeService(fakeFirestore, httpClient: mockClient);
 
-      final url = await service.createCheckoutSession(
+      final url = await svc.createCheckoutSession(
         userId: 'user-checkout',
         priceId: SubscriptionService.annualPriceId,
         successUrl: 'https://fittrack-app.web.app/?checkout=success',
@@ -126,51 +129,21 @@ void main() {
       );
 
       expect(url, 'https://checkout.stripe.com/session-xyz');
-
-      final sessions = await fakeFirestore
-          .collection('customers')
-          .doc('user-checkout')
-          .collection('checkout_sessions')
-          .get();
-
-      final data = sessions.docs.first.data();
-      expect(data['price'], SubscriptionService.annualPriceId);
-      expect(data['success_url'],
-          'https://fittrack-app.web.app/?checkout=success');
-      expect(data['cancel_url'],
-          'https://fittrack-app.web.app/?checkout=cancelled');
-      expect(data['mode'], 'subscription');
-      expect(data['allow_promotion_codes'], isTrue);
     });
 
-    test('lifetime plan uses payment mode', () async {
-      fakeFirestore
-          .collection('customers')
-          .doc('user-lifetime')
-          .collection('checkout_sessions')
-          .snapshots()
-          .listen((snap) async {
-        for (final doc in snap.docs) {
-          final data = doc.data();
-          if (data['price'] != null && data['url'] == null && data['error'] == null) {
-            await doc.reference.update({'url': 'https://checkout.stripe.com/lifetime'});
-          }
-        }
-      });
+    test('throws Exception when Worker returns non-200', () async {
+      final mockClient = MockClient((_) async => http.Response('server error', 500));
+      final svc = _makeService(fakeFirestore, httpClient: mockClient);
 
-      await service.createCheckoutSession(
-        userId: 'user-lifetime',
-        priceId: SubscriptionService.lifetimePriceId,
-        successUrl: 'https://fittrack-app.web.app/?checkout=success',
-        cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+      await expectLater(
+        svc.createCheckoutSession(
+          userId: 'user-error',
+          priceId: SubscriptionService.annualPriceId,
+          successUrl: 'https://fittrack-app.web.app/?checkout=success',
+          cancelUrl: 'https://fittrack-app.web.app/?checkout=cancelled',
+        ),
+        throwsA(isA<Exception>()),
       );
-
-      final sessions = await fakeFirestore
-          .collection('customers')
-          .doc('user-lifetime')
-          .collection('checkout_sessions')
-          .get();
-      expect(sessions.docs.first.data()['mode'], 'payment');
     });
   });
 
