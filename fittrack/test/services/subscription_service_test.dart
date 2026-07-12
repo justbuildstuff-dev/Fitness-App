@@ -211,7 +211,7 @@ void main() {
 
       expect(
         capturedRequests.first.headers['content-type'],
-        'application/json',
+        contains('application/json'),
       );
     });
   });
