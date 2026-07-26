@@ -5,11 +5,29 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:mockito/mockito.dart';
 import 'package:fittrack/models/subscription.dart';
 import 'package:fittrack/services/subscription_service.dart';
+
+import '../mocks/firebase_mocks.mocks.dart';
+
+/// Builds a MockFirebaseAuth whose current user returns [idToken] from
+/// getIdToken(), or has no current user when [idToken] is null.
+MockFirebaseAuth _mockAuthWithToken(String? idToken) {
+  final mockAuth = MockFirebaseAuth();
+  if (idToken == null) {
+    when(mockAuth.currentUser).thenReturn(null);
+    return mockAuth;
+  }
+  final mockUser = MockUser();
+  when(mockUser.getIdToken(any)).thenAnswer((_) async => idToken);
+  when(mockAuth.currentUser).thenReturn(mockUser);
+  return mockAuth;
+}
 
 void main() {
   late FakeFirebaseFirestore fakeFirestore;
@@ -157,7 +175,11 @@ void main() {
         );
       });
 
-      final service = SubscriptionService.forTest(fakeFirestore, mockClient);
+      final service = SubscriptionService.forTest(
+        fakeFirestore,
+        mockClient,
+        _mockAuthWithToken('fake-id-token'),
+      );
       final url = await service.createCheckoutSession(
         userId: 'user-checkout',
         priceId: SubscriptionService.annualPriceId,
@@ -168,6 +190,11 @@ void main() {
       expect(url, 'https://checkout.stripe.com/test123');
       expect(capturedRequests.length, 1);
 
+      expect(
+        capturedRequests.first.headers['Authorization'],
+        'Bearer fake-id-token',
+      );
+
       final body = jsonDecode(capturedRequests.first.body) as Map<String, dynamic>;
       expect(body['uid'], 'user-checkout');
       expect(body['priceId'], SubscriptionService.annualPriceId);
@@ -175,9 +202,32 @@ void main() {
       expect(body['cancelUrl'], 'https://app.test/?checkout=cancelled');
     });
 
+    test('throws Exception when no user is authenticated', () async {
+      final mockClient = MockClient((_) async => http.Response('unreachable', 200));
+      final service = SubscriptionService.forTest(
+        fakeFirestore,
+        mockClient,
+        _mockAuthWithToken(null),
+      );
+
+      expect(
+        () => service.createCheckoutSession(
+          userId: 'user-error',
+          priceId: SubscriptionService.annualPriceId,
+          successUrl: 'https://app.test/?checkout=success',
+          cancelUrl: 'https://app.test/?checkout=cancelled',
+        ),
+        throwsA(isA<Exception>()),
+      );
+    });
+
     test('throws Exception when Worker returns non-200', () async {
       final mockClient = MockClient((_) async => http.Response('error', 502));
-      final service = SubscriptionService.forTest(fakeFirestore, mockClient);
+      final service = SubscriptionService.forTest(
+        fakeFirestore,
+        mockClient,
+        _mockAuthWithToken('fake-id-token'),
+      );
 
       expect(
         () => service.createCheckoutSession(
@@ -201,7 +251,11 @@ void main() {
         );
       });
 
-      final service = SubscriptionService.forTest(fakeFirestore, mockClient);
+      final service = SubscriptionService.forTest(
+        fakeFirestore,
+        mockClient,
+        _mockAuthWithToken('fake-id-token'),
+      );
       await service.createCheckoutSession(
         userId: 'u1',
         priceId: SubscriptionService.monthlyPriceId,

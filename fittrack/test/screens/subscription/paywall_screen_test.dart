@@ -33,7 +33,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -44,7 +47,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -58,6 +64,7 @@ void main() {
           child: const PaywallScreen(
             headline: 'Unlock unlimited programs',
             subtext: 'You have reached the free plan limit.',
+            isWeb: true,
           ),
         ),
       );
@@ -69,7 +76,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -80,7 +90,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -93,7 +106,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -104,7 +120,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -116,7 +135,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -130,7 +152,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -146,7 +171,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: loadingSub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -190,7 +218,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -207,7 +238,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -219,7 +253,10 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
@@ -244,11 +281,75 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(
           sub: sub,
-          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: true,
+          ),
         ),
       );
 
       expect(find.text('Overload Pro'), findsOneWidget);
+    });
+  });
+
+  group('PaywallScreen - native (non-web) platforms', () {
+    // Stripe Checkout is a web-hosted flow. Presenting it as an external
+    // link from a native iOS/Android build risks App Store / Play Store
+    // policy rejection for steering users to purchase digital content
+    // outside the platform's in-app purchase system, so plan cards are
+    // replaced with a web-only notice when isWeb is false.
+    testWidgets('shows web-only notice instead of plan cards', (tester) async {
+      await tester.pumpWidget(
+        _buildSubject(
+          sub: sub,
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: false,
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Subscribing is available on the web app for now.'),
+        findsOneWidget,
+      );
+      expect(find.text('Annual'), findsNothing);
+      expect(find.text('Monthly'), findsNothing);
+      expect(find.text('RECOMMENDED'), findsNothing);
+      expect(find.text(r'$49.99/year'), findsNothing);
+      expect(find.text(r'$6.99/month'), findsNothing);
+    });
+
+    testWidgets('still renders header and benefits list', (tester) async {
+      await tester.pumpWidget(
+        _buildSubject(
+          sub: sub,
+          child: const PaywallScreen(
+            headline: 'Unlock unlimited programs',
+            isWeb: false,
+          ),
+        ),
+      );
+
+      expect(find.text('Overload Pro'), findsOneWidget);
+      expect(find.text('Unlock unlimited programs'), findsOneWidget);
+      expect(find.text('Unlimited programs'), findsOneWidget);
+    });
+
+    testWidgets('defaults to kIsWeb when isWeb is not overridden', (tester) async {
+      // flutter test runs on the VM (not the web renderer), so kIsWeb is
+      // false there — the default should match that and show the notice.
+      await tester.pumpWidget(
+        _buildSubject(
+          sub: sub,
+          child: const PaywallScreen(headline: 'Unlock unlimited programs'),
+        ),
+      );
+
+      expect(
+        find.text('Subscribing is available on the web app for now.'),
+        findsOneWidget,
+      );
     });
   });
 }

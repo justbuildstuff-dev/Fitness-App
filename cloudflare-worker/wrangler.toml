@@ -5,6 +5,11 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 FIREBASE_PROJECT_ID = "fitness-app-8505e"
+# Not secret — the live Stripe Price IDs for the two published plans.
+# /create-checkout-session rejects any priceId that isn't one of these.
+# Replace with the real price_... IDs from the Stripe Dashboard before launch.
+STRIPE_PRICE_ID_MONTHLY = "price_1TkLIOCQsbNjPXf4upMfkVHi"
+STRIPE_PRICE_ID_ANNUAL = "price_1TkLJCCQsbNjPXf4Ry70HEkO"
 
 # Secrets (set via `wrangler secret put`, never committed):
 # STRIPE_SECRET_KEY

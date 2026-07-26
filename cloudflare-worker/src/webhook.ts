@@ -18,8 +18,15 @@ interface StripeEvent {
   data: { object: StripeSubscription | StripeCheckoutSession };
 }
 
-// Verifies a Stripe webhook signature using HMAC-SHA256.
-// Returns true if valid, false if the signature doesn't match or is malformed.
+// Stripe recommends rejecting webhook events whose signature timestamp is
+// older than this, to prevent a captured valid payload+signature from being
+// replayed indefinitely. See https://stripe.com/docs/webhooks/signatures.
+const WEBHOOK_TOLERANCE_SECONDS = 5 * 60;
+
+// Verifies a Stripe webhook signature using HMAC-SHA256, and that the
+// signed timestamp is within the replay tolerance window.
+// Returns true if valid, false if the signature doesn't match, is malformed,
+// or is outside the tolerance window.
 async function verifyStripeSignature(
   body: string,
   signatureHeader: string,
@@ -32,6 +39,14 @@ async function verifyStripeSignature(
   const timestamp = parts['t'];
   const expectedSig = parts['v1'];
   if (!timestamp || !expectedSig) return false;
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds)) return false;
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestampSeconds) > WEBHOOK_TOLERANCE_SECONDS) {
+    return false;
+  }
 
   const signingPayload = `${timestamp}.${body}`;
   const key = await crypto.subtle.importKey(

@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Wrangler local dev secrets — contains real Stripe/Firebase credentials
+# when following StripeCheckoutTestPlan.md / Stripe_Cloudflare_Worker_Setup_Guide.md
+.dev.vars
+.dev.vars.*
+
+# Wrangler local state/cache
+.wrangler/
+
+# Build output
+dist/
+
+# Test coverage output
+coverage/

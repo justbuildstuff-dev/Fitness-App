@@ -1,9 +1,18 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../services/subscription_service.dart';
+
+/// Production web app URL — subscribing is only available there for now.
+/// Stripe Checkout is a web-hosted flow; presenting it as an external link
+/// from a native iOS/Android build would count as steering users to
+/// purchase digital content outside the platform's in-app purchase system,
+/// which risks App Store / Play Store policy rejection. Native in-app
+/// purchase is tracked as a separate future feature (see PRD "Out of Scope").
+const String _webAppUrl = 'https://overload-workouts.web.app';
 
 /// Paywall modal bottom sheet shown when a user hits a feature gate.
 ///
@@ -12,10 +21,16 @@ class PaywallScreen extends StatelessWidget {
   final String headline;
   final String? subtext;
 
+  /// Whether to show the purchasable plan cards (web) or the web-only
+  /// notice (native). Defaults to the real platform via [kIsWeb]; overridable
+  /// so widget tests can exercise both branches without a web test runner.
+  final bool isWeb;
+
   const PaywallScreen({
     super.key,
     required this.headline,
     this.subtext,
+    this.isWeb = kIsWeb,
   });
 
   static Future<void> show(
@@ -114,7 +129,9 @@ class PaywallScreen extends StatelessWidget {
 
                 if (sub.isLoading)
                   const Center(child: CircularProgressIndicator())
-                else ...[
+                else if (!isWeb) ...[
+                  _WebOnlyNotice(colorScheme: colorScheme, textTheme: textTheme),
+                ] else ...[
                   // Annual plan card (recommended)
                   _PlanCard(
                     label: 'Annual',
@@ -228,6 +245,36 @@ Future<void> _launchUrl(String url) async {
   final uri = Uri.parse(url);
   if (await canLaunchUrl(uri)) {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
+/// Shown instead of the plan cards on native iOS/Android — Stripe Checkout
+/// purchases are only available on the web app for now.
+class _WebOnlyNotice extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  const _WebOnlyNotice({required this.colorScheme, required this.textTheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(Icons.language, color: colorScheme.primary, size: 32),
+        const SizedBox(height: 12),
+        Text(
+          'Subscribing is available on the web app for now.',
+          style: textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: () => _launchUrl(_webAppUrl),
+          icon: const Icon(Icons.open_in_new, size: 18),
+          label: const Text('Open overload-workouts.web.app'),
+        ),
+      ],
+    );
   }
 }
 

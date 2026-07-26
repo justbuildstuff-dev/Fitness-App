@@ -15,13 +15,22 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:mockito/mockito.dart';
 import 'package:fittrack/models/subscription.dart';
 import 'package:fittrack/services/subscription_service.dart';
 
+import '../mocks/firebase_mocks.mocks.dart';
+
 SubscriptionService _makeService(FakeFirebaseFirestore firestore, {http.Client? httpClient}) {
+  final mockUser = MockUser();
+  when(mockUser.getIdToken(any)).thenAnswer((_) async => 'fake-id-token');
+  final mockAuth = MockFirebaseAuth();
+  when(mockAuth.currentUser).thenReturn(mockUser);
+
   return SubscriptionService.forTest(
     firestore,
     httpClient ?? MockClient((_) async => http.Response('', 200)),
+    mockAuth,
   );
 }
 

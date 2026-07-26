@@ -1,0 +1,86 @@
+name: Cloudflare Worker Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'cloudflare-worker/**'
+      - '.github/workflows/cloudflare_worker_tests.yml'
+  pull_request:
+    branches:
+      - main
+      - 'feature/**'  # Run on PRs to feature branches (task→feature)
+      - 'bug/**'      # Run on PRs to bug branches (task→bug)
+    paths:
+      - 'cloudflare-worker/**'
+      - '.github/workflows/cloudflare_worker_tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Unit Tests (checkout + webhook handlers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    # Using `npm install` rather than `npm ci` — no package-lock.json is
+    # committed yet. Switch to `npm ci` (and enable the setup-node npm cache)
+    # once a lockfile is committed for reproducible installs.
+    - name: Install dependencies
+      working-directory: cloudflare-worker
+      run: npm install
+
+    - name: Type check
+      working-directory: cloudflare-worker
+      run: npx tsc --noEmit
+
+    - name: Run tests with coverage
+      working-directory: cloudflare-worker
+      run: npm test -- --coverage
+
+  security-checks:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      working-directory: cloudflare-worker
+      run: npm install
+
+    - name: Run npm audit (high+ severity)
+      working-directory: cloudflare-worker
+      run: npm audit --audit-level=high
+
+  all-tests-passed:
+    name: All Worker Tests Passed
+    runs-on: ubuntu-latest
+    needs: [unit-tests, security-checks]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          if [ "${{ needs.unit-tests.result }}" != "success" ] || [ "${{ needs.security-checks.result }}" != "success" ]; then
+            echo "One or more required jobs failed."
+            exit 1
+          fi
+          echo "All Cloudflare Worker checks passed."
