@@ -41,6 +41,16 @@ jobs:
       working-directory: cloudflare-worker
       run: npm install
 
+    # TEMPORARY: uploads the generated lockfile so it can be downloaded and
+    # committed to the repo. Remove once cloudflare-worker/package-lock.json
+    # is checked in.
+    - name: Upload lockfile artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: worker-package-lock
+        path: cloudflare-worker/package-lock.json
+        retention-days: 1
+
     - name: Type check
       working-directory: cloudflare-worker
       run: npx tsc --noEmit
