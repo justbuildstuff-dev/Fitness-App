@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Overload is now free for all users — the Pro subscription tier (program/exercise/analytics limits, paywall, upgrade prompts) has been parked, not removed (#529). The Stripe Checkout integration, webhook handler, and Firestore subscription rules remain in place and can be re-enabled if paid tiers are reintroduced.
+- Updated the live Terms of Service and Privacy Policy pages to remove references to the never-shipped IAP-based subscription, pricing, and billing terms, reflecting the app's current free-for-all status.
+
+### Security
+- Hardened the Stripe/Cloudflare Worker payment flow before merging to `main` (#528):
+  - `/create-checkout-session` now requires `Authorization: Bearer <Firebase ID token>`, verified against Google's published JWKS, and rejects requests where the token's subject doesn't match the requested `uid` (previously unauthenticated — any caller could get a Checkout URL for an arbitrary uid)
+  - Restricted CORS to an allow-list of the app's production origins (was `*`)
+  - Added server-side allow-list validation for `priceId`, `successUrl`, and `cancelUrl` to prevent open-redirect and arbitrary-price checkout
+  - Added webhook signature replay protection (rejects signatures older than 5 minutes, per Stripe's guidance)
+  - Added CI coverage for `cloudflare-worker/**` (previously untested in CI)
+  - Gated Stripe Checkout to web/PWA only — native iOS/Android now shows a "subscribe on the web app" notice instead of an external purchase link, avoiding App Store/Play Store policy risk around steering digital-good purchases outside native IAP
+
 ## [1.6.1] - 2026-07-10
 
 ### Added
