@@ -107,6 +107,10 @@ void main() {
   late SubscriptionProvider subProvider;
 
   setUp(() {
+    // Monetization is parked (kMonetizationEnabled = false by default), so
+    // the 5-exercise free-tier limit tested below never applies in
+    // production — see the dedicated "monetization parked" group.
+    kMonetizationEnabled = true;
     mockProvider = MockExerciseLibraryProvider();
     subProvider = SubscriptionProvider();
   });
@@ -114,6 +118,7 @@ void main() {
   tearDown(() {
     mockProvider.dispose();
     subProvider.dispose();
+    kMonetizationEnabled = false;
   });
 
   Widget createTestWidget() {
@@ -360,6 +365,23 @@ void main() {
 
       // Add button should not appear
       expect(find.text('Add'), findsNothing);
+    });
+  });
+
+  group('MyExercisesScreen - monetization parked (production default)', () {
+    setUp(() => kMonetizationEnabled = false);
+
+    testWidgets('FAB stays visible well past the old free-tier limit', (tester) async {
+      final exercises = List.generate(
+        10,
+        (i) => createTestExercise(id: 'id_$i', name: 'Exercise $i'),
+      );
+      mockProvider.setCustomExercises(exercises);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FloatingActionButton), findsOneWidget);
     });
   });
 }

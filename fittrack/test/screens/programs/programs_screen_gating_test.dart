@@ -30,6 +30,11 @@ void main() {
   });
 
   setUp(() {
+    // Monetization is parked (kMonetizationEnabled = false by default), so
+    // the FAB never gates in production — see the dedicated "monetization
+    // parked" group below. The rest of this suite verifies the gating logic
+    // still works, ready to be re-enabled.
+    kMonetizationEnabled = true;
     mockProgramProvider = MockProgramProvider();
     sub = SubscriptionProvider();
 
@@ -48,6 +53,7 @@ void main() {
 
   tearDown(() {
     sub.dispose();
+    kMonetizationEnabled = false;
   });
 
   Widget buildSubject() {
@@ -148,6 +154,23 @@ void main() {
     testWidgets('override user with 3+ programs sees no paywall', (tester) async {
       sub.setProOverrideForTest(value: true);
       final programs = List.generate(4, (i) => _makeProgram('p$i'));
+      when(mockProgramProvider.programs).thenReturn(programs);
+
+      await tester.pumpWidget(buildSubject());
+      await tester.pump();
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Overload Pro'), findsNothing);
+    });
+  });
+
+  group('ProgramsScreen - FAB gating (monetization parked, production default)', () {
+    setUp(() => kMonetizationEnabled = false);
+
+    testWidgets('free-state user well past the old limit sees no paywall', (tester) async {
+      final programs = List.generate(10, (i) => _makeProgram('p$i'));
       when(mockProgramProvider.programs).thenReturn(programs);
 
       await tester.pumpWidget(buildSubject());

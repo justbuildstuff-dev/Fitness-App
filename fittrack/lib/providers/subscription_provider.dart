@@ -5,6 +5,15 @@ import '../models/subscription.dart';
 import '../providers/auth_provider.dart';
 import '../services/subscription_service.dart';
 
+/// Monetization is parked: the app is free for all users. Flip this back to
+/// `true` to re-enable Pro gating, checkout, and the paywall — the Stripe
+/// worker, Firestore listener, and gating call sites are all still intact.
+///
+/// Mutable (not `const`) so the tier-computation logic below stays covered
+/// by tests while it's dormant; production code never writes to it. Tests
+/// that flip it must reset it in `tearDown`.
+bool kMonetizationEnabled = false;
+
 /// Manages subscription state sourced from the Firebase Stripe Extension.
 ///
 /// Listens to `customers/{userId}/subscriptions` in real time and exposes
@@ -23,7 +32,8 @@ class SubscriptionProvider extends ChangeNotifier {
 
   // --- Public getters ---
 
-  bool get isPro => _isProOverride || _subscriptionInfo.isPro;
+  bool get isPro =>
+      !kMonetizationEnabled || _isProOverride || _subscriptionInfo.isPro;
   bool get isFree => !isPro;
   bool get isLoading => _isLoading;
   String? get error => _error;

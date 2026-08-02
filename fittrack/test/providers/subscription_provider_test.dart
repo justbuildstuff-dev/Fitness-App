@@ -8,12 +8,19 @@ import 'package:fittrack/providers/subscription_provider.dart';
 void main() {
   late SubscriptionProvider provider;
 
+  // Monetization is parked (kMonetizationEnabled = false by default) so the
+  // app is free for everyone regardless of tier state — see the dedicated
+  // "monetization parked" group below. The rest of this suite verifies the
+  // underlying tier-computation logic still works correctly, ready for
+  // kMonetizationEnabled to be flipped back to true in the future.
   setUp(() {
+    kMonetizationEnabled = true;
     provider = SubscriptionProvider();
   });
 
   tearDown(() {
     provider.dispose();
+    kMonetizationEnabled = false;
   });
 
   group('SubscriptionProvider - initial state', () {
@@ -187,6 +194,34 @@ void main() {
     test('dispose cancels stream subscription without throwing', () {
       final p = SubscriptionProvider();
       expect(() => p.dispose(), returnsNormally);
+    });
+  });
+
+  group('SubscriptionProvider - monetization parked (production default)', () {
+    setUp(() {
+      // Overrides the file-level setUp above — this group verifies the
+      // actual production default, where gating is switched off entirely.
+      kMonetizationEnabled = false;
+    });
+
+    test('isPro is true with no override and no active subscription', () {
+      expect(provider.isPro, isTrue);
+      expect(provider.isFree, isFalse);
+    });
+
+    test('isPro stays true even for an explicitly free/expired subscription', () {
+      provider.setSubscriptionInfoForTest(
+        const SubscriptionInfo(
+          tier: SubscriptionTier.free,
+          status: SubscriptionStatus.expired,
+        ),
+      );
+      expect(provider.isPro, isTrue);
+    });
+
+    test('limits are unrestricted regardless of subscription state', () {
+      expect(provider.maxPrograms, 999);
+      expect(provider.maxCustomExercises, 50);
     });
   });
 }

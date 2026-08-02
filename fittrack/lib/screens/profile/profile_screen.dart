@@ -71,35 +71,39 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               
-              // Subscription entry
-              const SizedBox(height: 16),
-              Consumer<SubscriptionProvider>(
-                builder: (context, sub, _) {
-                  if (sub.isPro) {
-                    return _MenuItem(
-                      icon: Icons.workspace_premium,
-                      title: 'Overload Pro',
-                      subtitle: sub.isProOverride ? 'Developer access' : 'Active subscription',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SubscriptionManagementScreen(),
+              // Subscription entry — monetization is parked, app is free for
+              // all users. Still shown for isProOverride accounts (internal
+              // dev/test access) so that flag remains visible/manageable.
+              if (kMonetizationEnabled) ...[
+                const SizedBox(height: 16),
+                Consumer<SubscriptionProvider>(
+                  builder: (context, sub, _) {
+                    if (sub.isPro) {
+                      return _MenuItem(
+                        icon: Icons.workspace_premium,
+                        title: 'Overload Pro',
+                        subtitle: sub.isProOverride ? 'Developer access' : 'Active subscription',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SubscriptionManagementScreen(),
+                          ),
                         ),
+                      );
+                    }
+                    return _MenuItem(
+                      icon: Icons.workspace_premium_outlined,
+                      title: 'Upgrade to Overload Pro',
+                      subtitle: 'Unlimited programs, full analytics & more',
+                      onTap: () => PaywallScreen.show(
+                        context,
+                        headline: 'Unlock Overload Pro',
+                        subtext: 'Unlimited programs. Full analytics. \$49.99/year.',
                       ),
                     );
-                  }
-                  return _MenuItem(
-                    icon: Icons.workspace_premium_outlined,
-                    title: 'Upgrade to Overload Pro',
-                    subtitle: 'Unlimited programs, full analytics & more',
-                    onTap: () => PaywallScreen.show(
-                      context,
-                      headline: 'Unlock Overload Pro',
-                      subtext: 'Unlimited programs. Full analytics. \$49.99/year.',
-                    ),
-                  );
-                },
-              ),
+                  },
+                ),
+              ],
 
               // Menu Items
               _MenuItem(

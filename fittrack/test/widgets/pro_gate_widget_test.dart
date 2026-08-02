@@ -22,12 +22,18 @@ Widget _buildSubject({
 void main() {
   late SubscriptionProvider sub;
 
+  // Monetization is parked (kMonetizationEnabled = false by default), so
+  // ProGateWidget always renders its child directly in production — see the
+  // dedicated "monetization parked" group below. The rest of this suite
+  // verifies the gating logic still works, ready to be re-enabled.
   setUp(() {
+    kMonetizationEnabled = true;
     sub = SubscriptionProvider();
   });
 
   tearDown(() {
     sub.dispose();
+    kMonetizationEnabled = false;
   });
 
   group('ProGateWidget - free tier', () {
@@ -249,6 +255,26 @@ void main() {
       // Pro state — no lock
       expect(find.byIcon(Icons.lock_outline), findsNothing);
       expect(find.text('Premium Content'), findsOneWidget);
+    });
+  });
+
+  group('ProGateWidget - monetization parked (production default)', () {
+    setUp(() => kMonetizationEnabled = false);
+
+    testWidgets('renders child directly with no lock, regardless of tier', (tester) async {
+      await tester.pumpWidget(
+        _buildSubject(
+          sub: sub,
+          child: const ProGateWidget(
+            paywallHeadline: 'Track every rep\'s progress',
+            child: Text('Premium Content'),
+          ),
+        ),
+      );
+
+      expect(find.text('Premium Content'), findsOneWidget);
+      expect(find.byIcon(Icons.lock_outline), findsNothing);
+      expect(find.text('Upgrade to Pro'), findsNothing);
     });
   });
 }
