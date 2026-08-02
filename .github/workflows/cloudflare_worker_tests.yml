@@ -68,9 +68,13 @@ jobs:
       working-directory: cloudflare-worker
       run: npm ci
 
-    - name: Run npm audit (high+ severity)
+    # --omit=dev: this package.json has no runtime "dependencies" — the
+    # Worker only bundles src/ on deploy — so wrangler/vitest's transitive
+    # devDependency CVEs (dev/test tooling only) don't ship to production
+    # and shouldn't block CI. Still audits any future runtime dependency.
+    - name: Run npm audit (high+ severity, production deps only)
       working-directory: cloudflare-worker
-      run: npm audit --audit-level=high
+      run: npm audit --omit=dev --audit-level=high
 
   all-tests-passed:
     name: All Worker Tests Passed
