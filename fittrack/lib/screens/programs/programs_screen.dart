@@ -94,7 +94,7 @@ class ProgramsScreen extends StatelessWidget {
 
           return Column(
             children: [
-              const CheckoutSuccessBanner(),
+              if (kMonetizationEnabled) const CheckoutSuccessBanner(),
               const ReturningUserBanner(),
               Expanded(
                 child: RefreshIndicator(

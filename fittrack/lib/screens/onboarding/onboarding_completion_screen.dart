@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/subscription_provider.dart';
 import '../../services/app_analytics_service.dart';
 import '../home/home_screen.dart';
 import 'pro_info_placeholder_screen.dart';
@@ -72,22 +73,24 @@ class _OnboardingCompletionScreenState
                     child: const Text('Go to My Programs'),
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ProInfoPlaceholderScreen(),
+                if (kMonetizationEnabled) ...[
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProInfoPlaceholderScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Explore Overload Pro →',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
-                    );
-                  },
-                  child: Text(
-                    'Explore Overload Pro →',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

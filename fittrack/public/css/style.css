@@ -462,7 +462,8 @@ h1, h2 {
 .pricing-wrap {
   margin-top: 48px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 480px);
+  justify-content: center;
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
