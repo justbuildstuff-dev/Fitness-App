@@ -33,23 +33,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: cloudflare-worker/package-lock.json
 
-    # Using `npm install` rather than `npm ci` — no package-lock.json is
-    # committed yet. Switch to `npm ci` (and enable the setup-node npm cache)
-    # once a lockfile is committed for reproducible installs.
     - name: Install dependencies
       working-directory: cloudflare-worker
-      run: npm install
-
-    # TEMPORARY: uploads the generated lockfile so it can be downloaded and
-    # committed to the repo. Remove once cloudflare-worker/package-lock.json
-    # is checked in.
-    - name: Upload lockfile artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: worker-package-lock
-        path: cloudflare-worker/package-lock.json
-        retention-days: 1
+      run: npm ci
 
     - name: Type check
       working-directory: cloudflare-worker
@@ -72,10 +61,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: cloudflare-worker/package-lock.json
 
     - name: Install dependencies
       working-directory: cloudflare-worker
-      run: npm install
+      run: npm ci
 
     - name: Run npm audit (high+ severity)
       working-directory: cloudflare-worker
