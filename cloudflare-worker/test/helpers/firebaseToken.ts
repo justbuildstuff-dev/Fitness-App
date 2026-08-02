@@ -7,7 +7,12 @@ export const TEST_PROJECT_ID = 'test-project';
 export const TEST_KID = 'test-kid-1';
 
 function base64url(data: ArrayBuffer | Uint8Array): string {
-  return Buffer.from(data).toString('base64url');
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 export async function generateTestKeyPair(): Promise<CryptoKeyPair> {
@@ -44,8 +49,8 @@ export async function buildIdToken(
     ...overrides,
   };
 
-  const encodedHeader = base64url(Buffer.from(JSON.stringify(header)));
-  const encodedPayload = base64url(Buffer.from(JSON.stringify(payload)));
+  const encodedHeader = base64url(new TextEncoder().encode(JSON.stringify(header)));
+  const encodedPayload = base64url(new TextEncoder().encode(JSON.stringify(payload)));
   const signingInput = `${encodedHeader}.${encodedPayload}`;
 
   const signature = await crypto.subtle.sign(

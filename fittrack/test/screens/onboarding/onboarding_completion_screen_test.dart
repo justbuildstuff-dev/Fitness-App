@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fittrack/providers/subscription_provider.dart';
 import 'package:fittrack/screens/onboarding/onboarding_completion_screen.dart';
 import 'package:fittrack/screens/onboarding/pro_info_placeholder_screen.dart';
 
@@ -66,31 +67,51 @@ void main() {
           reason: '"Go to My Programs" ElevatedButton should be present');
     });
 
-    testWidgets('Pro link uses TextButton (not ElevatedButton or FilledButton)', (WidgetTester tester) async {
-      /// Test Purpose: Verify Pro link is styled as subdued footnote, not a primary action
-      /// Failure indicates incorrect button type — Pro link must look like a footnote
+    group('Pro link (monetization enabled)', () {
+      // Monetization is parked (kMonetizationEnabled = false by default), so
+      // the link is hidden in production — see the "monetization parked"
+      // group below. These verify the link still works correctly for
+      // whenever it's re-enabled.
+      setUp(() => kMonetizationEnabled = true);
+      tearDown(() => kMonetizationEnabled = false);
 
-      await tester.pumpWidget(buildCompletion(programName: 'Test'));
-      await tester.pump();
+      testWidgets('Pro link uses TextButton (not ElevatedButton or FilledButton)', (WidgetTester tester) async {
+        /// Test Purpose: Verify Pro link is styled as subdued footnote, not a primary action
+        /// Failure indicates incorrect button type — Pro link must look like a footnote
 
-      expect(find.widgetWithText(TextButton, 'Explore Overload Pro →'), findsOneWidget,
-          reason: 'Pro link must be a TextButton, not ElevatedButton or FilledButton');
-      expect(find.widgetWithText(ElevatedButton, 'Explore Overload Pro →'), findsNothing,
-          reason: 'Pro link must NOT be an ElevatedButton');
+        await tester.pumpWidget(buildCompletion(programName: 'Test'));
+        await tester.pump();
+
+        expect(find.widgetWithText(TextButton, 'Explore Overload Pro →'), findsOneWidget,
+            reason: 'Pro link must be a TextButton, not ElevatedButton or FilledButton');
+        expect(find.widgetWithText(ElevatedButton, 'Explore Overload Pro →'), findsNothing,
+            reason: 'Pro link must NOT be an ElevatedButton');
+      });
+
+      testWidgets('tapping Pro link navigates to ProInfoPlaceholderScreen', (WidgetTester tester) async {
+        /// Test Purpose: Verify Pro link destination
+        /// Failure indicates navigation wired to wrong screen
+
+        await tester.pumpWidget(buildCompletion(programName: 'Test'));
+        await tester.pump();
+
+        await tester.tap(find.widgetWithText(TextButton, 'Explore Overload Pro →'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ProInfoPlaceholderScreen), findsOneWidget,
+            reason: 'Pro link should navigate to ProInfoPlaceholderScreen');
+      });
     });
 
-    testWidgets('tapping Pro link navigates to ProInfoPlaceholderScreen', (WidgetTester tester) async {
-      /// Test Purpose: Verify Pro link destination
-      /// Failure indicates navigation wired to wrong screen
+    testWidgets('Pro link is hidden when monetization is parked (production default)', (WidgetTester tester) async {
+      /// Test Purpose: Verify the dangling Pro link doesn't appear while
+      /// monetization is parked, since it leads to a "Coming Soon" dead end.
 
       await tester.pumpWidget(buildCompletion(programName: 'Test'));
       await tester.pump();
 
-      await tester.tap(find.widgetWithText(TextButton, 'Explore Overload Pro →'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ProInfoPlaceholderScreen), findsOneWidget,
-          reason: 'Pro link should navigate to ProInfoPlaceholderScreen');
+      expect(find.text('Explore Overload Pro →'), findsNothing,
+          reason: 'Pro link should not render while kMonetizationEnabled is false');
     });
 
     testWidgets('check circle icon is displayed', (WidgetTester tester) async {
