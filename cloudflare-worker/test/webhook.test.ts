@@ -13,6 +13,8 @@ const mockEnv: Env = {
   STRIPE_SECRET_KEY: 'sk_test_mock',
   STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
   FIREBASE_SERVICE_ACCOUNT_JSON: '{}',
+  STRIPE_PRICE_ID_MONTHLY: 'price_monthly',
+  STRIPE_PRICE_ID_ANNUAL: 'price_annual',
 };
 
 // Builds a valid Stripe-Signature header using HMAC-SHA256.
@@ -61,6 +63,18 @@ describe('handleStripeWebhook', () => {
     const req = makeWebhookRequest(body, 't=12345,v1=invalidsig');
     const res = await handleStripeWebhook(req, mockEnv);
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a validly-signed but expired timestamp (replay protection)', async () => {
+    const event = { type: 'customer.subscription.updated', data: { object: mockSub } };
+    const body = JSON.stringify(event);
+    const staleTimestamp = Math.floor(Date.now() / 1000) - 10 * 60; // 10 minutes old
+    const sig = await buildSignatureHeader(body, mockEnv.STRIPE_WEBHOOK_SECRET, staleTimestamp);
+    const req = makeWebhookRequest(body, sig);
+
+    const res = await handleStripeWebhook(req, mockEnv);
+    expect(res.status).toBe(400);
+    expect(writeSubscription).not.toHaveBeenCalled();
   });
 
   it('returns 400 for missing signature header', async () => {

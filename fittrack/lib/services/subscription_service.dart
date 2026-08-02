@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/subscription.dart';
@@ -15,12 +16,12 @@ class SubscriptionService {
 
   // Stripe Price IDs — set these after creating products in the Stripe Dashboard.
   // Format: price_XXXXXXXXXXXXXXXXXXXXXXXX
-  static const String monthlyPriceId = 'price_monthly_placeholder';
-  static const String annualPriceId = 'price_annual_placeholder';
+  static const String monthlyPriceId = 'price_1TkLIOCQsbNjPXf4upMfkVHi';
+  static const String annualPriceId = 'price_1TkLJCCQsbNjPXf4Ry70HEkO';
 
   // Cloudflare Worker base URL — set after deploying the Worker via `wrangler deploy`.
   // Format: https://fittrack-stripe-worker.<account>.workers.dev
-  static const String _workerBaseUrl = 'https://fittrack-stripe-worker.placeholder.workers.dev';
+  static const String _workerBaseUrl = 'https://fittrack-stripe-worker.justbuildstuff-dev.workers.dev';
 
   // Stripe Customer Portal shareable link — configured in Stripe Dashboard →
   // Settings → Billing → Customer Portal.
@@ -29,22 +30,28 @@ class SubscriptionService {
 
   final FirebaseFirestore? _injectedFirestore;
   final http.Client? _injectedHttpClient;
+  final FirebaseAuth? _injectedAuth;
 
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
 
   http.Client get _httpClient => _injectedHttpClient ?? http.Client();
 
+  FirebaseAuth get _auth => _injectedAuth ?? FirebaseAuth.instance;
+
   SubscriptionService._()
       : _injectedFirestore = null,
-        _injectedHttpClient = null;
+        _injectedHttpClient = null,
+        _injectedAuth = null;
 
   @visibleForTesting
   SubscriptionService.forTest(
     FirebaseFirestore firestore,
-    http.Client httpClient,
-  )   : _injectedFirestore = firestore,
-        _injectedHttpClient = httpClient;
+    http.Client httpClient, [
+    FirebaseAuth? auth,
+  ])  : _injectedFirestore = firestore,
+        _injectedHttpClient = httpClient,
+        _injectedAuth = auth;
 
   /// Real-time stream of active Stripe subscriptions for [userId].
   /// Emits [SubscriptionInfo.free] when no active/trialing subscriptions exist.
@@ -79,15 +86,27 @@ class SubscriptionService {
 
   /// Creates a Stripe Checkout session via the Cloudflare Worker and returns
   /// the hosted Checkout URL. Throws if the Worker returns a non-200 response.
+  ///
+  /// The current user's Firebase ID token is sent so the Worker can verify
+  /// the caller is actually authenticated as [userId] before starting a
+  /// Stripe payment flow on their behalf.
   Future<String> createCheckoutSession({
     required String userId,
     required String priceId,
     required String successUrl,
     required String cancelUrl,
   }) async {
+    final idToken = await _auth.currentUser?.getIdToken();
+    if (idToken == null) {
+      throw Exception('Checkout failed: no authenticated user');
+    }
+
     final response = await _httpClient.post(
       Uri.parse('$_workerBaseUrl/create-checkout-session'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $idToken',
+      },
       body: jsonEncode({
         'uid': userId,
         'priceId': priceId,

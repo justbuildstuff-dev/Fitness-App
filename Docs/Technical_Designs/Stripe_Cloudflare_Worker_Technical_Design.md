@@ -326,9 +326,10 @@ match /customers/{userId} {
    - Create Stripe products: Monthly ($6.99) and Annual ($49.99) — note the Price IDs
    - Create Cloudflare Worker (`wrangler deploy`) and note the Worker URL
    - Register Stripe webhook endpoint pointing to `https://[worker].workers.dev/stripe-webhook`
-   - Store secrets via `wrangler secret put`
+   - Store secrets via `wrangler secret put`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `FIREBASE_SERVICE_ACCOUNT_JSON`
+   - Set the Price ID vars in `wrangler.toml` `[vars]` (`STRIPE_PRICE_ID_MONTHLY`, `STRIPE_PRICE_ID_ANNUAL`) to the real `price_...` IDs — the Worker rejects any other `priceId` (see Implementation Notes)
    - Configure Stripe Customer Portal return URL in Stripe Dashboard
-   - Update `_workerBaseUrl` and `monthlyPriceId`/`annualPriceId` constants in `SubscriptionService`
+   - Update `_workerBaseUrl` and `monthlyPriceId`/`annualPriceId` constants in `SubscriptionService` — **must match** the `wrangler.toml` values exactly, or checkout will fail with "Unknown priceId"
 
 2. **Firebase Hosting:** `firebase deploy --only hosting` — `fittrack/public/index.html` already updated; redeploy as part of this release.
 
@@ -341,7 +342,22 @@ match /customers/{userId} {
 - Stripe webhook signature verification is mandatory — without it, any HTTP client could forge a `checkout.session.completed` event and grant Pro access to arbitrary users
 - Service account JSON must never be committed — store in Cloudflare Worker secrets only
 - The service account should be scoped to Firestore only (`roles/datastore.user`) — not a project owner
-- The Worker's `POST /create-checkout-session` endpoint does not require auth (Stripe Checkout handles payment auth). CORS is restricted to the app's production domain in the Worker config (not `*`)
+- The Worker's `POST /create-checkout-session` endpoint requires a verified Firebase ID token (see Implementation Notes below — this superseded the original "no auth required" design). CORS is restricted to the app's production domains (not `*`)
+
+---
+
+## Implementation Notes (Post-Design Security Hardening)
+
+A pre-merge security review of the implemented code (2026-07-15/16) found gaps against this design and against production-readiness generally. All were fixed on the feature branch before merging to `main`:
+
+1. **`/create-checkout-session` had no caller authentication.** The original design ("Stripe Checkout handles payment auth") let any HTTP client submit an arbitrary `uid` and get back a real Stripe Checkout URL attributed to that uid. Fixed: the endpoint now requires `Authorization: Bearer <Firebase ID token>`, verified against Google's published JWKS (`src/auth.ts`), and rejects (403) if the request body's `uid` doesn't match the token's subject. The Flutter client (`SubscriptionService.createCheckoutSession`) now attaches the current user's ID token.
+2. **CORS was `Access-Control-Allow-Origin: *`** instead of the restricted-origin behavior this doc originally specified. Fixed in `src/cors.ts` — an allow-list of the app's production origins is echoed back only when the request's `Origin` matches.
+3. **No server-side allow-list for `priceId`, `successUrl`, `cancelUrl`.** An authenticated caller could submit any Stripe price ID reachable by the account, or an arbitrary redirect URL (open-redirect-via-Stripe risk). Fixed: `priceId` is checked against `STRIPE_PRICE_ID_MONTHLY`/`STRIPE_PRICE_ID_ANNUAL` env vars, and `successUrl`/`cancelUrl` must start with an allow-listed origin (`src/cors.ts#isAllowedRedirectUrl`).
+4. **Webhook signature verification had no replay protection.** `verifyStripeSignature` checked the HMAC but never the signature timestamp's freshness, so a captured valid payload+signature could be replayed indefinitely. Fixed: requests older than 5 minutes (Stripe's documented tolerance) are rejected.
+5. **No CI coverage for the Worker.** `fittrack_test_suite.yml` only triggers on `fittrack/**` — the Worker's own tests never ran automatically. Added `.github/workflows/cloudflare_worker_tests.yml` (unit tests + `tsc --noEmit` + `npm audit`).
+6. **Paywall purchase UI wasn't platform-gated.** This PRD scopes the feature as Web (PWA) only and lists native IAP as future/out-of-scope, but `PaywallScreen` showed the same external Stripe Checkout link on iOS/Android builds with no platform check — a likely App Store/Play Store policy risk (steering users to pay outside native IAP for digital content). Fixed: plan cards only render when `isWeb` (defaults to `kIsWeb`); native builds show a "subscribing is available on the web app" notice with a link instead.
+
+See [Docs/Testing/StripeCheckoutTestPlan.md](../Testing/StripeCheckoutTestPlan.md) for the manual + automated test procedure for this flow.
 
 ---
 
