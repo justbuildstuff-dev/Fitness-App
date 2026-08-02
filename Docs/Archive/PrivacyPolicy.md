@@ -1,5 +1,7 @@
 # Overload — Privacy Policy
 
+> **ARCHIVED (2026-08-02):** Drafted while a native IAP-based Pro subscription was planned. That subscription was never actually implemented — the app used Stripe Checkout instead — and monetization has since been parked entirely; Overload is currently free for all users. The "Google Play Billing / App Store IAP" data-processor entry below no longer applies. This draft was never legally reviewed or published as the live privacy policy. Kept for reference in case paid tiers return. See [#472](https://github.com/justbuildstuff-dev/Fitness-App/issues/472) and [#453](https://github.com/justbuildstuff-dev/Fitness-App/issues/453) for context.
+
 **Effective Date:** [To be set before submission]  
 **Last Updated:** May 2026
 

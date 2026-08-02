@@ -1,5 +1,7 @@
 # Screenshot Specifications — Overload v1.6.0
 
+> **ARCHIVED (2026-08-02):** Drafted for a native IAP-based Pro subscription that was never actually implemented — the app used Stripe Checkout instead — and monetization has since been parked entirely. Overload is currently free for all users; the "Pro" badge note and the dedicated paywall/pricing screenshot below no longer apply (no screenshots have been captured against this spec yet). Kept for reference in case paid tiers return. See [#472](https://github.com/justbuildstuff-dev/Fitness-App/issues/472) and [#453](https://github.com/justbuildstuff-dev/Fitness-App/issues/453) for context.
+
 Screenshots are the highest-impact ASO element after ratings and reviews. Plan to create 6 screenshots minimum per device size. Prioritise the shots below in order.
 
 ---

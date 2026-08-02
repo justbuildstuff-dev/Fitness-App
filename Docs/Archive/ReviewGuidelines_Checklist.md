@@ -1,5 +1,7 @@
 # App Store Review Guidelines Compliance — Overload v1.6.0
 
+> **ARCHIVED (2026-08-02):** Drafted for a native IAP-based Pro subscription that was never actually implemented — the app used Stripe Checkout instead — and monetization has since been parked entirely. Overload is currently free for all users; the "Subscriptions & Billing" section and pricing disclosure text below no longer apply. Kept for reference in case paid tiers return. See [#472](https://github.com/justbuildstuff-dev/Fitness-App/issues/472) and [#453](https://github.com/justbuildstuff-dev/Fitness-App/issues/453) for context.
+
 Complete all items before submitting to either store. Tick each box as confirmed.
 
 ---

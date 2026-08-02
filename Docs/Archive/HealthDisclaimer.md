@@ -1,5 +1,7 @@
 # Health & Fitness Disclaimer — Overload
 
+> **ARCHIVED (2026-08-02):** Drafted while a native IAP-based Pro subscription was planned. That subscription was never actually implemented — the app used Stripe Checkout instead — and monetization has since been parked entirely; Overload is currently free for all users. The disclaimer content itself is still broadly usable, but the Terms of Service reference to "subscriptions and billing" no longer reflects an active purchase flow. See [#472](https://github.com/justbuildstuff-dev/Fitness-App/issues/472) and [#453](https://github.com/justbuildstuff-dev/Fitness-App/issues/453) for context.
+
 ---
 
 ## 1. App Store / Play Store Listing Disclaimer

@@ -1,5 +1,7 @@
 # Age Rating Questionnaire — Overload
 
+> **ARCHIVED (2026-08-02):** Drafted for a native IAP-based Pro subscription that was never actually implemented — the app used Stripe Checkout instead — and monetization has since been parked entirely. Overload is currently free for all users with no digital purchases. Kept for reference in case paid tiers return; needs a rewrite (the "digital purchases: Yes" answer below no longer applies) before any store submission. See [#472](https://github.com/justbuildstuff-dev/Fitness-App/issues/472) and [#453](https://github.com/justbuildstuff-dev/Fitness-App/issues/453) for context.
+
 ## Apple App Store (App Store Connect)
 
 Complete the Age Rating section in App Store Connect under your app's General Information. Answer as follows:
