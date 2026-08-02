@@ -8,10 +8,10 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240725.0",
-    "@vitest/coverage-v8": "^2.0.0",
+    "@cloudflare/workers-types": "^5.20260801.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0",
-    "wrangler": "^3.78.0"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.118.0"
   }
 }
