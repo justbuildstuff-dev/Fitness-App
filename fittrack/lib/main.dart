@@ -85,6 +85,12 @@ void main() async {
     try {
       await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
       FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+      // #533: connecting to the Auth emulator can disrupt the JS SDK's
+      // in-flight persisted-session restoration (IndexedDB), causing
+      // authStateChanges to settle on null instead of the persisted user
+      // after a page reload. Force LOCAL persistence explicitly rather
+      // than relying on whatever the SDK defaults to post-emulator-connect.
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
       debugPrint('[Emulator] Connected to local Firebase emulators');
     } catch (e) {
       debugPrint('[Emulator] Warning: $e');
