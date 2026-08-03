@@ -1,8 +1,45 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { signIn } from '../helpers/sign-in';
 
 const EMAIL = process.env.E2E_TEST_EMAIL ?? 'playwright-e2e@test.com';
 const PASSWORD = process.env.E2E_TEST_PASSWORD ?? 'playwright-test-123';
+
+// DIAGNOSTIC (#533): lists every IndexedDB database/object-store/key visible to the
+// page, so we can tell whether Firebase's persisted-auth data is physically gone
+// after a reload (storage-clearing bug) vs. still present but unread (SDK bug).
+async function dumpIndexedDb(page: Page, label: string): Promise<void> {
+  const result = await page.evaluate(async () => {
+    const dbs = await indexedDB.databases();
+    const summary: Array<{ name: string; version?: number; stores?: Record<string, unknown>; error?: string }> = [];
+    for (const dbInfo of dbs) {
+      if (!dbInfo.name) continue;
+      try {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open(dbInfo.name!);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        const stores: Record<string, unknown> = {};
+        for (const storeName of Array.from(db.objectStoreNames)) {
+          const tx = db.transaction(storeName, 'readonly');
+          const store = tx.objectStore(storeName);
+          const keys = await new Promise<unknown[]>((resolve, reject) => {
+            const req = store.getAllKeys();
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          stores[storeName] = keys;
+        }
+        db.close();
+        summary.push({ name: dbInfo.name, version: dbInfo.version, stores });
+      } catch (e) {
+        summary.push({ name: dbInfo.name, error: String(e) });
+      }
+    }
+    return summary;
+  });
+  console.log(`[E2E][indexeddb-${label}] ${JSON.stringify(result)}`);
+}
 
 // Runs on both configured projects (mobile-375px, desktop-1280px) per #514 AC —
 // both use Chromium under the hood, so the browserName skip below doesn't
@@ -203,9 +240,19 @@ test.describe('PWA Offline Smoke', () => {
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-before-plain-reload.png` }).catch(() => {});
 
+    // DIAGNOSTIC (#533): the setPersistence(Persistence.LOCAL) fix in PR #536 had
+    // zero effect on this bug — authStateChanges still stalls at null after reload.
+    // This dumps IndexedDB database/store/key names before and after reload to
+    // determine whether the persisted session data is physically gone from storage
+    // after reload (a real storage-clearing bug) vs. still present but the SDK
+    // simply isn't reading it back (an SDK-side restoration bug).
+    await dumpIndexedDb(page, 'before-reload');
+
     console.log('[E2E] --- plain reload starting (no offline) ---');
     await page.reload({ timeout: 20_000 });
     console.log('[E2E] --- plain reload complete; watching for AuthProvider state ---');
+
+    await dumpIndexedDb(page, 'after-reload');
 
     await expect(
       page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
