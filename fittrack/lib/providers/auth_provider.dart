@@ -49,7 +49,14 @@ class AuthProvider extends ChangeNotifier {
         }
         _user = _auth.currentUser;
       } else {
-        _user = null;
+        // #533: authStateChanges' first emission after a reload has been observed
+        // firing null even when a valid persisted session exists in storage.
+        // Fall back to the currentUser getter directly in case the stream's
+        // initial tick is stale while the SDK's synchronous property is not.
+        _user = _auth.currentUser;
+        if (_user != null) {
+          debugPrint('[AuthProvider] authStateChanges emitted null but currentUser is non-null (${_user!.uid}) - using currentUser as fallback');
+        }
       }
 
       if (_user != null) {
