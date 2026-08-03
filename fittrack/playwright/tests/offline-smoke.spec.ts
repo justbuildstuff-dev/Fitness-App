@@ -41,6 +41,38 @@ async function dumpIndexedDb(page: Page, label: string): Promise<void> {
   console.log(`[E2E][indexeddb-${label}] ${JSON.stringify(result)}`);
 }
 
+// DIAGNOSTIC (#533): the write of the persisted-session record to IndexedDB is
+// asynchronous and was observed lagging behind the in-memory sign-in state,
+// sometimes not landing at all before a quick reload — confounding attempts to
+// test whether the SDK can restore a session that's genuinely present in storage.
+// Polls until the firebaseLocalStorage object store has at least one key.
+async function waitForPersistedAuthWrite(page: Page, timeoutMs: number): Promise<boolean> {
+  return page.waitForFunction(() => {
+    return new Promise<boolean>(resolve => {
+      const req = indexedDB.open('firebaseLocalStorageDb');
+      req.onerror = () => resolve(false);
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('firebaseLocalStorage')) {
+          db.close();
+          resolve(false);
+          return;
+        }
+        const tx = db.transaction('firebaseLocalStorage', 'readonly');
+        const countReq = tx.objectStore('firebaseLocalStorage').count();
+        countReq.onsuccess = () => {
+          db.close();
+          resolve(countReq.result > 0);
+        };
+        countReq.onerror = () => {
+          db.close();
+          resolve(false);
+        };
+      };
+    });
+  }, { timeout: timeoutMs }).then(() => true).catch(() => false);
+}
+
 // Runs on both configured projects (mobile-375px, desktop-1280px) per #514 AC —
 // both use Chromium under the hood, so the browserName skip below doesn't
 // exclude either viewport.
@@ -239,6 +271,15 @@ test.describe('PWA Offline Smoke', () => {
     ).toBeVisible({ timeout: 15_000 });
 
     await page.screenshot({ path: `test-results/${testInfo.title}/01-before-plain-reload.png` }).catch(() => {});
+
+    // DIAGNOSTIC (#533): the write of the persisted-session record to IndexedDB is
+    // async and was observed sometimes not landing before a quick reload, which
+    // confounds this experiment (nothing to restore isn't the same as "SDK failed
+    // to restore something that was there"). Wait for the write to actually land
+    // before proceeding, so the reload below tests against a guaranteed-persisted
+    // session.
+    const writeLanded = await waitForPersistedAuthWrite(page, 5_000);
+    console.log(`[E2E] persisted-auth-write landed before reload: ${writeLanded}`);
 
     // DIAGNOSTIC (#533): the setPersistence(Persistence.LOCAL) fix in PR #536 had
     // zero effect on this bug — authStateChanges still stalls at null after reload.
