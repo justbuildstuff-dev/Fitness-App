@@ -28,6 +28,16 @@ export default defineConfig({
         // localhost→localhost requests trigger a PNA preflight that the Firebase
         // Auth emulator doesn't respond to, causing signInWithPassword to hang.
         '--disable-features=PrivateNetworkAccessSendPreflights',
+        // Flutter web's CanvasKit renderer requires WebGL2. GitHub Actions runners
+        // have no real GPU, and headless Chromium's default software WebGL path
+        // is being investigated as the cause of the renderer crash during the
+        // offline-smoke test's reconnect phase (#514) — the browser context dies
+        // ("Target page, context or browser has been closed") partway through the
+        // offline→reload→reconnect sequence. These flags force a stable software
+        // WebGL backend (ANGLE/SwiftShader) instead of whatever Chromium picks by
+        // default in headless mode.
+        '--use-angle=swiftshader-webgl',
+        '--enable-unsafe-swiftshader',
       ],
     },
   },

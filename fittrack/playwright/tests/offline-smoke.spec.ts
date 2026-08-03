@@ -4,19 +4,19 @@ import { signIn } from '../helpers/sign-in';
 const EMAIL = process.env.E2E_TEST_EMAIL ?? 'playwright-e2e@test.com';
 const PASSWORD = process.env.E2E_TEST_PASSWORD ?? 'playwright-test-123';
 
-// Offline smoke test runs only at desktop viewport to reduce complexity.
-// Service worker caching is viewport-independent, so a single project is sufficient.
+// Runs on both configured projects (mobile-375px, desktop-1280px) per #514 AC —
+// both use Chromium under the hood, so the browserName skip below doesn't
+// exclude either viewport.
 test.describe('PWA Offline Smoke', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'PWA service worker only in Chromium');
 
-  // FIXME: This test consistently exhausts its 200s budget in CI because the
-  // page.reload() in the reconnect phase does not settle within its 20s timeout
-  // when the browser context enters a degraded state after an offline reload on
-  // a Flutter CanvasKit PWA. The online-load and service-worker-activation portions
-  // pass; only the offline→reconnect phase hangs. Marked fixme so the suite keeps
-  // running but the failure is not counted as a blocking regression until the
-  // reconnect hang is diagnosed. Tracked in issue #512.
-  test.fixme('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
+  // Re-enabled per #514: the reconnect phase previously hung on an unbounded
+  // waitForLoadState('networkidle') call. Every reload/expect in the reconnect
+  // phase below now carries an explicit timeout, so a genuine hang is bounded
+  // by those timeouts rather than exhausting the full test budget. The final
+  // reconnect assertion below intentionally lets a real failure fail the test
+  // (see #514) rather than swallowing it into a console warning.
+  test('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
     // Extend timeout: sign-in (~5s) + HomeScreen wait (15s) + SW wait (10s) +
     // offline phase (36s max) + reconnect reload (20s) + HomeScreen check (20s) = ~106s.
     // 200s gives ample headroom for CI variability.
@@ -65,7 +65,17 @@ test.describe('PWA Offline Smoke', () => {
       // Reload while offline — service worker should serve from cache.
       // Catch navigation errors (e.g. if SW cache is empty and Chrome shows an
       // offline error page; the renderer may close, making subsequent calls throw).
-      await page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
+      //
+      // CONFIRMED IN CI (#514): once the renderer degrades after this reload, calls
+      // that rely solely on their own `timeout` option (rather than a Promise.race
+      // against a plain Node timer) do NOT reject on time — they hang until the
+      // outer 200s test timeout force-kills the browser. Race every call here
+      // against a hard wall-clock timer, not just a `timeout:` option, so a dead
+      // browser can never consume more than its allotted slice of the budget.
+      await Promise.race([
+        page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {}),
+        new Promise<void>(resolve => setTimeout(resolve, 15_000)),
+      ]);
 
       // page.screenshot() has no built-in timeout; wrap in a 3s race so a hung browser
       // during the offline phase (page awaiting a navigation that can never complete offline)
@@ -94,8 +104,14 @@ test.describe('PWA Offline Smoke', () => {
         pageContent.includes('No internet');
       expect(hasNetworkError).toBeFalsy();
 
-      // Some navigable content should be visible (the Flutter app shell or at minimum the title)
-      await page.waitForFunction(() => document.title.length > 0, { timeout: 10_000 }).catch(() => {});
+      // Some navigable content should be visible (the Flutter app shell or at minimum the title).
+      // This exact call was the confirmed hang culprit in CI (#514): its own `timeout: 10_000`
+      // option did not fire when the browser had already degraded — it hung ~208s until the
+      // outer test timeout force-killed the browser. Race it against a plain timer instead.
+      await Promise.race([
+        page.waitForFunction(() => document.title.length > 0, { timeout: 10_000 }).catch(() => {}),
+        new Promise<void>(resolve => setTimeout(resolve, 10_000)),
+      ]);
 
       await Promise.race([
         page.screenshot({ path: `test-results/${testInfo.title}/03-offline-app-visible.png` }).catch(() => {}),
@@ -117,14 +133,24 @@ test.describe('PWA Offline Smoke', () => {
     }
 
     // --- RESTORE NETWORK ---
-    // Reload to reconnect; catch errors if the page is in a bad state from the
-    // offline reload (e.g. renderer crash navigated to chrome-error://).
-    await page.reload({ timeout: 20_000 }).catch(() => {});
+    // If the offline reload above crashed the renderer, the browser context is
+    // already dead. page.reload() does not honor its own `timeout` option on a
+    // dead context — the call hangs until the full 200s test timeout instead of
+    // rejecting, wasting several minutes per attempt (confirmed in CI: see #514).
+    // Fail fast with a clear error instead of letting that hang play out.
+    if (page.isClosed()) {
+      throw new Error(
+        '[E2E] Browser context closed during the offline phase (renderer crash) — cannot verify reconnect. See #514.'
+      );
+    }
+
+    // Reload to reconnect. Unlike the offline-phase reload above, we do NOT
+    // swallow errors here — a failure to reconnect is the actual regression
+    // this test exists to catch (#514), so it must fail the test, not just log.
+    await page.reload({ timeout: 20_000 });
     await expect(
       page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
-    ).toBeVisible({ timeout: 20_000 }).catch((e) => {
-      console.log(`[E2E] Reconnect check failed (page may be in bad state after offline): ${e.message}`);
-    });
+    ).toBeVisible({ timeout: 20_000 });
 
     await Promise.race([
       page.screenshot({ path: `test-results/${testInfo.title}/04-reconnected.png` }).catch(() => {}),
