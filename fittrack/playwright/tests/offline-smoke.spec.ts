@@ -117,6 +117,17 @@ test.describe('PWA Offline Smoke', () => {
     }
 
     // --- RESTORE NETWORK ---
+    // If the offline reload above crashed the renderer, the browser context is
+    // already dead. page.reload() does not honor its own `timeout` option on a
+    // dead context — the call hangs until the full 200s test timeout instead of
+    // rejecting, wasting several minutes per attempt (confirmed in CI: see #514).
+    // Fail fast with a clear error instead of letting that hang play out.
+    if (page.isClosed()) {
+      throw new Error(
+        '[E2E] Browser context closed during the offline phase (renderer crash) — cannot verify reconnect. See #514.'
+      );
+    }
+
     // Reload to reconnect. Unlike the offline-phase reload above, we do NOT
     // swallow errors here — a failure to reconnect is the actual regression
     // this test exists to catch (#514), so it must fail the test, not just log.
