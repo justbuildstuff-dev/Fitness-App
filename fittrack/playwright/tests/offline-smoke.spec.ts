@@ -65,7 +65,17 @@ test.describe('PWA Offline Smoke', () => {
       // Reload while offline — service worker should serve from cache.
       // Catch navigation errors (e.g. if SW cache is empty and Chrome shows an
       // offline error page; the renderer may close, making subsequent calls throw).
-      await page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
+      //
+      // CONFIRMED IN CI (#514): once the renderer degrades after this reload, calls
+      // that rely solely on their own `timeout` option (rather than a Promise.race
+      // against a plain Node timer) do NOT reject on time — they hang until the
+      // outer 200s test timeout force-kills the browser. Race every call here
+      // against a hard wall-clock timer, not just a `timeout:` option, so a dead
+      // browser can never consume more than its allotted slice of the budget.
+      await Promise.race([
+        page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {}),
+        new Promise<void>(resolve => setTimeout(resolve, 15_000)),
+      ]);
 
       // page.screenshot() has no built-in timeout; wrap in a 3s race so a hung browser
       // during the offline phase (page awaiting a navigation that can never complete offline)
@@ -94,8 +104,14 @@ test.describe('PWA Offline Smoke', () => {
         pageContent.includes('No internet');
       expect(hasNetworkError).toBeFalsy();
 
-      // Some navigable content should be visible (the Flutter app shell or at minimum the title)
-      await page.waitForFunction(() => document.title.length > 0, { timeout: 10_000 }).catch(() => {});
+      // Some navigable content should be visible (the Flutter app shell or at minimum the title).
+      // This exact call was the confirmed hang culprit in CI (#514): its own `timeout: 10_000`
+      // option did not fire when the browser had already degraded — it hung ~208s until the
+      // outer test timeout force-killed the browser. Race it against a plain timer instead.
+      await Promise.race([
+        page.waitForFunction(() => document.title.length > 0, { timeout: 10_000 }).catch(() => {}),
+        new Promise<void>(resolve => setTimeout(resolve, 10_000)),
+      ]);
 
       await Promise.race([
         page.screenshot({ path: `test-results/${testInfo.title}/03-offline-app-visible.png` }).catch(() => {}),
