@@ -176,4 +176,41 @@ test.describe('PWA Offline Smoke', () => {
       new Promise<void>(resolve => setTimeout(resolve, 3_000)),
     ]);
   });
+
+  // DIAGNOSTIC (#533): isolates whether auth persistence loss requires the offline
+  // navigation, or happens on any reload. No context.setOffline() involved here at
+  // all — just sign in, confirm HomeScreen, plain reload, check whether the session
+  // is still there. If this also lands on Sign In screen, persistence loss is not
+  // offline/service-worker specific; if it survives, the offline sequence itself is
+  // implicated. Not a permanent test — remove once #533's root cause is confirmed.
+  test('DIAGNOSTIC: auth session survives a plain reload (no offline)', async ({ page }, testInfo) => {
+    test.setTimeout(60_000);
+
+    page.on('console', msg => {
+      const text = msg.text();
+      if (text.includes('[AuthProvider]') || text.includes('firebase') || text.includes('Firebase')) {
+        console.log(`[E2E][browser-console] ${text}`);
+      }
+    });
+    page.on('pageerror', err => {
+      console.log(`[E2E][browser-pageerror] ${err.message}`);
+    });
+
+    await signIn(page, EMAIL, PASSWORD);
+    await expect(
+      page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
+    ).toBeVisible({ timeout: 15_000 });
+
+    await page.screenshot({ path: `test-results/${testInfo.title}/01-before-plain-reload.png` }).catch(() => {});
+
+    console.log('[E2E] --- plain reload starting (no offline) ---');
+    await page.reload({ timeout: 20_000 });
+    console.log('[E2E] --- plain reload complete; watching for AuthProvider state ---');
+
+    await expect(
+      page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
+    ).toBeVisible({ timeout: 20_000 });
+
+    await page.screenshot({ path: `test-results/${testInfo.title}/02-after-plain-reload.png` }).catch(() => {});
+  });
 });
