@@ -22,6 +22,23 @@ test.describe('PWA Offline Smoke', () => {
     // 200s gives ample headroom for CI variability.
     test.setTimeout(200_000);
 
+    // DIAGNOSTIC (#533): surface AuthProvider's existing debugPrint output and any
+    // uncaught page errors. AuthProvider already logs `[AuthProvider] Auth state
+    // changed - userId: ...` on every authStateChanges emission (auth_provider.dart:37)
+    // but nothing was listening to the browser console, so this signal was invisible
+    // in CI. This tells us directly whether authStateChanges fires with a null user
+    // after the reconnect reload, or doesn't fire at all — narrowing down whether
+    // Firebase Auth persistence is being lost vs. the app just failing to re-render.
+    page.on('console', msg => {
+      const text = msg.text();
+      if (text.includes('[AuthProvider]') || text.includes('firebase') || text.includes('Firebase')) {
+        console.log(`[E2E][browser-console] ${text}`);
+      }
+    });
+    page.on('pageerror', err => {
+      console.log(`[E2E][browser-pageerror] ${err.message}`);
+    });
+
     // --- WARM THE SERVICE WORKER CACHE ---
     // Sign in first to ensure the service worker has cached the app shell.
     await signIn(page, EMAIL, PASSWORD);
@@ -147,7 +164,9 @@ test.describe('PWA Offline Smoke', () => {
     // Reload to reconnect. Unlike the offline-phase reload above, we do NOT
     // swallow errors here — a failure to reconnect is the actual regression
     // this test exists to catch (#514), so it must fail the test, not just log.
+    console.log('[E2E] --- reconnect reload starting ---');
     await page.reload({ timeout: 20_000 });
+    console.log('[E2E] --- reconnect reload complete; watching for AuthProvider state ---');
     await expect(
       page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
     ).toBeVisible({ timeout: 20_000 });
