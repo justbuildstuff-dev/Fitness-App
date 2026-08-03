@@ -4,19 +4,19 @@ import { signIn } from '../helpers/sign-in';
 const EMAIL = process.env.E2E_TEST_EMAIL ?? 'playwright-e2e@test.com';
 const PASSWORD = process.env.E2E_TEST_PASSWORD ?? 'playwright-test-123';
 
-// Offline smoke test runs only at desktop viewport to reduce complexity.
-// Service worker caching is viewport-independent, so a single project is sufficient.
+// Runs on both configured projects (mobile-375px, desktop-1280px) per #514 AC —
+// both use Chromium under the hood, so the browserName skip below doesn't
+// exclude either viewport.
 test.describe('PWA Offline Smoke', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'PWA service worker only in Chromium');
 
-  // FIXME: This test consistently exhausts its 200s budget in CI because the
-  // page.reload() in the reconnect phase does not settle within its 20s timeout
-  // when the browser context enters a degraded state after an offline reload on
-  // a Flutter CanvasKit PWA. The online-load and service-worker-activation portions
-  // pass; only the offline→reconnect phase hangs. Marked fixme so the suite keeps
-  // running but the failure is not counted as a blocking regression until the
-  // reconnect hang is diagnosed. Tracked in issue #512.
-  test.fixme('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
+  // Re-enabled per #514: the reconnect phase previously hung on an unbounded
+  // waitForLoadState('networkidle') call. Every reload/expect in the reconnect
+  // phase below now carries an explicit timeout, so a genuine hang is bounded
+  // by those timeouts rather than exhausting the full test budget. The final
+  // reconnect assertion below intentionally lets a real failure fail the test
+  // (see #514) rather than swallowing it into a console warning.
+  test('app shell loads from cache when network is offline', async ({ page, context }, testInfo) => {
     // Extend timeout: sign-in (~5s) + HomeScreen wait (15s) + SW wait (10s) +
     // offline phase (36s max) + reconnect reload (20s) + HomeScreen check (20s) = ~106s.
     // 200s gives ample headroom for CI variability.
@@ -117,14 +117,13 @@ test.describe('PWA Offline Smoke', () => {
     }
 
     // --- RESTORE NETWORK ---
-    // Reload to reconnect; catch errors if the page is in a bad state from the
-    // offline reload (e.g. renderer crash navigated to chrome-error://).
-    await page.reload({ timeout: 20_000 }).catch(() => {});
+    // Reload to reconnect. Unlike the offline-phase reload above, we do NOT
+    // swallow errors here — a failure to reconnect is the actual regression
+    // this test exists to catch (#514), so it must fail the test, not just log.
+    await page.reload({ timeout: 20_000 });
     await expect(
       page.locator('[aria-current="true"]').or(page.getByText('My Programs')).first()
-    ).toBeVisible({ timeout: 20_000 }).catch((e) => {
-      console.log(`[E2E] Reconnect check failed (page may be in bad state after offline): ${e.message}`);
-    });
+    ).toBeVisible({ timeout: 20_000 });
 
     await Promise.race([
       page.screenshot({ path: `test-results/${testInfo.title}/04-reconnected.png` }).catch(() => {}),
