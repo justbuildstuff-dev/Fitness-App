@@ -1,8 +1,8 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
-// #534: waits for an element matching `selector` to actually be the
-// page's true focused element, not just attached to the DOM. Flutter web's
-// focus transfer (whether triggered by Tab or by click()) is asynchronous —
+// #534: waits for the password/email <input> to actually be the page's true
+// focused element, not just attached to the DOM. Flutter web's focus
+// transfer (whether triggered by Tab or by click()) is asynchronous —
 // Playwright's click()/press() only wait for the input event to be
 // dispatched, not for whatever async side effect it triggers inside the
 // page. Typing before focus has genuinely landed silently drops/misroutes
@@ -12,25 +12,16 @@ import { Page } from '@playwright/test';
 // insufficient for the same reason Tab (round 1) was — neither guarantees
 // focus, only presence.
 //
-// Flutter's CanvasKit renderer hosts flt-text-editing-host inside a shadow
-// root, so document.activeElement only ever returns the shadow HOST, never
-// the <input> inside it (round-3-first-attempt regression: a plain
-// `document.querySelector(sel) === document.activeElement` check can never
-// be true, so it just times out instead of ever detecting focus). Walk down
-// through nested shadowRoot.activeElement to find the real deepest focused
-// element before checking it against the selector.
+// Flutter's CanvasKit renderer hosts flt-text-editing-host inside a CLOSED
+// shadow root. Playwright's locator engine pierces closed shadow roots via
+// CDP internals (why page.locator(...) reliably finds the input in every
+// round), but plain page-context JS run through page.evaluate/waitForFunction
+// cannot — element.shadowRoot returns null from outside a closed root, so a
+// round-3-first-attempt `document.activeElement` walk could never reach the
+// real focused element and just timed out instead. expect(locator).toBeFocused()
+// is Playwright's own CDP-backed focus check and correctly handles this.
 async function waitForInputFocus(page: Page, selector: string, timeoutMs: number): Promise<void> {
-  await page.waitForFunction(
-    (sel) => {
-      let el: Element | null = document.activeElement;
-      while (el?.shadowRoot?.activeElement) {
-        el = el.shadowRoot.activeElement;
-      }
-      return el !== null && el.matches(sel);
-    },
-    selector,
-    { timeout: timeoutMs }
-  );
+  await expect(page.locator(selector)).toBeFocused({ timeout: timeoutMs });
 }
 
 /**
