@@ -1,38 +1,4 @@
-import { Locator, Page } from '@playwright/test';
-
-// #534: types `value` into `input` and verifies the result, clearing and
-// retyping if it doesn't match. Three earlier fix attempts tried to detect
-// the exact moment Flutter's focus transfer has landed before typing — via
-// DOM attachment, a raw document.activeElement check, and Playwright's own
-// CDP-backed toBeFocused() — and all three still hit the same intermittent
-// race: keystrokes typed too early are silently dropped or misrouted,
-// corrupting the value (confirmed via diagnostic: "playwright-test-123"
-// arriving as "wright-test-123"), which the emulator then correctly rejects
-// as INVALID_PASSWORD for the password field. toBeFocused() still timing out
-// suggests Flutter's CanvasKit renderer may route keystrokes through its own
-// internal event handling rather than relying on standard DOM focus at all,
-// making "wait for focus" the wrong lever regardless of how it's detected.
-// Verifying the actual outcome and retrying sidesteps that question entirely
-// — it doesn't matter why a keystroke got lost, only whether the field ends
-// up holding the right value before we move on.
-async function typeWithRetry(page: Page, input: Locator, value: string, maxAttempts = 4): Promise<void> {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    await page.keyboard.type(value);
-    const actual = await input.inputValue().catch(() => null);
-    if (actual === value) return;
-
-    console.log(
-      `[E2E] typed value did not match after attempt ${attempt}/${maxAttempts} ` +
-      `(expected length ${value.length}, got length ${actual?.length ?? 'null'}) — clearing and retrying`
-    );
-    // Select-all + delete before retyping. By this point at least one
-    // keystroke round-trip has already happened, so the field is receiving
-    // keyboard input in some form — these are just more keystrokes.
-    await page.keyboard.press('Control+A');
-    await page.keyboard.press('Backspace');
-  }
-  throw new Error(`typeWithRetry: value still did not match after ${maxAttempts} attempts`);
-}
+import { Page } from '@playwright/test';
 
 /**
  * Signs in via the app's sign-in screen using Firebase Auth emulator credentials.
@@ -45,18 +11,17 @@ async function typeWithRetry(page: Page, input: Locator, value: string, maxAttem
  *
  * IMPORTANT — filling Flutter text fields:
  * locator.fill() dispatches `input` events on the flt-semantics element, which Flutter
- * does not translate to text controller changes. The correct sequence is:
- *   1. click() the flt-semantics textbox — Flutter focuses the field and creates a real
- *      <input> in <flt-text-editing-host> to receive keyboard input.
- *   2. page.keyboard.type(text) — keyboard events route to wherever Flutter is
- *      currently directing keyboard input, which Flutter DOES read.
- *   3. Verify the typed value actually landed correctly (see typeWithRetry
- *      above), retrying if not. Flutter's transition to accepting keystrokes
- *      for a newly-clicked field is asynchronous, and #534 found no reliable
- *      way to detect the exact moment it's ready — DOM attachment, native
- *      focus checks, and Playwright's own CDP-backed toBeFocused() all still
- *      raced it. Verifying the outcome and retrying sidesteps needing to know
- *      why or when a keystroke gets lost.
+ * does not translate to text controller changes. The correct sequence (#534:
+ * matches the proven pattern in program-creation.spec.ts's fillTextField(),
+ * after several other approaches all left an intermittent character-dropping
+ * race — see git history on this file for what didn't work and why) is:
+ *   1. click({ force: true }) the flt-semantics textbox — a trusted CDP click
+ *      that skips Playwright's actionability-check choreography. This focuses
+ *      the field and creates a real <input> in <flt-text-editing-host> to
+ *      receive keyboard input.
+ *   2. page.keyboard.press('Control+A') — clears any pre-filled value.
+ *   3. page.keyboard.type(text) — keyboard events route to the focused DOM
+ *      element (the flt-text-editing-host input), which Flutter DOES read.
  *
  * Form submission:
  * Clicking the flt-semantics Sign In button can hang in headless CI (pointer events
@@ -107,19 +72,40 @@ export async function signIn(page: Page, email: string, password: string): Promi
     }
   });
 
-  // #534: click() the flt-semantics textbox, then type-and-verify (see
-  // typeWithRetry above) rather than trying to detect exactly when Flutter is
-  // ready to receive keystrokes — three attempts at the latter (DOM
-  // attachment, native focus, Playwright's toBeFocused()) all still raced it.
-  await page.getByRole('textbox', { name: /email/i }).click();
-  const emailInput = page.locator('flt-text-editing-host input');
-  await emailInput.waitFor({ timeout: 10_000 });
-  await typeWithRetry(page, emailInput, email);
+  // #534: a plain click() plus various wait strategies (DOM attachment,
+  // native focus, Playwright's toBeFocused(), even verify-and-retry with an
+  // untested custom locator) all failed to reliably avoid a character-
+  // dropping race. program-creation.spec.ts's fillTextField() helper already
+  // has a proven-reliable pattern for this exact kind of Flutter TextFormField
+  // interaction that this file never adopted: click({ force: true }) — a
+  // trusted CDP click that skips Playwright's actionability-check choreography
+  // — followed immediately by Control+A (clears any prefill) and type().
+  // Mirroring it here instead of inventing a new approach.
+  const emailTextbox = page.getByRole('textbox', { name: /email/i });
+  await emailTextbox.waitFor({ state: 'visible', timeout: 10_000 });
+  await emailTextbox.click({ force: true });
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type(email);
 
-  await page.getByRole('textbox', { name: /password/i }).click();
-  const passwordInput = page.locator('input[type="password"]');
-  await passwordInput.waitFor({ timeout: 10_000 });
-  await typeWithRetry(page, passwordInput, password);
+  const passwordTextbox = page.getByRole('textbox', { name: /password/i });
+  await passwordTextbox.waitFor({ state: 'visible', timeout: 10_000 });
+  await passwordTextbox.click({ force: true });
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type(password);
+
+  // DIAGNOSTIC (#534): confirming click({force:true}) actually closes the
+  // race before removing this check — everything has looked plausible before
+  // in this investigation until CI proved otherwise. Never logs the literal
+  // value.
+  const actualPasswordValue = await page.locator('input[type="password"]').inputValue().catch(() => null);
+  if (actualPasswordValue !== password) {
+    console.log(
+      `[E2E][credential-check] MISMATCH — expected length ${password.length}, ` +
+      `actual length ${actualPasswordValue?.length ?? 'null'}, actual value starts with "${actualPasswordValue?.slice(0, 2) ?? ''}"`
+    );
+  } else {
+    console.log(`[E2E][credential-check] password input matches expected (length ${password.length})`);
+  }
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
