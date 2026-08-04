@@ -77,8 +77,29 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // Wait for the password editing input to appear before typing; that confirms Flutter
   // has finished processing Tab and focused the password field.
   await page.keyboard.press('Tab');
-  await page.locator('input[type="password"]').waitFor({ timeout: 10_000 });
+  const passwordInput = page.locator('input[type="password"]');
+  await passwordInput.waitFor({ timeout: 10_000 });
   await page.keyboard.type(password);
+
+  // DIAGNOSTIC (#534): waitFor() above only confirms the password <input> is
+  // attached to the DOM, not that it already has focus — Flutter's Tab-driven
+  // focus change is async, so page.keyboard.type() could in principle start
+  // before focus actually lands, silently dropping/misrouting characters and
+  // submitting a corrupted password. Read the input's actual value right before
+  // submit to check directly whether this is what's producing the intermittent
+  // "signInWithPassword returned 400: INVALID_PASSWORD" failures tracked in #534.
+  // Never logs the literal value — length and equality only.
+  const actualPasswordValue = await passwordInput.inputValue().catch(() => null);
+  if (actualPasswordValue === null) {
+    console.log('[E2E][credential-check] could not read password input value');
+  } else if (actualPasswordValue !== password) {
+    console.log(
+      `[E2E][credential-check] MISMATCH — expected length ${password.length}, ` +
+      `actual length ${actualPasswordValue.length}, actual value starts with "${actualPasswordValue.slice(0, 2)}"`
+    );
+  } else {
+    console.log(`[E2E][credential-check] password input matches expected (length ${password.length})`);
+  }
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
