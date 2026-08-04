@@ -10,7 +10,11 @@ import { Locator, Page } from '@playwright/test';
 async function typeAndVerify(page: Page, input: Locator, value: string, maxAttempts = 3): Promise<void> {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     await page.keyboard.type(value);
-    const actual = await input.inputValue().catch(() => null);
+    // Explicit short timeout: if the locator ever fails to resolve, fail
+    // fast instead of silently absorbing Playwright's much longer default
+    // per attempt (a first version of this function without it hung for a
+    // full CI job on an unrelated selector bug — see comment on the caller).
+    const actual = await input.inputValue({ timeout: 5_000 }).catch(() => null);
     if (actual === value) return;
     console.log(
       `[E2E] typed value mismatch on attempt ${attempt}/${maxAttempts} ` +
@@ -99,15 +103,24 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // already has a proven-reliable pattern for this exact kind of Flutter
   // TextFormField interaction that this file never adopted: click({ force: true })
   // — a trusted CDP click that skips Playwright's actionability-check
-  // choreography. That closed most of the race; typeAndVerify (above) closes
+  // choreography. That closed most of the race; typeAndVerify (below) closes
   // the small remainder that survived even that (confirmed via CI: one
   // instance on the very first sign-in of a run, before anything else had
   // executed — cold-boot contention, not cross-test interference).
+  //
+  // No typeAndVerify here for email: every failure observed across this
+  // entire investigation was on the password field specifically, never
+  // email, so there's no evidence it needs the same treatment — and a first
+  // attempt at adding it here hung for the CI job's full duration, because
+  // 'flt-text-editing-host input' (copied from this file's own pre-existing
+  // docstring, never independently verified) doesn't reliably resolve,
+  // unlike 'input[type="password"]' below, which has worked correctly in
+  // every single round of this investigation.
   const emailTextbox = page.getByRole('textbox', { name: /email/i });
   await emailTextbox.waitFor({ state: 'visible', timeout: 10_000 });
   await emailTextbox.click({ force: true });
   await page.keyboard.press('Control+A');
-  await typeAndVerify(page, page.locator('flt-text-editing-host input'), email);
+  await page.keyboard.type(email);
 
   const passwordTextbox = page.getByRole('textbox', { name: /password/i });
   await passwordTextbox.waitFor({ state: 'visible', timeout: 10_000 });
