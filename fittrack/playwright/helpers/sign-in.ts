@@ -1,18 +1,33 @@
 import { Page } from '@playwright/test';
 
-// #534: waits for an element matching `selector` to actually be
-// document.activeElement, not just attached to the DOM. Flutter web's focus
-// transfer (whether triggered by Tab or by click()) is asynchronous — Playwright's
-// click()/press() only wait for the input event to be dispatched, not for
-// whatever async side effect it triggers inside the page. Typing before focus
-// has genuinely landed silently drops/misroutes keystrokes (confirmed via
-// diagnostic: "playwright-test-123" arriving corrupted, e.g. "wright-test-123"),
-// which the emulator then correctly rejects as INVALID_PASSWORD. Waiting for
-// attachment alone (the previous fix attempt) was insufficient for the same
-// reason Tab was — neither guarantees focus, only presence.
+// #534: waits for an element matching `selector` to actually be the
+// page's true focused element, not just attached to the DOM. Flutter web's
+// focus transfer (whether triggered by Tab or by click()) is asynchronous —
+// Playwright's click()/press() only wait for the input event to be
+// dispatched, not for whatever async side effect it triggers inside the
+// page. Typing before focus has genuinely landed silently drops/misroutes
+// keystrokes (confirmed via diagnostic: "playwright-test-123" arriving
+// corrupted, e.g. "wright-test-123"), which the emulator then correctly
+// rejects as INVALID_PASSWORD. Waiting for attachment alone (round 2) was
+// insufficient for the same reason Tab (round 1) was — neither guarantees
+// focus, only presence.
+//
+// Flutter's CanvasKit renderer hosts flt-text-editing-host inside a shadow
+// root, so document.activeElement only ever returns the shadow HOST, never
+// the <input> inside it (round-3-first-attempt regression: a plain
+// `document.querySelector(sel) === document.activeElement` check can never
+// be true, so it just times out instead of ever detecting focus). Walk down
+// through nested shadowRoot.activeElement to find the real deepest focused
+// element before checking it against the selector.
 async function waitForInputFocus(page: Page, selector: string, timeoutMs: number): Promise<void> {
   await page.waitForFunction(
-    (sel) => document.querySelector(sel) !== null && document.querySelector(sel) === document.activeElement,
+    (sel) => {
+      let el: Element | null = document.activeElement;
+      while (el?.shadowRoot?.activeElement) {
+        el = el.shadowRoot.activeElement;
+      }
+      return el !== null && el.matches(sel);
+    },
     selector,
     { timeout: timeoutMs }
   );
