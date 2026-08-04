@@ -81,9 +81,27 @@ export async function signIn(page: Page, email: string, password: string): Promi
   // with INVALID_PASSWORD. Click the password field directly instead, mirroring
   // the email field's already-reliable pattern above — click() focuses
   // synchronously from Playwright's perspective, unlike Tab.
+  const passwordInput = page.locator('input[type="password"]');
   await page.getByRole('textbox', { name: /password/i }).click();
-  await page.locator('input[type="password"]').waitFor({ timeout: 10_000 });
+  await passwordInput.waitFor({ timeout: 10_000 });
   await page.keyboard.type(password);
+
+  // DIAGNOSTIC (#534 round 2): the click-based fix eliminated the specific
+  // character-dropping mismatch confirmed in round 1, but CI still shows the
+  // exact same per-test failure pattern (tests 2, 4, 6 of each project's run
+  // fail attempt #1, succeed on retry) even without it — too consistent to be
+  // coincidence. Re-checking whether click() has its own residual gap, or
+  // whether this is a different mechanism entirely (e.g. genuine emulator-side
+  // contention under load). Never logs the literal value.
+  const actualPasswordValue = await passwordInput.inputValue().catch(() => null);
+  if (actualPasswordValue !== password) {
+    console.log(
+      `[E2E][credential-check] MISMATCH — expected length ${password.length}, ` +
+      `actual length ${actualPasswordValue?.length ?? 'null'}, actual value starts with "${actualPasswordValue?.slice(0, 2) ?? ''}"`
+    );
+  } else {
+    console.log(`[E2E][credential-check] password input matches expected (length ${password.length})`);
+  }
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
