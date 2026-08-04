@@ -1,4 +1,25 @@
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
+
+// #534: click({force:true}) (see signIn below) closed most of an intermittent
+// character-dropping race but not all of it — the one residual failure
+// observed happened on the very first sign-in of a run, before anything else
+// had executed, suggesting genuine CPU/rendering contention during Flutter's
+// own cold-boot init rather than cross-test interference. Rather than chase a
+// fully deterministic trigger further, verify the outcome and self-heal:
+// type, check the actual value, clear and retype if it doesn't match.
+async function typeAndVerify(page: Page, input: Locator, value: string, maxAttempts = 3): Promise<void> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    await page.keyboard.type(value);
+    const actual = await input.inputValue().catch(() => null);
+    if (actual === value) return;
+    console.log(
+      `[E2E] typed value mismatch on attempt ${attempt}/${maxAttempts} ` +
+      `(expected length ${value.length}, got ${actual?.length ?? 'null'}) — clearing and retrying`
+    );
+    await page.keyboard.press('Control+A');
+  }
+  throw new Error(`typeAndVerify: value still did not match after ${maxAttempts} attempts`);
+}
 
 /**
  * Signs in via the app's sign-in screen using Firebase Auth emulator credentials.
@@ -73,39 +94,26 @@ export async function signIn(page: Page, email: string, password: string): Promi
   });
 
   // #534: a plain click() plus various wait strategies (DOM attachment,
-  // native focus, Playwright's toBeFocused(), even verify-and-retry with an
-  // untested custom locator) all failed to reliably avoid a character-
-  // dropping race. program-creation.spec.ts's fillTextField() helper already
-  // has a proven-reliable pattern for this exact kind of Flutter TextFormField
-  // interaction that this file never adopted: click({ force: true }) — a
-  // trusted CDP click that skips Playwright's actionability-check choreography
-  // — followed immediately by Control+A (clears any prefill) and type().
-  // Mirroring it here instead of inventing a new approach.
+  // native focus, Playwright's toBeFocused()) all failed to reliably avoid a
+  // character-dropping race. program-creation.spec.ts's fillTextField() helper
+  // already has a proven-reliable pattern for this exact kind of Flutter
+  // TextFormField interaction that this file never adopted: click({ force: true })
+  // — a trusted CDP click that skips Playwright's actionability-check
+  // choreography. That closed most of the race; typeAndVerify (above) closes
+  // the small remainder that survived even that (confirmed via CI: one
+  // instance on the very first sign-in of a run, before anything else had
+  // executed — cold-boot contention, not cross-test interference).
   const emailTextbox = page.getByRole('textbox', { name: /email/i });
   await emailTextbox.waitFor({ state: 'visible', timeout: 10_000 });
   await emailTextbox.click({ force: true });
   await page.keyboard.press('Control+A');
-  await page.keyboard.type(email);
+  await typeAndVerify(page, page.locator('flt-text-editing-host input'), email);
 
   const passwordTextbox = page.getByRole('textbox', { name: /password/i });
   await passwordTextbox.waitFor({ state: 'visible', timeout: 10_000 });
   await passwordTextbox.click({ force: true });
   await page.keyboard.press('Control+A');
-  await page.keyboard.type(password);
-
-  // DIAGNOSTIC (#534): confirming click({force:true}) actually closes the
-  // race before removing this check — everything has looked plausible before
-  // in this investigation until CI proved otherwise. Never logs the literal
-  // value.
-  const actualPasswordValue = await page.locator('input[type="password"]').inputValue().catch(() => null);
-  if (actualPasswordValue !== password) {
-    console.log(
-      `[E2E][credential-check] MISMATCH — expected length ${password.length}, ` +
-      `actual length ${actualPasswordValue?.length ?? 'null'}, actual value starts with "${actualPasswordValue?.slice(0, 2) ?? ''}"`
-    );
-  } else {
-    console.log(`[E2E][credential-check] password input matches expected (length ${password.length})`);
-  }
+  await typeAndVerify(page, page.locator('input[type="password"]'), password);
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
