@@ -71,44 +71,29 @@ export async function signIn(page: Page, email: string, password: string): Promi
   await page.getByRole('textbox', { name: /email/i }).click();
   await page.keyboard.type(email);
 
-  // Tab moves Flutter focus to the password field asynchronously (Dart→JS bridge).
-  // Typing immediately after Tab races with Flutter's focus change — partial password
-  // characters land in the email field before focus transfers.
-  // Wait for the password editing input to appear before typing; that confirms Flutter
-  // has finished processing Tab and focused the password field.
-  await page.keyboard.press('Tab');
-  const passwordInput = page.locator('input[type="password"]');
-  await passwordInput.waitFor({ timeout: 10_000 });
+  // #534: previously used Tab to move focus to the password field, then waited
+  // for input[type="password"] to be ATTACHED before typing. That wait doesn't
+  // guarantee FOCUS has actually landed yet — Flutter's Tab-driven focus change
+  // is async — so page.keyboard.type() could start typing into the void before
+  // the input starts accepting keystrokes, silently dropping the password's
+  // leading characters (confirmed via diagnostic: e.g. "playwright-test-123"
+  // arriving as "wright-test-123"), which the emulator then correctly rejects
+  // with INVALID_PASSWORD. Click the password field directly instead, mirroring
+  // the email field's already-reliable pattern above — click() focuses
+  // synchronously from Playwright's perspective, unlike Tab.
+  await page.getByRole('textbox', { name: /password/i }).click();
+  await page.locator('input[type="password"]').waitFor({ timeout: 10_000 });
   await page.keyboard.type(password);
-
-  // DIAGNOSTIC (#534): waitFor() above only confirms the password <input> is
-  // attached to the DOM, not that it already has focus — Flutter's Tab-driven
-  // focus change is async, so page.keyboard.type() could in principle start
-  // before focus actually lands, silently dropping/misrouting characters and
-  // submitting a corrupted password. Read the input's actual value right before
-  // submit to check directly whether this is what's producing the intermittent
-  // "signInWithPassword returned 400: INVALID_PASSWORD" failures tracked in #534.
-  // Never logs the literal value — length and equality only.
-  const actualPasswordValue = await passwordInput.inputValue().catch(() => null);
-  if (actualPasswordValue === null) {
-    console.log('[E2E][credential-check] could not read password input value');
-  } else if (actualPasswordValue !== password) {
-    console.log(
-      `[E2E][credential-check] MISMATCH — expected length ${password.length}, ` +
-      `actual length ${actualPasswordValue.length}, actual value starts with "${actualPasswordValue.slice(0, 2)}"`
-    );
-  } else {
-    console.log(`[E2E][credential-check] password input matches expected (length ${password.length})`);
-  }
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
   // or /v1/accounts:signInWithPassword — match either path pattern.
   // Wait for ANY signInWithPassword response (200 or 400), then check status.
-  // Filtering for 200 only causes a 90s hang when the emulator returns 400 on the first
-  // auth request of a suite run (race condition: global-setup creates the user, first test
-  // fires before the emulator commits it). Accepting any status lets us throw immediately
-  // on 400 so the test retries within seconds rather than burning the full timeout budget.
+  // Filtering for 200 only would hang for the full 90s whenever the emulator
+  // rejects a bad sign-in (see #534 — was a corrupted-password typing race, now
+  // fixed above) instead of failing fast. Accepting any status lets us throw
+  // immediately on 400 so the test retries within seconds rather than burning
+  // the full timeout budget.
   const authOkPromise = page.waitForResponse(
     resp => resp.url().includes('signInWithPassword') || resp.url().includes('accounts:signInWithPassword'),
     { timeout: 90_000 }
