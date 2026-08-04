@@ -1,4 +1,29 @@
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
+
+// #534: click({force:true}) (see signIn below) closed most of an intermittent
+// character-dropping race but not all of it — the one residual failure
+// observed happened on the very first sign-in of a run, before anything else
+// had executed, suggesting genuine CPU/rendering contention during Flutter's
+// own cold-boot init rather than cross-test interference. Rather than chase a
+// fully deterministic trigger further, verify the outcome and self-heal:
+// type, check the actual value, clear and retype if it doesn't match.
+async function typeAndVerify(page: Page, input: Locator, value: string, maxAttempts = 3): Promise<void> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    await page.keyboard.type(value);
+    // Explicit short timeout: if the locator ever fails to resolve, fail
+    // fast instead of silently absorbing Playwright's much longer default
+    // per attempt (a first version of this function without it hung for a
+    // full CI job on an unrelated selector bug — see comment on the caller).
+    const actual = await input.inputValue({ timeout: 5_000 }).catch(() => null);
+    if (actual === value) return;
+    console.log(
+      `[E2E] typed value mismatch on attempt ${attempt}/${maxAttempts} ` +
+      `(expected length ${value.length}, got ${actual?.length ?? 'null'}) — clearing and retrying`
+    );
+    await page.keyboard.press('Control+A');
+  }
+  throw new Error(`typeAndVerify: value still did not match after ${maxAttempts} attempts`);
+}
 
 /**
  * Signs in via the app's sign-in screen using Firebase Auth emulator credentials.
@@ -11,11 +36,17 @@ import { Page } from '@playwright/test';
  *
  * IMPORTANT — filling Flutter text fields:
  * locator.fill() dispatches `input` events on the flt-semantics element, which Flutter
- * does not translate to text controller changes. The correct sequence is:
- *   1. click() the flt-semantics textbox — Flutter focuses the field and creates a real
- *      <input> in <flt-text-editing-host> to receive keyboard input.
- *   2. page.keyboard.type(text) — keyboard events route to the focused DOM element
- *      (the flt-text-editing-host input), which Flutter DOES read.
+ * does not translate to text controller changes. The correct sequence (#534:
+ * matches the proven pattern in program-creation.spec.ts's fillTextField(),
+ * after several other approaches all left an intermittent character-dropping
+ * race — see git history on this file for what didn't work and why) is:
+ *   1. click({ force: true }) the flt-semantics textbox — a trusted CDP click
+ *      that skips Playwright's actionability-check choreography. This focuses
+ *      the field and creates a real <input> in <flt-text-editing-host> to
+ *      receive keyboard input.
+ *   2. page.keyboard.press('Control+A') — clears any pre-filled value.
+ *   3. page.keyboard.type(text) — keyboard events route to the focused DOM
+ *      element (the flt-text-editing-host input), which Flutter DOES read.
  *
  * Form submission:
  * Clicking the flt-semantics Sign In button can hang in headless CI (pointer events
@@ -66,28 +97,46 @@ export async function signIn(page: Page, email: string, password: string): Promi
     }
   });
 
-  // Click email field → Flutter focuses it, creates flt-text-editing-host <input>.
-  // Then type via keyboard — goes to the focused flt-text-editing-host input.
-  await page.getByRole('textbox', { name: /email/i }).click();
+  // #534: a plain click() plus various wait strategies (DOM attachment,
+  // native focus, Playwright's toBeFocused()) all failed to reliably avoid a
+  // character-dropping race. program-creation.spec.ts's fillTextField() helper
+  // already has a proven-reliable pattern for this exact kind of Flutter
+  // TextFormField interaction that this file never adopted: click({ force: true })
+  // — a trusted CDP click that skips Playwright's actionability-check
+  // choreography. That closed most of the race; typeAndVerify (below) closes
+  // the small remainder that survived even that (confirmed via CI: one
+  // instance on the very first sign-in of a run, before anything else had
+  // executed — cold-boot contention, not cross-test interference).
+  //
+  // No typeAndVerify here for email: every failure observed across this
+  // entire investigation was on the password field specifically, never
+  // email, so there's no evidence it needs the same treatment — and a first
+  // attempt at adding it here hung for the CI job's full duration, because
+  // 'flt-text-editing-host input' (copied from this file's own pre-existing
+  // docstring, never independently verified) doesn't reliably resolve,
+  // unlike 'input[type="password"]' below, which has worked correctly in
+  // every single round of this investigation.
+  const emailTextbox = page.getByRole('textbox', { name: /email/i });
+  await emailTextbox.waitFor({ state: 'visible', timeout: 10_000 });
+  await emailTextbox.click({ force: true });
+  await page.keyboard.press('Control+A');
   await page.keyboard.type(email);
 
-  // Tab moves Flutter focus to the password field asynchronously (Dart→JS bridge).
-  // Typing immediately after Tab races with Flutter's focus change — partial password
-  // characters land in the email field before focus transfers.
-  // Wait for the password editing input to appear before typing; that confirms Flutter
-  // has finished processing Tab and focused the password field.
-  await page.keyboard.press('Tab');
-  await page.locator('input[type="password"]').waitFor({ timeout: 10_000 });
-  await page.keyboard.type(password);
+  const passwordTextbox = page.getByRole('textbox', { name: /password/i });
+  await passwordTextbox.waitFor({ state: 'visible', timeout: 10_000 });
+  await passwordTextbox.click({ force: true });
+  await page.keyboard.press('Control+A');
+  await typeAndVerify(page, page.locator('input[type="password"]'), password);
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
   // or /v1/accounts:signInWithPassword — match either path pattern.
   // Wait for ANY signInWithPassword response (200 or 400), then check status.
-  // Filtering for 200 only causes a 90s hang when the emulator returns 400 on the first
-  // auth request of a suite run (race condition: global-setup creates the user, first test
-  // fires before the emulator commits it). Accepting any status lets us throw immediately
-  // on 400 so the test retries within seconds rather than burning the full timeout budget.
+  // Filtering for 200 only would hang for the full 90s whenever the emulator
+  // rejects a bad sign-in (see #534 — was a corrupted-password typing race, now
+  // fixed above) instead of failing fast. Accepting any status lets us throw
+  // immediately on 400 so the test retries within seconds rather than burning
+  // the full timeout budget.
   const authOkPromise = page.waitForResponse(
     resp => resp.url().includes('signInWithPassword') || resp.url().includes('accounts:signInWithPassword'),
     { timeout: 90_000 }
