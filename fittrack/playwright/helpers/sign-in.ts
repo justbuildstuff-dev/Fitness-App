@@ -1,5 +1,23 @@
 import { Page } from '@playwright/test';
 
+// #534: waits for an element matching `selector` to actually be
+// document.activeElement, not just attached to the DOM. Flutter web's focus
+// transfer (whether triggered by Tab or by click()) is asynchronous — Playwright's
+// click()/press() only wait for the input event to be dispatched, not for
+// whatever async side effect it triggers inside the page. Typing before focus
+// has genuinely landed silently drops/misroutes keystrokes (confirmed via
+// diagnostic: "playwright-test-123" arriving corrupted, e.g. "wright-test-123"),
+// which the emulator then correctly rejects as INVALID_PASSWORD. Waiting for
+// attachment alone (the previous fix attempt) was insufficient for the same
+// reason Tab was — neither guarantees focus, only presence.
+async function waitForInputFocus(page: Page, selector: string, timeoutMs: number): Promise<void> {
+  await page.waitForFunction(
+    (sel) => document.querySelector(sel) !== null && document.querySelector(sel) === document.activeElement,
+    selector,
+    { timeout: timeoutMs }
+  );
+}
+
 /**
  * Signs in via the app's sign-in screen using Firebase Auth emulator credentials.
  * Waits for the "My Programs" screen to confirm successful sign-in.
@@ -14,7 +32,13 @@ import { Page } from '@playwright/test';
  * does not translate to text controller changes. The correct sequence is:
  *   1. click() the flt-semantics textbox — Flutter focuses the field and creates a real
  *      <input> in <flt-text-editing-host> to receive keyboard input.
- *   2. page.keyboard.type(text) — keyboard events route to the focused DOM element
+ *   2. Wait for that <input> to actually be document.activeElement (see
+ *      waitForInputFocus below) — Flutter's focus transfer is asynchronous, so
+ *      neither the click() resolving nor the <input> merely existing in the DOM
+ *      guarantees focus has landed yet (#534: two earlier fix attempts assumed
+ *      one of those was sufficient; both left an intermittent race that silently
+ *      dropped/misrouted keystrokes typed too early).
+ *   3. page.keyboard.type(text) — keyboard events route to the focused DOM element
  *      (the flt-text-editing-host input), which Flutter DOES read.
  *
  * Form submission:
@@ -66,33 +90,25 @@ export async function signIn(page: Page, email: string, password: string): Promi
     }
   });
 
-  // Click email field → Flutter focuses it, creates flt-text-editing-host <input>.
-  // Then type via keyboard — goes to the focused flt-text-editing-host input.
+  // #534 (round 3): round 1 (Tab) and round 2 (click()) both left the same
+  // character-dropping race — neither waiting for DOM attachment nor for the
+  // click event to dispatch guarantees Flutter has actually moved DOM focus
+  // into the new input yet, since that focus transfer happens asynchronously
+  // inside the page regardless of what triggers it. Wait for genuine
+  // document.activeElement focus before typing into either field — this is
+  // the actual invariant that matters, not attachment or dispatch order.
   await page.getByRole('textbox', { name: /email/i }).click();
+  await waitForInputFocus(page, 'flt-text-editing-host input', 10_000);
   await page.keyboard.type(email);
 
-  // #534: previously used Tab to move focus to the password field, then waited
-  // for input[type="password"] to be ATTACHED before typing. That wait doesn't
-  // guarantee FOCUS has actually landed yet — Flutter's Tab-driven focus change
-  // is async — so page.keyboard.type() could start typing into the void before
-  // the input starts accepting keystrokes, silently dropping the password's
-  // leading characters (confirmed via diagnostic: e.g. "playwright-test-123"
-  // arriving as "wright-test-123"), which the emulator then correctly rejects
-  // with INVALID_PASSWORD. Click the password field directly instead, mirroring
-  // the email field's already-reliable pattern above — click() focuses
-  // synchronously from Playwright's perspective, unlike Tab.
   const passwordInput = page.locator('input[type="password"]');
   await page.getByRole('textbox', { name: /password/i }).click();
-  await passwordInput.waitFor({ timeout: 10_000 });
+  await waitForInputFocus(page, 'input[type="password"]', 10_000);
   await page.keyboard.type(password);
 
-  // DIAGNOSTIC (#534 round 2): the click-based fix eliminated the specific
-  // character-dropping mismatch confirmed in round 1, but CI still shows the
-  // exact same per-test failure pattern (tests 2, 4, 6 of each project's run
-  // fail attempt #1, succeed on retry) even without it — too consistent to be
-  // coincidence. Re-checking whether click() has its own residual gap, or
-  // whether this is a different mechanism entirely (e.g. genuine emulator-side
-  // contention under load). Never logs the literal value.
+  // DIAGNOSTIC (#534 round 3): verifying the focus-wait actually closes the
+  // race this time — rounds 1 and 2 both looked plausible until CI proved
+  // otherwise. Never logs the literal value.
   const actualPasswordValue = await passwordInput.inputValue().catch(() => null);
   if (actualPasswordValue !== password) {
     console.log(
