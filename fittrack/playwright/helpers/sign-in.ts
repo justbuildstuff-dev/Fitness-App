@@ -1,27 +1,37 @@
-import { expect, Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
-// #534: waits for the password/email <input> to actually be the page's true
-// focused element, not just attached to the DOM. Flutter web's focus
-// transfer (whether triggered by Tab or by click()) is asynchronous —
-// Playwright's click()/press() only wait for the input event to be
-// dispatched, not for whatever async side effect it triggers inside the
-// page. Typing before focus has genuinely landed silently drops/misroutes
-// keystrokes (confirmed via diagnostic: "playwright-test-123" arriving
-// corrupted, e.g. "wright-test-123"), which the emulator then correctly
-// rejects as INVALID_PASSWORD. Waiting for attachment alone (round 2) was
-// insufficient for the same reason Tab (round 1) was — neither guarantees
-// focus, only presence.
-//
-// Flutter's CanvasKit renderer hosts flt-text-editing-host inside a CLOSED
-// shadow root. Playwright's locator engine pierces closed shadow roots via
-// CDP internals (why page.locator(...) reliably finds the input in every
-// round), but plain page-context JS run through page.evaluate/waitForFunction
-// cannot — element.shadowRoot returns null from outside a closed root, so a
-// round-3-first-attempt `document.activeElement` walk could never reach the
-// real focused element and just timed out instead. expect(locator).toBeFocused()
-// is Playwright's own CDP-backed focus check and correctly handles this.
-async function waitForInputFocus(page: Page, selector: string, timeoutMs: number): Promise<void> {
-  await expect(page.locator(selector)).toBeFocused({ timeout: timeoutMs });
+// #534: types `value` into `input` and verifies the result, clearing and
+// retyping if it doesn't match. Three earlier fix attempts tried to detect
+// the exact moment Flutter's focus transfer has landed before typing — via
+// DOM attachment, a raw document.activeElement check, and Playwright's own
+// CDP-backed toBeFocused() — and all three still hit the same intermittent
+// race: keystrokes typed too early are silently dropped or misrouted,
+// corrupting the value (confirmed via diagnostic: "playwright-test-123"
+// arriving as "wright-test-123"), which the emulator then correctly rejects
+// as INVALID_PASSWORD for the password field. toBeFocused() still timing out
+// suggests Flutter's CanvasKit renderer may route keystrokes through its own
+// internal event handling rather than relying on standard DOM focus at all,
+// making "wait for focus" the wrong lever regardless of how it's detected.
+// Verifying the actual outcome and retrying sidesteps that question entirely
+// — it doesn't matter why a keystroke got lost, only whether the field ends
+// up holding the right value before we move on.
+async function typeWithRetry(page: Page, input: Locator, value: string, maxAttempts = 4): Promise<void> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    await page.keyboard.type(value);
+    const actual = await input.inputValue().catch(() => null);
+    if (actual === value) return;
+
+    console.log(
+      `[E2E] typed value did not match after attempt ${attempt}/${maxAttempts} ` +
+      `(expected length ${value.length}, got length ${actual?.length ?? 'null'}) — clearing and retrying`
+    );
+    // Select-all + delete before retyping. By this point at least one
+    // keystroke round-trip has already happened, so the field is receiving
+    // keyboard input in some form — these are just more keystrokes.
+    await page.keyboard.press('Control+A');
+    await page.keyboard.press('Backspace');
+  }
+  throw new Error(`typeWithRetry: value still did not match after ${maxAttempts} attempts`);
 }
 
 /**
@@ -38,14 +48,15 @@ async function waitForInputFocus(page: Page, selector: string, timeoutMs: number
  * does not translate to text controller changes. The correct sequence is:
  *   1. click() the flt-semantics textbox — Flutter focuses the field and creates a real
  *      <input> in <flt-text-editing-host> to receive keyboard input.
- *   2. Wait for that <input> to actually be document.activeElement (see
- *      waitForInputFocus below) — Flutter's focus transfer is asynchronous, so
- *      neither the click() resolving nor the <input> merely existing in the DOM
- *      guarantees focus has landed yet (#534: two earlier fix attempts assumed
- *      one of those was sufficient; both left an intermittent race that silently
- *      dropped/misrouted keystrokes typed too early).
- *   3. page.keyboard.type(text) — keyboard events route to the focused DOM element
- *      (the flt-text-editing-host input), which Flutter DOES read.
+ *   2. page.keyboard.type(text) — keyboard events route to wherever Flutter is
+ *      currently directing keyboard input, which Flutter DOES read.
+ *   3. Verify the typed value actually landed correctly (see typeWithRetry
+ *      above), retrying if not. Flutter's transition to accepting keystrokes
+ *      for a newly-clicked field is asynchronous, and #534 found no reliable
+ *      way to detect the exact moment it's ready — DOM attachment, native
+ *      focus checks, and Playwright's own CDP-backed toBeFocused() all still
+ *      raced it. Verifying the outcome and retrying sidesteps needing to know
+ *      why or when a keystroke gets lost.
  *
  * Form submission:
  * Clicking the flt-semantics Sign In button can hang in headless CI (pointer events
@@ -96,34 +107,19 @@ export async function signIn(page: Page, email: string, password: string): Promi
     }
   });
 
-  // #534 (round 3): round 1 (Tab) and round 2 (click()) both left the same
-  // character-dropping race — neither waiting for DOM attachment nor for the
-  // click event to dispatch guarantees Flutter has actually moved DOM focus
-  // into the new input yet, since that focus transfer happens asynchronously
-  // inside the page regardless of what triggers it. Wait for genuine
-  // document.activeElement focus before typing into either field — this is
-  // the actual invariant that matters, not attachment or dispatch order.
+  // #534: click() the flt-semantics textbox, then type-and-verify (see
+  // typeWithRetry above) rather than trying to detect exactly when Flutter is
+  // ready to receive keystrokes — three attempts at the latter (DOM
+  // attachment, native focus, Playwright's toBeFocused()) all still raced it.
   await page.getByRole('textbox', { name: /email/i }).click();
-  await waitForInputFocus(page, 'flt-text-editing-host input', 10_000);
-  await page.keyboard.type(email);
+  const emailInput = page.locator('flt-text-editing-host input');
+  await emailInput.waitFor({ timeout: 10_000 });
+  await typeWithRetry(page, emailInput, email);
 
-  const passwordInput = page.locator('input[type="password"]');
   await page.getByRole('textbox', { name: /password/i }).click();
-  await waitForInputFocus(page, 'input[type="password"]', 10_000);
-  await page.keyboard.type(password);
-
-  // DIAGNOSTIC (#534 round 3): verifying the focus-wait actually closes the
-  // race this time — rounds 1 and 2 both looked plausible until CI proved
-  // otherwise. Never logs the literal value.
-  const actualPasswordValue = await passwordInput.inputValue().catch(() => null);
-  if (actualPasswordValue !== password) {
-    console.log(
-      `[E2E][credential-check] MISMATCH — expected length ${password.length}, ` +
-      `actual length ${actualPasswordValue?.length ?? 'null'}, actual value starts with "${actualPasswordValue?.slice(0, 2) ?? ''}"`
-    );
-  } else {
-    console.log(`[E2E][credential-check] password input matches expected (length ${password.length})`);
-  }
+  const passwordInput = page.locator('input[type="password"]');
+  await passwordInput.waitFor({ timeout: 10_000 });
+  await typeWithRetry(page, passwordInput, password);
 
   // Set up response listener BEFORE pressing Enter so we don't miss the response.
   // Firebase Auth emulator handles signInWithPassword at /identitytoolkit/v3/relyingparty/...
